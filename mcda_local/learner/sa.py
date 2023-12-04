@@ -41,7 +41,7 @@ class SimulatedAnnealing(Learner[T]):
             for _ in range(self.L):
                 neighbor_model = self.neighbor(best_model, rng)
                 neighbor_fitness = neighbor_model.fitness(train_data, target)
-                if rng.random() < exp((best_fitness - neighbor_fitness) / temp):
+                if rng.random() < exp((neighbor_fitness - best_fitness) / temp):
                     best_model = neighbor_model
                     best_fitness = neighbor_fitness
             temp = self.alpha * temp
