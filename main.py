@@ -69,7 +69,7 @@ match model:
 
 # Generate training binary comparisons
 bc_train = random_comparisons(A_train, Mo).relations
-train_index = D_train_rng.choice(len(bc_train), n_bc)
+train_index = D_train_rng.choice(len(bc_train), n_bc, replace=False)
 D_train = PreferenceStructure([bc_train[i] for i in train_index])
 
 
