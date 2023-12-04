@@ -25,7 +25,7 @@ from neighbors import (
 from utils import midpoints
 
 # Parse arguments
-args = parse_args()
+args = parse_args(["@config.txt"])
 
 
 # Cast arguments

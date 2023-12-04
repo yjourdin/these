@@ -1,7 +1,8 @@
 import argparse
+from typing import Sequence
 
 
-def parse_args():
+def parse_args(args: Sequence[str] | None = None):
     # Create argument parser
     parser = argparse.ArgumentParser(
         description="Learn a preference model.", fromfile_prefix_chars="@"
@@ -107,4 +108,4 @@ def parse_args():
     # action="store_true", help="Take into account inconsistent comparisons")
 
     # Parse arguments
-    return parser.parse_args()
+    return parser.parse_args(args)
