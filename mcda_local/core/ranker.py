@@ -1,8 +1,10 @@
 from abc import abstractmethod
+from typing import cast
 
 from .model import Model
 from .performance_table import PerformanceTable
-from .relations import PreferenceStructure
+from .relations import IndifferenceRelation, PreferenceRelation, PreferenceStructure
+from .values import Ranking
 
 
 class Ranker(Model):
@@ -22,7 +24,13 @@ class Ranker(Model):
     def fitness(
         self, performance_table: PerformanceTable, comparisons: PreferenceStructure
     ) -> float:
-        rank = self.rank(performance_table)
-        return sum(
-            rel in rank.preference_structure.transitive_closure for rel in comparisons
-        ) / len(comparisons.relations)
+        rank = cast(Ranking, self.rank(performance_table))
+        s: int = 0
+        for r in comparisons:
+            a, b = r.elements
+            match r:
+                case PreferenceRelation():
+                    s += (cast(int, rank.data[a]) > cast(int, rank.data[b]))
+                case IndifferenceRelation():
+                    s += (cast(int, rank.data[a]) == cast(int, rank.data[b]))
+        return s / len(comparisons)

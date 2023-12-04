@@ -178,26 +178,25 @@ class BinaryAdjacencyMatrix(AdjacencyMatrix):
 
     def __init__(self, data, vertices: list | None = None):
         super().__init__(data, vertices)
-        # if ((self.data != 1) & (self.data != 0)).any(axis=None):
-        #     raise ValueError("AdjacencyMatrix objects must contain binary values")
+        if ((self.data != 1) & (self.data != 0)).any(axis=None):
+            raise ValueError("AdjacencyMatrix objects must contain binary values")
 
     @property
     def transitive_closure(self) -> "BinaryAdjacencyMatrix":
         """Return transitive closure of matrix"""
         _m = floyd_warshall(csr_matrix(self.data.to_numpy())) < float("inf")
-        return self.__class__(_m.astype(int))
-        # m = DataFrame(
-        #     _m,
-        #     index=self.vertices,
-        #     columns=self.vertices,
-        # )
-        # res = DataFrame(
-        #     0,
-        #     index=self.vertices,
-        #     columns=self.vertices,
-        # )
-        # res[m] = 1
-        # return self.__class__(res)
+        m = DataFrame(
+            _m,
+            index=self.vertices,
+            columns=self.vertices,
+        )
+        res = DataFrame(
+            0,
+            index=self.vertices,
+            columns=self.vertices,
+        )
+        res[m] = 1
+        return self.__class__(res)
 
     @property
     def transitive_reduction(self) -> "BinaryAdjacencyMatrix":

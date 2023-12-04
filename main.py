@@ -22,26 +22,6 @@ from neighbors import (
 )
 from utils import midpoints
 
-# class SRMPLearnerSimulatedAnnealing(Learner):
-#     def __init__(self, performance_table, comparisons, nb_profiles):
-#         self.performance_table = performance_table
-#         self.comparisons = comparisons
-#         self.nb_profiles = nb_profiles
-
-#     def learn(self, rng):
-#         initial = generate_model(
-#             self.nb_profiles, len(self.performance_table.criteria), rng
-#         )
-#         sa = SimulatedAnnealing(
-#             lambda model: 1-fitness(model, self.performance_table, self.comparisons),
-#             0.01,
-#             0.005,
-#             0.995,
-#             1,
-#             RandomNeighbor(0.1, 0.1),
-#         )
-#         return sa.optimise(initial, rng)
-
 # Parse arguments
 args = parse_args()
 

@@ -278,8 +278,8 @@ class PreferenceStructure(IPreferenceStructure):
             case _:
                 relations = data
         self._relations = relations
-        # self._relations = list(set(relations))
-        # self.validate()
+        self._relations = list(set(relations))
+        self.validate()
 
     @property
     def preference_structure(self) -> "PreferenceStructure":
