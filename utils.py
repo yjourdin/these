@@ -1,7 +1,6 @@
 from numpy import sort
 
 from mcda_local.core.performance_table import NormalPerformanceTable, PerformanceTable
-from mcda_local.core.values import Ranking
 
 
 def midpoints(performance_table: PerformanceTable) -> PerformanceTable:
@@ -18,7 +17,3 @@ def midpoints(performance_table: PerformanceTable) -> PerformanceTable:
         criteria=performance_table.criteria,
     )
     return result.transform(performance_table.scales)
-
-
-def kendall_tau(rank1: Ranking, rank2: Ranking) -> float:
-    pass

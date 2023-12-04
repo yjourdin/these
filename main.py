@@ -1,5 +1,7 @@
 from typing import Any, Literal, cast
 
+from scipy.stats import kendalltau
+
 from argument_parser import parse_args
 from generate_random import (
     random_alternatives,
@@ -116,14 +118,16 @@ Me = learner.learn(A_train, D_train, **kwargs)
 
 # Compare results
 if not Me:
-    "Fail"
+    ValueError("No elicited model")
 else:
     A_test = random_alternatives(n_te, m, A_test_rng)
 
-    Ranking_o = Mo.rank(A_test)
-    Ranking_e = Me.rank(A_test)
+    restauration = Me.fitness(A_train, D_train)
 
-# Mo, Me, Ranking_o, Ranking_e, A_train, A_test
+    ranking_o = Mo.rank(A_test)
+    ranking_e = Me.rank(A_test)
 
+    kendall_tau = kendalltau(ranking_o.data, ranking_e.data)
 
-# Mo, Me, Ro, Re, atrain, atest = test(10, 3, 1, 10)
+    print(f"Restauration rate : {restauration}")
+    print(f"Kendall's tau : {kendall_tau.statistic}")
