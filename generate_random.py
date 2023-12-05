@@ -1,3 +1,5 @@
+from typing import cast
+
 from numpy import sort
 from numpy.random import Generator, SeedSequence, default_rng
 from pandas import DataFrame
@@ -5,14 +7,14 @@ from pandas import DataFrame
 from mcda_local.core.performance_table import NormalPerformanceTable, PerformanceTable
 from mcda_local.core.power_set import PowerSet
 from mcda_local.core.ranker import Ranker
-from mcda_local.core.relations import PreferenceStructure
+from mcda_local.core.relations import PreferenceStructure, Relation
 from mcda_local.ranker.rmp import RMP
 from mcda_local.ranker.srmp import SRMP
 
 
-def random_generator(seed=None):
+def random_generator(seed: int | None = None):
     ss = SeedSequence(seed)
-    seed = ss.entropy
+    seed = cast(int, ss.entropy)
     return default_rng(ss), seed
 
 
@@ -68,5 +70,9 @@ def random_rmp(
     return RMP(capacities, profiles, lex_order.tolist())
 
 
-def random_comparisons(alt: PerformanceTable, model: Ranker) -> PreferenceStructure:
-    return model.rank(alt).preference_structure
+def random_comparisons(
+    nb: int, alt: PerformanceTable, model: Ranker, rng: Generator
+) -> PreferenceStructure:
+    bc = model.rank(alt).preference_structure
+    index = rng.choice(len(bc), nb, replace=False)
+    return PreferenceStructure([cast(Relation, bc[i]) for i in index])
