@@ -84,6 +84,11 @@ def parse_args(args: Sequence[str] | None = None):
         "seeds", "Random seeds used for reproductibility"
     )
     seeds_group.add_argument(
+        "--experiment-seed",
+        type=int,
+        help="Seed for all the experiment",
+    )
+    seeds_group.add_argument(
         "--A-train-seed",
         type=int,
         help="Seed used to generate the training data set of alternatives",

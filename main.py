@@ -40,6 +40,7 @@ k_e: int = args.k_e
 n_bc: int = args.n_bc
 method: Method = args.method
 model: Model = args.model or "SRMP"
+experiment_seed: int = args.experiment_seed
 A_train_seed: int = args.A_train_seed
 model_seed: int = args.model_seed
 D_train_seed: int = args.D_train_seed
@@ -48,11 +49,27 @@ A_test_seed: int = args.A_test_seed
 
 
 # Create random generators
-A_train_rng, A_train_seed = random_generator(A_train_seed)
-model_rng, model_seed = random_generator(model_seed)
-D_train_rng, D_train_seed = random_generator(D_train_seed)
-learn_rng, learn_seed = random_generator(learn_seed)
-A_test_rng, A_test_seed = random_generator(A_test_seed)
+experiment_rng, experiment_seed = random_generator(experiment_seed)
+
+A_train_rng, A_train_seed = (
+    random_generator(A_train_seed)
+    if A_train_seed
+    else (experiment_rng, experiment_seed)
+)
+model_rng, model_seed = (
+    random_generator(model_seed) if model_seed else (experiment_rng, experiment_seed)
+)
+D_train_rng, D_train_seed = (
+    random_generator(D_train_seed)
+    if D_train_seed
+    else (experiment_rng, experiment_seed)
+)
+learn_rng, learn_seed = (
+    random_generator(learn_seed) if learn_seed else (experiment_rng, experiment_seed)
+)
+A_test_rng, A_test_seed = (
+    random_generator(A_test_seed) if A_test_seed else (experiment_rng, experiment_seed)
+)
 
 
 # Generate training data set of alternatives
