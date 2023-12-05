@@ -42,7 +42,7 @@ class NeighborProfiles(Neighbor[RMP | SRMP]):
 
 
 class NeighborWeights(Neighbor[SRMP]):
-    def __init__(self, amp):
+    def __init__(self, amp: float):
         self.amp = amp
 
     def __call__(self, model, rng):

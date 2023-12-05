@@ -1,4 +1,4 @@
-from typing import Any, Literal, cast
+from typing import Any, Literal
 
 from scipy.stats import kendalltau
 
@@ -10,7 +10,7 @@ from generate_random import (
     random_rmp,
     random_srmp,
 )
-from mcda_local.core.relations import PreferenceStructure
+from mcda_local.core.learner import Learner
 from mcda_local.learner.mip import MIP
 from mcda_local.learner.neighbor import Neighbor, RandomNeighbor
 from mcda_local.learner.sa import SimulatedAnnealing
@@ -40,11 +40,11 @@ k_e: int = args.k_e
 n_bc: int = args.n_bc
 method: Method = args.method
 model: Model = args.model or "SRMP"
-A_train_seed = cast(int, args.A_train_seed)
-model_seed = cast(int, args.model_seed)
-D_train_seed = cast(int, args.D_train_seed)
-learn_seed = cast(int, args.learn_seed)
-A_test_seed = cast(int, args.A_test_seed)
+A_train_seed: int = args.A_train_seed
+model_seed: int = args.model_seed
+D_train_seed: int = args.D_train_seed
+learn_seed: int = args.learn_seed
+A_test_seed: int = args.A_test_seed
 
 
 # Create random generators
@@ -72,8 +72,8 @@ D_train = random_comparisons(n_bc, A_train, Mo, D_train_rng)
 
 
 # Create learner
-learner: MIP | SimulatedAnnealing[RMP | SRMP]
-kwargs: dict[Any, Any] = {}
+learner: Learner[RMP | SRMP]
+kwargs: dict[str, Any] = {}
 match method:
     case "MIP":
         learner = MIP(

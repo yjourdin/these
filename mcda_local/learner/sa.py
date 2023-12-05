@@ -44,6 +44,6 @@ class SimulatedAnnealing(Learner[T]):
                 if rng.random() < exp((neighbor_fitness - best_fitness) / temp):
                     best_model = neighbor_model
                     best_fitness = neighbor_fitness
-            temp = self.alpha * temp
+            temp *= self.alpha
             print(f"Temperature : {temp}")
         return best_model
