@@ -10,4 +10,4 @@ SA
 --T0=0.8
 --alpha=0.99
 --L=1
---max-iter-non-improving=100
+--max-time=60

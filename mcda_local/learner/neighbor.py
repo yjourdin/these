@@ -4,9 +4,7 @@ from typing import Generic, TypeVar
 
 from numpy.random import Generator
 
-from ..core.model import Model
-
-T = TypeVar("T", bound=Model)
+T = TypeVar("T")
 
 
 class Neighbor(Generic[T], ABC):
