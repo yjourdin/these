@@ -1,10 +1,9 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
-from .model import Model
 from .performance_table import PerformanceTable
 
 
-class Clusterizor(Model):
+class Clusterizor(ABC):
     """Interface to implement clustering MCDA algorithms."""
 
     @abstractmethod

@@ -1,11 +1,10 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Sequence
 
-from .model import Model
 from .performance_table import PerformanceTable
 
 
-class Selector(Model):
+class Selector(ABC):
     """Interface to implement selection MCDA algorithms."""
 
     @abstractmethod

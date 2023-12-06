@@ -1,11 +1,10 @@
 from abc import abstractmethod
 from typing import Generic, TypeVar
 
-from .model import Model
 from .performance_table import PerformanceTable
 from .relations import PreferenceStructure
 
-T = TypeVar("T", bound=Model, covariant=True)
+T = TypeVar("T", covariant=True)
 
 
 class Learner(Generic[T]):

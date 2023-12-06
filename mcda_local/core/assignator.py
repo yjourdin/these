@@ -1,10 +1,9 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
-from .model import Model
 from .performance_table import PerformanceTable
 
 
-class Assignator(Model):
+class Assignator(ABC):
     """Interface to implement assignment MCDA algorithms."""
 
     @abstractmethod

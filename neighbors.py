@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import cast
 
 from numpy import sort
@@ -13,7 +14,7 @@ class NeighborProfiles(Neighbor[RMP | SRMP]):
         self.values = values
 
     def __call__(self, model, rng):
-        neighbor = model.copy()
+        neighbor = deepcopy(model)
 
         crit_ind = rng.choice(len(neighbor.profiles.criteria))
         crit_values = self.values.data.iloc[:, crit_ind]
@@ -46,7 +47,7 @@ class NeighborWeights(Neighbor[SRMP]):
         self.amp = amp
 
     def __call__(self, model, rng):
-        neighbor = model.copy()
+        neighbor = deepcopy(model)
 
         d = neighbor.criteria_weights
         keys = list(d)
@@ -61,7 +62,7 @@ class NeighborWeights(Neighbor[SRMP]):
 
 class NeighborCapacities(Neighbor[RMP]):
     def __call__(self, model, rng):
-        neighbor = model.copy()
+        neighbor = deepcopy(model)
         power_set = neighbor.criteria_capacities
         keys = list(power_set)
         crits = keys[rng.choice(len(keys))]
@@ -85,7 +86,7 @@ class NeighborCapacities(Neighbor[RMP]):
 
 class NeighborLexOrder(Neighbor[RMP | SRMP]):
     def __call__(self, model, rng):
-        neighbor = model.copy()
+        neighbor = deepcopy(model)
         lex_order = neighbor.lexicographic_order
         i = rng.choice(len(lex_order) - 1)
         neighbor.lexicographic_order[i], neighbor.lexicographic_order[i + 1] = (

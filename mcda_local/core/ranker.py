@@ -1,13 +1,12 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import cast
 
-from .model import Model
 from .performance_table import PerformanceTable
 from .relations import IndifferenceRelation, PreferenceRelation, PreferenceStructure
 from .values import Ranking
 
 
-class Ranker(Model):
+class Ranker(ABC):
     """Interface to implement ranking MCDA algorithms."""
 
     @abstractmethod
@@ -24,13 +23,14 @@ class Ranker(Model):
     def fitness(
         self, performance_table: PerformanceTable, comparisons: PreferenceStructure
     ) -> float:
-        rank = cast(Ranking, self.rank(performance_table))
+        ranking = cast(Ranking, self.rank(performance_table))
+        print(f"Ranking : {ranking.data}")
         s: int = 0
         for r in comparisons:
             a, b = r.elements
             match r:
                 case PreferenceRelation():
-                    s += (cast(int, rank.data[a]) > cast(int, rank.data[b]))
+                    s += cast(int, ranking.data[a]) > cast(int, ranking.data[b])
                 case IndifferenceRelation():
-                    s += (cast(int, rank.data[a]) == cast(int, rank.data[b]))
+                    s += cast(int, ranking.data[a]) == cast(int, ranking.data[b])
         return s / len(comparisons)
