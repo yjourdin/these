@@ -78,6 +78,19 @@ def parse_args(args: Sequence[str] | None = None):
         required=True,
         help="Number of iterations for each temperature step",
     )
+    stopping_criterion_group = parser_sa.add_mutually_exclusive_group(required=True)
+    stopping_criterion_group.add_argument("--Tf", type=float, help="Final temperature")
+    stopping_criterion_group.add_argument(
+        "--time-limit", type=int, help="Time limit (in seconds)"
+    )
+    stopping_criterion_group.add_argument(
+        "--iteration-limit", type=int, help="Max number of iterations"
+    )
+    stopping_criterion_group.add_argument(
+        "--non-improving-limit",
+        type=int,
+        help="Max number of non improving iterations",
+    )
 
     # Seed arguments
     seeds_group = parser.add_argument_group(

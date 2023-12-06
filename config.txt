@@ -7,6 +7,6 @@
 SA
 --model=RMP
 --T0=0.8
---Tf=0.01
 --alpha=0.99
---L=100
+--L=1
+--non-improving-limit=50
