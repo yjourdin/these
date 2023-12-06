@@ -24,7 +24,6 @@ class Ranker(ABC):
         self, performance_table: PerformanceTable, comparisons: PreferenceStructure
     ) -> float:
         ranking = cast(Ranking, self.rank(performance_table))
-        print(f"Ranking : {ranking.data}")
         s: int = 0
         for r in comparisons:
             a, b = r.elements
