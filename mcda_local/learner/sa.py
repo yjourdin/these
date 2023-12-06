@@ -77,9 +77,4 @@ class SimulatedAnnealing(Learner[T]):
 
             # Update temperature
             temp *= self.alpha
-            print(f"Iteration : {it}")
-            print(f"Non improving iteration : {non_improving_it}")
-            print(f"Temperature : {temp}")
-            print(f"Best fitness : {best_fitness}")
-            print()
         return best_model
