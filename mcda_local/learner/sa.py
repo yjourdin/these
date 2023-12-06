@@ -16,22 +16,22 @@ T = TypeVar("T", bound=Ranker)
 class SimulatedAnnealing(Learner[T]):
     def __init__(
         self,
-        temp_initial: float,
+        T0: float,
         alpha: float,
         L: int,
         neighbor: Neighbor[T],
-        temp_final: float | None = None,
-        time_limit: int | None = None,
-        iteration_limit: int | None = None,
-        non_improving_limit: int | None = None,
+        Tf: float | None = None,
+        max_time: int | None = None,
+        max_iter: int | None = None,
+        max_iter_non_improving: int | None = None,
     ):
-        self.temp_initial = temp_initial
+        self.T0 = T0
         self.alpha = alpha
         self.L = L
-        self.temp_final = temp_final
-        self.time_limit = time_limit
-        self.iteration_limit = iteration_limit
-        self.non_improving_limit = non_improving_limit
+        self.Tf = Tf
+        self.max_time = max_time
+        self.max_iter = max_iter
+        self.max_iter_non_improving = max_iter_non_improving
         self.neighbor = neighbor
 
     def learn(
@@ -42,7 +42,7 @@ class SimulatedAnnealing(Learner[T]):
         rng: Generator,
     ):
         # Initialise
-        temp = self.temp_initial
+        temp = self.T0
         best_model = initial_model
         best_fitness = best_model.fitness(train_data, target)
         start_time = time()
@@ -51,12 +51,12 @@ class SimulatedAnnealing(Learner[T]):
 
         # Stopping criterion
         while (
-            (self.temp_final and (temp > self.temp_final))
-            and (self.time_limit and (time() < start_time + self.time_limit))
-            and (self.iteration_limit and (it < self.iteration_limit))
+            (not self.Tf or (temp > self.Tf))
+            and (not self.max_time or (time() < start_time + self.max_time))
+            and (not self.max_iter or (it < self.max_iter))
             and (
-                self.non_improving_limit
-                and (non_improving_it < self.non_improving_limit)
+                not self.max_iter_non_improving
+                or (non_improving_it < self.max_iter_non_improving)
             )
         ):
             for _ in range(self.L):
@@ -70,10 +70,16 @@ class SimulatedAnnealing(Learner[T]):
 
                 if rng.random() < exp((neighbor_fitness - best_fitness) / temp):
                     # Accepted
+                    if neighbor_fitness - best_fitness > 0:
+                        non_improving_it = 0
                     best_model = neighbor_model
                     best_fitness = neighbor_fitness
-                    non_improving_it = 0
 
             # Update temperature
             temp *= self.alpha
+            print(f"Iteration : {it}")
+            print(f"Non improving iteration : {non_improving_it}")
+            print(f"Temperature : {temp}")
+            print(f"Best fitness : {best_fitness}")
+            print()
         return best_model

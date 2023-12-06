@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any
 
 from scipy.stats import kendalltau
 
@@ -25,117 +25,122 @@ from neighbors import (
 from utils import midpoints
 
 # Parse arguments
-args = parse_args(["@config.txt"])
-
-
-# Cast arguments
-Model = Literal["RMP", "SRMP"]
-Method = Literal["MIP", "SA"]
-
-n_tr: int = args.n_tr
-n_te: int = args.n_te
-m: int = args.m
-k_o: int = args.k_o
-k_e: int = args.k_e
-n_bc: int = args.n_bc
-method: Method = args.method
-model: Model = args.model or "SRMP"
-experiment_seed: int = args.experiment_seed
-A_train_seed: int = args.A_train_seed
-model_seed: int = args.model_seed
-D_train_seed: int = args.D_train_seed
-learn_seed: int = args.learn_seed
-A_test_seed: int = args.A_test_seed
+ARGS = parse_args()
 
 
 # Create random generators
-experiment_rng, experiment_seed = random_generator(experiment_seed)
+default_rng, default_seed = random_generator(ARGS.seed)
 
 A_train_rng, A_train_seed = (
-    random_generator(A_train_seed)
-    if A_train_seed
-    else (experiment_rng, experiment_seed)
+    random_generator(ARGS.A_train_seed)
+    if ARGS.A_train_seed
+    else (default_rng, default_seed)
 )
 model_rng, model_seed = (
-    random_generator(model_seed) if model_seed else (experiment_rng, experiment_seed)
+    random_generator(ARGS.model_seed)
+    if ARGS.model_seed
+    else (default_rng, default_seed)
 )
 D_train_rng, D_train_seed = (
-    random_generator(D_train_seed)
-    if D_train_seed
-    else (experiment_rng, experiment_seed)
+    random_generator(ARGS.D_train_seed)
+    if ARGS.D_train_seed
+    else (default_rng, default_seed)
 )
 learn_rng, learn_seed = (
-    random_generator(learn_seed) if learn_seed else (experiment_rng, experiment_seed)
+    random_generator(ARGS.learn_seed)
+    if ARGS.learn_seed
+    else (default_rng, default_seed)
 )
 A_test_rng, A_test_seed = (
-    random_generator(A_test_seed) if A_test_seed else (experiment_rng, experiment_seed)
+    random_generator(ARGS.A_test_seed)
+    if ARGS.A_test_seed
+    else (default_rng, default_seed)
 )
 
 
 # Generate training data set of alternatives
-A_train = random_alternatives(n_tr, m, A_train_rng)
+A_train = random_alternatives(ARGS.n_tr, ARGS.m, A_train_rng)
 
 
 # Generate original model
-match model:
+match ARGS.model:
     case "RMP":
-        Mo = random_rmp(k_o, m, model_rng)
+        Mo = random_rmp(ARGS.k_o, ARGS.m, model_rng)
     case "SRMP":
-        Mo = random_srmp(k_o, m, model_rng)
+        Mo = random_srmp(ARGS.k_o, ARGS.m, model_rng)
 
 
 # Generate training binary comparisons
-D_train = random_comparisons(n_bc, A_train, Mo, D_train_rng)
+D_train = random_comparisons(ARGS.n_bc, A_train, Mo, D_train_rng)
 
 
 # Create learner
 learner: Learner[RMP | SRMP]
-kwargs: dict[str, Any] = {}
-match method:
+learn_kwargs: dict[str, Any] = {}
+match ARGS.method:
+
     case "MIP":
+        # Create MIP leaner
         learner = MIP(
-            gamma=args.gamma,
-            non_dictator=args.non_dictator,
+            **ARGS.kwargs(
+                [
+                    "max_profiles_number",
+                    "profiles_number",
+                    "lexicographic_order",
+                    "gamma",
+                    "non_dictator",
+                ]
+            )
         )
 
-        kwargs["lexicographic_order"] = args.lexicographic_order
-        kwargs["profiles_number"] = args.profiles_number
-        kwargs["max_profiles_number"] = args.max_profiles_number
-
     case "SA":
+        # Create neighbors
         neighbors: list[Neighbor] = []
         neighbors.append(NeighborProfiles(midpoints(A_train)))
-        match model:
+        match ARGS.model:
             case "RMP":
                 neighbors.append(NeighborCapacities())
             case "SRMP":
                 neighbors.append(NeighborWeights(0.01))
-        if k_e >= 2:
+        if ARGS.k_e >= 2:
             neighbors.append(NeighborLexOrder())
 
+        # Create SA leaner
         learner = SimulatedAnnealing(
-            args.T0, args.Tf, args.alpha, args.L, RandomNeighbor(neighbors)
+            neighbor=RandomNeighbor(neighbors),
+            **ARGS.kwargs(
+                [
+                    "T0",
+                    "alpha",
+                    "L",
+                    "Tf",
+                    "max_time",
+                    "max_iter",
+                    "max_iter_non_improving",
+                ]
+            ),
         )
 
-        match model:
+        # Add learning kwargs
+        match ARGS.model:
             case "RMP":
-                kwargs["initial_model"] = random_rmp(
-                    k_e, m, learn_rng, midpoints(A_train)
+                learn_kwargs["initial_model"] = random_rmp(
+                    ARGS.k_e, ARGS.m, learn_rng, midpoints(A_train)
                 )
             case "SRMP":
-                kwargs["initial_model"] = random_srmp(k_e, m, learn_rng)
-        kwargs["rng"] = learn_rng
+                learn_kwargs["initial_model"] = random_srmp(ARGS.k_e, ARGS.m, learn_rng)
+        learn_kwargs["rng"] = learn_rng
 
 
 # Learn
-Me = learner.learn(A_train, D_train, **kwargs)
+Me = learner.learn(A_train, D_train, **learn_kwargs)
 
 
 # Compare results
 if not Me:
     ValueError("No elicited model")
 else:
-    A_test = random_alternatives(n_te, m, A_test_rng)
+    A_test = random_alternatives(ARGS.n_te, ARGS.m, A_test_rng)
 
     restauration = Me.fitness(A_train, D_train)
 

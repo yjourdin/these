@@ -1,12 +1,13 @@
 --n-tr=10
 --n-te=10
 --m=3
---k-o=10
+--k-o=1
 --k-e=1
 --n-bc=10
+--seed=0
 SA
 --model=RMP
 --T0=0.8
 --alpha=0.99
 --L=1
---non-improving-limit=50
+--max-iter-non-improving=100

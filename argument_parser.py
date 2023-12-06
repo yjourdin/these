@@ -1,5 +1,50 @@
 import argparse
-from typing import Sequence
+from dataclasses import dataclass
+from typing import Any, Literal, Sequence
+
+Model = Literal["RMP", "SRMP"]
+Method = Literal["MIP", "SA"]
+
+
+@dataclass(frozen=True)
+class Arguments:
+    n_tr: int
+    n_te: int
+    m: int
+    k_o: int
+    k_e: int
+    n_bc: int
+
+    method: Method
+    model: Model = "SRMP"
+
+    gamma: float | None = None
+    non_dictator: bool | None = None
+    lexicographic_order: list[int] | None = None
+    profiles_number: int | None = None
+    max_profiles_number: int | None = None
+
+    T0: float | None = None
+    alpha: float | None = None
+    L: int | None = None
+    Tf: float | None = None
+    max_time: int | None = None
+    max_iter: int | None = None
+    max_iter_non_improving: int | None = None
+
+    seed: int | None = None
+    A_train_seed: int | None = None
+    model_seed: int | None = None
+    D_train_seed: int | None = None
+    learn_seed: int | None = None
+    A_test_seed: int | None = None
+
+    def kwargs(self, args: Sequence[str]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for arg in args:
+            if arg:
+                result[arg] = getattr(self, arg)
+        return result
 
 
 def parse_args(args: Sequence[str] | None = None):
@@ -41,7 +86,7 @@ def parse_args(args: Sequence[str] | None = None):
     parser_mip = subparsers.add_parser("MIP", help="Mixed-Integer Program")
     given_group = parser_mip.add_mutually_exclusive_group(required=True)
     given_group.add_argument(
-        "--lexicographic-order", type=int, help="Lexicographic order"
+        "--lexicographic-order", nargs="+", type=int, help="Lexicographic order"
     )
     given_group.add_argument("--profiles-number", type=int, help="Number of profiles")
     given_group.add_argument(
@@ -49,14 +94,12 @@ def parse_args(args: Sequence[str] | None = None):
     )
     parser_mip.add_argument(
         "--gamma",
-        default=0.001,
         type=float,
         help="Value used for modeling strict inequalities",
     )
     parser_mip.add_argument(
         "--non-dictator",
         action="store_true",
-        default=False,
         help="Prevent dictator weights",
     )
 
@@ -68,7 +111,6 @@ def parse_args(args: Sequence[str] | None = None):
     parser_sa.add_argument(
         "--T0", type=float, required=True, help="Initial temperature"
     )
-    parser_sa.add_argument("--Tf", type=float, required=True, help="Final temperature")
     parser_sa.add_argument(
         "--alpha", type=float, required=True, help="Temperature decrease"
     )
@@ -81,13 +123,13 @@ def parse_args(args: Sequence[str] | None = None):
     stopping_criterion_group = parser_sa.add_mutually_exclusive_group(required=True)
     stopping_criterion_group.add_argument("--Tf", type=float, help="Final temperature")
     stopping_criterion_group.add_argument(
-        "--time-limit", type=int, help="Time limit (in seconds)"
+        "--max-time", type=int, help="Time limit (in seconds)"
     )
     stopping_criterion_group.add_argument(
-        "--iteration-limit", type=int, help="Max number of iterations"
+        "--max-iter", type=int, help="Max number of iterations"
     )
     stopping_criterion_group.add_argument(
-        "--non-improving-limit",
+        "--max-iter-non-improving",
         type=int,
         help="Max number of non improving iterations",
     )
@@ -97,7 +139,7 @@ def parse_args(args: Sequence[str] | None = None):
         "seeds", "Random seeds used for reproductibility"
     )
     seeds_group.add_argument(
-        "--experiment-seed",
+        "--seed",
         type=int,
         help="Seed for all the experiment",
     )
@@ -126,4 +168,4 @@ def parse_args(args: Sequence[str] | None = None):
     # action="store_true", help="Take into account inconsistent comparisons")
 
     # Parse arguments
-    return parser.parse_args(args)
+    return Arguments(**vars(parser.parse_args(args)))
