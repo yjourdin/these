@@ -1,3 +1,4 @@
+from itertools import product
 from typing import cast
 
 from numpy import sort
@@ -7,7 +8,12 @@ from pandas import DataFrame
 from mcda_local.core.performance_table import NormalPerformanceTable, PerformanceTable
 from mcda_local.core.power_set import PowerSet
 from mcda_local.core.ranker import Ranker
-from mcda_local.core.relations import PreferenceStructure, Relation
+from mcda_local.core.relations import (
+    IndifferenceRelation,
+    PreferenceRelation,
+    PreferenceStructure,
+)
+from mcda_local.core.values import Ranking
 from mcda_local.ranker.rmp import RMP
 from mcda_local.ranker.srmp import SRMP
 
@@ -73,6 +79,15 @@ def random_rmp(
 def random_comparisons(
     nb: int, alt: PerformanceTable, model: Ranker, rng: Generator
 ) -> PreferenceStructure:
-    bc = model.rank(alt).preference_structure
-    index = rng.choice(len(bc), nb, replace=False)
-    return PreferenceStructure([cast(Relation, bc[i]) for i in index])
+    ranking = cast(Ranking, model.rank(alt))
+    all_pairs = list(product(ranking.labels, repeat=2))
+    pairs = rng.choice(all_pairs, nb, replace=False)
+    preference_stucture = PreferenceStructure()
+    for a, b in pairs:
+        if ranking.data[a] > ranking.data[b]:
+            preference_stucture += PreferenceRelation(a, b)
+        elif ranking.data[a] == ranking.data[b]:
+            preference_stucture += IndifferenceRelation(a, b)
+        else:
+            preference_stucture += PreferenceRelation(b, a)
+    return preference_stucture
