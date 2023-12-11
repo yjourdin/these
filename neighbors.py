@@ -22,20 +22,19 @@ class NeighborProfiles(Neighbor[RMP | SRMP]):
         value = neighbor.profiles.data.iloc[profile_ind, crit_ind]
         value_ind = cast(int, crit_values[crit_values == value].index[0])
 
-        match 0 < value_ind, value_ind < (len(self.values.alternatives) - 1):
-            case True, True:
-                new_value_ind = rng.choice([value_ind - 1, value_ind + 1])
-                neighbor.profiles.data.iloc[profile_ind, crit_ind] = crit_values[
-                    new_value_ind
-                ]
-            case True, False:
-                neighbor.profiles.data.iloc[profile_ind, crit_ind] = crit_values[
-                    value_ind - 1
-                ]
-            case False, True:
-                neighbor.profiles.data.iloc[profile_ind, crit_ind] = crit_values[
-                    value_ind + 1
-                ]
+        if value_ind == 0:
+            neighbor.profiles.data.iloc[profile_ind, crit_ind] = crit_values[
+                value_ind + 1
+            ]
+        elif value_ind == (len(self.values.alternatives) - 1):
+            neighbor.profiles.data.iloc[profile_ind, crit_ind] = crit_values[
+                value_ind - 1
+            ]
+        else:
+            new_value_ind = rng.choice([value_ind - 1, value_ind + 1])
+            neighbor.profiles.data.iloc[profile_ind, crit_ind] = crit_values[
+                new_value_ind
+            ]
 
         neighbor.profiles.data.transform(sort)
 
@@ -50,12 +49,11 @@ class NeighborWeights(Neighbor[SRMP]):
         neighbor = deepcopy(model)
 
         d = neighbor.criteria_weights
-        keys = list(d)
-        crit = rng.choice(keys)
+        crit = rng.choice(list(d))
 
-        x = rng.uniform(-1, 1)
-
-        neighbor.criteria_weights[crit] = min(max(d[crit] + self.amp * x, 0), 1)
+        neighbor.criteria_weights[crit] = rng.uniform(
+            max(d[crit] - self.amp, 0), min(d[crit] + self.amp, 1)
+        )
 
         return neighbor
 
