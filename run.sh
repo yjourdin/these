@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 for m in 3 5 7; do
     for ke in 1 2 3; do
