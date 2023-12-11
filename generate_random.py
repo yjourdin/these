@@ -8,11 +8,7 @@ from pandas import DataFrame
 from mcda_local.core.performance_table import NormalPerformanceTable, PerformanceTable
 from mcda_local.core.power_set import PowerSet
 from mcda_local.core.ranker import Ranker
-from mcda_local.core.relations import (
-    IndifferenceRelation,
-    PreferenceRelation,
-    PreferenceStructure,
-)
+from mcda_local.core.relations import IndifferenceRelation, PreferenceRelation, Relation
 from mcda_local.core.values import Ranking
 from mcda_local.ranker.rmp import RMP
 from mcda_local.ranker.srmp import SRMP
@@ -72,22 +68,44 @@ def random_rmp(
     else:
         profiles = NormalPerformanceTable(sort(rng.random((nb_profiles, nb_crit)), 0))
     capacities = PowerSet(list(range(nb_crit)))
+    for ss in capacities.keys():
+        capacities[ss] = rng.integers(
+            capacities.min_capacity(ss), capacities.max_capacity(ss), endpoint=True
+        )
     lex_order = rng.permutation(nb_profiles)
     return RMP(capacities, profiles, lex_order.tolist())
 
 
 def random_comparisons(
-    nb: int, alt: PerformanceTable, model: Ranker, rng: Generator
-) -> PreferenceStructure:
-    ranking = cast(Ranking, model.rank(alt))
+    nb: int,
+    alternatives: PerformanceTable,
+    model: Ranker,
+    rng: Generator,
+) -> list[Relation]:
+    ranking = cast(Ranking, model.rank(alternatives))
     all_pairs = list(product(ranking.labels, repeat=2))
     pairs = rng.choice(all_pairs, nb, replace=False)
-    preference_stucture = PreferenceStructure()
+    preference_stucture: list[Relation] = []
     for a, b in pairs:
-        if ranking.data[a] > ranking.data[b]:
-            preference_stucture += PreferenceRelation(a, b)
+        if ranking.data[a] < ranking.data[b]:
+            preference_stucture.append(PreferenceRelation(a, b))
         elif ranking.data[a] == ranking.data[b]:
-            preference_stucture += IndifferenceRelation(a, b)
+            preference_stucture.append(IndifferenceRelation(a, b))
         else:
-            preference_stucture += PreferenceRelation(b, a)
+            preference_stucture.append(PreferenceRelation(b, a))
     return preference_stucture
+
+
+def all_comparisons(alternatives: PerformanceTable, model: Ranker) -> list[Relation]:
+    ranking = cast(Ranking, model.rank(alternatives))
+    all_pairs = list(product(ranking.labels, repeat=2))
+    result: list[Relation] = []
+    for a, b in all_pairs:
+        # print(f"{a}, {b}")
+        if ranking.data[a] < ranking.data[b]:
+            result.append(PreferenceRelation(a, b))
+        elif ranking.data[a] == ranking.data[b]:
+            result.append(IndifferenceRelation(a, b))
+        else:
+            result.append(PreferenceRelation(b, a))
+    return result

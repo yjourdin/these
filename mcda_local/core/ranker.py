@@ -2,7 +2,12 @@ from abc import ABC, abstractmethod
 from typing import cast
 
 from .performance_table import PerformanceTable
-from .relations import IndifferenceRelation, PreferenceRelation, PreferenceStructure
+from .relations import (
+    IndifferenceRelation,
+    PreferenceRelation,
+    PreferenceStructure,
+    Relation,
+)
 from .values import Ranking
 
 
@@ -21,7 +26,7 @@ class Ranker(ABC):
         pass
 
     def fitness(
-        self, performance_table: PerformanceTable, comparisons: PreferenceStructure
+        self, performance_table: PerformanceTable, comparisons: list[Relation]
     ) -> float:
         ranking = cast(Ranking, self.rank(performance_table))
         s: int = 0
@@ -29,7 +34,7 @@ class Ranker(ABC):
             a, b = r.elements
             match r:
                 case PreferenceRelation():
-                    s += cast(int, ranking.data[a]) > cast(int, ranking.data[b])
+                    s += cast(int, ranking.data[a]) < cast(int, ranking.data[b])
                 case IndifferenceRelation():
                     s += cast(int, ranking.data[a]) == cast(int, ranking.data[b])
         return s / len(comparisons)
