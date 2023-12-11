@@ -47,20 +47,20 @@ seeds.update(
 )
 
 # Generate training data set of alternatives
-A_train = random_alternatives(ARGS.n_tr, ARGS.m, default_rng(seeds["A_train"]))
+A_train = random_alternatives(ARGS.N_tr, ARGS.M, default_rng(seeds["A_train"]))
 
 
 # Generate original model
 match ARGS.model:
     case "RMP":
-        Mo = random_rmp(ARGS.k_o, ARGS.m, default_rng(seeds["model"]))
+        Mo = random_rmp(ARGS.K_o, ARGS.M, default_rng(seeds["model"]))
     case "SRMP":
-        Mo = random_srmp(ARGS.k_o, ARGS.m, default_rng(seeds["model"]))
+        Mo = random_srmp(ARGS.K_o, ARGS.M, default_rng(seeds["model"]))
 # print(Mo)
 
 
 # Generate training binary comparisons
-D_train = random_comparisons(ARGS.n_bc, A_train, Mo, default_rng(seeds["D_train"]))
+D_train = random_comparisons(ARGS.N_bc, A_train, Mo, default_rng(seeds["D_train"]))
 
 
 # Create learner
@@ -90,7 +90,7 @@ match ARGS.method:
                 neighbors.append(NeighborCapacities())
             case "SRMP":
                 neighbors.append(NeighborWeights(0.1))
-        if ARGS.k_e >= 2:
+        if ARGS.K_e >= 2:
             neighbors.append(NeighborLexOrder())
 
         # Create SA leaner
@@ -119,15 +119,15 @@ match ARGS.method:
         match ARGS.model:
             case "RMP":
                 learn_kwargs["initial_model"] = random_rmp(
-                    ARGS.k_e,
-                    ARGS.m,
+                    ARGS.K_e,
+                    ARGS.M,
                     default_rng(seeds["initial_model"]),
                     midpoints(A_train),
                 )
             case "SRMP":
                 learn_kwargs["initial_model"] = random_srmp(
-                    ARGS.k_e,
-                    ARGS.m,
+                    ARGS.K_e,
+                    ARGS.M,
                     default_rng(seeds["initial_model"]),
                     midpoints(A_train),
                 )
@@ -147,7 +147,7 @@ learning_total_time = learning_end_time - learning_start_time
 if not Me:
     ValueError("No elicited model")
 else:
-    A_test = random_alternatives(ARGS.n_te, ARGS.m, default_rng(seeds["A_test"]))
+    A_test = random_alternatives(ARGS.N_te, ARGS.M, default_rng(seeds["A_test"]))
 
     train_accuracy = Me.fitness(A_train, D_train)
     test_accuracy = Me.fitness(A_test, all_comparisons(A_test, Mo))

@@ -9,12 +9,12 @@ Method = Literal["MIP", "SA"]
 
 @dataclass(frozen=True)
 class Arguments:
-    n_tr: int
-    n_te: int
-    m: int
-    k_o: int
-    k_e: int
-    n_bc: int
+    N_tr: int
+    N_te: int
+    M: int
+    K_o: int
+    K_e: int
+    N_bc: int
 
     method: Method
     model: Model = "SRMP"
