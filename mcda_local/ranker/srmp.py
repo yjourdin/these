@@ -11,6 +11,8 @@ from mcda.core.relations import OutrankingMatrix
 from numpy import arange, array, unique, where
 from pandas import DataFrame, Series, concat
 
+from utils import print_list
+
 from ..core.criteria_functions import CriteriaFunctions
 from ..core.performance_table import PerformanceTable
 from ..core.ranker import Ranker
@@ -129,13 +131,17 @@ class SRMP(Ranker):
         self.profiles = profiles
         self.lexicographic_order = lexicographic_order
 
-    def copy(self) -> "SRMP":
-        """Copy the SRMP model
-
-        Returns:
-            SRMP: the copy
-        """
-        return SRMP(self.criteria_weights, self.profiles, self.lexicographic_order)
+    def __str__(self) -> str:
+        # return (
+        #     f"Weights : {self.criteria_weights.__str__()}\n"
+        #     f"Profiles : {self.profiles.data.to_numpy().__str__()}\n"
+        #     f"Order : {self.lexicographic_order.__str__()}"
+        # )
+        return (
+            f"{print_list(list(self.criteria_weights.values()))}\t"
+            f"{print_list(self.profiles.data.to_numpy()[0])}\t"
+            f"{self.lexicographic_order.__str__()}"
+        )
 
     @property
     def sub_srmp(self) -> list[ProfileWiseOutranking]:

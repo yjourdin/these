@@ -16,6 +16,9 @@ class PowerSet(MutableMapping[frozenset[Any], int]):
         self.supremum = {ss: {ss | {i} for i in (s - ss)} for ss in power_set}
         self.infimum = {ss: {ss - {i} for i in ss} for ss in power_set}
 
+    def __str__(self) -> str:
+        return " ".join([str(val) for val in self.capacities.values()])
+
     def __getitem__(self, __key: frozenset[Any]) -> int:
         return self.capacities.__getitem__(__key)
 

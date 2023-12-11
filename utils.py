@@ -17,3 +17,10 @@ def midpoints(performance_table: PerformanceTable) -> PerformanceTable:
         criteria=performance_table.criteria,
     )
     return result.transform(performance_table.scales)
+
+
+def print_list(lst):
+    result = ""
+    for x in lst:
+        result += f"{x:3.3f} "
+    return result

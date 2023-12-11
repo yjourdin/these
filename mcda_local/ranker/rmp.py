@@ -10,6 +10,8 @@ from mcda.core.aliases import Function
 from numpy import arange, unique, where
 from pandas import DataFrame, concat
 
+from utils import print_list
+
 from ..core.criteria_functions import CriteriaFunctions
 from ..core.performance_table import PerformanceTable
 from ..core.power_set import PowerSet
@@ -82,9 +84,7 @@ class ProfileWiseOutranking(Ranker):
 
         comp_df = performance_table.apply(functions)
 
-        comp_series = comp_df.data.apply(
-            lambda a: a.index[a], 1, result_type="reduce"
-        )
+        comp_series = comp_df.data.apply(lambda a: a.index[a], 1, result_type="reduce")
 
         capacities = comp_series.apply(lambda a: self.criteria_capacities[frozenset(a)])
 
@@ -130,13 +130,17 @@ class RMP(Ranker):
         self.profiles = profiles
         self.lexicographic_order = lexicographic_order
 
-    def copy(self) -> "RMP":
-        """Copy the SRMP model
-
-        Returns:
-            SRMP: the copy
-        """
-        return RMP(self.criteria_capacities, self.profiles, self.lexicographic_order)
+    def __str__(self) -> str:
+        # return (
+        #     f"Capacities : {self.criteria_capacities.__str__()}\n"
+        #     f"Profiles : {self.profiles.data.to_numpy().__str__()}\n"
+        #     f"Order : {self.lexicographic_order.__str__()}"
+        # )
+        return (
+            f"{self.criteria_capacities.__str__()}\t"
+            f"{print_list(self.profiles.data.to_numpy()[0])}\t"
+            f"{self.lexicographic_order.__str__()}"
+        )
 
     @property
     def sub_rmp(self) -> list[ProfileWiseOutranking]:
