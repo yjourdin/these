@@ -160,12 +160,12 @@ else:
     # Print results
     result: str = ""
     result += str(learning_total_time)
-    result += "\t" + str(train_accuracy)
-    result += "\t" + str(test_accuracy)
-    result += "\t" + str(kendall_tau.statistic)
+    result += "," + str(train_accuracy)
+    result += "," + str(test_accuracy)
+    result += "," + str(kendall_tau.statistic)
     for seed in seeds.values():
-        result += "\t" + str(seed)
+        result += "," + str(seed)
     for arg in fields(ARGS):
-        result += "\t" + str(getattr(ARGS, arg.name))
+        result += "," + str(getattr(ARGS, arg.name))
 
     print(result)
