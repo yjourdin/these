@@ -87,21 +87,21 @@ def parse_args(args: Sequence[str] | None = None):
     )
 
     # Constant numbers
-    parser.add_argument("--n-tr", type=int, help="Number of training alternatives")
-    parser.add_argument("--n-te", type=int, help="Number of testing alternatives")
-    parser.add_argument("--m", type=int, help="Number of criteria")
+    parser.add_argument("--N-tr", type=int, help="Number of training alternatives")
+    parser.add_argument("--N-te", type=int, help="Number of testing alternatives")
+    parser.add_argument("--M", type=int, help="Number of criteria")
     parser.add_argument(
-        "--k-o",
+        "--K-o",
         type=int,
         help="Number of profiles in the original model",
     )
     parser.add_argument(
-        "--k-e",
+        "--K-e",
         type=int,
         help="Number of profiles in the elicited model",
     )
     parser.add_argument(
-        "--n-bc", type=int, help="Number of training binary comparisons"
+        "--N-bc", type=int, help="Number of training binary comparisons"
     )
 
     # Method used
