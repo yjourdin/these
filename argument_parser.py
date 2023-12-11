@@ -1,6 +1,7 @@
 import argparse
 from dataclasses import dataclass
-from typing import Any, Literal, Sequence
+from types import NoneType, UnionType
+from typing import Any, Literal, Sequence, get_args, get_origin
 
 Model = Literal["RMP", "SRMP"]
 Method = Literal["MIP", "SA"]
@@ -39,11 +40,43 @@ class Arguments:
     learn_seed: int | None = None
     A_test_seed: int | None = None
 
-    def kwargs(self, args: Sequence[str]) -> dict[str, Any]:
+    def __post_init__(self):
+        for name, field_type in self.__annotations__.items():
+            if (not get_origin(field_type) is UnionType) or (
+                NoneType not in get_args(field_type)
+            ):
+                if get_origin(field_type) is Literal:
+                    if self.__dict__[name] not in get_args(field_type):
+                        current_type = type(self.__dict__[name])
+                        raise TypeError(
+                            f"The field `{name}` "
+                            f"was assigned by `{current_type}` "
+                            f"instead of `{field_type}`"
+                        )
+                else:
+                    if not isinstance(self.__dict__[name], field_type):
+                        current_type = type(self.__dict__[name])
+                        raise TypeError(
+                            f"The field `{name}` "
+                            f"was assigned by `{current_type}` "
+                            f"instead of `{field_type}`"
+                        )
+
+    def kwargs(
+        self, args: Sequence[str], keys: list[str] | dict[str, str] | None = None
+    ) -> dict[str, Any]:
         result: dict[str, Any] = {}
-        for arg in args:
-            if arg:
-                result[arg] = getattr(self, arg)
+        for i, arg in enumerate(args):
+            arg_value = getattr(self, arg)
+            if arg_value:
+                match keys:
+                    case list():
+                        key = keys[i]
+                    case dict():
+                        key = keys.get(arg, arg)
+                    case _:
+                        key = arg
+                result[key] = arg_value
         return result
 
 
@@ -54,33 +87,25 @@ def parse_args(args: Sequence[str] | None = None):
     )
 
     # Constant numbers
-    parser.add_argument(
-        "--n-tr", type=int, required=True, help="Number of training alternatives"
-    )
-    parser.add_argument(
-        "--n-te", type=int, required=True, help="Number of testing alternatives"
-    )
-    parser.add_argument("--m", type=int, required=True, help="Number of criteria")
+    parser.add_argument("--n-tr", type=int, help="Number of training alternatives")
+    parser.add_argument("--n-te", type=int, help="Number of testing alternatives")
+    parser.add_argument("--m", type=int, help="Number of criteria")
     parser.add_argument(
         "--k-o",
         type=int,
-        required=True,
         help="Number of profiles in the original model",
     )
     parser.add_argument(
         "--k-e",
         type=int,
-        required=True,
         help="Number of profiles in the elicited model",
     )
     parser.add_argument(
-        "--n-bc", type=int, required=True, help="Number of training binary comparisons"
+        "--n-bc", type=int, help="Number of training binary comparisons"
     )
 
     # Method used
-    subparsers = parser.add_subparsers(
-        help="Method used to learn", dest="method", required=True
-    )
+    subparsers = parser.add_subparsers(help="Method used to learn", dest="method")
 
     # Mixed Integer Program arguments
     parser_mip = subparsers.add_parser("MIP", help="Mixed-Integer Program")
@@ -168,4 +193,10 @@ def parse_args(args: Sequence[str] | None = None):
     # action="store_true", help="Take into account inconsistent comparisons")
 
     # Parse arguments
-    return Arguments(**vars(parser.parse_args(args)))
+    pua = None
+    ns, ua = parser.parse_known_args(args)
+    while len(ua) and ua != pua:
+        ns, ua = parser.parse_known_args(ua, ns)
+        pua = ua
+    ns = parser.parse_args(ua, ns)
+    return Arguments(**vars(ns))
