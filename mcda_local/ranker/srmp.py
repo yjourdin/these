@@ -88,15 +88,17 @@ class ProfileWiseOutranking(Ranker):
             Series,
             performance_table.apply(functions).sum(1),
         )
+        conditional_weighted_sum_numpy = conditional_weighted_sum.to_numpy()
 
         return OutrankingMatrix(
             DataFrame(
                 [
                     [
-                        conditional_weighted_sum[ai] >= conditional_weighted_sum[aj]
-                        for aj in performance_table.alternatives
+                        conditional_weighted_sum_numpy[i]
+                        >= conditional_weighted_sum_numpy[j]
+                        for j in range(len(performance_table.alternatives))
                     ]
-                    for ai in performance_table.alternatives
+                    for i in range(len(performance_table.alternatives))
                 ],
                 index=performance_table.alternatives,
                 columns=performance_table.alternatives,
