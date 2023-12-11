@@ -1,4 +1,5 @@
 from dataclasses import fields
+from time import time
 from typing import Any, cast
 
 from numpy.random import SeedSequence, default_rng
@@ -135,7 +136,10 @@ match ARGS.method:
 
 # Learn
 # print("learning")
+learning_start_time = time()
 Me = learner.learn(A_train, D_train, **learn_kwargs)
+learning_end_time = time()
+learning_total_time = learning_end_time - learning_start_time
 # print("learned")
 
 
@@ -155,6 +159,7 @@ else:
 
     # Print results
     result: str = ""
+    result += str(learning_total_time) + " "
     result += str(train_accuracy) + " "
     result += str(test_accuracy) + " "
     result += str(kendall_tau.statistic) + " "
