@@ -1,13 +1,21 @@
 #!/bin/sh
 
-echo "Time,Train accuracy,Test accuracy,Kendall's tau,General seed,A train seed,Model seed,D train seed,Learn seed,A test seed,Initial model seed,SA seed,N_tr,N_te,M,K_o,K_e,N_bc,Method,Model,Gamma,Non dictator,Lexicographic order,Profiles number,Max profiles number,T0,Alpha,L,Tf,Max time,Max iter,Max iter non improving,Seed,A train seed,Model seed,D train seed,Learn seed,A test seed" >evo_out.csv
+# Output file
+file='results/csv/gen_out.csv'
 
-for m in 7 11 15; do
-    for ke in 1 2 3 4; do
-        for nbc in 100 300 500 1000 2000; do
-            for seed in 0 1 2 3 4 5 6 7 8 9; do
-                python main.py @config.txt --M=$m --K-o=$ke --K-e=$ke --N-bc=$nbc --seed=$seed >>evo_out.csv &
-            done
-        done
-    done
-done
+# Header
+tr '\n' ',' <config/header.txt >$file
+
+# Grid
+M='M 7 11 15'
+K_e='K_e 1 2 3 4'
+N_bc='N_bc 100 300 500 1000 2000'
+seed='seed 0 1 2 3 4 5 6 7 8 9'
+
+# shellcheck disable=SC1083
+# shellcheck disable=SC2086
+parallel --header : \
+    python main.py @config/defaults.txt \
+    --M={M} --K-o={K_e} --K-e={K_e} --N-bc={N_bc} --seed={seed} \
+    ::: $M ::: $K_e ::: $N_bc ::: $seed \
+    >>$file
