@@ -162,4 +162,7 @@ cython_debug/
 # VS Code files for those working on multiple tools
 .vscode/*
 
-*.prof
+# Auxiliary directories
+profiling/*
+results/csv/*
+results/plots/*
