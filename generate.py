@@ -48,6 +48,30 @@ def random_srmp(
     return SRMP(weights, profiles, lex_order.tolist())
 
 
+def balanced_srmp(
+    nb_profiles: int,
+    nb_crit: int,
+    rng: Generator,
+    profiles_values: PerformanceTable | None = None,
+):
+    if profiles_values:
+        profiles = PerformanceTable(
+            profiles_values.data.iloc[
+                [
+                    int(i / (nb_profiles + 1) * len(profiles_values.alternatives))
+                    for i in range(1, nb_profiles + 1)
+                ],
+                :,
+            ],
+            profiles_values.scales,
+        )
+    else:
+        profiles = NormalPerformanceTable(sort(rng.random((nb_profiles, nb_crit)), 0))
+    weights = dict(enumerate(rng.random(nb_crit)))
+    lex_order = rng.permutation(nb_profiles)
+    return SRMP(weights, profiles, lex_order.tolist())
+
+
 def random_rmp(
     nb_profiles: int,
     nb_crit: int,
@@ -76,6 +100,36 @@ def random_rmp(
     return RMP(capacities, profiles, lex_order.tolist())
 
 
+def balanced_rmp(
+    nb_profiles: int,
+    nb_crit: int,
+    rng: Generator,
+    profiles_values: PerformanceTable | None = None,
+) -> RMP:
+    if profiles_values:
+        profiles = PerformanceTable(
+            profiles_values.data.iloc[
+                [
+                    int(i / (nb_profiles + 1) * len(profiles_values.alternatives))
+                    for i in range(1, nb_profiles + 1)
+                ],
+                :,
+            ],
+            profiles_values.scales,
+        )
+    else:
+        profiles = NormalPerformanceTable(
+            [[x / (nb_profiles + 1)] * nb_crit for x in range(1, nb_profiles + 1)]
+        )
+    capacities = PowerSet(list(range(nb_crit)))
+    for ss in capacities.keys():
+        capacities[ss] = rng.integers(
+            capacities.min_capacity(ss), capacities.max_capacity(ss), endpoint=True
+        )
+    lex_order = rng.permutation(nb_profiles)
+    return RMP(capacities, profiles, lex_order.tolist())
+
+
 def random_comparisons(
     nb: int,
     alternatives: PerformanceTable,
@@ -87,9 +141,11 @@ def random_comparisons(
     pairs = rng.choice(all_pairs, nb, replace=False)
     preference_stucture: list[Relation] = []
     for a, b in pairs:
-        if ranking.data[a] < ranking.data[b]:
+        rank_a = ranking.data[a]
+        rank_b = ranking.data[b]
+        if rank_a < rank_b:
             preference_stucture.append(PreferenceRelation(a, b))
-        elif ranking.data[a] == ranking.data[b]:
+        elif rank_a == rank_b:
             preference_stucture.append(IndifferenceRelation(a, b))
         else:
             preference_stucture.append(PreferenceRelation(b, a))
