@@ -164,5 +164,4 @@ cython_debug/
 
 # Auxiliary directories
 profiling/*
-results/csv/*
-results/plots/*
+results/*
