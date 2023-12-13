@@ -8,7 +8,7 @@ from typing import Any, cast
 
 from mcda.core.aliases import Function
 from mcda.core.relations import OutrankingMatrix
-from numpy import arange, array, unique, where
+from numpy import arange, array, greater_equal, unique, where
 from pandas import DataFrame, Series, concat
 
 from utils import print_list
@@ -90,20 +90,26 @@ class ProfileWiseOutranking(Ranker):
         )
         conditional_weighted_sum_numpy = conditional_weighted_sum.to_numpy()
 
+        # return OutrankingMatrix(
+        #     DataFrame(
+        #         [
+        #             [
+        #                 conditional_weighted_sum_numpy[i]
+        #                 >= conditional_weighted_sum_numpy[j]
+        #                 for j in range(len(performance_table.alternatives))
+        #             ]
+        #             for i in range(len(performance_table.alternatives))
+        #         ],
+        #         index=performance_table.alternatives,
+        #         columns=performance_table.alternatives,
+        #         dtype="int64",
+        #     )
+        # )
         return OutrankingMatrix(
-            DataFrame(
-                [
-                    [
-                        conditional_weighted_sum_numpy[i]
-                        >= conditional_weighted_sum_numpy[j]
-                        for j in range(len(performance_table.alternatives))
-                    ]
-                    for i in range(len(performance_table.alternatives))
-                ],
-                index=performance_table.alternatives,
-                columns=performance_table.alternatives,
-                dtype="int64",
-            )
+            greater_equal.outer(
+                conditional_weighted_sum_numpy, conditional_weighted_sum_numpy
+            ),
+            performance_table.alternatives,
         )
 
     def rank(self, performance_table: PerformanceTable, **kwargs) -> OutrankingMatrix:
@@ -140,8 +146,8 @@ class SRMP(Ranker):
         #     f"Order : {self.lexicographic_order.__str__()}"
         # )
         return (
-            f"{print_list(list(self.criteria_weights.values()))}\t"
-            f"{print_list(self.profiles.data.to_numpy()[0])}\t"
+            f"{print_list(list(self.criteria_weights.values()))}   "
+            f"{print_list(self.profiles.data.to_numpy()[0])}   "
             f"{self.lexicographic_order.__str__()}"
         )
 

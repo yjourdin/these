@@ -7,7 +7,7 @@ Implementation and naming conventions are taken from
 from typing import cast
 
 from mcda.core.aliases import Function
-from numpy import arange, unique, where
+from numpy import arange, greater_equal, unique, where
 from pandas import DataFrame, concat
 
 from utils import print_list
@@ -88,19 +88,25 @@ class ProfileWiseOutranking(Ranker):
 
         capacities = comp_series.apply(lambda a: self.criteria_capacities[frozenset(a)])
 
+        capacities_numpy = capacities.to_numpy()
+
+        # return OutrankingMatrix(
+        #     DataFrame(
+        #         [
+        #             [
+        #                 capacities_numpy[i] >= capacities_numpy[j]
+        #                 for j in range(len(performance_table.alternatives))
+        #             ]
+        #             for i in range(len(performance_table.alternatives))
+        #         ],
+        #         index=performance_table.alternatives,
+        #         columns=performance_table.alternatives,
+        #         dtype="int64",
+        #     )
+        # )
         return OutrankingMatrix(
-            DataFrame(
-                [
-                    [
-                        capacities[ai] >= capacities[aj]
-                        for aj in performance_table.alternatives
-                    ]
-                    for ai in performance_table.alternatives
-                ],
-                index=performance_table.alternatives,
-                columns=performance_table.alternatives,
-                dtype="int64",
-            )
+            greater_equal.outer(capacities_numpy, capacities_numpy),
+            performance_table.alternatives,
         )
 
     def rank(self, performance_table: PerformanceTable, **kwargs) -> OutrankingMatrix:
@@ -137,8 +143,8 @@ class RMP(Ranker):
         #     f"Order : {self.lexicographic_order.__str__()}"
         # )
         return (
-            f"{self.criteria_capacities.__str__()}\t"
-            f"{print_list(self.profiles.data.to_numpy()[0])}\t"
+            f"{self.criteria_capacities.__str__()}   "
+            f"{print_list(self.profiles.data.to_numpy()[0])}   "
             f"{self.lexicographic_order.__str__()}"
         )
 
