@@ -6,8 +6,10 @@ from numpy.random import SeedSequence, default_rng
 from scipy.stats import kendalltau
 
 from argument_parser import parse_args
-from generate_random import (
+from generate import (
     all_comparisons,
+    balanced_rmp,
+    balanced_srmp,
     random_alternatives,
     random_comparisons,
     random_rmp,
@@ -56,7 +58,7 @@ match ARGS.model:
         Mo = random_rmp(ARGS.K_o, ARGS.M, default_rng(seeds["model"]))
     case "SRMP":
         Mo = random_srmp(ARGS.K_o, ARGS.M, default_rng(seeds["model"]))
-# print(Mo)
+print(Mo)
 
 
 # Generate training binary comparisons
@@ -118,14 +120,14 @@ match ARGS.method:
         )
         match ARGS.model:
             case "RMP":
-                learn_kwargs["initial_model"] = random_rmp(
+                learn_kwargs["initial_model"] = balanced_rmp(
                     ARGS.K_e,
                     ARGS.M,
                     default_rng(seeds["initial_model"]),
                     midpoints(A_train),
                 )
             case "SRMP":
-                learn_kwargs["initial_model"] = random_srmp(
+                learn_kwargs["initial_model"] = balanced_srmp(
                     ARGS.K_e,
                     ARGS.M,
                     default_rng(seeds["initial_model"]),
