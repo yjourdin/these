@@ -112,10 +112,7 @@ class CriteriaFunctions:
 
     def __call__(
         self,
-        data: PerformanceTable
-        | DataFrame
-        | Series
-        | ScaleValues,
+        data: PerformanceTable | DataFrame | Series | ScaleValues,
         *args,
         **kwargs,
     ) -> Any:
