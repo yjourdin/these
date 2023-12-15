@@ -58,7 +58,7 @@ match ARGS.model:
         Mo = random_rmp(ARGS.K_o, ARGS.M, default_rng(seeds["model"]))
     case "SRMP":
         Mo = random_srmp(ARGS.K_o, ARGS.M, default_rng(seeds["model"]))
-print(Mo)
+# print(Mo)
 
 
 # Generate training binary comparisons
