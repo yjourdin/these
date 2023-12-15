@@ -154,13 +154,15 @@ def random_comparisons(
 
 def all_comparisons(alternatives: PerformanceTable, model: Ranker) -> list[Relation]:
     ranking = cast(Ranking, model.rank(alternatives))
-    all_pairs = list(product(ranking.labels, repeat=2))
+    ranking_dict = ranking.data.to_dict()
+    labels = ranking.labels
+    all_pairs = list(product(labels, repeat=2))
     result: list[Relation] = []
     for a, b in all_pairs:
         # print(f"{a}, {b}")
-        if ranking.data[a] < ranking.data[b]:
+        if ranking_dict[a] < ranking_dict[b]:
             result.append(PreferenceRelation(a, b))
-        elif ranking.data[a] == ranking.data[b]:
+        elif ranking_dict[a] == ranking_dict[b]:
             result.append(IndifferenceRelation(a, b))
         else:
             result.append(PreferenceRelation(b, a))
