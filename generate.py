@@ -12,6 +12,7 @@ from mcda_local.core.relations import IndifferenceRelation, PreferenceRelation, 
 from mcda_local.core.values import Ranking
 from mcda_local.ranker.rmp import RMP
 from mcda_local.ranker.srmp import SRMP
+from utils import max_weight
 
 
 def random_generator(seed: int | None = None):
@@ -44,6 +45,10 @@ def random_srmp(
     else:
         profiles = NormalPerformanceTable(sort(rng.random((nb_profiles, nb_crit)), 0))
     weights = dict(enumerate(rng.random(nb_crit)))
+    # weights = dict(enumerate(rng.integers(1, max_weight(nb_crit), nb_crit, endpoint=True)))
+    s = sum([w for w in weights.values()])
+    for c, w in weights.items():
+        weights[c] = w / s
     lex_order = rng.permutation(nb_profiles)
     return SRMP(weights, profiles, lex_order.tolist())
 
@@ -67,7 +72,9 @@ def balanced_srmp(
         )
     else:
         profiles = NormalPerformanceTable(sort(rng.random((nb_profiles, nb_crit)), 0))
-    weights = dict(enumerate(rng.random(nb_crit)))
+    weights = {k: 1/nb_crit for k in range(nb_crit)}
+    # weights = dict(enumerate(rng.random(nb_crit)))
+    # weights = dict(enumerate(rng.integers(1, max_weight(nb_crit), nb_crit, endpoint=True)))
     lex_order = rng.permutation(nb_profiles)
     return SRMP(weights, profiles, lex_order.tolist())
 
