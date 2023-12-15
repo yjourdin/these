@@ -86,7 +86,7 @@ match ARGS.method:
     case "SA":
         # Create neighbors
         neighbors: list[Neighbor] = []
-        neighbors.append(NeighborProfiles(midpoints(A_train)))
+        neighbors.append(NeighborProfiles(0.1))  # midpoints(A_train)))
         match ARGS.model:
             case "RMP":
                 neighbors.append(NeighborCapacities())

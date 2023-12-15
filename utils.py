@@ -25,5 +25,10 @@ def midpoints(performance_table: PerformanceTable) -> PerformanceTable:
 def print_list(lst):
     result = ""
     for x in lst:
-        result += f"{x:3.3f} "
+        result += f"{x:1.3f} "
     return result
+
+
+def max_weight(n):
+    # return 1 if n == 1 else (n - 1) * max_weight(n - 1) + 1
+    return 2**n
