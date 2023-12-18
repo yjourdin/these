@@ -14,7 +14,6 @@ from ..core.relations import (
     IndifferenceRelation,
     PreferenceRelation,
     PreferenceStructure,
-    Relation,
 )
 from ..core.scales import NormalScale
 from ..ranker.srmp import SRMP
@@ -377,7 +376,7 @@ class MIP(Learner[SRMP]):
         return best_result, best_prob
 
     def learn(
-        self, train_data: PerformanceTable, target: list[Relation]
+        self, train_data: PerformanceTable, target: PreferenceStructure
     ) -> SRMP | None:
         """Learn and return SRMP solution (if existing).
 
@@ -385,7 +384,7 @@ class MIP(Learner[SRMP]):
         """
         result, _ = self._learn(
             train_data,
-            PreferenceStructure(target),
+            target,
             self.lexicographic_order,
             self.profiles_number,
             self.max_profiles_number,

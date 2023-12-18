@@ -6,7 +6,6 @@ from .relations import (
     IndifferenceRelation,
     PreferenceRelation,
     PreferenceStructure,
-    Relation,
 )
 from .values import Ranking
 
@@ -26,7 +25,7 @@ class Ranker(ABC):
         pass
 
     def fitness(
-        self, performance_table: PerformanceTable, comparisons: list[Relation]
+        self, performance_table: PerformanceTable, comparisons: PreferenceStructure
     ) -> float:
         ranking = cast(Ranking, self.rank(performance_table))
         ranking_dict = ranking.data.to_dict()

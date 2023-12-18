@@ -7,7 +7,7 @@ from numpy.random import Generator
 from ..core.learner import Learner
 from ..core.performance_table import PerformanceTable
 from ..core.ranker import Ranker
-from ..core.relations import Relation
+from ..core.relations import PreferenceStructure
 from .neighbor import Neighbor
 
 T = TypeVar("T", bound=Ranker)
@@ -37,7 +37,7 @@ class SimulatedAnnealing(Learner[T]):
     def learn(
         self,
         train_data: PerformanceTable,
-        target: list[Relation],
+        target: PreferenceStructure,
         initial_model: T,
         rng: Generator,
     ):
@@ -73,7 +73,7 @@ class SimulatedAnnealing(Learner[T]):
                     if neighbor_fitness - best_fitness > 0:
                         non_improving_it = 0
                     best_model = neighbor_model
-                    # print(f"{best_model}   {best_fitness}   {temp}")
+                    print(f"{best_model}   {best_fitness}   {temp}")
                     best_fitness = neighbor_fitness
 
                 # print(f"{best_fitness},{temp}")
