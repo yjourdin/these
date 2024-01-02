@@ -58,7 +58,7 @@ match ARGS.model:
         Mo = random_rmp(ARGS.K_o, ARGS.M, default_rng(seeds["model"]))
     case "SRMP":
         Mo = random_srmp(ARGS.K_o, ARGS.M, default_rng(seeds["model"]))
-# print(Mo)
+print(Mo)
 
 
 # Generate training binary comparisons
@@ -86,12 +86,14 @@ match ARGS.method:
     case "SA":
         # Create neighbors
         neighbors: list[Neighbor] = []
-        neighbors.append(NeighborProfiles(0.1))  # midpoints(A_train)))
+        neighbors.append(
+            NeighborProfiles(midpoints(A_train.subtable(D_train.elements)))
+        )
         match ARGS.model:
             case "RMP":
                 neighbors.append(NeighborCapacities())
             case "SRMP":
-                neighbors.append(NeighborWeights(0.1))
+                neighbors.append(NeighborWeights(0.2))
         if ARGS.K_e >= 2:
             neighbors.append(NeighborLexOrder())
 
@@ -124,14 +126,14 @@ match ARGS.method:
                     ARGS.K_e,
                     ARGS.M,
                     default_rng(seeds["initial_model"]),
-                    midpoints(A_train),
+                    midpoints(A_train.subtable(D_train.elements)),
                 )
             case "SRMP":
                 learn_kwargs["initial_model"] = balanced_srmp(
                     ARGS.K_e,
                     ARGS.M,
                     default_rng(seeds["initial_model"]),
-                    midpoints(A_train),
+                    midpoints(A_train.subtable(D_train.elements)),
                 )
         learn_kwargs["rng"] = default_rng(seeds["sa"])
 
