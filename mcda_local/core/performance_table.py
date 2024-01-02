@@ -324,3 +324,16 @@ class NormalPerformanceTable(PerformanceTable):
 
     def normalize(self) -> PerformanceTable:
         return self
+
+    def subtable(
+        self, alternatives: list[Any] | None = None, criteria: list[Any] | None = None
+    ) -> "PerformanceTable":
+        """Return the subtable containing given alternatives and criteria.
+
+        :param alternatives:
+        :param criteria:
+        :return:
+        """
+        alternatives = alternatives or self.alternatives
+        criteria = criteria or self.criteria
+        return self.__class__(self.data.loc[alternatives, criteria])
