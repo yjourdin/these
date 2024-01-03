@@ -43,6 +43,8 @@ class SimulatedAnnealing(Learner[T]):
     ):
         # Initialise
         temp = self.T0
+        current_model = initial_model
+        current_fitness = current_model.fitness(train_data, target)
         best_model = initial_model
         best_fitness = best_model.fitness(train_data, target)
         start_time = time()
@@ -65,23 +67,25 @@ class SimulatedAnnealing(Learner[T]):
                 non_improving_it += 1
 
                 # Neighbor model
-                neighbor_model = self.neighbor(best_model, rng)
+                neighbor_model = self.neighbor(current_model, rng)
                 neighbor_fitness = neighbor_model.fitness(train_data, target)
-                print(f"{neighbor_model}   {neighbor_fitness}   {temp}")
 
-                if rng.random() < exp((neighbor_fitness - best_fitness) / temp):
+                if rng.random() < exp((neighbor_fitness - current_fitness) / temp):
                     # Accepted
-                    if neighbor_fitness - best_fitness > 0:
+                    current_model = neighbor_model
+                    current_fitness = neighbor_fitness
+                    
+                    # New best
+                    if current_fitness > best_fitness:
                         non_improving_it = 0
-                    best_model = neighbor_model
-                    # print(f"{best_model}   {best_fitness}   {temp}")
-                    best_fitness = neighbor_fitness
+                        best_model = current_model
+                        best_fitness = current_fitness
 
-                # print(f"{best_fitness},{temp}")
+                        # Stop when fitness equals 1
+                        if best_fitness == 1:
+                            return best_model
 
-                if best_fitness == 1:
-                    return best_model
-
+                print(f"{neighbor_model}   {neighbor_fitness:.3f}   {current_fitness:.3f}   {best_fitness:.3f}   {temp}")
                 # if it % 100 == 0:
                 #     print(
                 #         f"Iteration : {it} \t"
