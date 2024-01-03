@@ -6,14 +6,14 @@ Implementation and naming conventions are taken from
 """
 from typing import cast
 
+import numpy as np
 from mcda.core.aliases import Function
-from numpy import arange, greater_equal, unique, where
-from pandas import DataFrame, concat
+from pandas import DataFrame, Series, concat
 
 from utils import print_list
 
 from ..core.criteria_functions import CriteriaFunctions
-from ..core.performance_table import PerformanceTable
+from ..core.performance_table import NormalPerformanceTable, PerformanceTable
 from ..core.power_set import PowerSet
 from ..core.ranker import Ranker
 from ..core.relations import OutrankingMatrix
@@ -105,9 +105,42 @@ class ProfileWiseOutranking(Ranker):
         #     )
         # )
         return OutrankingMatrix(
-            greater_equal.outer(capacities_numpy, capacities_numpy),
+            np.greater_equal.outer(capacities_numpy, capacities_numpy),
             performance_table.alternatives,
         )
+
+    def normal_construct(self, performance_table: NormalPerformanceTable) -> np.ndarray:
+        """Construct the outranking matrix.
+
+        :param performance_table:
+        :return:
+        """
+        _profile = self.profile.normalize()
+
+        comp_df = performance_table.data.ge(_profile.data)
+
+        capacities = [
+            self.criteria_capacities[frozenset(np.nonzero(a)[0])]
+            for a in comp_df.values
+        ]
+
+        capacities_numpy = np.array(capacities)
+
+        # return OutrankingMatrix(
+        #     DataFrame(
+        #         [
+        #             [
+        #                 capacities_numpy[i] >= capacities_numpy[j]
+        #                 for j in range(len(performance_table.alternatives))
+        #             ]
+        #             for i in range(len(performance_table.alternatives))
+        #         ],
+        #         index=performance_table.alternatives,
+        #         columns=performance_table.alternatives,
+        #         dtype="int64",
+        #     )
+        # )
+        return np.greater_equal.outer(capacities_numpy, capacities_numpy)
 
     def rank(self, performance_table: PerformanceTable, **kwargs) -> OutrankingMatrix:
         """Construct an outranking matrix.
@@ -116,6 +149,16 @@ class ProfileWiseOutranking(Ranker):
         :return:
         """
         return self.construct(performance_table=performance_table)
+
+    def normal_rank(
+        self, performance_table: NormalPerformanceTable, **kwargs
+    ) -> np.ndarray:
+        """Construct an outranking matrix.
+
+        :param performance_table:
+        :return:
+        """
+        return self.normal_construct(performance_table=performance_table)
 
 
 class RMP(Ranker):
@@ -170,6 +213,16 @@ class RMP(Ranker):
         """
         return [sub_rmp.rank(performance_table) for sub_rmp in self.sub_rmp]
 
+    def normal_construct(self, performance_table: NormalPerformanceTable) -> np.ndarray:
+        """Construct one outranking matrix per category profile.
+
+        :param performance_table:
+        :return:
+        """
+        return np.array(
+            [sub_rmp.normal_rank(performance_table) for sub_rmp in self.sub_rmp]
+        )
+
     def exploit(
         self,
         outranking_matrices: list[OutrankingMatrix],
@@ -203,6 +256,32 @@ class RMP(Ranker):
             PreferenceDirection.MIN,
         )
 
+    def normal_exploit(
+        self,
+        outranking_matrices: np.ndarray,
+        lexicographic_order: list[int] | None = None,
+    ) -> Ranking:
+        """Merge outranking matrices built by profiles in lexicographic
+        order using SRMP exploitation method.
+
+        :param outranking_matrices:
+            outranking matrix constructed in :attr:`profiles` order
+        :param lexicographic_order: (if not supplied, use attribute)
+        :return:
+            the outranking total order as a ranking
+        """
+        lexicographic_order = lexicographic_order or self.lexicographic_order
+        relations_ordered = outranking_matrices[lexicographic_order]
+        n = len(relations_ordered)
+        score = np.sum([relations_ordered[i] * 2 ** (n - 1 - i) for i in range(n)], 0)
+        outranking_matrix = score - score.transpose() >= 0
+        scores = outranking_matrix.sum(1)
+        scores_ordered = sorted(set(scores), reverse=True)
+        return Ranking(
+            Series([scores_ordered.index(x) + 1 for x in scores]),
+            PreferenceDirection.MIN,
+        )
+
     def rank(self, performance_table: PerformanceTable, **kwargs) -> Ranking:
         """Compute the SRMP algorithm
 
@@ -210,7 +289,10 @@ class RMP(Ranker):
         :return:
             the outranking total order as a ranking
         """
-        return self.exploit(self.construct(performance_table))
+        if isinstance(performance_table, NormalPerformanceTable):
+            return self.normal_exploit(self.normal_construct(performance_table))
+        else:
+            return self.exploit(self.construct(performance_table))
 
     def plot_input_data(
         self,
@@ -532,7 +614,7 @@ class RMP(Ranker):
         xticklabels = [f"$P^{profile}$" for profile in self.lexicographic_order]
         ylim = (0.5, nb_ranks + 0.5)
         yticks = cast(list[float], range(1, nb_ranks + 1))
-        yminorticks = arange(1, nb_ranks + 2) - 0.5
+        yminorticks = np.arange(1, nb_ranks + 2) - 0.5
         yticklabels = cast(list[str], range(nb_ranks, 0, -1))
 
         # Draw horizontal striped background
@@ -548,7 +630,10 @@ class RMP(Ranker):
         # Number of alternatives for each rank (depending on the profile)
         rank_counts = DataFrame(
             [
-                {k: v for k, v in zip(*unique(ranks.loc[profile], return_counts=True))}
+                {
+                    k: v
+                    for k, v in zip(*np.unique(ranks.loc[profile], return_counts=True))
+                }
                 for profile in ranks.index
             ],
             columns=range(1, nb_alt + 1),
@@ -566,7 +651,7 @@ class RMP(Ranker):
             # Current alternative's ranks
             current_ranks = ranks[alt]
             # Update offsets (return to 0.5 if it's a new rank)
-            offsets = where(current_ranks == previous_ranks, offsets, 0.5).tolist()
+            offsets = np.where(current_ranks == previous_ranks, offsets, 0.5).tolist()
             offsets = [
                 offsets[profile] - offsets_width.loc[profile, current_ranks[profile]]
                 for profile in range(nb_profiles)
