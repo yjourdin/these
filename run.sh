@@ -16,7 +16,7 @@ seed='seed 0 1 2 3 4 5 6 7 8 9'
 
 # shellcheck disable=SC1083
 # shellcheck disable=SC2086
-parallel --header : \
+parallel -j40 --header : \
     python main.py @config/defaults.txt \
     --M={M} --K-o={K_e} --K-e={K_e} --N-bc={N_bc} --T0={T0} --Tf={Tf} --seed={seed} \
     ::: $M ::: $K_e ::: $N_bc :::+ $T0 :::+ $Tf ::: $seed \
