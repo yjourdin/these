@@ -86,20 +86,25 @@ match ARGS.method:
     case "SA":
         # Create neighbors
         neighbors: list[Neighbor] = []
+        prob: list[int] = []
         neighbors.append(
             NeighborProfiles(midpoints(A_train.subtable(D_train.elements)))
         )
+        prob.append(ARGS.K_e * ARGS.M)
         match ARGS.model:
             case "RMP":
                 neighbors.append(NeighborCapacities())
+                prob.append(2**ARGS.M)
             case "SRMP":
-                neighbors.append(NeighborWeights(0.2))
+                neighbors.append(NeighborWeights(1))
+                prob.append(ARGS.M)
         if ARGS.K_e >= 2:
             neighbors.append(NeighborLexOrder())
+            prob.append(ARGS.K_e)
 
         # Create SA leaner
         learner = SimulatedAnnealing(
-            neighbor=RandomNeighbor(neighbors),
+            neighbor=RandomNeighbor(neighbors, prob),
             **ARGS.kwargs(
                 [
                     "T0",
