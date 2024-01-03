@@ -34,19 +34,24 @@ class NeighborProfiles(Neighbor[RMP | SRMP]):
             int, crit_values.index.get_loc(crit_values[crit_values == value].index[0])
         )
 
-        if value_ind == 0:
-            neighbor.profiles.data.iloc[profile_ind, crit_ind] = crit_values[
-                crit_values.index[value_ind + 1]
-            ]
-        elif value_ind == (len(self.values.alternatives) - 1):
-            neighbor.profiles.data.iloc[profile_ind, crit_ind] = crit_values[
-                crit_values.index[value_ind - 1]
-            ]
-        else:
-            new_value_ind = rng.choice([value_ind - 1, value_ind + 1])
-            neighbor.profiles.data.iloc[profile_ind, crit_ind] = crit_values[
-                crit_values.index[new_value_ind]
-            ]
+        # if value_ind == 0:
+        #     neighbor.profiles.data.iloc[profile_ind, crit_ind] = crit_values[
+        #         crit_values.index[value_ind + 1]
+        #     ]
+        # elif value_ind == (len(self.values.alternatives) - 1):
+        #     neighbor.profiles.data.iloc[profile_ind, crit_ind] = crit_values[
+        #         crit_values.index[value_ind - 1]
+        #     ]
+        # else:
+        #     new_value_ind = rng.choice([value_ind - 1, value_ind + 1])
+        #     neighbor.profiles.data.iloc[profile_ind, crit_ind] = crit_values[
+        #         crit_values.index[new_value_ind]
+        #     ]
+
+        new_value_ind = rng.choice(len(self.values.alternatives))
+        neighbor.profiles.data.iloc[profile_ind, crit_ind] = crit_values[
+            crit_values.index[new_value_ind]
+        ]
 
         neighbor.profiles.data.transform(sort)
 
@@ -157,9 +162,15 @@ class NeighborLexOrder(Neighbor[RMP | SRMP]):
     def __call__(self, model, rng):
         neighbor = deepcopy(model)
         lex_order = neighbor.lexicographic_order
-        i = rng.choice(len(lex_order) - 1)
-        neighbor.lexicographic_order[i], neighbor.lexicographic_order[i + 1] = (
-            lex_order[i + 1],
+        i = rng.choice(len(lex_order))
+        j = rng.choice([x for x in range(len(lex_order)) if x != i])
+        neighbor.lexicographic_order[i], neighbor.lexicographic_order[j] = (
+            lex_order[j],
             lex_order[i],
         )
+        # i = rng.choice(len(lex_order) - 1)
+        # neighbor.lexicographic_order[i], neighbor.lexicographic_order[i + 1] = (
+        #     lex_order[i + 1],
+        #     lex_order[i],
+        # )
         return neighbor
