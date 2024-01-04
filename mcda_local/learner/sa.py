@@ -74,7 +74,7 @@ class SimulatedAnnealing(Learner[T]):
                     # Accepted
                     current_model = neighbor_model
                     current_fitness = neighbor_fitness
-                    
+
                     # New best
                     if current_fitness > best_fitness:
                         non_improving_it = 0
@@ -85,7 +85,9 @@ class SimulatedAnnealing(Learner[T]):
                         if best_fitness == 1:
                             return best_model
 
-                print(f"{neighbor_model}   {neighbor_fitness:.3f}   {current_fitness:.3f}   {best_fitness:.3f}   {temp}")
+                print(
+                    f"{neighbor_model}   {neighbor_fitness:.3f}   {current_fitness:.3f}   {best_fitness:.3f}   {temp}"
+                )
                 # if it % 100 == 0:
                 #     print(
                 #         f"Iteration : {it} \t"
