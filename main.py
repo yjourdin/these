@@ -1,5 +1,5 @@
 from dataclasses import fields
-from time import time
+from time import process_time
 from typing import Any, cast
 
 from numpy.random import SeedSequence, default_rng
@@ -96,7 +96,7 @@ match ARGS.method:
                 neighbors.append(NeighborCapacities())
                 prob.append(2**ARGS.M)
             case "SRMP":
-                neighbors.append(NeighborWeights(1))
+                neighbors.append(NeighborWeights(0.1))
                 prob.append(ARGS.M)
         if ARGS.K_e >= 2:
             neighbors.append(NeighborLexOrder())
@@ -145,9 +145,9 @@ match ARGS.method:
 
 # Learn
 # print("learning")
-learning_start_time = time()
+learning_start_time = process_time()
 Me = learner.learn(A_train, D_train, **learn_kwargs)
-learning_end_time = time()
+learning_end_time = process_time()
 learning_total_time = learning_end_time - learning_start_time
 # print("learned")
 
