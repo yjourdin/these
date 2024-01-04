@@ -37,6 +37,8 @@ from ..plot.plot import (
     Text,
 )
 
+from scipy.stats import rankdata
+
 
 class ProfileWiseOutranking(Ranker):
     """This class infers outranking relations related to a single profile.
@@ -121,7 +123,7 @@ class ProfileWiseOutranking(Ranker):
         _profile = self.profile.normalize()
 
         conditional_weighted_sum = np.dot(
-            performance_table.data.ge(_profile.data),
+            performance_table.data.values >= _profile.data.values,
             np.array(list(self.criteria_weights.values())),
         )
 
@@ -275,12 +277,17 @@ class SRMP(Ranker):
         lexicographic_order = lexicographic_order or self.lexicographic_order
         relations_ordered = outranking_matrices[lexicographic_order]
         n = len(relations_ordered)
-        score = np.sum([relations_ordered[i] * 2 ** (n - 1 - i) for i in range(n)], 0)
+        power = np.array([2 ** (n - 1 - i) for i in range(n)])
+        score = np.sum(relations_ordered * power[:, None, None], 0)
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
-        scores_ordered = sorted(set(scores), reverse=True)
+        # scores_ordered = sorted(set(scores), reverse=True)
+        # return Ranking(
+        #     Series([scores_ordered.index(x) + 1 for x in scores]),
+        #     PreferenceDirection.MIN,
+        # )
         return Ranking(
-            Series([scores_ordered.index(x) + 1 for x in scores]),
+            Series(rankdata(-scores, method='dense')),
             PreferenceDirection.MIN,
         )
 
