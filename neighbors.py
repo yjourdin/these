@@ -143,17 +143,18 @@ class NeighborCapacities(Neighbor[RMP]):
         while power_set.min_capacity(crits) == power_set.max_capacity(crits):
             crits = keys[rng.choice(len(keys))]
         capacity = power_set[crits]
-        if power_set.min_capacity(crits) < capacity < power_set.max_capacity(crits):
-            new_capa = rng.choice([capacity - 1, capacity + 1])
-        elif power_set.min_capacity(crits) == capacity:
-            new_capa = capacity + 1
-        elif capacity == power_set.max_capacity(crits):
-            new_capa = capacity - 1
-        else:
-            raise ValueError(
-                f"{capacity} is not between {power_set.min_capacity(crits)}"
-                f" and {power_set.max_capacity(crits)}"
-            )
+        new_capa = rng.integers(power_set.min_capacity(crits), power_set.max_capacity(crits), endpoint=True)
+        # if power_set.min_capacity(crits) < capacity < power_set.max_capacity(crits):
+        #     new_capa = rng.choice([capacity - 1, capacity + 1])
+        # elif power_set.min_capacity(crits) == capacity:
+        #     new_capa = capacity + 1
+        # elif capacity == power_set.max_capacity(crits):
+        #     new_capa = capacity - 1
+        # else:
+        #     raise ValueError(
+        #         f"{capacity} is not between {power_set.min_capacity(crits)}"
+        #         f" and {power_set.max_capacity(crits)}"
+        #     )
         neighbor.criteria_capacities[crits] = new_capa
         return neighbor
 
