@@ -10,6 +10,7 @@ import numpy as np
 from mcda.core.aliases import Function
 from mcda.core.relations import OutrankingMatrix
 from pandas import DataFrame, Series, concat
+from scipy.stats import rankdata
 
 from utils import print_list
 
@@ -36,8 +37,6 @@ from ..plot.plot import (
     StackedBarPlot,
     Text,
 )
-
-from scipy.stats import rankdata
 
 
 class ProfileWiseOutranking(Ranker):
@@ -281,13 +280,8 @@ class SRMP(Ranker):
         score = np.sum(relations_ordered * power[:, None, None], 0)
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
-        # scores_ordered = sorted(set(scores), reverse=True)
-        # return Ranking(
-        #     Series([scores_ordered.index(x) + 1 for x in scores]),
-        #     PreferenceDirection.MIN,
-        # )
         return Ranking(
-            Series(rankdata(-scores, method='dense')),
+            Series(rankdata(-scores, method="dense")),
             PreferenceDirection.MIN,
         )
 

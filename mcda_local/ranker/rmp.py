@@ -9,6 +9,7 @@ from typing import cast
 import numpy as np
 from mcda.core.aliases import Function
 from pandas import DataFrame, Series, concat
+from scipy.stats import rankdata
 
 from utils import print_list
 
@@ -276,9 +277,8 @@ class RMP(Ranker):
         score = np.sum([relations_ordered[i] * 2 ** (n - 1 - i) for i in range(n)], 0)
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
-        scores_ordered = sorted(set(scores), reverse=True)
         return Ranking(
-            Series([scores_ordered.index(x) + 1 for x in scores]),
+            Series(rankdata(-scores, method="dense")),
             PreferenceDirection.MIN,
         )
 
