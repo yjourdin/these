@@ -274,7 +274,8 @@ class RMP(Ranker):
         lexicographic_order = lexicographic_order or self.lexicographic_order
         relations_ordered = outranking_matrices[lexicographic_order]
         n = len(relations_ordered)
-        score = np.sum([relations_ordered[i] * 2 ** (n - 1 - i) for i in range(n)], 0)
+        power = np.array([2 ** (n - 1 - i) for i in range(n)])
+        score = np.sum(relations_ordered * power[:, None, None], 0)
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
         return Ranking(
