@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Output file
-file='results/03-01-24.csv'
+file='results/gne.csv'
 
 # Header
 tr '\n' ',' <config/header.txt >$file
