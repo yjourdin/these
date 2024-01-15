@@ -1,6 +1,0 @@
-name = "RandomCapacities"
-uuid = "703a4cbb-a4a0-4afb-a0ce-079e231afa5b"
-
-[deps]
-SimplePosets = "b2aef97b-4721-5af9-b440-0bad754dc5ba"
-StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
