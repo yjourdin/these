@@ -73,7 +73,7 @@ class SimulatedAnnealing(Learner[T]):
                 print(
                     f"{neighbor_model}   {neighbor_fitness:.3f}   {current_fitness:.3f}   {best_fitness:.3f}   {temp}"
                 )
-                
+
                 if rng.random() < exp((neighbor_fitness - current_fitness) / temp):
                     # Accepted
                     current_model = neighbor_model
