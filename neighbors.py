@@ -1,5 +1,6 @@
 from copy import deepcopy
-from typing import cast
+from itertools import chain, combinations
+from typing import Any, Collection, cast
 
 from numpy import sort
 
@@ -112,7 +113,7 @@ class NeighborWeights(Neighbor[SRMP]):
 
         # neighbor.criteria_weights[crit] = max(min(rng.normal(d[crit], self.amp), 1), 0)
 
-        s = sum([w for w in neighbor.criteria_weights.values()])
+        s = sum(neighbor.criteria_weights.values())
         for c, w in neighbor.criteria_weights.items():
             neighbor.criteria_weights[c] = w / s
 
@@ -135,15 +136,30 @@ class NeighborWeights(Neighbor[SRMP]):
 
 
 class NeighborCapacities(Neighbor[RMP]):
+    def __init__(self, s: Collection[Any]):
+        s = set(s)
+
+        power_set_tmp = chain.from_iterable(
+            combinations(s, r) for r in range(len(s) + 1)
+        )
+        power_set = {frozenset(i for i in ss) for ss in power_set_tmp}
+
+        self.supremum = {ss: {ss | {i} for i in (s - ss)} for ss in power_set}
+        self.infimum = {ss: {ss - {i} for i in ss} for ss in power_set}
+
     def __call__(self, model, rng):
         neighbor = deepcopy(model)
-        power_set = neighbor.criteria_capacities
-        keys = list(power_set)
+
+        capacities = neighbor.criteria_capacities
+        keys = list(capacities)
         crits = keys[rng.choice(len(keys))]
-        while power_set.min_capacity(crits) == power_set.max_capacity(crits):
-            crits = keys[rng.choice(len(keys))]
-        capacity = power_set[crits]
-        new_capa = rng.integers(power_set.min_capacity(crits), power_set.max_capacity(crits), endpoint=True)
+
+        infimum_capacities = [capacities[ss] for ss in self.infimum[crits]]
+        min_capacity = max(infimum_capacities) if infimum_capacities else 0
+        supremum_capacities = [capacities[ss] for ss in self.supremum[crits]]
+        max_capacity = min(supremum_capacities) if supremum_capacities else 1
+
+        new_capa = rng.uniform(min_capacity, max_capacity)
         # if power_set.min_capacity(crits) < capacity < power_set.max_capacity(crits):
         #     new_capa = rng.choice([capacity - 1, capacity + 1])
         # elif power_set.min_capacity(crits) == capacity:
