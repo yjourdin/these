@@ -22,7 +22,7 @@ error='error 0 0.1 0.2 0.3'
 
 # shellcheck disable=SC1083
 # shellcheck disable=SC2086
-parallel --header : \
+parallel -j75 --header : \
     python main.py \
     --N-tr $N_tr --N-te $N_te SA --model-o SRMP --model-e SRMP --alpha $alpha --L $L \
     --M {M} --K-o {K_e} --K-e {K_e} --N-bc {N_bc} --T0 {T0} --Tf {Tf} --error {error} \
