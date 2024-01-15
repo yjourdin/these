@@ -15,6 +15,7 @@ class Arguments:
     K_o: int
     K_e: int
     N_bc: int
+    error: float
 
     method: Method
     model: Model = "SRMP"
@@ -37,6 +38,7 @@ class Arguments:
     A_train_seed: int | None = None
     model_seed: int | None = None
     D_train_seed: int | None = None
+    error_seed: int | None = None
     learn_seed: int | None = None
     A_test_seed: int | None = None
 
@@ -102,6 +104,9 @@ def parse_args(args: Sequence[str] | None = None):
     )
     parser.add_argument(
         "--N-bc", type=int, help="Number of training binary comparisons"
+    )
+    parser.add_argument(
+        "--error", type=float, help="Error rate in training binary comparisons"
     )
 
     # Method used
@@ -180,6 +185,11 @@ def parse_args(args: Sequence[str] | None = None):
         "--D-train-seed",
         type=int,
         help="Seed used to select the alternatives into the training dataset",
+    )
+    seeds_group.add_argument(
+        "--error-seed",
+        type=int,
+        help="Seed used to add noise into the training dataset",
     )
     seeds_group.add_argument(
         "--learn-seed", type=int, help="Seed used during the learning process"

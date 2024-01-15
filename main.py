@@ -10,6 +10,7 @@ from generate import (
     all_comparisons,
     balanced_rmp,
     balanced_srmp,
+    noisy_comparisons,
     random_alternatives,
     random_comparisons,
     random_rmp,
@@ -37,14 +38,21 @@ ARGS = parse_args()
 seeds: dict[str, int] = {"general": cast(int, SeedSequence(ARGS.seed).entropy)}
 seeds.update(
     zip(
-        ["A_train", "model", "D_train", "learn", "A_test"],
-        SeedSequence(seeds["general"]).generate_state(5),
+        ["A_train", "model", "D_train", "error", "learn", "A_test"],
+        SeedSequence(seeds["general"]).generate_state(6),
     )
 )
 seeds.update(
     ARGS.kwargs(
-        ["A_train_seed", "model_seed", "D_train_seed", "learn_seed", "A_test_seed"],
-        ["A_train", "model", "D_train", "learn", "A_test"],
+        [
+            "A_train_seed",
+            "model_seed",
+            "D_train_seed",
+            "error_seed",
+            "learn_seed",
+            "A_test_seed",
+        ],
+        ["A_train", "model", "D_train", "error", "learn", "A_test"],
     )
 )
 
@@ -64,6 +72,8 @@ print(Mo)
 # Generate training binary comparisons
 D_train = random_comparisons(ARGS.N_bc, A_train, Mo, default_rng(seeds["D_train"]))
 
+if ARGS.error > 0:
+    D_train = noisy_comparisons(D_train, ARGS.error, default_rng(seeds["error"]))
 
 # Create learner
 learner: Learner[RMP | SRMP]

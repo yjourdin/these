@@ -3,7 +3,7 @@
 --M=7
 --K-o=1
 --K-e=1
---N-bc=100
+--error=0.1
 SA
 --model=RMP
 --T0=0.01

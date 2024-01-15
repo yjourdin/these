@@ -6,6 +6,7 @@ General seed
 A train seed
 Model seed
 D train seed
+Error seed
 Learn seed
 A test seed
 Initial model seed
@@ -34,5 +35,6 @@ Seed
 A train seed
 Model seed
 D train seed
+Error seed
 Learn seed
 A test seed

@@ -189,3 +189,29 @@ def all_comparisons(
         else:
             result.append(PreferenceRelation(b, a))
     return PreferenceStructure(result)
+
+
+def noisy_comparisons(
+    comparisons: PreferenceStructure, error_rate: float, rng: Generator
+) -> PreferenceStructure:
+    relations = comparisons.relations
+    selected_relations = rng.choice(
+        array(relations), int(error_rate * len(relations)), replace=False
+    )
+    relations = list(set(relations) - set(selected_relations))
+    selected_indifferences = [
+        r for r in selected_relations if isinstance(r, IndifferenceRelation)
+    ]
+    nb_indifferences = len(selected_indifferences)
+    selected_preferences = list(set(selected_relations) - set(selected_indifferences))
+    nb_preferences = len(selected_preferences)
+    changed_indifferences = [
+        PreferenceRelation(*rng.permutation(r.elements)) for r in selected_indifferences
+    ]
+    changed_preferences = [
+        IndifferenceRelation(*(r.elements))
+        if rng.random() < (nb_indifferences / nb_preferences)
+        else PreferenceRelation(r.b, r.a)
+        for r in selected_preferences
+    ]
+    return PreferenceStructure(relations + changed_indifferences + changed_preferences)
