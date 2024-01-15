@@ -4,7 +4,7 @@ as well as the preference elicitation algorithm and plot functions.
 Implementation and naming conventions are taken from
 :cite:p:`olteanu2022preference`.
 """
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 from mcda.core.aliases import Function
@@ -15,7 +15,6 @@ from utils import print_list
 
 from ..core.criteria_functions import CriteriaFunctions
 from ..core.performance_table import NormalPerformanceTable, PerformanceTable
-from ..core.power_set import PowerSet
 from ..core.ranker import Ranker
 from ..core.relations import OutrankingMatrix
 from ..core.scales import (
@@ -53,7 +52,9 @@ class ProfileWiseOutranking(Ranker):
     .. todo:: Find a better name
     """
 
-    def __init__(self, criteria_capacities: PowerSet, profile: ScaleValues):
+    def __init__(
+        self, criteria_capacities: dict[frozenset[Any], float], profile: ScaleValues
+    ):
         self.criteria_capacities = criteria_capacities
         self.profile = profile
 
@@ -172,7 +173,7 @@ class RMP(Ranker):
 
     def __init__(
         self,
-        criteria_capacities: PowerSet,
+        criteria_capacities: dict[frozenset[Any], float],
         profiles: PerformanceTable,
         lexicographic_order: list[int],
     ):
@@ -187,7 +188,7 @@ class RMP(Ranker):
         #     f"Order : {self.lexicographic_order.__str__()}"
         # )
         return (
-            f"{self.criteria_capacities.__str__()}   "
+            # f"{self.criteria_capacities.__str__()}   "
             f"{print_list(self.profiles.data.to_numpy()[0])}   "
             f"{self.lexicographic_order.__str__()}"
         )

@@ -6,7 +6,6 @@ from numpy.random import Generator, SeedSequence, default_rng
 from pandas import DataFrame
 
 from mcda_local.core.performance_table import NormalPerformanceTable, PerformanceTable
-from mcda_local.core.power_set import PowerSet
 from mcda_local.core.ranker import Ranker
 from mcda_local.core.relations import (
     IndifferenceRelation,
@@ -108,11 +107,7 @@ def random_rmp(
         )
     else:
         profiles = NormalPerformanceTable(sort(rng.random((nb_profiles, nb_crit)), 0))
-    capacities = PowerSet(list(range(nb_crit)))
-    for ss in capacities.keys():
-        capacities[ss] = rng.integers(
-            capacities.min_capacity(ss), capacities.max_capacity(ss), endpoint=True
-        )
+    capacities = random_capacities(nb_crit, rng)
     lex_order = rng.permutation(nb_profiles)
     return RMP(capacities, profiles, lex_order.tolist())
 
@@ -138,11 +133,7 @@ def balanced_rmp(
         profiles = NormalPerformanceTable(
             [[x / (nb_profiles + 1)] * nb_crit for x in range(1, nb_profiles + 1)]
         )
-    capacities = PowerSet(list(range(nb_crit)))
-    for ss in capacities.keys():
-        capacities[ss] = rng.integers(
-            capacities.min_capacity(ss), capacities.max_capacity(ss), endpoint=True
-        )
+    capacities = random_capacities(nb_crit, rng)
     lex_order = rng.permutation(nb_profiles)
     return RMP(capacities, profiles, lex_order.tolist())
 
