@@ -1,8 +1,10 @@
-from itertools import product
-from typing import cast
+from itertools import permutations
+from os import chdir
+from subprocess import check_output
+from typing import Any, cast
 
-from numpy import sort
-from numpy.random import Generator, SeedSequence, default_rng
+from numpy import arange, array, concatenate, diff, sort
+from numpy.random import Generator
 from pandas import DataFrame
 
 from mcda_local.core.performance_table import NormalPerformanceTable, PerformanceTable
@@ -17,17 +19,30 @@ from mcda_local.core.values import Ranking
 from mcda_local.ranker.rmp import RMP
 from mcda_local.ranker.srmp import SRMP
 
-# from utils import max_weight
-
-
-def random_generator(seed: int | None = None):
-    ss = SeedSequence(seed)
-    seed = cast(int, ss.entropy)
-    return default_rng(ss), seed
-
 
 def random_alternatives(nb_alt: int, nb_crit: int, rng: Generator) -> PerformanceTable:
     return NormalPerformanceTable(rng.random((nb_alt, nb_crit)))
+
+
+def random_weights(nb_crit: int, rng: Generator) -> dict[Any, float]:
+    return dict(
+        zip(
+            range(nb_crit), diff(sort(concatenate([[0], rng.random(nb_crit - 1), [1]])))
+        )
+    )
+
+
+def random_capacities(nb_crit: int, rng: Generator) -> dict[frozenset[Any], float]:
+    chdir("/home/yann/Bureau/these/RandomCapacitiesCompiled/bin")
+    linext = eval(check_output(f"./RandomCapacities {nb_crit}", shell=True))
+    rng.random(nb_crit)
+    crits = arange(nb_crit)
+    return dict(
+        zip(
+            [frozenset(crits[array([bool(int(x)) for x in node])]) for node in linext],
+            sort(rng.random(2**nb_crit)),
+        )
+    )
 
 
 def random_srmp(
@@ -49,11 +64,11 @@ def random_srmp(
         )
     else:
         profiles = NormalPerformanceTable(sort(rng.random((nb_profiles, nb_crit)), 0))
-    weights = dict(enumerate(rng.random(nb_crit)))
+    weights = random_weights(nb_crit, rng)
     # weights = dict(
     #     enumerate(rng.integers(1, max_weight(nb_crit), nb_crit, endpoint=True))
     # )
-    s = sum([w for w in weights.values()])
+    s = sum(weights.values())
     for c, w in weights.items():
         weights[c] = w / s
     lex_order = rng.permutation(nb_profiles)
@@ -145,19 +160,18 @@ def random_comparisons(
     rng: Generator,
 ) -> PreferenceStructure:
     ranking = cast(Ranking, model.rank(alternatives))
-    all_pairs = list(product(ranking.labels, repeat=2))
+    ranking_dict = ranking.data.to_dict()
+    all_pairs = list(permutations(ranking.labels, 2))
     pairs = rng.choice(all_pairs, nb, replace=False)
-    preference_stucture = PreferenceStructure()
+    result: list[Relation] = []
     for a, b in pairs:
-        rank_a = ranking.data[a]
-        rank_b = ranking.data[b]
-        if rank_a < rank_b:
-            preference_stucture += PreferenceRelation(a, b)
-        elif rank_a == rank_b:
-            preference_stucture += IndifferenceRelation(a, b)
+        if ranking_dict[a] < ranking_dict[b]:
+            result.append(PreferenceRelation(a, b))
+        elif ranking_dict[a] == ranking_dict[b]:
+            result.append(IndifferenceRelation(a, b))
         else:
-            preference_stucture += PreferenceRelation(b, a)
-    return preference_stucture
+            result.append(PreferenceRelation(b, a))
+    return PreferenceStructure(result)
 
 
 def all_comparisons(
@@ -165,11 +179,9 @@ def all_comparisons(
 ) -> PreferenceStructure:
     ranking = cast(Ranking, model.rank(alternatives))
     ranking_dict = ranking.data.to_dict()
-    labels = ranking.labels
-    all_pairs = list(product(labels, repeat=2))
+    all_pairs = list(permutations(ranking.labels, 2))
     result: list[Relation] = []
     for a, b in all_pairs:
-        # print(f"{a}, {b}")
         if ranking_dict[a] < ranking_dict[b]:
             result.append(PreferenceRelation(a, b))
         elif ranking_dict[a] == ranking_dict[b]:
