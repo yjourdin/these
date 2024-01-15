@@ -141,7 +141,4 @@ function julia_main()::Cint
     return 0
 end
 
-x = generate_linext(BooleanLattice(6))
-println(x)
-
 end # module RandomCapacities
