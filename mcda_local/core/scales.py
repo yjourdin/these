@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, List, cast
 
-import numpy as np
+from numpy import linspace
 from mcda.core.functions import FuzzyNumber, Interval
 from pandas import Series
 from pandas.api.types import is_numeric_dtype
@@ -218,7 +218,7 @@ class QuantitativeScale(Scale, Interval):
         :return:
         """
         nb = nb or 2
-        return cast(List[Any], np.linspace(self.dmin, self.dmax, nb).tolist())
+        return cast(List[Any], linspace(self.dmin, self.dmax, nb).tolist())
 
     def _normalize_value(self, x: float) -> float:
         """Normalize numeric value.
