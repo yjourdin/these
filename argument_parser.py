@@ -18,7 +18,8 @@ class Arguments:
     error: float
 
     method: Method
-    model: Model = "SRMP"
+    model_o: Model = "SRMP"
+    model_e: Model = "SRMP"
 
     gamma: float | None = None
     non_dictator: bool | None = None
@@ -136,7 +137,10 @@ def parse_args(args: Sequence[str] | None = None):
     # Simulated Annealing arguments
     parser_sa = subparsers.add_parser("SA", help="Simulated Annealing")
     parser_sa.add_argument(
-        "--model", choices=["RMP", "SRMP"], required=True, help="The model to learn"
+        "--model-o", choices=["RMP", "SRMP"], required=True, help="The original model"
+    )
+    parser_sa.add_argument(
+        "--model-e", choices=["RMP", "SRMP"], required=True, help="The elicited model"
     )
     parser_sa.add_argument(
         "--T0", type=float, required=True, help="Initial temperature"

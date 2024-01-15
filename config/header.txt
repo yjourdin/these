@@ -18,7 +18,8 @@ K_o
 K_e
 N_bc
 Method
-Model
+Original model
+Elicited model
 Gamma
 Non dictator
 Lexicographic order

@@ -5,8 +5,8 @@
 --K-e=1
 --error=0.1
 SA
---model=RMP
---T0=0.01
+--model-o=RMP
+--model-e=RMP
 --alpha=0.999
 --L=1
 --Tf=0.001

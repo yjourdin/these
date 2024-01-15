@@ -61,7 +61,7 @@ A_train = random_alternatives(ARGS.N_tr, ARGS.M, default_rng(seeds["A_train"]))
 
 
 # Generate original model
-match ARGS.model:
+match ARGS.model_o:
     case "RMP":
         Mo = random_rmp(ARGS.K_o, ARGS.M, default_rng(seeds["model"]))
     case "SRMP":
@@ -101,9 +101,9 @@ match ARGS.method:
             NeighborProfiles(midpoints(A_train.subtable(D_train.elements)))
         )
         prob.append(ARGS.K_e * ARGS.M)
-        match ARGS.model:
+        match ARGS.model_e:
             case "RMP":
-                neighbors.append(NeighborCapacities())
+                neighbors.append(NeighborCapacities(list(range(ARGS.M))))
                 prob.append(2**ARGS.M)
             case "SRMP":
                 neighbors.append(NeighborWeights(0.1))
@@ -135,16 +135,16 @@ match ARGS.method:
                 SeedSequence(seeds["learn"]).generate_state(2),
             )
         )
-        match ARGS.model:
+        match ARGS.model_e:
             case "RMP":
-                learn_kwargs["initial_model"] = balanced_rmp(
+                learn_kwargs["initial_model"] = random_rmp(
                     ARGS.K_e,
                     ARGS.M,
                     default_rng(seeds["initial_model"]),
                     midpoints(A_train.subtable(D_train.elements)),
                 )
             case "SRMP":
-                learn_kwargs["initial_model"] = balanced_srmp(
+                learn_kwargs["initial_model"] = random_srmp(
                     ARGS.K_e,
                     ARGS.M,
                     default_rng(seeds["initial_model"]),
