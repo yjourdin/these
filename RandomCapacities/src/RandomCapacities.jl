@@ -41,25 +41,25 @@ end
 function proba_upper_Th(x::String, P::SimplePoset, h::Int, k::Int, I::Vector{String})
     II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
     III = setdiff(II, I)
-    return (1 / h) * (prod([big(h - 1 + k - length(II) + i) for i in 1:length(II)])) / (prod([big(h - 1 + k - length(II) + i) for i in 1:length(II)]) + length(I) * prod([big(h - 1 + k - length(II) + i) for i in 1:length(III)]) * prod([big(h + k - length(I) + i) for i in 1:(length(I)-1)]))
+    return (1 / h) * (prod([h - 1 + k - length(II) + i for i in 1:length(II)])) / (prod([h - 1 + k - length(II) + i for i in 1:length(II)]) + length(I) * prod([h - 1 + k - length(II) + i for i in 1:length(III)]) * prod([h + k - length(I) + i for i in 1:(length(I)-1)]))
 end
 
 function proba_lower_Th(x::String, P::SimplePoset, h::Int, k::Int, I::Vector{String})
     II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
     III = setdiff(II, I)
-    return (prod([big(h - 1 + k - length(II) + i) for i in 1:length(III)]) * prod([big(h + k - length(I) + i) for i in 1:(length(I)-1)])) / (prod([big(h - 1 + k - length(II) + i) for i in 1:length(II)]) + length(I) * prod([big(h - 1 + k - length(II) + i) for i in 1:length(III)]) * prod([big(h + k - length(I) + i) for i in 1:(length(I)-1)]))
+    return (prod([h - 1 + k - length(II) + i for i in 1:length(III)]) * prod([h + k - length(I) + i for i in 1:(length(I)-1)])) / (prod([h - 1 + k - length(II) + i for i in 1:length(II)]) + length(I) * prod([h - 1 + k - length(II) + i for i in 1:length(III)]) * prod([h + k - length(I) + i for i in 1:(length(I)-1)]))
 end
 
 function proba_upper_Bh(x::String, P::SimplePoset, h::Int, k::Int, I::Vector{String})
     II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
     III = setdiff(II, I)
-    return (prod([big(h - length(II) + k - 1 + i) for i in 1:length(III)]) * prod([big(h - length(I) + k + i) for i in 1:(length(I)-1)])) / (prod([big(h - length(II) + k - 1 + i) for i in 1:length(II)]) + length(I) * prod([big(h - length(II) + k - 1 + i) for i in 1:length(III)]) * prod([big(h - length(I) + k + i) for i in 1:(length(I)-1)]))
+    return (prod([h - length(II) + k - 1 + i for i in 1:length(III)]) * prod([h - length(I) + k + i for i in 1:(length(I)-1)])) / (prod([h - length(II) + k - 1 + i for i in 1:length(II)]) + length(I) * prod([h - length(II) + k - 1 + i for i in 1:length(III)]) * prod([h - length(I) + k + i for i in 1:(length(I)-1)]))
 end
 
 function proba_lower_Bh(x::String, P::SimplePoset, h::Int, k::Int, I::Vector{String})
     II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
     III = setdiff(II, I)
-    return (1 / k) * (prod([big(h - length(II) + k - 1 + i) for i in 1:length(II)])) / (prod([big(h - length(II) + k - 1 + i) for i in 1:length(II)]) + length(I) * prod([big(h - length(II) + k - 1 + i) for i in 1:length(III)]) * prod([big(h - length(I) + k + i) for i in 1:(length(I)-1)]))
+    return (1 / k) * (prod([h - length(II) + k - 1 + i for i in 1:length(II)])) / (prod([h - length(II) + k - 1 + i for i in 1:length(II)]) + length(I) * prod([h - length(II) + k - 1 + i for i in 1:length(III)]) * prod([h - length(I) + k + i for i in 1:(length(I)-1)]))
 end
 
 function generate_linext(P::SimplePoset)
