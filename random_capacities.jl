@@ -1,5 +1,3 @@
-module RandomCapacities
-
 using SimplePosets
 using StatsBase
 
@@ -136,9 +134,4 @@ function generate_linext(P::SimplePoset)
     return [lmin; lmax]
 end
 
-function julia_main()::Cint
-    println(generate_linext(BooleanLattice(parse(Int, ARGS[1]))))
-    return 0
-end
-
-end # module RandomCapacities
+println(generate_linext(BooleanLattice(parse(Int, ARGS[1]))))
