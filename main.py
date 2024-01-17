@@ -75,6 +75,7 @@ D_train = random_comparisons(ARGS.N_bc, A_train, Mo, default_rng(seeds["D_train"
 if ARGS.error > 0:
     D_train = noisy_comparisons(D_train, ARGS.error, default_rng(seeds["error"]))
 
+
 # Create learner
 learner: Learner[RMP | SRMP]
 learn_kwargs: dict[str, Any] = {}
