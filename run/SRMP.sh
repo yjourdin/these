@@ -14,6 +14,7 @@ L=1
 
 # Grid
 M='M 7 11 15'
+K_o='K_o 1 2 3 4'
 K_e='K_e 1 2 3 4'
 N_bc='N_bc 100 300 500 1000 2000'
 T0='T0 0.01 0.003 0.002 0.001 0.0005'
@@ -26,6 +27,6 @@ repetition=50
 parallel -j75 --header : \
     python main.py \
     --N-tr $N_tr --N-te $N_te SA --model-o SRMP --model-e SRMP --alpha $alpha --L $L \
-    --M {M} --K-o {K_e} --K-e {K_e} --N-bc {N_bc} --T0 {T0} --Tf {Tf} --error {error} \
-    ::: $M ::: $K_e ::: $N_bc :::+ $T0 :::+ $Tf ::: $error ::: repetition $(seq $repetition) \
+    --M {M} --K-o {K_o} --K-e {K_e} --N-bc {N_bc} --T0 {T0} --Tf {Tf} --error {error} \
+    ::: $M ::: $K_o ::: $K_e ::: $N_bc :::+ $T0 :::+ $Tf ::: $error ::: repetition $(seq $repetition) \
     >>$file
