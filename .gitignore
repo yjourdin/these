@@ -165,6 +165,3 @@ cython_debug/
 # Auxiliary directories
 profiling/*
 results/*
-
-# Large directory
-RandomCapacitiesCompiled
