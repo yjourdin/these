@@ -1,5 +1,4 @@
 from itertools import permutations
-from os import chdir
 from subprocess import check_output
 from typing import Any, cast
 
@@ -33,8 +32,7 @@ def random_weights(nb_crit: int, rng: Generator) -> dict[Any, float]:
 
 
 def random_capacities(nb_crit: int, rng: Generator) -> dict[frozenset[Any], float]:
-    chdir("/home/yann/Bureau/these/RandomCapacitiesCompiled/bin")
-    linext = eval(check_output(f"./RandomCapacities {nb_crit}", shell=True))
+    linext = eval(check_output(f"julia ./random_capacities.jl {nb_crit}", shell=True))
     rng.random(nb_crit)
     crits = arange(nb_crit)
     return dict(
