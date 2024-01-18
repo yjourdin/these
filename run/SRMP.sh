@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Output file
-file='results/gne.csv'
+file="results/$1.csv"
 
 # Header
-tr '\n' ',' <config/header.txt >$file
-'\n' >>$file
+tr '\n' ',' <config/header.txt >"$file"
+'\n' >>"$file"
 
 # Fixed parameters
 N_tr=500
@@ -24,11 +24,10 @@ error='error 0 0.1 0.2 0.3'
 repetition=50
 
 # shellcheck disable=SC1083
-# shellcheck disable=SC2086
 parallel -j35 --header : \
     python main.py \
     --N-tr $N_tr --N-te $N_te SA --model-o SRMP --model-e SRMP --alpha $alpha --L $L \
     --M {M} --K-o {K_o} --K-e {K_e} --N-bc {N_bc} --T0 {T0} --Tf {Tf} --error {error} \
     ::: repetition $(seq $repetition) \
-    ::: $M ::: $K_o ::: $K_e ::: $N_bc :::+ $T0 :::+ $Tf ::: $error \
-    >>$file
+    ::: "$M" ::: "$K_o" ::: "$K_e" ::: "$N_bc" :::+ "$T0" :::+ "$Tf" ::: "$error" \
+    >>"$file"
