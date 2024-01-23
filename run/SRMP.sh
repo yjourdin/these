@@ -28,7 +28,7 @@ repetition=50
 parallel -j35 --header : \
     python main.py \
     --N-tr $N_tr --N-te $N_te SA --model-o SRMP --model-e SRMP --alpha $alpha --L $L \
-    --M {M} --K-o {K_o} --K-e {K_e} --N-bc {N_bc} --T0 {T0} --Tf {Tf} --error {error} \
-    ::: repetition $(seq $repetition) \
+    --M {M} --K-o {K_o} --K-e {K_e} --N-bc {N_bc} --T0 {T0} --Tf {Tf} --error {error} --seed {seed} \
+    ::: seed "$(jot -r $repetition 0 $((2 ** 16)))" \
     ::: $M ::: $K_o :::+ $K_e ::: $N_bc :::+ $T0 :::+ $Tf ::: $error \
     >>"$file"
