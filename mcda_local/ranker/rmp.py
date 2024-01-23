@@ -8,7 +8,7 @@ from typing import Any, cast
 
 import numpy as np
 from mcda.core.aliases import Function
-from pandas import DataFrame, Series, concat
+from pandas import DataFrame, Index, Series, concat
 from scipy.stats import rankdata
 
 from utils import print_list
@@ -262,6 +262,7 @@ class RMP(Ranker):
         self,
         outranking_matrices: np.ndarray,
         lexicographic_order: list[int] | None = None,
+        index: Index | None = None,
     ) -> Ranking:
         """Merge outranking matrices built by profiles in lexicographic
         order using SRMP exploitation method.
@@ -280,7 +281,7 @@ class RMP(Ranker):
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
         return Ranking(
-            Series(rankdata(-scores, method="dense")),
+            Series(rankdata(-scores, method="dense"), index),
             PreferenceDirection.MIN,
         )
 
@@ -292,7 +293,10 @@ class RMP(Ranker):
             the outranking total order as a ranking
         """
         if isinstance(performance_table, NormalPerformanceTable):
-            return self.normal_exploit(self.normal_construct(performance_table))
+            return self.normal_exploit(
+                self.normal_construct(performance_table),
+                index=performance_table.data.index,
+            )
         else:
             return self.exploit(self.construct(performance_table))
 

@@ -56,7 +56,7 @@ seeds.update(
     )
 )
 
-# Generate training data set of alternatives
+# Generate training dataset of alternatives
 A_train = random_alternatives(ARGS.N_tr, ARGS.M, default_rng(seeds["A_train"]))
 
 
@@ -69,12 +69,13 @@ match ARGS.model_o:
 print(Mo)
 
 
-# Generate training binary comparisons
+# Generate training dataset of binary comparisons
 D_train = random_comparisons(ARGS.N_bc, A_train, Mo, default_rng(seeds["D_train"]))
 
 if ARGS.error > 0:
     D_train = noisy_comparisons(D_train, ARGS.error, default_rng(seeds["error"]))
 
+A_train = A_train.subtable(D_train.elements)
 
 # Create learner
 learner: Learner[RMP | SRMP]
@@ -99,7 +100,7 @@ match ARGS.method:
         neighbors: list[Neighbor] = []
         prob: list[int] = []
         neighbors.append(
-            NeighborProfiles(midpoints(A_train.subtable(D_train.elements)))
+            NeighborProfiles(midpoints(A_train))
         )
         prob.append(ARGS.K_e * ARGS.M)
         match ARGS.model_e:
@@ -142,14 +143,14 @@ match ARGS.method:
                     ARGS.K_e,
                     ARGS.M,
                     default_rng(seeds["initial_model"]),
-                    midpoints(A_train.subtable(D_train.elements)),
+                    midpoints(A_train),
                 )
             case "SRMP":
                 learn_kwargs["initial_model"] = random_srmp(
                     ARGS.K_e,
                     ARGS.M,
                     default_rng(seeds["initial_model"]),
-                    midpoints(A_train.subtable(D_train.elements)),
+                    midpoints(A_train),
                 )
         learn_kwargs["rng"] = default_rng(seeds["sa"])
 
@@ -175,14 +176,14 @@ else:
     ranking_o = Mo.rank(A_test)
     ranking_e = Me.rank(A_test)
 
-    kendall_tau = kendalltau(ranking_o.data, ranking_e.data)
+    kendall_tau = kendalltau(ranking_o.data, ranking_e.data, variant='b').statistic
 
     # Print results
     result: str = ""
     result += str(learning_total_time)
     result += "," + str(train_accuracy)
     result += "," + str(test_accuracy)
-    result += "," + str(kendall_tau.statistic)
+    result += "," + str(kendall_tau)
     for seed in seeds.values():
         result += "," + str(seed)
     for arg in fields(ARGS):
