@@ -135,6 +135,6 @@ function generate_linext(P::SimplePoset, rng::AbstractRNG)
     return [lmin; lmax]
 end
 
-seed!(parse(Int, ARGS[2]))
+Random.seed!(parse(Int, ARGS[2]))
 
-println(generate_linext(BooleanLattice(parse(Int, ARGS[1])), default_rng()))
+println(generate_linext(BooleanLattice(parse(Int, ARGS[1])), Random.default_rng()))
