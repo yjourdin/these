@@ -61,7 +61,7 @@ function proba_lower_Bh(x::String, P::SimplePoset, h::Int, k::Int, I::Vector{Str
     return (1 / k) * (prod([h - length(II) + k - 1 + i for i in 1:length(II)])) / (prod([h - length(II) + k - 1 + i for i in 1:length(II)]) + length(I) * prod([h - length(II) + k - 1 + i for i in 1:length(III)]) * prod([h - length(I) + k + i for i in 1:(length(I)-1)]))
 end
 
-function generate_linext(P::SimplePoset)
+function generate_linext(P::SimplePoset, rng::AbstractRNG)
     H = deepcopy(P)
     lmin = String[]
     lmax = String[]
@@ -77,7 +77,7 @@ function generate_linext(P::SimplePoset)
             k = length(ll)
             I = intersect(isolated(Th), ll)
             proba = [proba_upper_Th.(ul, Ref(Th), Ref(h), Ref(k), Ref(I)); proba_lower_Th.(I, Ref(Th), Ref(h), Ref(k), Ref(I))]
-            M = sample([ul; I], ProbabilityWeights(proba))
+            M = sample(rng, [ul; I], ProbabilityWeights(proba))
         end
         pushfirst!(lmax, M)
         delete!(H, M)
@@ -92,7 +92,7 @@ function generate_linext(P::SimplePoset)
             k = length(ll)
             I = intersect(isolated(Bh), ul)
             proba = [proba_lower_Bh.(ll, Ref(Bh), Ref(h), Ref(k), Ref(I)); proba_upper_Bh.(I, Ref(Bh), Ref(h), Ref(k), Ref(I))]
-            m = sample([ll; I], ProbabilityWeights(proba))
+            m = sample(rng, [ll; I], ProbabilityWeights(proba))
         end
         push!(lmin, m)
         delete!(H, m)
@@ -109,7 +109,7 @@ function generate_linext(P::SimplePoset)
             else
                 I = intersect(isolated(H), ll)
                 proba = [proba_upper_Th.(ul, Ref(H), Ref(h), Ref(k), Ref(I)); proba_lower_Th.(I, Ref(H), Ref(h), Ref(k), Ref(I))]
-                M = sample([ul; I], ProbabilityWeights(proba))
+                M = sample(rng, [ul; I], ProbabilityWeights(proba))
             end
             pushfirst!(lmax, M)
             delete!(H, M)
@@ -119,7 +119,7 @@ function generate_linext(P::SimplePoset)
             else
                 I = intersect(isolated(H), ul)
                 proba = [proba_lower_Bh.(ll, Ref(H), Ref(h), Ref(k), Ref(I)); proba_upper_Bh.(I, Ref(H), Ref(h), Ref(k), Ref(I))]
-                m = sample([ll; I], ProbabilityWeights(proba))
+                m = sample(rng, [ll; I], ProbabilityWeights(proba))
             end
             push!(lmin, m)
             delete!(H, m)
@@ -127,7 +127,7 @@ function generate_linext(P::SimplePoset)
     end
 
     while card(H) > 0
-        x = sample(elements(H))
+        x = sample(rng, elements(H))
         push!(lmin, x)
         delete!(H, x)
     end
@@ -135,6 +135,6 @@ function generate_linext(P::SimplePoset)
     return [lmin; lmax]
 end
 
-Random.seed!(ARGS[2])
+seed!(parse(Int, ARGS[2]))
 
-println(generate_linext(BooleanLattice(parse(Int, ARGS[1]))))
+println(generate_linext(BooleanLattice(parse(Int, ARGS[1])), default_rng()))
