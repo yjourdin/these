@@ -32,7 +32,7 @@ def random_weights(nb_crit: int, rng: Generator) -> dict[Any, float]:
 
 
 def random_capacities(nb_crit: int, rng: Generator) -> dict[frozenset[Any], float]:
-    linext = eval(check_output(f"julia ./random_capacities.jl {nb_crit}", shell=True))
+    linext = eval(check_output(f"julia ./random_capacities.jl {nb_crit} {rng.integers(2**16)}", shell=True))
     rng.random(nb_crit)
     crits = arange(nb_crit)
     return dict(

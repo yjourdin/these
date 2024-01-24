@@ -1,3 +1,4 @@
+using Random
 using SimplePosets
 using StatsBase
 
@@ -133,5 +134,7 @@ function generate_linext(P::SimplePoset)
 
     return [lmin; lmax]
 end
+
+Random.seed!(ARGS[2])
 
 println(generate_linext(BooleanLattice(parse(Int, ARGS[1]))))
