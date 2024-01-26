@@ -9,7 +9,7 @@ echo >>"$file"
 
 # Fixed parameters
 N_tr=500
-N_te=500
+N_te=5000
 alpha=0.9999
 L=1
 
