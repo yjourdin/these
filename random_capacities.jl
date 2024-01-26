@@ -2,6 +2,21 @@ using Random
 using SimplePosets
 using StatsBase
 
+function induce_except_one(P::SimplePoset{String}, x::String)
+    Q = SimplePoset{String}()
+    for v in filter(!=(x), elements(P))
+        add!(Q, v)
+    end
+
+    for (a, b) in relations(P)
+        if (a != x) && (b != x)
+            add!(Q, a, b)
+        end
+    end
+
+    return Q
+end
+
 function cardinality(str::String)
     return count_ones(parse(UInt, str, base=2))
 end
@@ -11,8 +26,36 @@ function height(P::SimplePoset)
     return length(unique(cards))
 end
 
-function isolated(P::SimplePoset)
-    return filter(x -> above(P, x) == below(P, x), elements(P))
+function is_isolated_top(P::SimplePoset, x)
+    return isempty(above(P, x))
+end
+
+function is_isolated_bottom(P::SimplePoset, x)
+    return isempty(below(P, x))
+end
+
+function isolated_top(P::SimplePoset, A::Vector)
+    return filter(x -> is_isolated_top(P, x), A)
+end
+
+function isolated_bottom(P::SimplePoset, A::Vector)
+    return filter(x -> is_isolated_bottom(P, x), A)
+end
+
+function is_isolated_top_without(P::SimplePoset, s::Array, x)
+    return issubset(above(P, x), s)
+end
+
+function is_isolated_bottom_without(P::SimplePoset, s::Array, x)
+    return issubset(below(P, x), s)
+end
+
+function isolated_top_without_x(P::SimplePoset, x)
+    return filter(y -> is_isolated_top_without(P, [x], y), filter(!=(x), elements(P)))
+end
+
+function isolated_bottom_without_x(P::SimplePoset, x)
+    return filter(y -> is_isolated_bottom_without(P, [x], y), filter(!=(x), elements(P)))
 end
 
 function upper_layer(P::SimplePoset)
@@ -38,27 +81,35 @@ function bottom_layers(P::SimplePoset)
 end
 
 function proba_upper_Th(x::String, P::SimplePoset, h::Int, k::Int, I::Vector{String})
-    II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
+    # II = isolated(induce_except_one(P, x))
+    # II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
+    II = isolated_top_without_x(P, x)
     III = setdiff(II, I)
-    return (1 / h) * (prod([h - 1 + k - length(II) + i for i in 1:length(II)])) / (prod([h - 1 + k - length(II) + i for i in 1:length(II)]) + length(I) * prod([h - 1 + k - length(II) + i for i in 1:length(III)]) * prod([h + k - length(I) + i for i in 1:(length(I)-1)]))
+    return (1 / h) * (prod([big(h - 1 + k - length(II) + i) for i in 1:length(II)])) / (prod([big(h - 1 + k - length(II) + i) for i in 1:length(II)]) + length(I) * prod([big(h - 1 + k - length(II) + i) for i in 1:length(III)]) * prod([big(h + k - length(I) + i) for i in 1:(length(I)-1)]))
 end
 
 function proba_lower_Th(x::String, P::SimplePoset, h::Int, k::Int, I::Vector{String})
-    II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
+    # II = isolated(induce_except_one(P, x))
+    # II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
+    II = isolated_top_without_x(P, x)
     III = setdiff(II, I)
-    return (prod([h - 1 + k - length(II) + i for i in 1:length(III)]) * prod([h + k - length(I) + i for i in 1:(length(I)-1)])) / (prod([h - 1 + k - length(II) + i for i in 1:length(II)]) + length(I) * prod([h - 1 + k - length(II) + i for i in 1:length(III)]) * prod([h + k - length(I) + i for i in 1:(length(I)-1)]))
+    return (prod([big(h - 1 + k - length(II) + i) for i in 1:length(III)]) * prod([big(h + k - length(I) + i) for i in 1:(length(I)-1)])) / (prod([big(h - 1 + k - length(II) + i) for i in 1:length(II)]) + length(I) * prod([big(h - 1 + k - length(II) + i) for i in 1:length(III)]) * prod([big(h + k - length(I) + i) for i in 1:(length(I)-1)]))
 end
 
 function proba_upper_Bh(x::String, P::SimplePoset, h::Int, k::Int, I::Vector{String})
-    II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
+    # II = isolated(induce_except_one(P, x))
+    # II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
+    II = isolated_bottom_without_x(P, x)
     III = setdiff(II, I)
-    return (prod([h - length(II) + k - 1 + i for i in 1:length(III)]) * prod([h - length(I) + k + i for i in 1:(length(I)-1)])) / (prod([h - length(II) + k - 1 + i for i in 1:length(II)]) + length(I) * prod([h - length(II) + k - 1 + i for i in 1:length(III)]) * prod([h - length(I) + k + i for i in 1:(length(I)-1)]))
+    return (prod([big(h - length(II) + k - 1 + i) for i in 1:length(III)]) * prod([big(h - length(I) + k + i) for i in 1:(length(I)-1)])) / (prod([big(h - length(II) + k - 1 + i) for i in 1:length(II)]) + length(I) * prod([big(h - length(II) + k - 1 + i) for i in 1:length(III)]) * prod([big(h - length(I) + k + i) for i in 1:(length(I)-1)]))
 end
 
 function proba_lower_Bh(x::String, P::SimplePoset, h::Int, k::Int, I::Vector{String})
-    II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
+    # II = isolated(induce_except_one(P, x))
+    # II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
+    II = isolated_bottom_without_x(P, x)
     III = setdiff(II, I)
-    return (1 / k) * (prod([h - length(II) + k - 1 + i for i in 1:length(II)])) / (prod([h - length(II) + k - 1 + i for i in 1:length(II)]) + length(I) * prod([h - length(II) + k - 1 + i for i in 1:length(III)]) * prod([h - length(I) + k + i for i in 1:(length(I)-1)]))
+    return (1 / k) * (prod([big(h - length(II) + k - 1 + i) for i in 1:length(II)])) / (prod([big(h - length(II) + k - 1 + i) for i in 1:length(II)]) + length(I) * prod([big(h - length(II) + k - 1 + i) for i in 1:length(III)]) * prod([big(h - length(I) + k + i) for i in 1:(length(I)-1)]))
 end
 
 function generate_linext(P::SimplePoset, rng::AbstractRNG)
@@ -75,7 +126,7 @@ function generate_linext(P::SimplePoset, rng::AbstractRNG)
             ll = lower_layer(Th)
             h = length(ul)
             k = length(ll)
-            I = intersect(isolated(Th), ll)
+            I = isolated_top(Th, ll)
             proba = [proba_upper_Th.(ul, Ref(Th), Ref(h), Ref(k), Ref(I)); proba_lower_Th.(I, Ref(Th), Ref(h), Ref(k), Ref(I))]
             M = sample(rng, [ul; I], ProbabilityWeights(proba))
         end
@@ -90,7 +141,7 @@ function generate_linext(P::SimplePoset, rng::AbstractRNG)
             ll = lower_layer(Bh)
             h = length(ul)
             k = length(ll)
-            I = intersect(isolated(Bh), ul)
+            I = isolated_bottom(Bh, ul)
             proba = [proba_lower_Bh.(ll, Ref(Bh), Ref(h), Ref(k), Ref(I)); proba_upper_Bh.(I, Ref(Bh), Ref(h), Ref(k), Ref(I))]
             m = sample(rng, [ll; I], ProbabilityWeights(proba))
         end
@@ -107,7 +158,7 @@ function generate_linext(P::SimplePoset, rng::AbstractRNG)
             if length(maximals(H)) == 1
                 M = maximals(H)[1]
             else
-                I = intersect(isolated(H), ll)
+                I = isolated_top(H, ll)
                 proba = [proba_upper_Th.(ul, Ref(H), Ref(h), Ref(k), Ref(I)); proba_lower_Th.(I, Ref(H), Ref(h), Ref(k), Ref(I))]
                 M = sample(rng, [ul; I], ProbabilityWeights(proba))
             end
@@ -117,7 +168,7 @@ function generate_linext(P::SimplePoset, rng::AbstractRNG)
             if length(minimals(H)) == 1
                 m = minimals(H)[1]
             else
-                I = intersect(isolated(H), ul)
+                I = isolated_bottom(H, ul)
                 proba = [proba_lower_Bh.(ll, Ref(H), Ref(h), Ref(k), Ref(I)); proba_upper_Bh.(I, Ref(H), Ref(h), Ref(k), Ref(I))]
                 m = sample(rng, [ll; I], ProbabilityWeights(proba))
             end
