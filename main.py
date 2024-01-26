@@ -6,8 +6,7 @@ from numpy.random import SeedSequence, default_rng
 from scipy.stats import kendalltau
 
 from argument_parser import parse_args
-from generate import (
-    all_comparisons,
+from generate import (  # all_comparisons,
     balanced_rmp,
     balanced_srmp,
     noisy_comparisons,
@@ -58,6 +57,7 @@ seeds.update(
 
 # Generate training dataset of alternatives
 A_train = random_alternatives(ARGS.N_tr, ARGS.M, default_rng(seeds["A_train"]))
+# print(A_train.data.iloc[1:])
 
 
 # Generate original model
@@ -99,9 +99,7 @@ match ARGS.method:
         # Create neighbors
         neighbors: list[Neighbor] = []
         prob: list[int] = []
-        neighbors.append(
-            NeighborProfiles(midpoints(A_train))
-        )
+        neighbors.append(NeighborProfiles(midpoints(A_train)))
         prob.append(ARGS.K_e * ARGS.M)
         match ARGS.model_e:
             case "RMP":
@@ -139,14 +137,14 @@ match ARGS.method:
         )
         match ARGS.model_e:
             case "RMP":
-                learn_kwargs["initial_model"] = random_rmp(
+                learn_kwargs["initial_model"] = balanced_rmp(
                     ARGS.K_e,
                     ARGS.M,
                     default_rng(seeds["initial_model"]),
                     midpoints(A_train),
                 )
             case "SRMP":
-                learn_kwargs["initial_model"] = random_srmp(
+                learn_kwargs["initial_model"] = balanced_srmp(
                     ARGS.K_e,
                     ARGS.M,
                     default_rng(seeds["initial_model"]),
@@ -171,18 +169,18 @@ else:
     A_test = random_alternatives(ARGS.N_te, ARGS.M, default_rng(seeds["A_test"]))
 
     train_accuracy = Me.fitness(A_train, D_train)
-    test_accuracy = Me.fitness(A_test, all_comparisons(A_test, Mo))
+    # test_accuracy = Me.fitness(A_test, all_comparisons(A_test, Mo))
 
     ranking_o = Mo.rank(A_test)
     ranking_e = Me.rank(A_test)
 
-    kendall_tau = kendalltau(ranking_o.data, ranking_e.data, variant='b').statistic
+    kendall_tau = kendalltau(ranking_o.data, ranking_e.data, variant="b").statistic
 
     # Print results
     result: str = ""
     result += str(learning_total_time)
     result += "," + str(train_accuracy)
-    result += "," + str(test_accuracy)
+    # result += "," + str(test_accuracy)
     result += "," + str(kendall_tau)
     for seed in seeds.values():
         result += "," + str(seed)
