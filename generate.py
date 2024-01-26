@@ -1,4 +1,4 @@
-from itertools import permutations
+from itertools import chain, combinations, permutations
 from subprocess import check_output
 from typing import Any, cast
 
@@ -32,7 +32,11 @@ def random_weights(nb_crit: int, rng: Generator) -> dict[Any, float]:
 
 
 def random_capacities(nb_crit: int, rng: Generator) -> dict[frozenset[Any], float]:
-    linext = eval(check_output(f"julia ./random_capacities.jl {nb_crit} {rng.integers(2**16)}", shell=True))
+    linext = eval(
+        check_output(
+            f"julia ./random_capacities.jl {nb_crit} {rng.integers(2**16)}", shell=True
+        )
+    )
     rng.random(nb_crit)
     crits = arange(nb_crit)
     return dict(
@@ -63,9 +67,6 @@ def random_srmp(
     else:
         profiles = NormalPerformanceTable(sort(rng.random((nb_profiles, nb_crit)), 0))
     weights = random_weights(nb_crit, rng)
-    # weights = dict(
-    #     enumerate(rng.integers(1, max_weight(nb_crit), nb_crit, endpoint=True))
-    # )
     s = sum(weights.values())
     for c, w in weights.items():
         weights[c] = w / s
@@ -93,10 +94,6 @@ def balanced_srmp(
     else:
         profiles = NormalPerformanceTable(sort(rng.random((nb_profiles, nb_crit)), 0))
     weights = {k: 1 / nb_crit for k in range(nb_crit)}
-    # weights = dict(enumerate(rng.random(nb_crit)))
-    # weights = dict(
-    #     enumerate(rng.integers(1, max_weight(nb_crit), nb_crit, endpoint=True))
-    # )
     lex_order = rng.permutation(nb_profiles)
     return SRMP(weights, profiles, lex_order.tolist())
 
@@ -146,7 +143,12 @@ def balanced_rmp(
         profiles = NormalPerformanceTable(
             [[x / (nb_profiles + 1)] * nb_crit for x in range(1, nb_profiles + 1)]
         )
-    capacities = random_capacities(nb_crit, rng)
+
+    crits = arange(nb_crit)
+    power_set = chain.from_iterable(
+        combinations(crits, r) for r in range(len(crits) + 1)
+    )
+    capacities = {frozenset(x): len(x) / nb_crit for x in power_set}
     lex_order = rng.permutation(nb_profiles)
     return RMP(capacities, profiles, lex_order.tolist())
 
