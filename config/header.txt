@@ -1,6 +1,7 @@
 Time
 Train accuracy
 Test accuracy
+Kendall's tau
 General seed
 A train seed
 Model seed

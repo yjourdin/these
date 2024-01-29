@@ -7,6 +7,7 @@ from scipy.stats import kendalltau
 
 from argument_parser import parse_args
 from generate import (  # all_comparisons,
+    all_comparisons,
     balanced_rmp,
     balanced_srmp,
     noisy_comparisons,
@@ -169,7 +170,7 @@ else:
     A_test = random_alternatives(ARGS.N_te, ARGS.M, default_rng(seeds["A_test"]))
 
     train_accuracy = Me.fitness(A_train, D_train)
-    # test_accuracy = Me.fitness(A_test, all_comparisons(A_test, Mo))
+    test_accuracy = Me.fitness(A_test, all_comparisons(A_test, Mo))
 
     ranking_o = Mo.rank(A_test)
     ranking_e = Me.rank(A_test)
@@ -180,7 +181,7 @@ else:
     result: str = ""
     result += str(learning_total_time)
     result += "," + str(train_accuracy)
-    # result += "," + str(test_accuracy)
+    result += "," + str(test_accuracy)
     result += "," + str(kendall_tau)
     for seed in seeds.values():
         result += "," + str(seed)
