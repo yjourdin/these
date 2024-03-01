@@ -2,7 +2,7 @@ from itertools import chain, combinations, permutations
 from subprocess import check_output
 from typing import Any, cast
 
-from numpy import arange, array, concatenate, diff, sort
+from numpy import arange, array, concatenate, diff, sort, triu_indices
 from numpy.random import Generator
 from pandas import DataFrame
 
@@ -179,7 +179,8 @@ def all_comparisons(
 ) -> PreferenceStructure:
     ranking = cast(Ranking, model.rank(alternatives))
     ranking_dict = ranking.data.to_dict()
-    all_pairs = list(permutations(ranking.labels, 2))
+    # all_pairs = list(permutations(ranking.labels, 2))
+    all_pairs = array(triu_indices(len(alternatives.data), 1)).transpose()
     result: list[Relation] = []
     for a, b in all_pairs:
         if ranking_dict[a] < ranking_dict[b]:

@@ -1,25 +1,29 @@
+from typing import TypeVar
+
+from mcda.core.matrices import PerformanceTable
+from mcda.core.scales import OrdinalScale
 from numpy import sort
 
-from mcda_local.core.performance_table import NormalPerformanceTable, PerformanceTable
+S = TypeVar("S", bound=OrdinalScale, covariant=True)
 
 
-def midpoints(performance_table: PerformanceTable) -> PerformanceTable:
+def midpoints(performance_table: PerformanceTable[S]) -> PerformanceTable[S]:
     # sort performance table
-    df = performance_table.normalize().data.transform(sort)
+    df = performance_table.data.transform(sort)
 
     # compute midpoints
     df = df.rolling(2).mean().drop(df.index[0])
 
     # Add 0's and 1's at the beginning and the end
-    df.loc[0, :] = [0] * len(performance_table.criteria)
-    df.loc[len(performance_table.data), :] = [1] * len(performance_table.criteria)
+    df.loc[0, :] = [
+        performance_table.scales[c].interval.dmin for c in performance_table.criteria
+    ]
+    df.loc[len(performance_table.data), :] = [
+        performance_table.scales[c].interval.dmax for c in performance_table.criteria
+    ]
     df.sort_index(inplace=True)
 
-    result = NormalPerformanceTable(
-        df,
-        criteria=performance_table.criteria,
-    )
-    return result.transform(performance_table.scales)
+    return PerformanceTable(df, scales=performance_table.scales)
 
 
 def print_list(lst):

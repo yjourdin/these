@@ -9,7 +9,7 @@ echo >>"$file"
 
 # Fixed parameters
 N_tr=500
-N_te=5000
+N_te=500
 alpha=0.9999
 L=1
 
@@ -20,7 +20,7 @@ K_e='K_e 1 2 3 4'
 N_bc='N_bc 100 300 500 1000 2000'
 T0='T0 0.01 0.003 0.002 0.001 0.0005'
 Tf='Tf 0.001 0.0003 0.0002 0.0001 0.00005'
-error='error 0 '
+error='error 0'
 repetition=50
 
 # shellcheck disable=SC1083
