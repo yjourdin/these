@@ -2,11 +2,11 @@ import argparse
 import logging
 import logging.config
 import logging.handlers
-import threading
 from collections import defaultdict
 from json import load
 from multiprocessing import JoinableQueue, Manager, Process, Queue
 from pathlib import Path
+from threading import Thread
 from typing import Any
 
 import numpy as np
@@ -146,7 +146,9 @@ def create_D(n: int, error: float, k: int, m: int, i: int, rng: Generator):
     logger.info(log_message + " done")
 
 
-def create_Me(lock, ke: int, n: int, e: float, ko: int, m: int, i: int, rng: Generator):
+def create_Me(
+    queue, ke: int, n: int, e: float, ko: int, m: int, i: int, rng: Generator
+):
     logger = logging.getLogger("log")
     log_message = (
         f"Me      (No: {i:2} M: {m:2} Ko: {ko:2} N: {n:4} Error: {e:4} Ke: {ke:2})"
@@ -176,15 +178,11 @@ def create_Me(lock, ke: int, n: int, e: float, ko: int, m: int, i: int, rng: Gen
     with path_Me(i, m, ko, n, e, ke).open("w") as f:
         f.write(sa.best_model.to_json())
 
-    with lock:
-        with (dir / "train_results.csv").open("a") as f:
-            f.write(
-                f"{i},{m},{ko},{n},{e},{ke},{sa.time},{sa.it},{1-sa.best_objective}\n"
-            )
+    queue.put(f"{i},{m},{ko},{n},{e},{ke},{sa.time},{sa.it},{1-sa.best_objective}\n")
     logger.info(log_message + " done")
 
 
-def compute_test(lock, ke: int, n: int, e: float, ko: int, m: int, i: int):
+def compute_test(queue, ke: int, n: int, e: float, ko: int, m: int, i: int):
     logger = logging.getLogger("log")
     log_message = (
         f"Test    (No: {i:2} M: {m:2} Ko: {ko:2} N: {n:4} Error: {e:4} Ke: {ke:2})"
@@ -222,9 +220,7 @@ def compute_test(lock, ke: int, n: int, e: float, ko: int, m: int, i: int):
 
     kendall_tau = kendalltau(Ro, Re).statistic
 
-    with lock:
-        with (dir / "test_results.csv").open("a") as f:
-            f.write(f"{i},{m},{ko},{n},{e},{ke},{test_fitness},{kendall_tau}\n")
+    queue.put(f"{i},{m},{ko},{n},{e},{ke},{test_fitness},{kendall_tau}\n")
     logger.info(log_message + " done")
 
 
@@ -267,9 +263,9 @@ def compute_task(task: Task):
         case ("D", i, m, k, n, e):
             create_D(n, e, k, m, i, rngs[i])
         case ("Me", i, m, ko, n, e, ke):
-            create_Me(lock_train, ke, n, e, ko, m, i, rngs[i])
+            create_Me(train_results_queue, ke, n, e, ko, m, i, rngs[i])
         case ("Test", i, m, ko, n, e, ke):
-            compute_test(lock_test, ke, n, e, ko, m, i)
+            compute_test(test_results_queue, ke, n, e, ko, m, i)
         case _:
             raise ValueError("Unknown task")
 
@@ -277,10 +273,7 @@ def compute_task(task: Task):
 def next_tasks(task, done_dict):
     done_dict[task] = True
     tasks = []
-    # logger = logging.getLogger("log")
     for next_task in succeed[task]:
-        # for t in precede[next_task]:
-        #     logger.info(str(task) + " precede " + str(next_task) + " succeed " + str(t) + ": " + str(done_dict.get(t, False)))
         if all([done_dict.get(t, False) for t in precede[next_task]]):
             tasks.append(next_task)
     return tasks
@@ -343,22 +336,31 @@ def worker(task_queue, put_dict, done_dict, logging_queue):
     task_queue.task_done()
 
 
+# Thread
+def file_thread(file, q):
+    with file.open("a") as f:
+        for result in iter(q.get, "STOP"):
+            f.write(result)
+
+
 # Main
 
+# Dicts for tasks
 succeed: defaultdict[Task, list[Task]] = defaultdict(list)
 precede: defaultdict[Task, list[Task]] = defaultdict(list)
 
+# Spawn random seeds across all experiments
 rngs = rng.spawn(ARGS.N_exp)
 
+# Create queues
 task_queue: JoinableQueue = JoinableQueue()
 logging_queue: Queue = Queue()
-
+train_results_queue: Queue = Queue()
+test_results_queue: Queue = Queue()
 
 with Manager() as manager:
     done_dict = manager.dict()
     put_dict = manager.dict()
-    lock_train = manager.Lock()
-    lock_test = manager.Lock()
 
     for i in range(ARGS.N_exp):
         for m in ARGS.M:
@@ -384,18 +386,40 @@ with Manager() as manager:
                             succeed[t_Me] += [t_test]
                             succeed[t_A_test] += [t_test]
 
+    train_result_thread = Thread(
+        target=file_thread,
+        args=(
+            dir / "train_results.csv",
+            train_results_queue,
+        ),
+    )
+    test_result_thread = Thread(
+        target=file_thread,
+        args=(
+            dir / "test_results.csv",
+            test_results_queue,
+        ),
+    )
+    train_result_thread.start()
+    test_result_thread.start()
+
     for i in range(ARGS.jobs):
         Process(
             target=worker, args=(task_queue, put_dict, done_dict, logging_queue)
         ).start()
 
     logging.config.dictConfig(d)
-    logging_thread = threading.Thread(target=logger_thread, args=(logging_queue,))
+    logging_thread = Thread(target=logger_thread, args=(logging_queue,))
     logging_thread.start()
 
     task_queue.join()
     for i in range(ARGS.jobs):
         task_queue.put("STOP")
+
+    train_results_queue.put("STOP")
+    test_results_queue.put("STOP")
+    train_result_thread.join()
+    test_result_thread.join()
 
     logging_queue.put("STOP")
     logging_thread.join()
