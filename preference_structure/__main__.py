@@ -1,6 +1,3 @@
-import argparse
-import sys
-
 from numpy.random import default_rng
 from pandas import read_csv
 
@@ -8,24 +5,11 @@ from performance_table.core import NormalPerformanceTable
 from rmp.model import RMPModel
 from srmp.model import SRMPModel
 
+from .argument_parser import parse_args
 from .core import to_csv
 from .generate import all_comparisons, noisy_comparisons, random_comparisons
 
-parser = argparse.ArgumentParser()
-parser.add_argument("model", type=argparse.FileType("r"), help="Preferences model")
-parser.add_argument("A", type=argparse.FileType("r"), help="Alternatives")
-parser.add_argument("n", type=int, help="Number of comparisons")
-parser.add_argument("-e", "--error", type=float, help="Error rate")
-parser.add_argument("-s", "--seed", type=int, help="Random seed")
-parser.add_argument(
-    "-o",
-    "--output",
-    default=sys.stdout,
-    type=argparse.FileType("w"),
-    help="Output file",
-)
-
-args = parser.parse_args()
+args = parse_args()
 
 s = args.model.read()
 if "capacities" in s:
