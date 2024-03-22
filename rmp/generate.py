@@ -16,10 +16,13 @@ from .model import RMPModel
 def random_capacities(nb_crit: int, rng: Generator) -> dict[frozenset[Any], float]:
     linext = eval(
         run(
-            f"julia "
-            f"~/Bureau/these/rmp/random_capacities.jl "
-            f"{nb_crit} "
-            f"{rng.integers(2**16)}",
+            [
+                "julia",
+                "rmp/random_capacities.jl",
+                f"{nb_crit}",
+                f"{rng.integers(2**16)}",
+            ],
+            capture_output=True,
             text=True,
         ).stdout
     )
