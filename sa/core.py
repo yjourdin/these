@@ -6,7 +6,7 @@ from typing import Generic, TypeVar
 from mcda.core.interfaces import Learner
 from numpy.random import Generator
 
-from model import Model
+from abstract_model import Model
 
 T = TypeVar("T", bound=Model)
 
@@ -99,9 +99,16 @@ class SimulatedAnnealing(Learner[T]):
                 neighbor_model = self.neighbor(current_model, rng)
                 neighbor_objective = self.objective(neighbor_model)
 
-                if ((current_objective - neighbor_objective) / temp > 1000) or (
-                    rng.random() < exp((current_objective - neighbor_objective) / temp)
-                ):
+                prob: float
+                if neighbor_objective <= current_objective:
+                    prob = 1
+                else:
+                    try:
+                        prob = exp((current_objective - neighbor_objective) / temp)
+                    except OverflowError:
+                        prob = 0
+
+                if rng.random() < prob:
                     # Accepted
                     current_model = neighbor_model
                     current_objective = neighbor_objective

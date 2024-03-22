@@ -1,9 +1,8 @@
 from numpy.random import default_rng
 from pandas import read_csv
 
+from model import import_model
 from performance_table.core import NormalPerformanceTable
-from rmp.model import RMPModel
-from srmp.model import SRMPModel
 
 from .argument_parser import parse_args
 from .core import to_csv
@@ -12,12 +11,7 @@ from .generate import all_comparisons, noisy_comparisons, random_comparisons
 args = parse_args()
 
 s = args.model.read()
-if "capacities" in s:
-    model = RMPModel.from_json(s)
-elif "weights" in s:
-    model = SRMPModel.from_json(s)
-else:
-    ValueError("model is not a valid model")
+model = import_model(s)
 
 A = NormalPerformanceTable(read_csv(args.A))
 

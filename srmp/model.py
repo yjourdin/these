@@ -4,7 +4,7 @@ from typing import TypeVar
 
 from mcda.core.scales import NormalScale, Scale
 
-from model import Model
+from abstract_model import Model
 from performance_table.core import NormalPerformanceTable
 from utils import print_list
 

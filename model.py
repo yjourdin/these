@@ -1,53 +1,16 @@
-from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import Literal
 
-from mcda.core.matrices import PerformanceTable
-from mcda.core.relations import (
-    IndifferenceRelation,
-    PreferenceRelation,
-    PreferenceStructure,
-)
-from mcda.core.scales import Scale
-from mcda.core.values import Ranking
+from abstract_model import Model
+from rmp.model import RMPModel
+from srmp.model import SRMPModel
 
-S = TypeVar("S", bound=Scale, covariant=True)
+ModelType = Literal["SRMP", "RMP"]
 
 
-def fitness(ranking: Ranking, comparisons: PreferenceStructure):
-    # ranking_dict = ranking.data.to_dict()
-    s: int = 0
-    for r in comparisons:
-        a, b = r.elements
-        match r:
-            case PreferenceRelation():
-                # s += cast(int, ranking_dict[a]) < cast(int, ranking_dict[b])
-                s += ranking[a] < ranking[b]
-            case IndifferenceRelation():
-                # s += cast(int, ranking_dict[a]) == cast(int, ranking_dict[b])
-                s += ranking[a] == ranking[b]
-    return s / len(comparisons)
-
-
-class Model(ABC, Generic[S]):
-    @abstractmethod
-    def __str__(self) -> str:
-        pass
-
-    @classmethod
-    @abstractmethod
-    def from_json(cls, s: str) -> "Model":
-        pass
-
-    @abstractmethod
-    def to_json(self) -> str:
-        pass
-
-    @abstractmethod
-    def rank(self, performance_table: PerformanceTable[S]) -> Ranking:
-        pass
-
-    def fitness(
-        self, performance_table: PerformanceTable[S], comparisons: PreferenceStructure
-    ) -> float:
-        ranking = self.rank(performance_table)
-        return fitness(ranking, comparisons)
+def import_model(s: str) -> Model:
+    if "capacities" in s:
+        return RMPModel.from_json(s)
+    elif "weights" in s:
+        return SRMPModel.from_json(s)
+    else:
+        raise ValueError("model is not a valid model")

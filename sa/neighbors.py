@@ -7,7 +7,7 @@ from mcda.core.matrices import PerformanceTable
 from numpy import array, sort
 from numpy.random import Generator
 
-from model import Model
+from abstract_model import Model
 from rmp.model import RMPModel
 from srmp.model import SRMPModel
 

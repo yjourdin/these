@@ -1,8 +1,7 @@
-from typing import Literal
-
 from mcda.core.relations import PreferenceStructure
 from numpy.random import Generator
 
+from model import ModelType
 from performance_table.core import NormalPerformanceTable
 from rmp.generate import balanced_rmp
 from srmp.generate import balanced_srmp
@@ -21,7 +20,7 @@ from .objective import FitnessObjective
 
 
 def learn_sa(
-    model: Literal["RMP", "SRMP"],
+    model: ModelType,
     k: int,
     alternatives: NormalPerformanceTable,
     comparisons: PreferenceStructure,

@@ -9,7 +9,7 @@ from mcda.core.relations import (
 from mcda.core.values import Ranking
 from numpy.random import Generator
 
-from model import Model
+from abstract_model import Model
 
 
 def random_comparisons(
