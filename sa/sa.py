@@ -6,9 +6,7 @@ from typing import Generic, TypeVar
 from mcda.core.interfaces import Learner
 from numpy.random import Generator
 
-from abstract_model import Model
-
-T = TypeVar("T", bound=Model)
+T = TypeVar("T")
 
 
 class Neighbor(Generic[T], ABC):
@@ -17,9 +15,9 @@ class Neighbor(Generic[T], ABC):
         pass
 
 
-class Objective(ABC):
+class Objective(Generic[T], ABC):
     @abstractmethod
-    def __call__(self, model: Model) -> float:
+    def __call__(self, sol: T) -> float:
         pass
 
     @property
@@ -42,7 +40,7 @@ class SimulatedAnnealing(Learner[T]):
         neighbor: Neighbor[T],
         objective: Objective,
         cooling_schedule: CoolingSchedule,
-        initial_model: T,
+        initial_sol: T,
         rng: Generator,
         Tf: float | None = None,
         max_time: int | None = None,
@@ -59,21 +57,21 @@ class SimulatedAnnealing(Learner[T]):
         self.max_time = max_time
         self.max_iter = max_iter
         self.max_iter_non_improving = max_iter_non_improving
-        self.initial_model = initial_model
+        self.initial_sol = initial_sol
         self.rng = rng
         self.verbose = verbose
 
     def _learn(
         self,
-        initial_model: T,
+        initial_sol: T,
         rng: Generator,
     ):
         # Initialise
         temp = self.T0
-        current_model = initial_model
-        current_objective = self.objective(current_model)
-        self.best_model = initial_model
-        self.best_objective = self.objective(self.best_model)
+        current_sol = initial_sol
+        current_objective = self.objective(current_sol)
+        self.best_sol = initial_sol
+        self.best_objective = self.objective(self.best_sol)
         start_time = time()
         self.time = time() - start_time
         self.it = 0
@@ -96,7 +94,7 @@ class SimulatedAnnealing(Learner[T]):
                 self.non_improving_it += 1
 
                 # Neighbor model
-                neighbor_model = self.neighbor(current_model, rng)
+                neighbor_model = self.neighbor(current_sol, rng)
                 neighbor_objective = self.objective(neighbor_model)
 
                 prob: float
@@ -110,18 +108,18 @@ class SimulatedAnnealing(Learner[T]):
 
                 if rng.random() < prob:
                     # Accepted
-                    current_model = neighbor_model
+                    current_sol = neighbor_model
                     current_objective = neighbor_objective
 
                     # New best
                     if current_objective < self.best_objective:
                         self.non_improving_it = 0
-                        self.best_model = current_model
+                        self.best_sol = current_sol
                         self.best_objective = current_objective
 
                         # Stop when fitness equals 1
                         if self.best_objective <= self.objective.optimum:
-                            return self.best_model
+                            return self.best_sol
 
                 if self.verbose:
                     print(
@@ -134,7 +132,7 @@ class SimulatedAnnealing(Learner[T]):
 
             # Update temperature
             temp = self.cooling_schedule(temp)
-        return self.best_model
+        return self.best_sol
 
     def learn(self):
-        return self._learn(self.initial_model, self.rng)
+        return self._learn(self.initial_sol, self.rng)

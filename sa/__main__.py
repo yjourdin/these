@@ -1,8 +1,8 @@
 from numpy.random import default_rng
 from pandas import read_csv
 
-from performance_table.core import NormalPerformanceTable
-from preference_structure.core import from_csv
+from performance_table.normal_performance_table import NormalPerformanceTable
+from preference_structure.io import from_csv
 
 from .argument_parser import parse_args
 from .main import learn_sa
@@ -30,7 +30,7 @@ SA = learn_sa(
     args.verbose,
 )
 
-args.output.write(SA.best_model.to_json())
+args.output.write(SA.best_sol.to_json())
 args.result.write(
     f"{args.A.name},"
     f"{args.D.name},"

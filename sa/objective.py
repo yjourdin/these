@@ -1,7 +1,7 @@
 from mcda.core.matrices import PerformanceTable
 from mcda.core.relations import PreferenceStructure
 
-from .core import Objective
+from .sa import Objective
 
 
 class FitnessObjective(Objective):

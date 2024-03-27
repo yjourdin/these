@@ -1,4 +1,4 @@
-"""This module implements the SRMP algorithm,
+"""This module implements the RMP algorithm,
 as well as the preference elicitation algorithm and plot functions.
 
 Implementation and naming conventions are taken from
@@ -134,7 +134,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
 
 
 class RMP(Ranker):
-    """This class implements the SRMP algorithm.
+    """This class implements the RMP algorithm.
 
     :param performance_table:
     :param criteria_capacities:
@@ -155,8 +155,8 @@ class RMP(Ranker):
         self.lexicographic_order = lexicographic_order
 
     @property
-    def sub_srmp(self) -> list[ProfileWiseOutranking]:
-        """Return list of sub SRMP problems (one per category profile).
+    def sub_rmp(self) -> list[ProfileWiseOutranking]:
+        """Return list of sub RMP problems (one per category profile).
 
         :return:
         """
@@ -174,7 +174,7 @@ class RMP(Ranker):
 
         :return:
         """
-        return [sub_srmp.rank() for sub_srmp in self.sub_srmp]
+        return [sub_rmp.rank() for sub_rmp in self.sub_rmp]
 
     def exploit(
         self,
@@ -182,7 +182,7 @@ class RMP(Ranker):
         lexicographic_order: list[int] | None = None,
     ) -> Ranking:
         """Merge outranking matrices built by profiles in lexicographic
-        order using SRMP exploitation method.
+        order using RMP exploitation method.
 
         :param outranking_matrices:
             outranking matrix constructed in :attr:`profiles` order
@@ -218,7 +218,7 @@ class RMP(Ranker):
         )
 
     def rank(self, **kwargs) -> Ranking:
-        """Compute the SRMP algorithm
+        """Compute the RMP algorithm
 
         :return:
             the outranking total order as a ranking
@@ -630,8 +630,8 @@ class NormalRMP(RMP):
         self.lexicographic_order = lexicographic_order
 
     @property
-    def sub_srmp(self):
-        """Return list of sub SRMP problems (one per category profile).
+    def sub_rmp(self):
+        """Return list of sub RMP problems (one per category profile).
 
         :return:
         """
@@ -645,13 +645,13 @@ class NormalRMP(RMP):
         ]
 
     def rank(self, **kwargs):
-        """Compute the SRMP algorithm
+        """Compute the RMP algorithm
 
         :return:
             the outranking total order as a ranking
         """
         profilewise_outranking_matrices = np.array(
-            [sub_srmp.rank() for sub_srmp in self.sub_srmp]
+            [sub_rmp.rank() for sub_rmp in self.sub_rmp]
         )
         relations_ordered = [
             profilewise_outranking_matrices[i] for i in self.lexicographic_order

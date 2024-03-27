@@ -1,4 +1,4 @@
-from .core import CoolingSchedule
+from .sa import CoolingSchedule
 
 
 class GeometricSchedule(CoolingSchedule):

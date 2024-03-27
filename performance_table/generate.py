@@ -1,6 +1,6 @@
 from numpy.random import Generator
 
-from .core import NormalPerformanceTable
+from .normal_performance_table import NormalPerformanceTable
 
 
 def random_alternatives(

@@ -5,10 +5,10 @@ from typing import Any
 from mcda.core.scales import NormalScale
 
 from abstract_model import Model
-from performance_table.core import NormalPerformanceTable
+from performance_table.normal_performance_table import NormalPerformanceTable
 from utils import print_list
 
-from .core import NormalRMP
+from .rmp import NormalRMP
 
 
 class RMPEncoder(JSONEncoder):

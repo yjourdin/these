@@ -1,15 +1,17 @@
+import numpy as np
 from mcda.core.matrices import PerformanceTable
 from mcda.core.scales import NormalScale
-from numpy import array, concatenate, diff, sort
 from numpy.random import Generator
 
-from performance_table.core import NormalPerformanceTable
+from performance_table.normal_performance_table import NormalPerformanceTable
 
 from .model import SRMPModel
 
 
 def random_weights(nb_crit: int, rng: Generator) -> list[float]:
-    return diff(sort(concatenate([[0], rng.random(nb_crit - 1), [1]]))).tolist()
+    return np.diff(
+        np.sort(np.concatenate([[0], rng.random(nb_crit - 1), [1]]))
+    ).tolist()
 
 
 def random_srmp(
@@ -19,9 +21,9 @@ def random_srmp(
     profiles_values: PerformanceTable[NormalScale] | None = None,
 ):
     if profiles_values:
-        idx = sort(rng.choice(len(profiles_values.data), (nb_profiles, nb_crit)), 0)
+        idx = np.sort(rng.choice(len(profiles_values.data), (nb_profiles, nb_crit)), 0)
         profiles = NormalPerformanceTable(
-            array(
+            np.array(
                 [
                     profiles_values.data.iloc[idx[:, i], i].to_numpy()
                     for i in range(nb_crit)
@@ -29,7 +31,9 @@ def random_srmp(
             ).transpose()
         )
     else:
-        profiles = NormalPerformanceTable(sort(rng.random((nb_profiles, nb_crit)), 0))
+        profiles = NormalPerformanceTable(
+            np.sort(rng.random((nb_profiles, nb_crit)), 0)
+        )
 
     weights = random_weights(nb_crit, rng)
 
@@ -55,7 +59,9 @@ def balanced_srmp(
             ]
         )
     else:
-        profiles = NormalPerformanceTable(sort(rng.random((nb_profiles, nb_crit)), 0))
+        profiles = NormalPerformanceTable(
+            np.sort(rng.random((nb_profiles, nb_crit)), 0)
+        )
 
     weights = [1 / nb_crit] * nb_crit
 

@@ -2,10 +2,10 @@ from numpy.random import default_rng
 from pandas import read_csv
 
 from model import import_model
-from performance_table.core import NormalPerformanceTable
+from performance_table.normal_performance_table import NormalPerformanceTable
 
 from .argument_parser import parse_args
-from .core import to_csv
+from .io import to_csv
 from .generate import all_comparisons, noisy_comparisons, random_comparisons
 
 args = parse_args()

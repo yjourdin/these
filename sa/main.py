@@ -2,13 +2,12 @@ from mcda.core.relations import PreferenceStructure
 from numpy.random import Generator
 
 from model import ModelType
-from performance_table.core import NormalPerformanceTable
+from performance_table.normal_performance_table import NormalPerformanceTable
 from rmp.generate import balanced_rmp
 from srmp.generate import balanced_srmp
 from utils import midpoints
 
 from .cooling_schedule import GeometricSchedule
-from .core import Neighbor, SimulatedAnnealing
 from .neighbors import (
     NeighborCapacities,
     NeighborLexOrder,
@@ -17,6 +16,7 @@ from .neighbors import (
     RandomNeighbor,
 )
 from .objective import FitnessObjective
+from .sa import Neighbor, SimulatedAnnealing
 
 
 def learn_sa(
@@ -81,7 +81,7 @@ def learn_sa(
         neighbor=RandomNeighbor(neighbors, prob),
         objective=FitnessObjective(alternatives, comparisons),
         cooling_schedule=GeometricSchedule(alpha),
-        initial_model=initial_model,
+        initial_sol=initial_model,
         rng=rng_sa,
         Tf=Tf,
         max_time=max_time,

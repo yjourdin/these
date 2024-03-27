@@ -7,10 +7,10 @@ from pandas import read_csv
 from scipy.stats import kendalltau
 
 from model import ModelType
-from performance_table.core import NormalPerformanceTable
 from performance_table.generate import random_alternatives
-from preference_structure.core import from_csv, to_csv
+from performance_table.normal_performance_table import NormalPerformanceTable
 from preference_structure.generate import noisy_comparisons, random_comparisons
+from preference_structure.io import from_csv, to_csv
 from rmp.generate import random_rmp
 from rmp.model import RMPModel
 from sa.main import learn_sa
@@ -138,7 +138,7 @@ def create_Me(
     )
 
     with dir.Me_file(i, Mo, m, ko, n, e, Me, ke).open("w") as f:
-        f.write(sa.best_model.to_json())
+        f.write(sa.best_sol.to_json())
 
     results_queue.put(
         f"{i},{m},{Mo},{ko},{n},{e},{Me},{ke},{sa.time},{sa.it},{1-sa.best_objective}\n"

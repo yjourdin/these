@@ -2,13 +2,13 @@ from itertools import chain, combinations
 from subprocess import run
 from typing import Any
 
+import numpy as np
 from mcda.core.matrices import PerformanceTable
 from mcda.core.scales import NormalScale
-from numpy import arange, array, sort
 from numpy.random import Generator
 from pandas import DataFrame
 
-from performance_table.core import NormalPerformanceTable
+from performance_table.normal_performance_table import NormalPerformanceTable
 
 from .model import RMPModel
 
@@ -26,12 +26,14 @@ def random_capacities(nb_crit: int, rng: Generator) -> dict[frozenset[Any], floa
             text=True,
         ).stdout
     )
-    rng.random(nb_crit)
-    crits = arange(nb_crit)
+    crits = np.arange(nb_crit)
     return dict(
         zip(
-            [frozenset(crits[array([bool(int(x)) for x in node])]) for node in linext],
-            sort(rng.random(2**nb_crit)),
+            [
+                frozenset(crits[np.array([bool(int(x)) for x in node])])
+                for node in linext
+            ],
+            np.sort(rng.random(2**nb_crit)),
         )
     )
 
@@ -43,7 +45,7 @@ def random_rmp(
     profiles_values: PerformanceTable[NormalScale] | None = None,
 ) -> RMPModel:
     if profiles_values:
-        idx = sort(rng.choice(len(profiles_values.data), (nb_profiles, nb_crit)))
+        idx = np.sort(rng.choice(len(profiles_values.data), (nb_profiles, nb_crit)))
         profiles = NormalPerformanceTable(
             DataFrame(
                 {
@@ -53,7 +55,9 @@ def random_rmp(
             )
         )
     else:
-        profiles = NormalPerformanceTable(sort(rng.random((nb_profiles, nb_crit)), 0))
+        profiles = NormalPerformanceTable(
+            np.sort(rng.random((nb_profiles, nb_crit)), 0)
+        )
     capacities = random_capacities(nb_crit, rng)
     lex_order = rng.permutation(nb_profiles)
     return RMPModel(profiles, capacities, lex_order.tolist())
@@ -80,7 +84,7 @@ def balanced_rmp(
             [[x / (nb_profiles + 1)] * nb_crit for x in range(1, nb_profiles + 1)]
         )
 
-    crits = arange(nb_crit)
+    crits = np.arange(nb_crit)
     power_set = chain.from_iterable(
         combinations(crits, r) for r in range(len(crits) + 1)
     )

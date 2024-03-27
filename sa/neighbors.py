@@ -4,14 +4,14 @@ from itertools import chain, combinations
 from typing import Any, Collection, TypeVar, cast
 
 from mcda.core.matrices import PerformanceTable
-from numpy import array, sort
+import numpy as np
 from numpy.random import Generator
 
 from abstract_model import Model
 from rmp.model import RMPModel
 from srmp.model import SRMPModel
 
-from .core import Neighbor
+from .sa import Neighbor
 
 # from utils import max_weight
 
@@ -25,7 +25,7 @@ class RandomNeighbor(Neighbor[T]):
     ):
         self.neighbors = neighbors
         if prob:
-            prob_array = array(prob)
+            prob_array = np.array(prob)
             self.prob = prob_array / prob_array.sum()
         else:
             self.prob = None
@@ -77,7 +77,7 @@ class NeighborProfiles(Neighbor[RMPModel | SRMPModel]):
             crit_values.index[new_value_ind]
         ]
 
-        neighbor.profiles.data.transform(sort)
+        neighbor.profiles.data.transform(np.sort)
         return neighbor
 
 
@@ -114,7 +114,7 @@ class NeighborProfilesSRMP(Neighbor[SRMPModel]):
                 new_value_ind
             ]
 
-        neighbor.profiles.data.transform(sort)
+        neighbor.profiles.data.transform(np.sort)
 
         return neighbor
 
