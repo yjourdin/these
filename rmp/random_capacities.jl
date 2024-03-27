@@ -1,30 +1,9 @@
 using Random
 using SimplePosets
 using StatsBase
+import SimplePosets: delete!
 
-function induce_except_one(P::SimplePoset{String}, x::String)
-    Q = SimplePoset{String}()
-    for v in filter(!=(x), elements(P))
-        add!(Q, v)
-    end
-
-    for (a, b) in relations(P)
-        if (a != x) && (b != x)
-            add!(Q, a, b)
-        end
-    end
-
-    return Q
-end
-
-function cardinality(str::String)
-    return count_ones(parse(UInt, str, base=2))
-end
-
-function height(P::SimplePoset)
-    cards = cardinality.(elements(P))
-    return length(unique(cards))
-end
+# Isolated methods
 
 function is_isolated_top(P::SimplePoset, x)
     return isempty(above(P, x))
@@ -42,74 +21,155 @@ function isolated_bottom(P::SimplePoset, A::Vector)
     return filter(x -> is_isolated_bottom(P, x), A)
 end
 
-function is_isolated_top_without(P::SimplePoset, s::Array, x)
-    return issubset(above(P, x), s)
+# Cardinality methods
+function cardinality(str::String)
+    return count_ones(parse(UInt, str, base=2))
 end
 
-function is_isolated_bottom_without(P::SimplePoset, s::Array, x)
-    return issubset(below(P, x), s)
+function top_cardinality(P::SimplePoset)
+    return maximum(cardinality.(maximals(P)))
 end
 
-function isolated_top_without_x(P::SimplePoset, x)
-    return filter(y -> is_isolated_top_without(P, [x], y), filter(!=(x), elements(P)))
+function bottom_cardinality(P::SimplePoset)
+    return minimum(cardinality.(minimals(P)))
 end
 
-function isolated_bottom_without_x(P::SimplePoset, x)
-    return filter(y -> is_isolated_bottom_without(P, [x], y), filter(!=(x), elements(P)))
-end
+# Two layers methods
 
-function upper_layer(P::SimplePoset)
-    top_card = maximum(cardinality.(elements(P)))
-    return filter(x -> cardinality(x) == top_card, elements(P))
-end
-
-function lower_layer(P::SimplePoset)
-    bottom_card = minimum(cardinality.(elements(P)))
-    return filter(x -> cardinality(x) == bottom_card, elements(P))
-end
-
-function top_layers(P::SimplePoset)
-    top_card = maximum(cardinality.(elements(P)))
+function top_two_layers(P::SimplePoset, top_card::Int)
     layers = filter(x -> cardinality(x) >= top_card - 1, elements(P))
     return induce(P, Set(layers))
 end
 
-function bottom_layers(P::SimplePoset)
-    bottom_card = minimum(cardinality.(elements(P)))
-    layers = filter(x -> cardinality(x) <= bottom_card + 1, elements(P))
+function bottom_two_layers(P::SimplePoset, bottom_card::Int)
+    layers = layers = filter(x -> cardinality(x) <= bottom_card + 1, elements(P))
     return induce(P, Set(layers))
 end
 
-function proba_upper_Th(x::String, P::SimplePoset, h::Int, k::Int, I::Vector{String})
-    # II = isolated(induce_except_one(P, x))
-    # II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
-    II = isolated_top_without_x(P, x)
-    III = setdiff(II, I)
-    return (1 / h) * (prod([big(h - 1 + k - length(II) + i) for i in 1:length(II)])) / (prod([big(h - 1 + k - length(II) + i) for i in 1:length(II)]) + length(I) * prod([big(h - 1 + k - length(II) + i) for i in 1:length(III)]) * prod([big(h + k - length(I) + i) for i in 1:(length(I)-1)]))
+# Two layers struct
+
+mutable struct TopTwoLayers{T}
+    poset::SimplePoset{T}
+    layers::SimplePoset{T}
+    top_card::Int
 end
 
-function proba_lower_Th(x::String, P::SimplePoset, h::Int, k::Int, I::Vector{String})
-    # II = isolated(induce_except_one(P, x))
-    # II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
-    II = isolated_top_without_x(P, x)
-    III = setdiff(II, I)
-    return (prod([big(h - 1 + k - length(II) + i) for i in 1:length(III)]) * prod([big(h + k - length(I) + i) for i in 1:(length(I)-1)])) / (prod([big(h - 1 + k - length(II) + i) for i in 1:length(II)]) + length(I) * prod([big(h - 1 + k - length(II) + i) for i in 1:length(III)]) * prod([big(h + k - length(I) + i) for i in 1:(length(I)-1)]))
+mutable struct BottomTwoLayers{T}
+    poset::SimplePoset{T}
+    layers::SimplePoset{T}
+    bottom_card::Int
 end
 
-function proba_upper_Bh(x::String, P::SimplePoset, h::Int, k::Int, I::Vector{String})
-    # II = isolated(induce_except_one(P, x))
-    # II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
-    II = isolated_bottom_without_x(P, x)
-    III = setdiff(II, I)
-    return (prod([big(h - length(II) + k - 1 + i) for i in 1:length(III)]) * prod([big(h - length(I) + k + i) for i in 1:(length(I)-1)])) / (prod([big(h - length(II) + k - 1 + i) for i in 1:length(II)]) + length(I) * prod([big(h - length(II) + k - 1 + i) for i in 1:length(III)]) * prod([big(h - length(I) + k + i) for i in 1:(length(I)-1)]))
+# Constructors
+
+function TopTwoLayers(P::SimplePoset)
+    top_card = top_cardinality(P)
+    TopTwoLayers(P, top_two_layers(P, top_card), top_card)
 end
 
-function proba_lower_Bh(x::String, P::SimplePoset, h::Int, k::Int, I::Vector{String})
-    # II = isolated(induce_except_one(P, x))
-    # II = isolated(induce(P, Set(filter(!=(x), elements(P)))))
-    II = isolated_bottom_without_x(P, x)
-    III = setdiff(II, I)
-    return (1 / k) * (prod([big(h - length(II) + k - 1 + i) for i in 1:length(II)])) / (prod([big(h - length(II) + k - 1 + i) for i in 1:length(II)]) + length(I) * prod([big(h - length(II) + k - 1 + i) for i in 1:length(III)]) * prod([big(h - length(I) + k + i) for i in 1:(length(I)-1)]))
+function BottomTwoLayers(P::SimplePoset)
+    bottom_card = bottom_cardinality(P)
+    BottomTwoLayers(P, bottom_two_layers(P, bottom_card), bottom_card)
+end
+
+# Sub layers
+
+function layer(P::SimplePoset, card::Int)
+    return filter(x -> cardinality(x) == card, elements(P))
+end
+
+function upper_layer(Th::TopTwoLayers)
+    return layer(Th.layers, Th.top_card)
+end
+
+function lower_layer(Th::TopTwoLayers)
+    return layer(Th.layers, Th.top_card - 1)
+end
+
+function upper_layer(Bh::BottomTwoLayers)
+    return layer(Bh.layers, Bh.bottom_card + 1)
+end
+
+function lower_layer(Bh::BottomTwoLayers)
+    return layer(Bh.layers, Bh.bottom_card)
+end
+
+# Delete methods
+
+function delete!(Th::TopTwoLayers, x)
+    if has(Th.layers, x)
+        delete!(Th.layers, x)
+        if cardinality(x) == Th.top_card
+            Th.top_card = top_cardinality(Th.layers)
+            if Th.top_card < cardinality(x)
+                Th.layers = top_two_layers(Th.poset, Th.top_card)
+            end
+        end
+    end
+end
+
+function delete!(Bh::BottomTwoLayers, x)
+    if has(Bh.layers, x)
+        delete!(Bh.layers, x)
+        if cardinality(x) == Bh.bottom_card
+            Bh.bottom_card = bottom_cardinality(Bh.layers)
+            if Bh.bottom_card > cardinality(x)
+                Bh.layers = bottom_two_layers(Bh.poset, Bh.bottom_card)
+            end
+        end
+    end
+end
+
+function proba_upper_Th(h::Int, k::Int, I::Int, II::Int, III::Int)
+    return (1 / h) * (prod(big(h - 1 + k - II + i) for i in 1:II; init=big(1))) / (prod(big(h - 1 + k - II + i) for i in 1:II; init=big(1)) + I * prod(big(h - 1 + k - II + i) for i in 1:III; init=big(1)) * prod(big(h + k - I + i) for i in 1:(I-1); init=big(1)))
+end
+
+function proba_lower_Th(h::Int, k::Int, I::Int, II::Int, III::Int)
+    return (prod([big(h - 1 + k - II + i) for i in 1:III]) * prod([big(h + k - I + i) for i in 1:(I-1)])) / (prod([big(h - 1 + k - II + i) for i in 1:II]) + I * prod([big(h - 1 + k - II + i) for i in 1:III]) * prod([big(h + k - I + i) for i in 1:(I-1)]))
+end
+
+function proba_upper_Bh(h::Int, k::Int, I::Int, II::Int, III::Int)
+    return (prod([big(h - II + k - 1 + i) for i in 1:III]) * prod([big(h - I + k + i) for i in 1:(I-1)])) / (prod([big(h - II + k - 1 + i) for i in 1:II]) + I * prod([big(h - II + k - 1 + i) for i in 1:III]) * prod([big(h - I + k + i) for i in 1:(I-1)]))
+end
+
+function proba_lower_Bh(h::Int, k::Int, I::Int, II::Int, III::Int)
+    return (1 / k) * (prod([big(h - II + k - 1 + i) for i in 1:II])) / (prod([big(h - II + k - 1 + i) for i in 1:II]) + I * prod([big(h - II + k - 1 + i) for i in 1:III]) * prod([big(h - I + k + i) for i in 1:(I-1)]))
+end
+
+function proba_Th(h::Int, k::Int, I::Int, II::Int, III::Int)
+    eu = prod(big(h - 1 + k - II + i) for i in 1:II; init=big(1))
+    el = prod(big(h - 1 + k - II + i) for i in 1:III; init=big(1)) * prod(big(h + k - I + i) for i in 1:(I-1); init=big(1))
+    pu = eu / (h * (eu + I * el))
+    pl = el / (eu + I * el)
+    return pu, pl
+end
+
+function proba_Bh(h::Int, k::Int, I::Int, II::Int, III::Int)
+    el = prod(big(h - 1 + k - II + i) for i in 1:II; init=big(1))
+    eu = prod(big(h - 1 + k - II + i) for i in 1:III; init=big(1)) * prod(big(h + k - I + i) for i in 1:(I-1); init=big(1))
+    pl = el / (k * (eu + I * el))
+    pu = eu / (eu + I * el)
+    return pl, pu
+end
+
+function select_M(Th::SimplePoset, ul::Vector, h::Int, k::Int, I::Vector, rng::AbstractRNG)
+    card_I = length(I)
+    III = count(x -> above(Th, x) == [ul[1]], below(Th, ul[1]))
+    II = card_I + III
+    # pu = proba_upper_Th(h, k, card_I, II, III)
+    # pl = proba_lower_Th(h, k, card_I, II, III)
+    pu, pl = proba_Th(h, k, card_I, II, III)
+    return sample(rng, [ul; I], ProbabilityWeights([fill(pu, length(ul)); fill(pl, card_I)]))
+end
+
+function select_m(Bh::SimplePoset, ll::Vector, h::Int, k::Int, I::Vector, rng::AbstractRNG)
+    card_I = length(I)
+    III = count(x -> below(Bh, x) == [ll[1]], above(Bh, ll[1]))
+    II = card_I + III
+    # pu = proba_upper_Bh(h, k, card_I, II, III)
+    # pl = proba_lower_Bh(h, k, card_I, II, III)
+    pl, pu = proba_Bh(h, k, card_I, II, III)
+    return sample(rng, [ll; I], ProbabilityWeights([fill(pl, length(ll)); fill(pu, card_I)]))
 end
 
 function generate_linext(P::SimplePoset, rng::AbstractRNG)
@@ -117,60 +177,61 @@ function generate_linext(P::SimplePoset, rng::AbstractRNG)
     lmin = String[]
     lmax = String[]
 
-    while height(H) > 2
-        if length(maximals(H)) == 1
+    Th = TopTwoLayers(H)
+    Bh = BottomTwoLayers(H)
+
+    while Th.top_card - Bh.bottom_card > 1
+        if length(maximals(Th.layers)) == 1
             M = maximals(H)[1]
         else
-            Th = top_layers(H)
             ul = upper_layer(Th)
             ll = lower_layer(Th)
             h = length(ul)
             k = length(ll)
-            I = isolated_top(Th, ll)
-            proba = [proba_upper_Th.(ul, Ref(Th), Ref(h), Ref(k), Ref(I)); proba_lower_Th.(I, Ref(Th), Ref(h), Ref(k), Ref(I))]
-            M = sample(rng, [ul; I], ProbabilityWeights(proba))
+            I = isolated_top(Th.layers, ll)
+            M = select_M(Th.layers, ul, h, k, I, rng)
         end
         pushfirst!(lmax, M)
         delete!(H, M)
+        delete!(Th, M)
+        delete!(Bh, M)
 
-        if length(minimals(H)) == 1
+        if length(minimals(Bh.layers)) == 1
             m = minimals(H)[1]
         else
-            Bh = bottom_layers(H)
             ul = upper_layer(Bh)
             ll = lower_layer(Bh)
             h = length(ul)
             k = length(ll)
-            I = isolated_bottom(Bh, ul)
-            proba = [proba_lower_Bh.(ll, Ref(Bh), Ref(h), Ref(k), Ref(I)); proba_upper_Bh.(I, Ref(Bh), Ref(h), Ref(k), Ref(I))]
-            m = sample(rng, [ll; I], ProbabilityWeights(proba))
+            I = isolated_bottom(Bh.layers, ul)
+            m = select_m(Bh.layers, ll, h, k, I, rng)
         end
         push!(lmin, m)
         delete!(H, m)
+        delete!(Th, m)
+        delete!(Bh, m)
     end
 
     while height(H) == 2
-        ul = upper_layer(H)
-        ll = lower_layer(H)
+        ul = maximals(H)
+        ll = minimals(H)
         h = length(ul)
         k = length(ll)
         if h <= k
-            if length(maximals(H)) == 1
-                M = maximals(H)[1]
+            if h == 1
+                M = ul[1]
             else
                 I = isolated_top(H, ll)
-                proba = [proba_upper_Th.(ul, Ref(H), Ref(h), Ref(k), Ref(I)); proba_lower_Th.(I, Ref(H), Ref(h), Ref(k), Ref(I))]
-                M = sample(rng, [ul; I], ProbabilityWeights(proba))
+                M = select_M(H, ul, h, k, I, rng)
             end
             pushfirst!(lmax, M)
             delete!(H, M)
         else
-            if length(minimals(H)) == 1
-                m = minimals(H)[1]
+            if k == 1
+                m = ll[1]
             else
                 I = isolated_bottom(H, ul)
-                proba = [proba_lower_Bh.(ll, Ref(H), Ref(h), Ref(k), Ref(I)); proba_upper_Bh.(I, Ref(H), Ref(h), Ref(k), Ref(I))]
-                m = sample(rng, [ll; I], ProbabilityWeights(proba))
+                m = select_m(H, ll, h, k, I, rng)
             end
             push!(lmin, m)
             delete!(H, m)
@@ -186,6 +247,8 @@ function generate_linext(P::SimplePoset, rng::AbstractRNG)
     return [lmin; lmax]
 end
 
-Random.seed!(parse(Int, ARGS[2]))
+# Random.seed!(parse(Int, ARGS[2]))
 
-println(generate_linext(BooleanLattice(parse(Int, ARGS[1])), Random.default_rng()))
+# println(generate_linext(BooleanLattice(parse(Int, ARGS[1])), Random.default_rng()))
+
+@profview generate_linext(BooleanLattice(parse(Int, "12")), Random.default_rng())
