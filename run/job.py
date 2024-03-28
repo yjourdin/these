@@ -1,11 +1,11 @@
 import logging
 from multiprocessing import Queue
 
-import numpy as np
 from numpy.random import Generator
 from pandas import read_csv
 from scipy.stats import kendalltau
 
+from fitness import fitness_ranking
 from model import ModelType
 from performance_table.generate import random_alternatives
 from performance_table.normal_performance_table import NormalPerformanceTable
@@ -125,7 +125,7 @@ def create_Me(
         D = from_csv(f.read())
 
     rng_init, rng_sa = rng.spawn(2)
-    sa = learn_sa(
+    best_model, best_fitness, time, it = learn_sa(
         Me,
         ke,
         A,
@@ -138,10 +138,10 @@ def create_Me(
     )
 
     with dir.Me_file(i, Mo, m, ko, n, e, Me, ke).open("w") as f:
-        f.write(sa.best_sol.to_json())
+        f.write(best_model.to_json())
 
     results_queue.put(
-        f"{i},{m},{Mo},{ko},{n},{e},{Me},{ke},{sa.time},{sa.it},{1-sa.best_objective}\n"
+        f"{i},{m},{Mo},{ko},{n},{e},{Me},{ke},{time},{it},{best_fitness}\n"
     )
     logger.info(log_message + " done")
 
@@ -188,18 +188,10 @@ def compute_test(
             case "SRMP":
                 Me = SRMPModel.from_json(f.read())
 
-    Ro = Mo.rank(A_test).data.to_numpy()
-    Re = Me.rank(A_test).data.to_numpy()
+    Ro = Mo.rank(A_test)
+    Re = Me.rank(A_test)
 
-    outranking_o = np.less.outer(Ro, Ro).astype("int64", copy=False)
-    outranking_e = np.less.outer(Re, Re).astype("int64", copy=False)
-
-    outranking_o = outranking_o - outranking_o.transpose()
-    outranking_e = outranking_e - outranking_e.transpose()
-
-    ind = np.triu_indices(len(Ro), 1)
-
-    test_fitness = np.equal(outranking_o[ind], outranking_e[ind]).sum() / len(ind[0])
+    test_fitness = fitness_ranking(Ro, Re)
 
     kendall_tau = kendalltau(Ro, Re).statistic
 

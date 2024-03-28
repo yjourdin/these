@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 from mcda.core.relations import PreferenceStructure
 from numpy.random import Generator
 
@@ -92,4 +94,6 @@ def learn_sa(
 
     sa.learn()
 
-    return sa
+    return namedtuple("SAResult", ["best_model", "best_fitness", "time", "it"])(
+        sa.best_sol, 1 - sa.best_objective, sa.time, sa.it
+    )  # type: ignore

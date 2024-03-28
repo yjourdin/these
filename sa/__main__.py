@@ -13,7 +13,7 @@ A = NormalPerformanceTable(read_csv(args.A, header=None))
 
 D = from_csv(args.D.read())
 
-SA = learn_sa(
+best_model, best_fitness, time, it = learn_sa(
     args.model,
     args.k,
     A,
@@ -30,12 +30,12 @@ SA = learn_sa(
     args.verbose,
 )
 
-args.output.write(SA.best_sol.to_json())
+args.output.write(best_model.to_json())
 args.result.write(
     f"{args.A.name},"
     f"{args.D.name},"
     f"{args.k},"
-    f"{SA.time},"
-    f"{SA.it},"
-    f"{1-SA.best_objective}\n"
+    f"{time},"
+    f"{it},"
+    f"{best_fitness}\n"
 )

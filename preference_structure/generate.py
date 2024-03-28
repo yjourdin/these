@@ -1,11 +1,6 @@
 import numpy as np
 from mcda.core.matrices import PerformanceTable
-from mcda.core.relations import (
-    IndifferenceRelation,
-    PreferenceRelation,
-    PreferenceStructure,
-    Relation,
-)
+from mcda.core.relations import I, P, PreferenceStructure, Relation
 from mcda.core.values import Ranking
 from numpy.random import Generator
 
@@ -28,11 +23,11 @@ def random_comparisons(
     for ia, ib in pairs:
         a, b = labels[ia], labels[ib]
         if ranking_dict[a] < ranking_dict[b]:
-            relations.append(PreferenceRelation(a, b))
+            relations.append(P(a, b))
         elif ranking_dict[a] == ranking_dict[b]:
-            relations.append(IndifferenceRelation(a, b))
+            relations.append(I(a, b))
         else:
-            relations.append(PreferenceRelation(b, a))
+            relations.append(P(b, a))
     result._relations = relations
     return result
 
@@ -46,11 +41,11 @@ def from_ranking(ranking: Ranking):
     for ia, ib in all_pairs:
         a, b = labels[ia], labels[ib]
         if ranking_dict[a] < ranking_dict[b]:
-            relations.append(PreferenceRelation(a, b))
+            relations.append(P(a, b))
         elif ranking_dict[a] == ranking_dict[b]:
-            relations.append(IndifferenceRelation(a, b))
+            relations.append(I(a, b))
         else:
-            relations.append(PreferenceRelation(b, a))
+            relations.append(P(b, a))
     result._relations = relations
     return result
 
@@ -70,20 +65,18 @@ def noisy_comparisons(
         np.array(relations), int(error_rate * len(relations)), replace=False
     )
     relations = list(set(relations) - set(selected_relations))
-    selected_indifferences = [
-        r for r in selected_relations if isinstance(r, IndifferenceRelation)
-    ]
+    selected_indifferences = [r for r in selected_relations if isinstance(r, I)]
     nb_indifferences = len(selected_indifferences)
     selected_preferences = list(set(selected_relations) - set(selected_indifferences))
     nb_preferences = len(selected_preferences)
     changed_indifferences = [
-        PreferenceRelation(*rng.permutation(r.elements)) for r in selected_indifferences
+        P(*rng.permutation(r.elements)) for r in selected_indifferences
     ]
     changed_preferences = [
         (
-            IndifferenceRelation(*(r.elements))
+            I(*(r.elements))
             if rng.random() < (nb_indifferences / nb_preferences)
-            else PreferenceRelation(r.b, r.a)
+            else P(r.b, r.a)
         )
         for r in selected_preferences
     ]
