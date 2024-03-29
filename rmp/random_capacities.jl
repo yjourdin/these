@@ -42,7 +42,7 @@ end
 # Probabilities
 
 function proba_upper_Th(h, k, I, II, III)
-    return (1 / h) * (prod(big(h - 1 + k - II + i) for i in 1:II; init=big(1))) / (prod(big(h - 1 + k - II + i) for i in 1:II; init=big(1)) + I * prod(big(h - 1 + k - II + i) for i in 1:III; init=big(1)) * prod(big(h + k - I + i) for i in 1:(I-1); init=big(1)))
+    return (1 / h) * (prod([big(h - 1 + k - II + i) for i in 1:II])) / (prod([big(h - 1 + k - II + i) for i in 1:II]) + I * prod([big(h - 1 + k - II + i) for i in 1:III]) * prod([big(h + k - I + i) for i in 1:(I-1)]))
 end
 
 function proba_lower_Th(h, k, I, II, III)
@@ -60,7 +60,7 @@ end
 function proba_Th(h, k, I, II, III)
     A = [big(h - 1 + k - II + i) for i in 1:II]
     eu = prod(A)
-    el = prod(view(A,1:III)) * prod([big(h + k - I + i) for i in 1:(I-1)])
+    el = prod(view(A, 1:III)) * prod([big(h + k - I + i) for i in 1:(I-1)])
     # eu = prod(big(h - 1 + k - II + i) for i in 1:II; init=big(1))
     # el = prod(big(h - 1 + k - II + i) for i in 1:III; init=big(1)) * prod(big(h + k - I + i) for i in 1:(I-1); init=big(1))
     denom = eu + I * el
@@ -72,7 +72,7 @@ end
 function proba_Bh(h, k, I, II, III)
     A = [big(h - 1 + k - II + i) for i in 1:II]
     el = prod(A)
-    eu = prod(view(A,1:III)) * prod([big(h + k - I + i) for i in 1:(I-1)])
+    eu = prod(view(A, 1:III)) * prod([big(h + k - I + i) for i in 1:(I-1)])
     # el = prod(big(h - 1 + k - II + i) for i in 1:II; init=big(1))
     # eu = prod(big(h - 1 + k - II + i) for i in 1:III; init=big(1)) * prod(big(h + k - I + i) for i in 1:(I-1); init=big(1))
     denom = eu + I * el
@@ -120,7 +120,7 @@ function generate_linext(P, rng)
     while top_card - bottom_card > 1
         max = maximals(H)
         if length(max) == 1
-            M = max[1]
+            M = first(max)
         else
             ul = layer(elem, top_card)
             ll = layer(elem, top_card - 1)
@@ -138,7 +138,7 @@ function generate_linext(P, rng)
 
         min = minimals(H)
         if length(min) == 1
-            m = min[1]
+            m = first(min)
         else
             ul = layer(elem, bottom_card + 1)
             ll = layer(elem, bottom_card)
@@ -163,7 +163,7 @@ function generate_linext(P, rng)
         if h <= k
             max = maximals(H)
             if length(max) == 1
-                M = max[1]
+                M = first(max)
             else
                 I = isolated_top(H, ll)
                 M = select_M(H, ul, I, h, k, rng)
@@ -177,7 +177,7 @@ function generate_linext(P, rng)
         else
             min = minimals(H)
             if length(min) == 1
-                m = min[1]
+                m = first(min)
             else
                 I = isolated_bottom(H, ul)
                 m = select_m(H, ll, I, h, k, rng)
