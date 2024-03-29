@@ -6,6 +6,7 @@ from pandas import read_csv
 from scipy.stats import kendalltau
 
 from fitness import fitness_ranking
+from mip.main import learn_mip
 from model import ModelType
 from performance_table.generate import random_alternatives
 from performance_table.normal_performance_table import NormalPerformanceTable
@@ -89,7 +90,7 @@ def create_D(
     logger.info(log_message + " done")
 
 
-def create_Me(
+def run_SA(
     Me: ModelType,
     ke: int,
     n: int,
@@ -107,7 +108,7 @@ def create_Me(
 ):
     logger = logging.getLogger("log")
     log_message = (
-        f"Me      ("
+        f"SA      ("
         f"No: {i:2} "
         f"M: {m:2} "
         f"Mo: {Mo:4} "
@@ -118,6 +119,7 @@ def create_Me(
         f"Ke: {ke:2})"
     )
     logger.info(log_message + " running...")
+
     with dir.A_train_file(i, m).open("r") as f:
         A = NormalPerformanceTable(read_csv(f, header=None))
 
@@ -141,12 +143,54 @@ def create_Me(
         f.write(best_model.to_json())
 
     results_queue.put(
-        f"{i},{m},{Mo},{ko},{n},{e},{Me},{ke},{time},{it},{best_fitness}\n"
+        f"{i},{m},{Mo},{ko},{n},{e},{Me},{ke},SA,{time},{it},{best_fitness}\n"
     )
     logger.info(log_message + " done")
 
 
-def compute_test(
+def run_MIP(
+    ke: int,
+    n: int,
+    e: float,
+    Mo: ModelType,
+    ko: int,
+    m: int,
+    i: int,
+    dir: Directory,
+    results_queue: Queue,
+):
+    logger = logging.getLogger("log")
+    log_message = (
+        f"MIP     ("
+        f"No: {i:2} "
+        f"M: {m:2} "
+        f"Mo: {Mo:4} "
+        f"Ko: {ko:2} "
+        f"N: {n:4} "
+        f"Error: {e:4} "
+        f"Me: SRMP "
+        f"Ke: {ke:2})"
+    )
+    logger.info(log_message + " running...")
+
+    with dir.A_train_file(i, m).open("r") as f:
+        A = NormalPerformanceTable(read_csv(f, header=None))
+
+    with dir.D_file(i, m, Mo, ko, n, e).open("r") as f:
+        D = from_csv(f.read())
+
+    best_model, best_fitness, time = learn_mip(ke, A, D)
+
+    with dir.Me_file(i, Mo, m, ko, n, e, "SRMP", ke).open("w") as f:
+        f.write(best_model.to_json())
+
+    results_queue.put(
+        f"{i},{m},{Mo},{ko},{n},{e},SRMP,{ke},MIP,{time},,{best_fitness}\n"
+    )
+    logger.info(log_message + " done")
+
+
+def run_test(
     Me_type: ModelType,
     ke: int,
     n: int,

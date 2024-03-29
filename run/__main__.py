@@ -14,8 +14,9 @@ from .task import (
     task_A_test,
     task_A_train,
     task_D,
-    task_Me,
+    task_MIP,
     task_Mo,
+    task_SA,
     task_test,
 )
 from .worker import file_thread, worker
@@ -58,13 +59,22 @@ for i in range(args.N_exp):
                         succeed[t_Mo] += [t_D]
                         for Me in args.Me:
                             for ke in args.Ke:
-                                t_Me = task_Me(i, m, Mo, ko, n_bc, e, Me, ke)
-                                t_test = task_test(i, m, Mo, ko, n_bc, e, Me, ke)
-                                precede[t_Me] += [t_D]
-                                succeed[t_D] += [t_Me]
-                                precede[t_test] += [t_A_test, t_Me]
-                                succeed[t_Me] += [t_test]
-                                succeed[t_A_test] += [t_test]
+                                for method in args.method:
+                                    match method:
+                                        case "SA":
+                                            t_Me = task_SA(
+                                                i, m, Mo, ko, n_bc, e, Me, ke
+                                            )
+                                        case "MIP" if Me == "SRMP":
+                                            t_Me = task_MIP(i, m, Mo, ko, n_bc, e, ke)
+                                        case _:
+                                            break
+                                    t_test = task_test(i, m, Mo, ko, n_bc, e, Me, ke)
+                                    precede[t_Me] += [t_D]
+                                    succeed[t_D] += [t_Me]
+                                    precede[t_test] += [t_A_test, t_Me]
+                                    succeed[t_Me] += [t_test]
+                                    succeed[t_A_test] += [t_test]
 
 task_manager = TaskManager(
     args, succeed, precede, dir, rngs, train_results_queue, test_results_queue

@@ -9,12 +9,13 @@ from numpy.random import Generator
 from model import ModelType
 
 from .job import (
-    compute_test,
     create_A_test,
     create_A_train,
     create_D,
-    create_Me,
     create_Mo,
+    run_MIP,
+    run_SA,
+    run_test,
 )
 from .path import Directory
 
@@ -37,10 +38,29 @@ def task_D(i: int, m: int, Mo: ModelType, ko: int, n: int, e: float) -> Task:
     return ("D", i, m, Mo, ko, n, e)
 
 
-def task_Me(
-    i: int, m: int, Mo: ModelType, ko: int, n: int, e: float, Me: ModelType, ke: int
+def task_SA(
+    i: int,
+    m: int,
+    Mo: ModelType,
+    ko: int,
+    n: int,
+    e: float,
+    Me: ModelType,
+    ke: int,
 ) -> Task:
-    return ("Me", i, m, Mo, ko, n, e, Me, ke)
+    return ("SA", i, m, Mo, ko, n, e, Me, ke)
+
+
+def task_MIP(
+    i: int,
+    m: int,
+    Mo: ModelType,
+    ko: int,
+    n: int,
+    e: float,
+    ke: int,
+) -> Task:
+    return ("MIP", i, m, Mo, ko, n, e, ke)
 
 
 def task_test(
@@ -78,8 +98,8 @@ class TaskManager:
                 create_Mo(model, k, m, i, self.dir, self.rngs[i])
             case ("D", i, m, Mo, ko, n, e):
                 create_D(n, e, Mo, ko, m, i, self.dir, self.rngs[i])
-            case ("Me", i, m, Mo, ko, n, e, Me, ke):
-                create_Me(
+            case ("SA", i, m, Mo, ko, n, e, Me, ke):
+                run_SA(
                     Me,
                     ke,
                     n,
@@ -95,10 +115,20 @@ class TaskManager:
                     self.rngs[i],
                     self.train_results_queue,
                 )
-            case ("Test", i, m, Mo, ko, n, e, Me, ke):
-                compute_test(
-                    Me, ke, n, e, Mo, ko, m, i, self.dir, self.test_results_queue
+            case ("MIP", i, m, Mo, ko, n, e, ke):
+                run_MIP(
+                    ke,
+                    n,
+                    e,
+                    Mo,
+                    ko,
+                    m,
+                    i,
+                    self.dir,
+                    self.train_results_queue,
                 )
+            case ("Test", i, m, Mo, ko, n, e, Me, ke):
+                run_test(Me, ke, n, e, Mo, ko, m, i, self.dir, self.test_results_queue)
             case _:
                 raise ValueError("Unknown task")
 
