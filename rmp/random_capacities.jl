@@ -49,7 +49,7 @@ function proba_lower_Th(h, k, I, II, III)
     return (prod([big(h - 1 + k - II + i) for i in 1:III]) * prod([big(h + k - I + i) for i in 1:(I-1)])) / (prod([big(h - 1 + k - II + i) for i in 1:II]) + I * prod([big(h - 1 + k - II + i) for i in 1:III]) * prod([big(h + k - I + i) for i in 1:(I-1)]))
 end
 
-function proba_upper_Bh(hh, k, I, II, III)
+function proba_upper_Bh(h, k, I, II, III)
     return (prod([big(h - II + k - 1 + i) for i in 1:III]) * prod([big(h - I + k + i) for i in 1:(I-1)])) / (prod([big(h - II + k - 1 + i) for i in 1:II]) + I * prod([big(h - II + k - 1 + i) for i in 1:III]) * prod([big(h - I + k + i) for i in 1:(I-1)]))
 end
 
@@ -61,8 +61,6 @@ function proba_Th(h, k, I, II, III)
     A = [big(h - 1 + k - II + i) for i in 1:II]
     eu = prod(A)
     el = prod(view(A, 1:III)) * prod([big(h + k - I + i) for i in 1:(I-1)])
-    # eu = prod(big(h - 1 + k - II + i) for i in 1:II; init=big(1))
-    # el = prod(big(h - 1 + k - II + i) for i in 1:III; init=big(1)) * prod(big(h + k - I + i) for i in 1:(I-1); init=big(1))
     denom = eu + I * el
     pu = eu / (h * denom)
     pl = el / denom
@@ -73,8 +71,6 @@ function proba_Bh(h, k, I, II, III)
     A = [big(h - 1 + k - II + i) for i in 1:II]
     el = prod(A)
     eu = prod(view(A, 1:III)) * prod([big(h + k - I + i) for i in 1:(I-1)])
-    # el = prod(big(h - 1 + k - II + i) for i in 1:II; init=big(1))
-    # eu = prod(big(h - 1 + k - II + i) for i in 1:III; init=big(1)) * prod(big(h + k - I + i) for i in 1:(I-1); init=big(1))
     denom = eu + I * el
     pl = el / (k * denom)
     pu = eu / denom
@@ -113,9 +109,6 @@ function generate_linext(P, rng)
     elem = Set(elements(H))
     top_card = top_cardinality(H)
     bottom_card = bottom_cardinality(H)
-
-    # Th = TopTwoLayers(H)
-    # Bh = BottomTwoLayers(H)
 
     while top_card - bottom_card > 1
         max = maximals(H)
