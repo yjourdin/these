@@ -81,21 +81,21 @@ end
 
 function select_M(P, ul, I, h, k, rng)
     card_I = length(I)
-    III = count(x -> length(above(P, x)) == 1, below(P, first(ul)))
-    II = card_I + III
-    # pu = proba_upper_Th(h, k, card_I, II, III)
-    # pl = proba_lower_Th(h, k, card_I, II, III)
-    pu, pl = proba_Th(h, k, card_I, II, III)
+    card_III = count(x -> length(above(P, x)) == 1, below(P, first(ul)))
+    card_II = card_I + card_III
+    # pu = proba_upper_Th(h, k, card_I, card_II, card_III)
+    # pl = proba_lower_Th(h, k, card_I, card_II, card_III)
+    pu, pl = proba_Th(h, k, card_I, card_II, card_III)
     return sample(rng, [collect(ul); collect(I)], ProbabilityWeights([fill(pu, h); fill(pl, card_I)]))
 end
 
 function select_m(P, ll, I, h, k, rng)
     card_I = length(I)
-    III = count(x -> length(below(P, x)) == 1, above(P, first(ll)))
-    II = card_I + III
-    # pu = proba_upper_Bh(h, k, card_I, II, III)
-    # pl = proba_lower_Bh(h, k, card_I, II, III)
-    pl, pu = proba_Bh(h, k, card_I, II, III)
+    card_III = count(x -> length(below(P, x)) == 1, above(P, first(ll)))
+    card_II = card_I + card_III
+    # pu = proba_upper_Bh(h, k, card_I, card_II, card_III)
+    # pl = proba_lower_Bh(h, k, card_I, card_II, card_III)
+    pl, pu = proba_Bh(h, k, card_I, card_II, card_III)
     return sample(rng, [collect(ll); collect(I)], ProbabilityWeights([fill(pl, k); fill(pu, card_I)]))
 end
 
