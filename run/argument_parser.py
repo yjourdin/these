@@ -25,6 +25,9 @@ parser.add_argument(
 parser.add_argument(
     "-j", "--jobs", default=35, type=int, help="Maximum number of parallel jobs"
 )
+parser.add_argument(
+    "-s", "--seed", type=int, help="Random seed"
+)
 
 
 def parse_args():

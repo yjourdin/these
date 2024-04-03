@@ -28,6 +28,7 @@ def learn_sa(
     comparisons: PreferenceStructure,
     T0: float,
     alpha: float,
+    amp: float,
     rng_init: Generator,
     rng_sa: Generator,
     L: int = 1,
@@ -52,7 +53,7 @@ def learn_sa(
             neighbors.append(NeighborCapacities(alternatives.criteria))
             prob.append(2**M)
         case "SRMP":
-            neighbors.append(NeighborWeights(0.1))
+            neighbors.append(NeighborWeights(amp))
             prob.append(M)
 
     if k >= 2:

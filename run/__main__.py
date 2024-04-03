@@ -29,7 +29,11 @@ dir = Directory(args.name)
 dir.mkdir()
 
 # Create random generators
-rngs = default_rng(args.seed).spawn(args.N_exp)
+seeds = (
+    args.seeds
+    if isinstance(args.seeds, list)
+    else default_rng(args.seed).integers(2**63, size=args.seeds)
+)
 
 # Create queues
 task_queue: JoinableQueue = JoinableQueue()
@@ -41,43 +45,85 @@ test_results_queue: Queue = Queue()
 succeed: defaultdict[Task, list[Task]] = defaultdict(list)
 precede: defaultdict[Task, list[Task]] = defaultdict(list)
 
-for i in range(args.N_exp):
+for i in range(len(seeds)):
     for m in args.M:
-        t_A_train = task_A_train(i, m)
-        t_A_test = task_A_test(i, m)
+        for n_te in args.N_te:
+            t_A_test = task_A_test(i, n_te, m)
+            task_queue.put(t_A_test)  # Put task in task queue
+    for n_tr in args.N_tr:
+        t_A_train = task_A_train(i, n_tr, m)
         task_queue.put(t_A_train)  # Put task in task queue
-        task_queue.put(t_A_test)  # Put task in task queue
         for Mo in args.Mo:
             for ko in args.Ko:
                 t_Mo = task_Mo(i, m, Mo, ko)
                 task_queue.put(t_Mo)  # Put task in task queue
                 for n_bc in args.N_bc:
                     for e in args.error:
-                        t_D = task_D(i, m, Mo, ko, n_bc, e)
-                        precede[t_D] += [t_A_train, t_Mo]
+                        t_D = task_D(i, n_tr, m, Mo, ko, n_bc, e)
                         succeed[t_A_train] += [t_D]
                         succeed[t_Mo] += [t_D]
+                        precede[t_D] += [t_A_train, t_Mo]
                         for Me in args.Me:
                             for ke in args.Ke:
+                                ts_Me = []
                                 for method in args.method:
-                                    match method:
-                                        case "SA":
-                                            t_Me = task_SA(
-                                                i, m, Mo, ko, n_bc, e, Me, ke
+                                    for config in range(len(args.config) or 1):
+                                        match method:
+                                            case "SA":
+                                                ts_Me.append(
+                                                    task_SA(
+                                                        i,
+                                                        n_tr,
+                                                        m,
+                                                        Mo,
+                                                        ko,
+                                                        n_bc,
+                                                        e,
+                                                        Me,
+                                                        ke,
+                                                        config,
+                                                    )
+                                                )
+                                            case "MIP" if Me == "SRMP":
+                                                ts_Me.append(
+                                                    task_MIP(
+                                                        i, n_tr, m, Mo, ko, n_bc, e, ke
+                                                    )
+                                                )
+                                            case _:
+                                                break
+                                        for n_te in args.N_te:
+                                            t_test = task_test(
+                                                i,
+                                                n_tr,
+                                                n_te,
+                                                m,
+                                                Mo,
+                                                ko,
+                                                n_bc,
+                                                e,
+                                                Me,
+                                                ke,
+                                                method,
+                                                config,
                                             )
-                                        case "MIP" if Me == "SRMP":
-                                            t_Me = task_MIP(i, m, Mo, ko, n_bc, e, ke)
-                                        case _:
-                                            break
-                                    t_test = task_test(i, m, Mo, ko, n_bc, e, Me, ke)
-                                    precede[t_Me] += [t_D]
-                                    succeed[t_D] += [t_Me]
-                                    precede[t_test] += [t_A_test, t_Me]
-                                    succeed[t_Me] += [t_test]
-                                    succeed[t_A_test] += [t_test]
+                                            t_A_test = task_A_test(i, n_te, m)
+                                            for t_Me in ts_Me:
+                                                succeed[t_D] += [t_Me]
+                                                precede[t_Me] += [t_D]
+                                                succeed[t_Me] += [t_test]
+                                                succeed[t_A_test] += [t_test]
+                                                precede[t_test] += [t_A_test, t_Me]
 
 task_manager = TaskManager(
-    args, succeed, precede, dir, rngs, train_results_queue, test_results_queue
+    args,
+    succeed,
+    precede,
+    dir,
+    seeds,
+    args.config,
+    train_results_queue,
+    test_results_queue,
 )
 
 # Start result file threads

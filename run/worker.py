@@ -18,9 +18,12 @@ def worker(
     logging_root.setLevel(logging.INFO)
     logging_root.addHandler(logging_qh)
 
+    logger = logging.getLogger("log")
     for task in iter(task_queue.get, "STOP"):
         try:
+            logger.info(task_manager.name(task) + " running...")
             task_manager.execute(task)
+            logger.info(task_manager.name(task) + " done")
             done_dict[task] = True
             for t in task_manager.next_tasks(task, done_dict):
                 if not put_dict.get(t, False):
@@ -28,7 +31,6 @@ def worker(
                     put_dict[t] = True
             task_queue.task_done()
         except Exception as e:
-            logger = logging.getLogger("log")
             logger.error(e)
             logger.info("Kill")
             break
