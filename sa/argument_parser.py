@@ -9,6 +9,9 @@ parser.add_argument("D", type=argparse.FileType("r"), help="Comparisons")
 parser.add_argument("--T0", type=float, required=True, help="Initial temperature")
 parser.add_argument("--alpha", type=float, required=True, help="Cooling coefficient")
 parser.add_argument(
+    "--amp", type=float, required=True, help="SRMP weight neighborhood amplitude"
+)
+parser.add_argument(
     "--L",
     default=1,
     type=int,

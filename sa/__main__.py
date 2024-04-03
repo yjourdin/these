@@ -20,6 +20,7 @@ best_model, best_fitness, time, it = learn_sa(
     D,
     args.T0,
     args.alpha,
+    args.amp,
     default_rng(args.seed_initial),
     default_rng(args.seed_sa),
     args.L,
