@@ -157,8 +157,8 @@ class TaskExecutor:
                     f"Error: {e:4} "
                     f"Me: {Me:4} "
                     f"Ke: {ke:2} "
-                    f"Method: {method:3} "
                     f"Config: {config:4} "
+                    f"Method: {method:3} "
                     f"N_te: {n_te:4})"
                 )
             case _:
