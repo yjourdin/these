@@ -180,6 +180,6 @@ def run_test(
 
     test_fitness = fitness_ranking(Ro, Re)
 
-    kendall_tau = kendalltau(Ro, Re).statistic
+    kendall_tau = kendalltau(Ro.data, Re.data).statistic
 
     return (test_fitness, kendall_tau)
