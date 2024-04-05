@@ -2,11 +2,13 @@ from collections.abc import Sequence
 
 from mcda.core.interfaces import Learner
 from mcda.core.relations import PreferenceStructure
-from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value, getSolver
+from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, getSolver, lpSum, value
 
 from performance_table.normal_performance_table import NormalPerformanceTable
 from srmp.model import SRMPModel
-solver = getSolver("PULP_CBC_CMD", timeLimit=10)
+
+solver = getSolver("PULP_CBC_CMD", msg=False)
+
 
 class MIP(Learner[SRMPModel | None]):
     def __init__(
@@ -125,7 +127,9 @@ class MIP(Learner[SRMPModel | None]):
                 for a in A_star:
                     # Constraints on the local concordances
                     self.prob += alternatives.cell[a, j] - p[h][j] >= delta[a][h][j] - 1
-                    self.prob += delta[a][h][j] >= alternatives.cell[a, j] - p[h][j] + self.gamma
+                    self.prob += (
+                        delta[a][h][j] >= alternatives.cell[a, j] - p[h][j] + self.gamma
+                    )
 
                     # Constraints on the weighted local concordances
                     self.prob += omega[a][h][j] <= w[j]
@@ -203,7 +207,7 @@ class MIP(Learner[SRMPModel | None]):
             [[value(p[h][j]) for j in M] for h in profile_indices]
         )
 
-        return SRMPModel(profiles, weights, lexicographic_order)
+        return SRMPModel(profiles, weights, [p - 1 for p in lexicographic_order[1:]])
 
     def learn(self):
         return self._learn(
