@@ -1,16 +1,14 @@
 import logging
 import logging.handlers
 from multiprocessing import JoinableQueue, Queue
-from multiprocessing.managers import DictProxy
 
-from .task import Task, TaskManager
+from .task import TaskExecutor, Task
 
 
 def worker(
-    task_manager: TaskManager,
-    task_queue: JoinableQueue,
-    put_dict: "DictProxy[Task, bool]",
-    done_dict: "DictProxy[Task, bool]",
+    task_executor: TaskExecutor,
+    task_queue: "JoinableQueue[Task]",
+    done_queue: "JoinableQueue[Task]",
     logging_queue: Queue,
 ):
     logging_qh = logging.handlers.QueueHandler(logging_queue)
@@ -21,17 +19,13 @@ def worker(
     logger = logging.getLogger("log")
     for task in iter(task_queue.get, "STOP"):
         try:
-            logger.info(task_manager.name(task) + " running...")
-            task_manager.execute(task)
-            logger.info(task_manager.name(task) + " done")
-            done_dict[task] = True
-            for t in task_manager.next_tasks(task, done_dict):
-                if not put_dict.get(t, False):
-                    task_queue.put(t)
-                    put_dict[t] = True
+            logger.info(task_executor.name(task) + " running...")
+            task_executor.execute(task)
             task_queue.task_done()
+            done_queue.put(task)
+            logger.info(task_executor.name(task) + " done")
         except Exception as e:
-            logger.error(e)
+            logger.error(e, exc_info=True)
             logger.info("Kill")
             break
 

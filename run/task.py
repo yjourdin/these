@@ -1,7 +1,6 @@
 from argparse import Namespace
 from collections import defaultdict
-from multiprocessing import Queue
-from multiprocessing.managers import DictProxy
+from multiprocessing import JoinableQueue, Queue
 from typing import Any, Literal
 
 from numpy.random import default_rng
@@ -83,12 +82,10 @@ def task_test(
     return ("Test", i, n_tr, n_te, m, Mo, ko, n, e, Me, ke, method, config)
 
 
-class TaskManager:
+class TaskExecutor:
     def __init__(
         self,
         args: Namespace,
-        succeed: defaultdict[Task, list[Task]],
-        precede: defaultdict[Task, list[Task]],
         dir: Directory,
         seeds: list[int],
         configs: dict,
@@ -96,8 +93,6 @@ class TaskManager:
         test_results_queue: Queue,
     ) -> None:
         self.args = args
-        self.succeed = succeed
-        self.precede = precede
         self.dir = dir
         self.seeds = seeds
         self.configs = configs
@@ -272,9 +267,21 @@ class TaskManager:
             case _:
                 raise ValueError("Unknown task")
 
-    def next_tasks(self, task: Task, done_dict: "DictProxy[Task, bool]"):
-        tasks = []
-        for next_task in self.succeed[task]:
-            if all(done_dict.get(t, False) for t in self.precede[next_task]):
-                tasks.append(next_task)
-        return tasks
+
+def task_manager(
+    succeed: defaultdict[Task, list[Task]],
+    precede: defaultdict[Task, list[Task]],
+    task_queue: "JoinableQueue[Task]",
+    done_queue: "JoinableQueue[Task]",
+):
+    task_set = set()
+    done_set = set()
+    for task in iter(done_queue.get, "STOP"):
+        done_set.add(task)
+        for next_task in succeed[task]:
+            if next_task not in task_set:
+                if all(t in done_set for t in precede[next_task]):
+                    task_queue.put(next_task)
+                    task_set.add(next_task)
+        done_queue.task_done()
+    done_queue.task_done()

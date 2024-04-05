@@ -1,6 +1,6 @@
 import logging.config
 from collections import defaultdict
-from multiprocessing import JoinableQueue, Manager, Process, Queue
+from multiprocessing import JoinableQueue, Process, Queue
 from threading import Thread
 
 from numpy.random import default_rng
@@ -10,10 +10,11 @@ from .logging import create_logging_config_dict, logger_thread
 from .path import Directory
 from .task import (
     Task,
-    TaskManager,
+    TaskExecutor,
     task_A_test,
     task_A_train,
     task_D,
+    task_manager,
     task_MIP,
     task_Mo,
     task_SA,
@@ -37,11 +38,12 @@ seeds = (
 
 # Create queues
 task_queue: JoinableQueue = JoinableQueue()
+done_queue: JoinableQueue = JoinableQueue()
 logging_queue: Queue = Queue()
 train_results_queue: Queue = Queue()
 test_results_queue: Queue = Queue()
 
-# Create TaskManager
+# Set up task precedence
 succeed: defaultdict[Task, list[Task]] = defaultdict(list)
 precede: defaultdict[Task, list[Task]] = defaultdict(list)
 
@@ -115,10 +117,9 @@ for i in range(len(seeds)):
                                                 succeed[t_A_test] += [t_test]
                                                 precede[t_test] += [t_A_test, t_Me]
 
-task_manager = TaskManager(
+# Create task executor
+task_executor = TaskExecutor(
     args,
-    succeed,
-    precede,
     dir,
     seeds,
     args.config,
@@ -145,36 +146,37 @@ test_result_thread = Thread(
 train_result_thread.start()
 test_result_thread.start()
 
+# Start task manager
+Process(target=task_manager, args=(succeed, precede, task_queue, done_queue)).start()
 
-with Manager() as manager:
-    done_dict = manager.dict()
-    put_dict = manager.dict()
+# Start workers
+for i in range(args.jobs):
+    Process(
+        target=worker,
+        args=(task_executor, task_queue, done_queue, logging_queue),
+    ).start()
 
-    # Start workers
-    for i in range(args.jobs):
-        Process(
-            target=worker,
-            args=(task_manager, task_queue, put_dict, done_dict, logging_queue),
-        ).start()
+# Start logging thread
+logging.config.dictConfig(create_logging_config_dict(dir))
+logging_thread = Thread(target=logger_thread, args=(logging_queue,))
+logging_thread.start()
 
-    # Start logging thread
-    logging.config.dictConfig(create_logging_config_dict(dir))
-    logging_thread = Thread(target=logger_thread, args=(logging_queue,))
-    logging_thread.start()
+# Wait all tasks to be done
+task_queue.join()
 
-    # Wait all tasks to be done
-    task_queue.join()
+# Stop workers
+for i in range(args.jobs):
+    task_queue.put("STOP")
 
-    # Stop workers
-    for i in range(args.jobs):
-        task_queue.put("STOP")
+# Stop task manager
+done_queue.put("STOP")
 
-    # Stop result file threads
-    train_results_queue.put("STOP")
-    test_results_queue.put("STOP")
-    train_result_thread.join()
-    test_result_thread.join()
+# Stop result file threads
+train_results_queue.put("STOP")
+test_results_queue.put("STOP")
+train_result_thread.join()
+test_result_thread.join()
 
-    # Stop logging thread
-    logging_queue.put("STOP")
-    logging_thread.join()
+# Stop logging thread
+logging_queue.put("STOP")
+logging_thread.join()
