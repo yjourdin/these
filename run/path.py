@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from model import ModelType
 
@@ -40,11 +41,22 @@ class Directory:
         e: float,
         Me: ModelType,
         ke: int,
+        method: Literal["MIP", "SA"],
+        config: int | None = None,
     ):
-        return (
-            self.Me_dir
-            / f"DM_{i}_Ntr_{n_tr}_M_{m}_Mo_{Mo}_Ko_{ko}_N_{n}_E_{e}_Me_{Me}_Ke_{ke}"
-            ".json"
+        return self.Me_dir / (
+            f"DM_{i}_"
+            f"Ntr_{n_tr}_"
+            f"M_{m}_"
+            f"Mo_{Mo}_"
+            f"Ko_{ko}_"
+            f"N_{n}_"
+            f"E_{e}_"
+            f"Me_{Me}_"
+            f"Ke_{ke}_"
+            f"Method_{method}"
+            + (f"_Config_{config}" if config is not None else "")
+            + ".json"
         )
 
     def mkdir(self):

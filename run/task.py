@@ -77,7 +77,7 @@ def task_test(
     Me: ModelType,
     ke: int,
     method: Literal["MIP", "SA"],
-    config: int,
+    config: int | None = None,
 ) -> Task:
     return ("Test", i, n_tr, n_te, m, Mo, ko, n, e, Me, ke, method, config)
 
@@ -150,7 +150,6 @@ class TaskExecutor:
                     f"Test    ("
                     f"DM: {i:2} "
                     f"N_tr: {n_tr:4} "
-                    f"N_te: {n_te:4} "
                     f"M: {m:2} "
                     f"Mo: {Mo:4} "
                     f"Ko: {ko:2} "
@@ -159,7 +158,8 @@ class TaskExecutor:
                     f"Me: {Me:4} "
                     f"Ke: {ke:2} "
                     f"Method: {method:3} "
-                    f"Config: {config:4})"
+                    f"Config: {config:4} "
+                    f"N_te: {n_te:4})"
                 )
             case _:
                 raise ValueError("Unknown task")
@@ -186,6 +186,7 @@ class TaskExecutor:
                 )
             case ("SA", i, n_tr, m, Mo, ko, n, e, Me, ke, config):
                 time, it, best_fitness = run_SA(
+                    config,
                     Me,
                     ke,
                     n,
@@ -246,7 +247,7 @@ class TaskExecutor:
                 )
             case ("Test", i, n_tr, n_te, m, Mo, ko, n, e, Me, ke, method, config):
                 test_fitness, kendall_tau = run_test(
-                    Me, ke, n, e, Mo, ko, m, n_te, n_tr, i, self.dir
+                    config, method, Me, ke, n, e, Mo, ko, m, n_te, n_tr, i, self.dir
                 )
                 self.test_results_queue.put(
                     f"{i},"

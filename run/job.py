@@ -1,3 +1,5 @@
+from typing import Literal
+
 from numpy.random import Generator
 from pandas import read_csv
 from scipy.stats import kendalltau
@@ -71,6 +73,7 @@ def create_D(
 
 
 def run_SA(
+    config: int,
     Me: ModelType,
     ke: int,
     n: int,
@@ -107,7 +110,7 @@ def run_SA(
         Tf=Tf,
     )
 
-    with dir.Me_file(i, n_tr, m, Mo, ko, n, e, Me, ke).open("w") as f:
+    with dir.Me_file(i, n_tr, m, Mo, ko, n, e, Me, ke, "SA", config).open("w") as f:
         f.write(best_model.to_json())
 
     return (time, it, best_fitness)
@@ -132,13 +135,15 @@ def run_MIP(
 
     best_model, best_fitness, time = learn_mip(ke, A, D)
 
-    with dir.Me_file(i, n_tr, m, Mo, ko, n, e, "SRMP", ke).open("w") as f:
+    with dir.Me_file(i, n_tr, m, Mo, ko, n, e, "SRMP", ke, "MIP").open("w") as f:
         f.write(best_model.to_json())
 
     return (time, best_fitness)
 
 
 def run_test(
+    config: int,
+    method: Literal["MIP", "SA"],
     Me_type: ModelType,
     ke: int,
     n: int,
@@ -161,7 +166,9 @@ def run_test(
             case "SRMP":
                 Mo = SRMPModel.from_json(f.read())
 
-    with dir.Me_file(i, n_tr, m, Mo_type, ko, n, e, Me_type, ke).open("r") as f:
+    with dir.Me_file(i, n_tr, m, Mo_type, ko, n, e, Me_type, ke, method, config).open(
+        "r"
+    ) as f:
         match Me_type:
             case "RMP":
                 Me = RMPModel.from_json(f.read())
