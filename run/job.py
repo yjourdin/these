@@ -59,7 +59,7 @@ def create_D(
                 model = SRMPModel.from_json(f.read())
 
     with dir.A_train_file(i, n_tr, m).open("r") as f:
-        A = NormalPerformanceTable(read_csv(f))
+        A = NormalPerformanceTable(read_csv(f, header=None))
 
     D = random_comparisons(n, A, model, rng)
 

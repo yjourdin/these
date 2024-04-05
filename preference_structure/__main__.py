@@ -13,7 +13,7 @@ args = parse_args()
 s = args.model.read()
 model = import_model(s)
 
-A = NormalPerformanceTable(read_csv(args.A))
+A = NormalPerformanceTable(read_csv(args.A, header=None))
 
 if args.n > 0:
     D = random_comparisons(args.n, A, model, default_rng(args.seed))
