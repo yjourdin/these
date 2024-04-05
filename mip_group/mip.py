@@ -222,7 +222,6 @@ class MIP(Learner[SRMPModel | None]):
         profiles = NormalPerformanceTable(
             [[value(p[h][j]) for j in M] for h in profile_indices]
         )
-        print(lexicographic_order)
         return SRMPModel(profiles, weights, [p - 1 for p in lexicographic_order[1:]])
 
     def learn(self):
