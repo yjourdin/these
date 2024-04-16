@@ -134,7 +134,7 @@ task_executor = TaskExecutor(
     seeds,
     train_results_queue,
     test_results_queue,
-    args.config or {},
+    args.config if hasattr(args, "config") else {},
 )
 
 # Start result file threads
