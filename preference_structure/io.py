@@ -1,4 +1,5 @@
-from mcda.core.relations import I, P, PreferenceStructure, R, Relation
+from mcda.relations import I, P, PreferenceStructure, R
+from mcda.internal.core.relations import Relation
 
 
 def to_csv(comparisons: PreferenceStructure) -> str:

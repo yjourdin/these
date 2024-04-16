@@ -1,7 +1,8 @@
 import numpy as np
-from mcda.core.matrices import PerformanceTable
-from mcda.core.relations import I, P, PreferenceStructure, Relation
-from mcda.core.values import Ranking
+from mcda.matrices import PerformanceTable
+from mcda.relations import I, P, PreferenceStructure
+from mcda.internal.core.relations import Relation
+from mcda.internal.core.values import Ranking
 from numpy.random import Generator
 
 from abstract_model import Model

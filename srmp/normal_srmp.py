@@ -1,9 +1,10 @@
 from typing import Any
 
 import numpy as np
-from mcda.core.matrices import PerformanceTable
-from mcda.core.scales import DiscreteQuantitativeScale, NormalScale, PreferenceDirection
-from mcda.core.values import Ranking, Values
+from mcda.matrices import PerformanceTable
+from mcda.scales import DiscreteQuantitativeScale, PreferenceDirection
+from mcda.internal.core.scales import NormalScale
+from mcda.values import Values, CommensurableValues
 from mcda.outranking.srmp import SRMP, ProfileWiseOutranking
 from pandas import Series
 from scipy.stats import rankdata
@@ -103,7 +104,7 @@ class NormalSRMP(SRMP):
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
         ranks = rankdata(-scores, method="dense")
-        return Ranking[DiscreteQuantitativeScale](
+        return CommensurableValues(
             Series(ranks, self.performance_table.alternatives),
             scale=DiscreteQuantitativeScale(
                 ranks.tolist(),

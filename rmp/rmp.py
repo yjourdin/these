@@ -10,16 +10,12 @@ from __future__ import annotations
 from typing import Any, cast
 
 import numpy as np
-from mcda.core.interfaces import Ranker
-from mcda.core.matrices import (
-    OutrankingMatrix,
-    PerformanceTable,
-    create_outranking_matrix,
-)
-from mcda.core.scales import DiscreteQuantitativeScale, NormalScale, PreferenceDirection
-from mcda.core.transformers import ClosestTransformer
-from mcda.core.values import Ranking, Values
-from mcda.plot.plot import (
+from mcda.internal.core.interfaces import Ranker
+from mcda.internal.core.matrices import OutrankingMatrix
+from mcda.internal.core.scales import NormalScale
+from mcda.internal.core.values import Ranking
+from mcda.matrices import PerformanceTable, create_outranking_matrix
+from mcda.plot import (
     Annotation,
     AreaPlot,
     Axis,
@@ -30,6 +26,9 @@ from mcda.plot.plot import (
     ParallelCoordinatesPlot,
     Text,
 )
+from mcda.scales import DiscreteQuantitativeScale, PreferenceDirection
+from mcda.transformers import ClosestTransformer
+from mcda.values import Values, CommensurableValues
 from pandas import DataFrame, Series, concat
 from scipy.stats import rankdata
 
@@ -209,7 +208,7 @@ class RMP(Ranker):
         scores = outranking_matrix.sum(1)
         scores_ordered = sorted(set(scores.values), reverse=True)
         ranks = cast(Series, scores.apply(lambda x: scores_ordered.index(x) + 1))
-        return Ranking[DiscreteQuantitativeScale](
+        return CommensurableValues(
             ranks,
             scale=DiscreteQuantitativeScale(
                 ranks.tolist(),
@@ -662,7 +661,7 @@ class NormalRMP(RMP):
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
         ranks = rankdata(-scores, method="dense")
-        return Ranking[DiscreteQuantitativeScale](
+        return CommensurableValues(
             Series(ranks, self.performance_table.alternatives),
             scale=DiscreteQuantitativeScale(
                 ranks.tolist(),

@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 
-from mcda.core.interfaces import Learner
-from mcda.core.relations import PreferenceStructure
+from mcda.internal.core.interfaces import Learner
+from mcda.relations import PreferenceStructure
 from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, getSolver, lpSum, value
 
 from performance_table.normal_performance_table import NormalPerformanceTable

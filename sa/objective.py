@@ -1,5 +1,5 @@
-from mcda.core.matrices import PerformanceTable
-from mcda.core.relations import PreferenceStructure
+from mcda.matrices import PerformanceTable
+from mcda.relations import PreferenceStructure
 
 from .sa import Objective
 

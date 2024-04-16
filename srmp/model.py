@@ -1,16 +1,13 @@
 from dataclasses import dataclass
 from json import JSONDecoder, JSONEncoder, dumps, loads
-from typing import TypeVar
 
-from mcda.core.scales import NormalScale, Scale
+from mcda.internal.core.scales import NormalScale
 
 from abstract_model import Model
 from performance_table.normal_performance_table import NormalPerformanceTable
 from utils import print_list
 
 from .normal_srmp import NormalSRMP
-
-S = TypeVar("S", bound=Scale, covariant=True)
 
 
 class SRMPEncoder(JSONEncoder):

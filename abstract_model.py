@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-from mcda.core.matrices import PerformanceTable
-from mcda.core.relations import PreferenceStructure
-from mcda.core.scales import Scale
-from mcda.core.values import Ranking
+from mcda.internal.core.scales import Scale
+from mcda.internal.core.values import Ranking
+from mcda.matrices import PerformanceTable
+from mcda.relations import PreferenceStructure
 
 from fitness import fitness_comparisons
 

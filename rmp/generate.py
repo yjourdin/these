@@ -3,8 +3,8 @@ from subprocess import run
 from typing import Any
 
 import numpy as np
-from mcda.core.matrices import PerformanceTable
-from mcda.core.scales import NormalScale
+from mcda.internal.core.scales import NormalScale
+from mcda.matrices import PerformanceTable
 from numpy.random import Generator
 from pandas import DataFrame
 

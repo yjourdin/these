@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from mcda.core.relations import PreferenceStructure
+from mcda.relations import PreferenceStructure
 from numpy.random import Generator
 
 from model import ModelType

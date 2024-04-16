@@ -2,7 +2,7 @@ from collections import namedtuple
 from itertools import permutations
 from typing import cast
 
-from mcda.core.relations import I, P, PreferenceStructure
+from mcda.relations import I, P, PreferenceStructure
 from pulp import value
 
 from performance_table.normal_performance_table import NormalPerformanceTable

@@ -3,7 +3,7 @@ from copy import deepcopy
 from itertools import chain, combinations
 from typing import Any, Collection, TypeVar, cast
 
-from mcda.core.matrices import PerformanceTable
+from mcda.matrices import PerformanceTable
 import numpy as np
 from numpy.random import Generator
 

@@ -3,7 +3,7 @@ from math import exp
 from time import time
 from typing import Generic, TypeVar
 
-from mcda.core.interfaces import Learner
+from mcda.internal.core.interfaces import Learner
 from numpy.random import Generator
 
 T = TypeVar("T")

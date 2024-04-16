@@ -1,7 +1,7 @@
 from typing import TypeVar
 
-from mcda.core.matrices import PerformanceTable
-from mcda.core.scales import OrdinalScale
+from mcda.internal.core.scales import OrdinalScale
+from mcda.matrices import PerformanceTable
 from numpy import sort
 
 S = TypeVar("S", bound=OrdinalScale, covariant=True)

@@ -1,6 +1,6 @@
 import numpy as np
-from mcda.core.matrices import PerformanceTable
-from mcda.core.scales import NormalScale
+from mcda.internal.core.scales import NormalScale
+from mcda.matrices import PerformanceTable
 from numpy.random import Generator
 
 from performance_table.normal_performance_table import NormalPerformanceTable

@@ -1,10 +1,6 @@
 import numpy as np
-from mcda.core.relations import (
-    I,
-    P,
-    PreferenceStructure,
-)
-from mcda.core.values import Ranking
+from mcda.internal.core.values import Ranking
+from mcda.relations import I, P, PreferenceStructure
 
 
 def fitness_comparisons(ranking: Ranking, comparisons: PreferenceStructure):

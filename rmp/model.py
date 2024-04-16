@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from json import JSONDecoder, JSONEncoder, dumps, loads
 from typing import Any
 
-from mcda.core.scales import NormalScale
+from mcda.internal.core.scales import NormalScale
 
 from abstract_model import Model
 from performance_table.normal_performance_table import NormalPerformanceTable
