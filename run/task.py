@@ -146,6 +146,7 @@ class TaskExecutor:
                     f"Ke: {ke:2})"
                 )
             case ("Test", i, n_tr, n_te, m, Mo, ko, n, e, Me, ke, method, config):
+                config = config or 0
                 return (
                     f"Test    ("
                     f"DM: {i:2} "
