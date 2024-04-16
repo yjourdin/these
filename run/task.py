@@ -88,16 +88,16 @@ class TaskExecutor:
         args: Namespace,
         dir: Directory,
         seeds: list[int],
-        configs: dict,
         train_results_queue: Queue,
         test_results_queue: Queue,
+        configs: dict = {},
     ) -> None:
         self.args = args
         self.dir = dir
         self.seeds = seeds
-        self.configs = configs
         self.train_results_queue = train_results_queue
         self.test_results_queue = test_results_queue
+        self.configs = configs
 
     def name(self, task: Task):
         match task:

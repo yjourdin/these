@@ -2,7 +2,7 @@ import logging
 import logging.handlers
 from multiprocessing import JoinableQueue, Queue
 
-from .task import TaskExecutor, Task
+from .task import Task, TaskExecutor
 
 
 def worker(

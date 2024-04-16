@@ -73,17 +73,17 @@ for i in range(len(seeds)):
                                         case "SA":
                                             for config in range(len(args.config) or 1):
                                                 t_Me = task_SA(
-                                                        i,
-                                                        n_tr,
-                                                        m,
-                                                        Mo,
-                                                        ko,
-                                                        n_bc,
-                                                        e,
-                                                        Me,
-                                                        ke,
-                                                        config,
-                                                    )
+                                                    i,
+                                                    n_tr,
+                                                    m,
+                                                    Mo,
+                                                    ko,
+                                                    n_bc,
+                                                    e,
+                                                    Me,
+                                                    ke,
+                                                    config,
+                                                )
                                                 t_test = task_test(
                                                     i,
                                                     n_tr,
@@ -101,26 +101,26 @@ for i in range(len(seeds)):
                                                 ts.append((t_Me, t_test))
                                         case "MIP" if Me == "SRMP":
                                             t_Me = task_MIP(
-                                                    i, n_tr, m, Mo, ko, n_bc, e, ke
-                                                )
+                                                i, n_tr, m, Mo, ko, n_bc, e, ke
+                                            )
                                             t_test = task_test(
-                                                    i,
-                                                    n_tr,
-                                                    n_te,
-                                                    m,
-                                                    Mo,
-                                                    ko,
-                                                    n_bc,
-                                                    e,
-                                                    Me,
-                                                    ke,
-                                                    method,
-                                                )
+                                                i,
+                                                n_tr,
+                                                n_te,
+                                                m,
+                                                Mo,
+                                                ko,
+                                                n_bc,
+                                                e,
+                                                Me,
+                                                ke,
+                                                method,
+                                            )
                                             ts.append((t_Me, t_test))
                                         case _:
                                             break
                                     for n_te in args.N_te:
-                                        for (t_Me, t_test) in ts:
+                                        for t_Me, t_test in ts:
                                             succeed[t_D] += [t_Me]
                                             precede[t_Me] += [t_D]
                                             succeed[t_Me] += [t_test]
@@ -132,9 +132,9 @@ task_executor = TaskExecutor(
     args,
     dir,
     seeds,
-    args.config,
     train_results_queue,
     test_results_queue,
+    args.config,
 )
 
 # Start result file threads
