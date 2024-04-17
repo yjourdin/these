@@ -21,9 +21,9 @@ def worker(
         try:
             logger.info(task_executor.name(task) + " running...")
             task_executor.execute(task)
-            task_queue.task_done()
             done_queue.put(task)
             logger.info(task_executor.name(task) + " done")
+            task_queue.task_done()
         except Exception as e:
             logger.error(e, exc_info=True)
             logger.info("Kill")
