@@ -18,7 +18,6 @@ best_model, best_fitness, time = learn_mip(
     D,
     args.gamma,
     not args.no_inconsistencies,
-    args.verbose,
 )
 
 if best_model is not None :

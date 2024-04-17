@@ -16,7 +16,6 @@ def learn_mip(
     comparisons: PreferenceStructure,
     gamma: float = 0.001,
     inconsistencies: bool = True,
-    verbose: bool = False,
 ):
     alternatives = alternatives.subtable(comparisons.elements)
 

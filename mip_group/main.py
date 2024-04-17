@@ -2,7 +2,7 @@ from collections import namedtuple
 from itertools import permutations
 from typing import cast
 
-from mcda.core.relations import I, P, PreferenceStructure
+from mcda.relations import I, P, PreferenceStructure
 from pulp import value
 
 from performance_table.normal_performance_table import NormalPerformanceTable
@@ -17,7 +17,6 @@ def learn_mip(
     comparisons2: PreferenceStructure,
     gamma: float = 0.001,
     inconsistencies: bool = True,
-    verbose: bool = False,
 ):
     alternatives = alternatives.subtable(comparisons.elements)
 

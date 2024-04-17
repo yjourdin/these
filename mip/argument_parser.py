@@ -32,7 +32,6 @@ parser.add_argument(
     type=argparse.FileType("w"),
     help="Result file",
 )
-parser.add_argument("-v", "--verbose", action="store_true", help="Verbose")
 
 
 def parse_args():
