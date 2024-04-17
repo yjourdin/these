@@ -35,6 +35,9 @@ seeds = (
     if isinstance(args.seeds, list)
     else default_rng(args.seed).integers(2**63, size=args.seeds)
 )
+with dir.seeds_file.open("w") as f:
+    for i, seed in enumerate(seeds):
+        f.write(f"{i},{seed}\n")
 
 # Create queues
 task_queue: JoinableQueue = JoinableQueue()

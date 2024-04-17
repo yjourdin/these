@@ -15,6 +15,7 @@ class Directory:
         self.train_results_file = self.root_dir / "train_results.csv"
         self.test_results_file = self.root_dir / "test_results.csv"
         self.log_file = self.root_dir / "log.log"
+        self.seeds_file = self.root_dir / "seeds.csv"
 
     def A_train_file(self, i: int, n: int, m: int):
         return self.A_train_dir / f"DM_{i}_N_{n}_M_{m}.csv"
