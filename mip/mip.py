@@ -16,11 +16,6 @@ from pulp import (
 from performance_table.normal_performance_table import NormalPerformanceTable
 from srmp.model import SRMPModel
 
-if "GUROBI" in listSolvers(True):
-    solver = getSolver("GUROBI", msg=False)
-else:
-    solver = getSolver("PULP_CBC_CMD", msg=False)
-
 
 class MIP(Learner[SRMPModel | None]):
     def __init__(
@@ -31,6 +26,7 @@ class MIP(Learner[SRMPModel | None]):
         lexicographic_order: Sequence[int],
         gamma: float,
         inconsistencies: bool,
+        seed: int = 0,
     ):
         self.alternatives = alternatives
         self.preference_relations = preference_relations
@@ -38,6 +34,13 @@ class MIP(Learner[SRMPModel | None]):
         self.lexicographic_order = lexicographic_order
         self.gamma = gamma
         self.inconsistencies = inconsistencies
+
+        if "GUROBI" in listSolvers(True):
+            self.solver = getSolver(
+                "GUROBI", msg=False, seed=seed % 2_000_000_000, threads=1
+            )
+        else:
+            self.solver = getSolver("PULP_CBC_CMD", msg=False)
 
     def _learn(
         self,
@@ -208,7 +211,7 @@ class MIP(Learner[SRMPModel | None]):
                     )
 
         # Solve problem
-        status = self.prob.solve(solver)
+        status = self.prob.solve(self.solver)
 
         if status != 1:
             return None
