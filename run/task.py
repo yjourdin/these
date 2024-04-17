@@ -238,6 +238,7 @@ class TaskExecutor:
                     n_tr,
                     i,
                     self.dir,
+                    default_rng([ke, n, ko, m, self.seeds[i]]).integers(2_000_000_000),
                 )
                 self.train_results_queue.put(
                     f"{i},"

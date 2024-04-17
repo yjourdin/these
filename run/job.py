@@ -126,6 +126,7 @@ def run_MIP(
     n_tr: int,
     i: int,
     dir: Directory,
+    seed: int,
 ):
     with dir.A_train_file(i, n_tr, m).open("r") as f:
         A = NormalPerformanceTable(read_csv(f, header=None))
@@ -133,7 +134,7 @@ def run_MIP(
     with dir.D_file(i, n_tr, m, Mo, ko, n, e).open("r") as f:
         D = from_csv(f.read())
 
-    best_model, best_fitness, time = learn_mip(ke, A, D)
+    best_model, best_fitness, time = learn_mip(ke, A, D, seed=seed)
 
     with dir.Me_file(i, n_tr, m, Mo, ko, n, e, "SRMP", ke, "MIP").open("w") as f:
         f.write(best_model.to_json())

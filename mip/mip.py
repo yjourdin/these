@@ -26,7 +26,7 @@ class MIP(Learner[SRMPModel | None]):
         lexicographic_order: Sequence[int],
         gamma: float,
         inconsistencies: bool,
-        seed: int = 0,
+        seed: int,
     ):
         self.alternatives = alternatives
         self.preference_relations = preference_relations

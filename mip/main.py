@@ -16,6 +16,7 @@ def learn_mip(
     comparisons: PreferenceStructure,
     gamma: float = 0.001,
     inconsistencies: bool = True,
+    seed: int = 0,
 ):
     alternatives = alternatives.subtable(comparisons.elements)
 
@@ -40,6 +41,7 @@ def learn_mip(
             lexicographic_order,
             gamma=gamma,
             inconsistencies=inconsistencies,
+            seed=seed,
         )
         model = mip.learn()
         if model is not None:
