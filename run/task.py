@@ -102,11 +102,18 @@ class TaskExecutor:
     def name(self, task: Task):
         match task:
             case ("A_train", i, n, m):
-                return f"A_train (DM: {i:2} N: {n:4} M: {m:2})"
+                return f"A_train (DM: {i:2} N_tr: {n:4} M: {m:2})"
             case ("A_test", i, n, m):
-                return f"A_test  (DM: {i:2} N: {n:4} M: {m:2})"
+                return f"A_test  (DM: {i:2} N_te: {n:4} M: {m:2})"
             case ("Mo", i, m, model, k):
-                return f"Mo      (DM: {i:2} M: {m:2} Mo: {model:4} Ko: {k:2})"
+                return (
+                    f"Mo      ("
+                    f"DM: {i:2} "
+                    "           "
+                    f"M: {m:2} "
+                    f"Mo: {model:4} "
+                    f"Ko: {k:2})"
+                )
             case ("D", i, n_tr, m, Mo, ko, n, e):
                 return (
                     f"D       ("
