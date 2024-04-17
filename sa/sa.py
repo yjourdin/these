@@ -94,8 +94,8 @@ class SimulatedAnnealing(Learner[T]):
                 self.non_improving_it += 1
 
                 # Neighbor model
-                neighbor_model = self.neighbor(current_sol, rng)
-                neighbor_objective = self.objective(neighbor_model)
+                neighbor_sol = self.neighbor(current_sol, rng)
+                neighbor_objective = self.objective(neighbor_sol)
 
                 prob: float
                 if neighbor_objective <= current_objective:
@@ -108,7 +108,7 @@ class SimulatedAnnealing(Learner[T]):
 
                 if rng.random() < prob:
                     # Accepted
-                    current_sol = neighbor_model
+                    current_sol = neighbor_sol
                     current_objective = neighbor_objective
 
                     # New best
@@ -123,7 +123,10 @@ class SimulatedAnnealing(Learner[T]):
 
                 if self.verbose:
                     print(
-                        f"{neighbor_model}   "
+                        f"{self.it}   "
+                        f"{self.non_improving_it}   "
+                        f"{self.time}   "
+                        f"{neighbor_sol}   "
                         f"{neighbor_objective:.3f}   "
                         f"{current_objective:.3f}   "
                         f"{self.best_objective:.3f}   "
