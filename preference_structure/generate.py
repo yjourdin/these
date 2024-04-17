@@ -1,7 +1,6 @@
 import numpy as np
 from mcda.matrices import PerformanceTable
 from mcda.relations import I, P, PreferenceStructure
-from mcda.internal.core.relations import Relation
 from mcda.internal.core.values import Ranking
 from numpy.random import Generator
 
@@ -20,16 +19,14 @@ def random_comparisons(
     all_pairs = np.array(np.triu_indices(len(alternatives.data), 1)).transpose()
     pairs = rng.choice(all_pairs, nb, replace=False)
     result = PreferenceStructure()
-    relations: list[Relation] = []
     for ia, ib in pairs:
         a, b = labels[ia], labels[ib]
         if ranking_dict[a] < ranking_dict[b]:
-            relations.append(P(a, b))
+            result._relations.append(P(a, b))
         elif ranking_dict[a] == ranking_dict[b]:
-            relations.append(I(a, b))
+            result._relations.append(I(a, b))
         else:
-            relations.append(P(b, a))
-    result._relations = relations
+            result._relations.append(P(b, a))
     return result
 
 
@@ -38,16 +35,14 @@ def from_ranking(ranking: Ranking):
     labels = ranking.labels
     all_pairs = np.array(np.triu_indices(len(ranking.data), 1)).transpose()
     result = PreferenceStructure()
-    relations: list[Relation] = []
     for ia, ib in all_pairs:
         a, b = labels[ia], labels[ib]
         if ranking_dict[a] < ranking_dict[b]:
-            relations.append(P(a, b))
+            result._relations.append(P(a, b))
         elif ranking_dict[a] == ranking_dict[b]:
-            relations.append(I(a, b))
+            result._relations.append(I(a, b))
         else:
-            relations.append(P(b, a))
-    result._relations = relations
+            result._relations.append(P(b, a))
     return result
 
 
