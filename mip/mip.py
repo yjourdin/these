@@ -42,7 +42,7 @@ class MIP(Learner[SRMPModel | None]):
                 msg=verbose,
                 seed=seed % 2_000_000_000,
                 threads=1,
-                outputflag=0,
+                options=[("OutputFlag", 0)],
             )
         else:
             self.solver = getSolver("PULP_CBC_CMD", msg=verbose)
