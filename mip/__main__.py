@@ -13,14 +13,10 @@ A = NormalPerformanceTable(read_csv(args.A, header=None))
 D = from_csv(args.D.read())
 
 best_model, best_fitness, time = learn_mip(
-    args.k,
-    A,
-    D,
-    args.gamma,
-    not args.no_inconsistencies,
+    args.k, A, D, args.gamma, not args.no_inconsistencies, args.seed, args.verbose
 )
 
-if best_model is not None :
+if best_model is not None:
     args.output.write(best_model.to_json())
     args.result.write(
         f"{args.A.name}," f"{args.D.name}," f"{args.k}," f"{time}," f"{best_fitness}\n"

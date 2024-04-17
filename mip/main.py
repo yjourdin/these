@@ -17,6 +17,7 @@ def learn_mip(
     gamma: float = 0.001,
     inconsistencies: bool = True,
     seed: int = 0,
+    verbose: bool = False,
 ):
     alternatives = alternatives.subtable(comparisons.elements)
 
@@ -42,6 +43,7 @@ def learn_mip(
             gamma=gamma,
             inconsistencies=inconsistencies,
             seed=seed,
+            verbose=verbose,
         )
         model = mip.learn()
         if model is not None:

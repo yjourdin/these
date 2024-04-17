@@ -14,13 +14,7 @@ D = from_csv(args.D.read())
 D2 = from_csv(args.D2.read())
 
 best_model, best_fitness, time = learn_mip(
-    args.k,
-    A,
-    D,
-    D2,
-    args.gamma,
-    not args.no_inconsistencies,
-    args.verbose,
+    args.k, A, D, D2, args.gamma, not args.no_inconsistencies, args.seed, args.verbose
 )
 
 if best_model is not None:

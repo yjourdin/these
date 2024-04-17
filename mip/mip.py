@@ -27,6 +27,7 @@ class MIP(Learner[SRMPModel | None]):
         gamma: float,
         inconsistencies: bool,
         seed: int,
+        verbose: bool
     ):
         self.alternatives = alternatives
         self.preference_relations = preference_relations
@@ -37,10 +38,10 @@ class MIP(Learner[SRMPModel | None]):
 
         if "GUROBI" in listSolvers(True):
             self.solver = getSolver(
-                "GUROBI", msg=False, seed=seed % 2_000_000_000, threads=1
+                "GUROBI", msg=verbose, seed=seed % 2_000_000_000, threads=1
             )
         else:
-            self.solver = getSolver("PULP_CBC_CMD", msg=False)
+            self.solver = getSolver("PULP_CBC_CMD", msg=verbose)
 
     def _learn(
         self,
