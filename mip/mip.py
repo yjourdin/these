@@ -2,12 +2,24 @@ from collections.abc import Sequence
 
 from mcda.internal.core.interfaces import Learner
 from mcda.relations import PreferenceStructure
-from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, getSolver, lpSum, value
+from pulp import (
+    LpBinary,
+    LpMaximize,
+    LpProblem,
+    LpVariable,
+    getSolver,
+    listSolvers,
+    lpSum,
+    value,
+)
 
 from performance_table.normal_performance_table import NormalPerformanceTable
 from srmp.model import SRMPModel
 
-solver = getSolver("PULP_CBC_CMD", msg=False)
+if "GUROBI" in listSolvers(True):
+    solver = getSolver("GUROBI", msg=False)
+else:
+    solver = getSolver("PULP_CBC_CMD", msg=False)
 
 
 class MIP(Learner[SRMPModel | None]):
