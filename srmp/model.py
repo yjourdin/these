@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from json import JSONDecoder, JSONEncoder, dumps, loads
 
 from mcda.internal.core.scales import NormalScale
@@ -53,8 +53,15 @@ class SRMPModel(Model[NormalScale]):
         )
 
     @classmethod
+    def from_dict(cls, dct):
+        return cls(**dct)
+
+    @classmethod
     def from_json(cls, s):
         return loads(s, cls=SRMPDecoder)
+
+    def to_dict(self):
+        return asdict(self)
 
     def to_json(self):
         return dumps(self, cls=SRMPEncoder, indent=4)

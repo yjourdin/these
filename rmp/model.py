@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from json import JSONDecoder, JSONEncoder, dumps, loads
 from typing import Any
 
@@ -54,8 +54,15 @@ class RMPModel(Model[NormalScale]):
         )
 
     @classmethod
+    def from_dict(cls, dct):
+        return cls(**dct)
+
+    @classmethod
     def from_json(cls, s):
         return loads(s, cls=RMPDecoder)
+
+    def to_dict(self):
+        return asdict(self)
 
     def to_json(self):
         return dumps(self, cls=RMPEncoder, indent=4)
