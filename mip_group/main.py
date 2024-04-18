@@ -7,73 +7,68 @@ from pulp import value
 
 from performance_table.normal_performance_table import NormalPerformanceTable
 
-from .mip import MIP
+from .mip import MIPGroup
 
 
 def learn_mip(
     k: int,
     alternatives: NormalPerformanceTable,
-    comparisons: PreferenceStructure,
-    comparisons2: PreferenceStructure,
+    comparisons: list[PreferenceStructure],
     gamma: float = 0.001,
     inconsistencies: bool = True,
     seed: int = 0,
     verbose: bool = False,
 ):
-    alternatives = alternatives.subtable(comparisons.elements)
+    alternatives = alternatives.subtable(
+        list(set().union(comp.elements for comp in comparisons))
+    )
 
-    best_model = None
+    best_models = None
     best_fitness: float = 0
     time = None
 
-    preference_relations = PreferenceStructure()
-    indifference_relations = PreferenceStructure()
-    for r in comparisons:
-        match r:
-            case P():
-                preference_relations._relations.append(r)
-            case I():
-                indifference_relations._relations.append(r)
-
-    preference_relations2 = PreferenceStructure()
-    indifference_relations2 = PreferenceStructure()
-    for r in comparisons2:
-        match r:
-            case P():
-                preference_relations2._relations.append(r)
-            case I():
-                indifference_relations2._relations.append(r)
+    preference_relations = []
+    indifference_relations = []
+    for comp in comparisons:
+        pref_rels = PreferenceStructure()
+        indiff_rels = PreferenceStructure()
+        for r in comp:
+            match r:
+                case P():
+                    pref_rels._relations.append(r)
+                case I():
+                    indiff_rels._relations.append(r)
+        preference_relations.append(pref_rels)
+        indifference_relations.append(indiff_rels)
 
     for lexicographic_order in permutations(range(k)):
-        mip = MIP(
+        mip = MIPGroup(
             alternatives,
             preference_relations,
             indifference_relations,
-            preference_relations2,
-            indifference_relations2,
             lexicographic_order,
             gamma=gamma,
             inconsistencies=inconsistencies,
             seed=seed,
             verbose=verbose,
         )
-        model = mip.learn()
-        if model is not None:
+        models = mip.learn()
+        if models is not None:
             objective = mip.prob.objective
             fitness = (
-                cast(int, value(objective)) / (len(comparisons) + len(comparisons2))
+                cast(int, value(objective)) / (sum(len(comp) for comp in comparisons))
                 if objective
                 else 1
             )
 
             if fitness > best_fitness:
-                best_model = model
+                best_models = models
                 best_fitness = fitness
                 time = mip.prob.solutionCpuTime
 
                 if best_fitness == 1:
                     break
 
-    return namedtuple("MIPResult", ["best_model", "best_fitness", "time"])(
-        best_model, best_fitness, time  # type: ignore
+    return namedtuple("MIPGroupResult", ["best_models", "best_fitness", "time"])(
+        best_models, best_fitness, time  # type: ignore
     )  # type: ignore

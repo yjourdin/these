@@ -4,8 +4,7 @@ from sys import stdout
 parser = argparse.ArgumentParser()
 parser.add_argument("k", type=int, help="Number of profiles")
 parser.add_argument("A", type=argparse.FileType("r"), help="Alternatives")
-parser.add_argument("D", type=argparse.FileType("r"), help="Comparisons")
-parser.add_argument("D2", type=argparse.FileType("r"), help="Comparisons")
+parser.add_argument("D", nargs="+", type=argparse.FileType("r"), help="Comparisons")
 parser.add_argument(
     "-g",
     "--gamma",
@@ -22,9 +21,10 @@ parser.add_argument(
 parser.add_argument(
     "-o",
     "--output",
+    nargs="*",
     default=stdout,
     type=argparse.FileType("w"),
-    help="Output file",
+    help="Output files",
 )
 parser.add_argument(
     "-r",

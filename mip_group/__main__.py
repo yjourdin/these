@@ -10,20 +10,23 @@ args = parse_args()
 
 A = NormalPerformanceTable(read_csv(args.A, header=None))
 
-D = from_csv(args.D.read())
-D2 = from_csv(args.D2.read())
+D = []
+for d in args.D:
+    D.append(from_csv(d.read()))
 
-best_model, best_fitness, time = learn_mip(
-    args.k, A, D, D2, args.gamma, not args.no_inconsistencies, args.seed, args.verbose
+best_models, best_fitness, time = learn_mip(
+    args.k, A, D, args.gamma, not args.no_inconsistencies, args.seed, args.verbose
 )
 
-if best_model is not None:
-    args.output.write(best_model.to_json())
+if best_models is not None:
+    for i, o in enumerate(args.output):
+        o.write(best_models[i].to_json())
     args.result.write(
         f"{args.A.name}," f"{args.D.name}," f"{args.k}," f"{time}," f"{best_fitness}\n"
     )
 else:
-    args.output.write("None")
+    for o in args.output:
+        o.write("None")
     args.result.write(
         f"{args.A.name}," f"{args.D.name}," f"{args.k}," f"{time}," f"{best_fitness}\n"
     )
