@@ -1,4 +1,3 @@
-from argparse import Namespace
 from collections import defaultdict
 from multiprocessing import JoinableQueue, Queue
 from typing import Any, Literal
@@ -7,6 +6,7 @@ from numpy.random import default_rng
 
 from model import ModelType
 
+from .arguments import Arguments
 from .job import (
     create_A_test,
     create_A_train,
@@ -85,19 +85,17 @@ def task_test(
 class TaskExecutor:
     def __init__(
         self,
-        args: Namespace,
+        args: Arguments,
         dir: Directory,
         seeds: list[int],
         train_results_queue: Queue,
         test_results_queue: Queue,
-        configs: dict = {},
     ) -> None:
         self.args = args
         self.dir = dir
         self.seeds = seeds
         self.train_results_queue = train_results_queue
         self.test_results_queue = test_results_queue
-        self.configs = configs
 
     def name(self, task: Task):
         match task:
@@ -204,10 +202,10 @@ class TaskExecutor:
                     m,
                     n_tr,
                     i,
-                    self.configs[config]["T0"][n],
-                    self.configs[config]["Tf"][n],
-                    self.configs[config]["alpha"],
-                    self.configs[config]["amp"],
+                    self.args.config[config].T0[n],
+                    self.args.config[config].Tf[n],
+                    self.args.config[config].alpha,
+                    self.args.config[config].amp,
                     self.dir,
                     default_rng([ke, n, ko, m, self.seeds[i]]),
                 )

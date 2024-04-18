@@ -1,5 +1,6 @@
 import argparse
-from json import load
+
+from .arguments import Arguments
 
 
 def key2int(dct):
@@ -16,14 +17,14 @@ def key2int(dct):
 
 # Arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("name", type=str, help="Name of the experiment")
 parser.add_argument(
     "args",
     type=argparse.FileType("r"),
     help="Arguments file",
 )
+parser.add_argument("-n", "--name", type=str, help="Name of the experiment")
 parser.add_argument(
-    "-j", "--jobs", default=35, type=int, help="Maximum number of parallel jobs"
+    "-j", "--jobs", type=int, help="Maximum number of parallel jobs"
 )
 parser.add_argument(
     "-s", "--seed", type=int, help="Random seed"
@@ -31,6 +32,11 @@ parser.add_argument(
 
 
 def parse_args():
+    # args = parser.parse_args()
+    # vars(args).update(load(args.args, object_hook=key2int))
     args = parser.parse_args()
-    vars(args).update(load(args.args, object_hook=key2int))
-    return args
+    arguments = Arguments.from_json(args.args.read())
+    arguments.name = args.name or arguments.name
+    arguments.jobs = args.jobs or arguments.jobs
+    arguments.seed = args.seed or arguments.seed
+    return arguments
