@@ -43,7 +43,7 @@ parser.add_argument(
     "-r",
     "--result",
     default=stdout,
-    type=argparse.FileType("w"),
+    type=argparse.FileType("a"),
     help="Result file",
 )
 parser.add_argument("-v", "--verbose", action="store_true", help="Verbose")
