@@ -1,6 +1,8 @@
 from json import dump, load
 
-configs = []
+from run.config import SAConfig
+
+configs = {}
 
 N_bc = list(range(100, 1100, 100)) + [2000]
 
@@ -9,15 +11,12 @@ for T0_coef in [0.1, 0.5, 1, 5, 10]:
     for Tf_coef in [0.1, 0.5, 1, 5, 10]:
         for alpha in [0.9]:
             for amp in [0.1, 0.2, 0.3, 0.4, 0.5]:
-                configs.append(
-                    {
-                        "id": id,
-                        "T0": {str(n): T0_coef * 1 / n for n in N_bc},
-                        "Tf": {str(n): Tf_coef * 1 / (10 * n) for n in N_bc},
-                        "alpha": alpha,
-                        "amp": amp,
-                    }
-                )
+                configs[id] = SAConfig(
+                    {n: T0_coef * 1 / n for n in N_bc},
+                    {n: Tf_coef * 1 / (10 * n) for n in N_bc},
+                    alpha,
+                    amp,
+                ).to_dict()
                 id += 1
 
 with open("args.json", "r+") as f:
