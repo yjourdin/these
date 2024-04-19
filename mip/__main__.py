@@ -1,3 +1,4 @@
+from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
 from performance_table.normal_performance_table import NormalPerformanceTable
@@ -10,7 +11,9 @@ args = parse_args()
 
 A = NormalPerformanceTable(read_csv(args.A, header=None))
 
-D = from_csv(args.D.read())
+D = PreferenceStructure()
+for d in args.D:
+    D._relations += from_csv(d.read())._relations
 
 best_model, best_fitness, time = learn_mip(
     args.k, A, D, args.gamma, not args.no_inconsistencies, args.seed, args.verbose
