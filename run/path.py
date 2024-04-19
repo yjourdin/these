@@ -68,6 +68,34 @@ class Directory:
         self.D_dir.mkdir()
         self.Me_dir.mkdir()
         with self.train_results_file.open("w") as f:
-            f.write("DM,M,Mo,Ko,N_tr,Error,Me,Ke,Method,Config,Time,Fitness,It.\n")
+            f.write("DM,"
+                    "N_tr,"
+                    "M,"
+                    "Mo,"
+                    "Ko,"
+                    "N_bc,"
+                    "Error,"
+                    "Me,"
+                    "Ke,"
+                    "Method,"
+                    "Config,"
+                    "Time,"
+                    "Fitness,"
+                    "It.\n")
         with self.test_results_file.open("w") as f:
-            f.write("DM,M,Mo,Ko,N_tr,Error,Me,Ke,Method,Config,Fitness,Kendall's tau\n")
+            f.write(
+                "DM,"
+                "N_tr,"
+                "N_te,"
+                "M,"
+                "Mo,"
+                "Ko,"
+                "N_bc,"
+                "Error,"
+                "Me,"
+                "Ke,"
+                "Method,"
+                "Config,"
+                "Fitness,"
+                "Kendall's tau\n"
+            )
