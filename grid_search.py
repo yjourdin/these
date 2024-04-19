@@ -9,7 +9,7 @@ N_bc = list(range(100, 1100, 100)) + [2000]
 id = 0
 for T0_coef in [0.1, 0.5, 1, 5, 10]:
     for Tf_coef in [0.1, 0.5, 1, 5, 10]:
-        for alpha in [0.9]:
+        for alpha in [0.9999]:
             for amp in [0.1, 0.2, 0.3, 0.4, 0.5]:
                 configs[id] = SAConfig(
                     {n: T0_coef * 1 / n for n in N_bc},

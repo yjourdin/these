@@ -39,23 +39,43 @@ def task_precedence(args: Arguments):
                             succeed[t_Mo] += [t_D]
                             precede[t_D] += [t_A_train, t_Mo]
                             for Me in args.Me:
-                                for ke in args.Ke:
-                                    ts = []
-                                    for method in args.method:
-                                        match method:
-                                            case "SA":
-                                                for config in args.config:
-                                                    t_Me = task_SA(
-                                                        i,
-                                                        n_tr,
-                                                        m,
-                                                        Mo,
-                                                        ko,
-                                                        n_bc,
-                                                        e,
-                                                        Me,
-                                                        ke,
-                                                        config,
+                                if Me == Mo:
+                                    for ke in args.Ke:
+                                        ts = []
+                                        for method in args.method:
+                                            match method:
+                                                case "SA":
+                                                    for config in args.config:
+                                                        t_Me = task_SA(
+                                                            i,
+                                                            n_tr,
+                                                            m,
+                                                            Mo,
+                                                            ko,
+                                                            n_bc,
+                                                            e,
+                                                            Me,
+                                                            ke,
+                                                            config,
+                                                        )
+                                                        t_test = task_test(
+                                                            i,
+                                                            n_tr,
+                                                            n_te,
+                                                            m,
+                                                            Mo,
+                                                            ko,
+                                                            n_bc,
+                                                            e,
+                                                            Me,
+                                                            ke,
+                                                            method,
+                                                            config,
+                                                        )
+                                                        ts.append((t_Me, t_test))
+                                                case "MIP" if Me == "SRMP":
+                                                    t_Me = task_MIP(
+                                                        i, n_tr, m, Mo, ko, n_bc, e, ke
                                                     )
                                                     t_test = task_test(
                                                         i,
@@ -69,35 +89,16 @@ def task_precedence(args: Arguments):
                                                         Me,
                                                         ke,
                                                         method,
-                                                        config,
                                                     )
                                                     ts.append((t_Me, t_test))
-                                            case "MIP" if Me == "SRMP":
-                                                t_Me = task_MIP(
-                                                    i, n_tr, m, Mo, ko, n_bc, e, ke
-                                                )
-                                                t_test = task_test(
-                                                    i,
-                                                    n_tr,
-                                                    n_te,
-                                                    m,
-                                                    Mo,
-                                                    ko,
-                                                    n_bc,
-                                                    e,
-                                                    Me,
-                                                    ke,
-                                                    method,
-                                                )
-                                                ts.append((t_Me, t_test))
-                                            case _:
-                                                break
-                                        for n_te in args.N_te:
-                                            for t_Me, t_test in ts:
-                                                succeed[t_D] += [t_Me]
-                                                precede[t_Me] += [t_D]
-                                                succeed[t_Me] += [t_test]
-                                                succeed[t_A_test] += [t_test]
-                                                precede[t_test] += [t_A_test, t_Me]
+                                                case _:
+                                                    break
+                                            for n_te in args.N_te:
+                                                for t_Me, t_test in ts:
+                                                    succeed[t_D] += [t_Me]
+                                                    precede[t_Me] += [t_D]
+                                                    succeed[t_Me] += [t_test]
+                                                    succeed[t_A_test] += [t_test]
+                                                    precede[t_test] += [t_A_test, t_Me]
 
     return to_do, succeed, precede
