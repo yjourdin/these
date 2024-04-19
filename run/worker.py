@@ -23,8 +23,8 @@ def worker(
             task_executor.execute(task)
             done_queue.put(task)
             done_queue.join()
-            task_queue.task_done()
             logger.info(task_executor.name(task) + " done")
+            task_queue.task_done()
         except Exception as e:
             logger.error(e, exc_info=True)
             logger.info("Kill")
