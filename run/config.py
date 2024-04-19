@@ -17,9 +17,9 @@ def key2int(dct):
 @dataclass(frozen=True)
 class SAConfig:
     T0: dict[int, float]
-    Tf: dict[int, float]
     alpha: float
     amp: float
+    max_iter: int
 
     @classmethod
     def from_dict(cls, dct):

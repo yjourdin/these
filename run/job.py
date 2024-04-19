@@ -84,9 +84,9 @@ def run_SA(
     n_tr: int,
     i: int,
     T0: float,
-    Tf: float,
     alpha: float,
     amp: float,
+    max_iter: int,
     dir: Directory,
     rng: Generator,
 ):
@@ -107,7 +107,7 @@ def run_SA(
         amp,
         rng_init,
         rng_sa,
-        Tf=Tf,
+        max_iter=max_iter,
     )
 
     with dir.Me_file(i, n_tr, m, Mo, ko, n, e, Me, ke, "SA", config).open("w") as f:

@@ -203,15 +203,15 @@ class TaskExecutor:
                     n_tr,
                     i,
                     self.args.config[config].T0[n],
-                    self.args.config[config].Tf[n],
                     self.args.config[config].alpha,
                     self.args.config[config].amp,
+                    self.args.config[config].max_iter,
                     self.dir,
                     default_rng([ke, n, ko, m, self.seeds[i]]),
                 )
                 self.train_results_queue.put(
                     f"{i},"
-                    f"{n_tr}"
+                    f"{n_tr},"
                     f"{m},"
                     f"{Mo},"
                     f"{ko},"
@@ -240,7 +240,7 @@ class TaskExecutor:
                 )
                 self.train_results_queue.put(
                     f"{i},"
-                    f"{n_tr}"
+                    f"{n_tr},"
                     f"{m},"
                     f"{Mo},"
                     f"{ko},"
@@ -258,8 +258,8 @@ class TaskExecutor:
                 )
                 self.test_results_queue.put(
                     f"{i},"
-                    f"{n_tr}"
-                    f"{n_te}"
+                    f"{n_tr},"
+                    f"{n_te},"
                     f"{m},"
                     f"{Mo},"
                     f"{ko},"
