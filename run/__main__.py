@@ -101,9 +101,9 @@ done_queue.put("STOP")
 # Stop result file threads
 train_results_queue.put("STOP")
 test_results_queue.put("STOP")
-# train_result_thread.join()
-# test_result_thread.join()
+train_result_thread.join()
+test_result_thread.join()
 
 # Stop logging thread
 logging_queue.put("STOP")
-# logging_thread.join()
+logging_thread.join()
