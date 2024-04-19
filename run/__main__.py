@@ -94,9 +94,11 @@ task_queue.join()
 # Stop workers
 for i in range(args.jobs):
     task_queue.put("STOP")
+    task_queue.join()
 
 # Stop task manager
 done_queue.put("STOP")
+done_queue.join()
 
 # Stop result file threads
 train_results_queue.put("STOP")
