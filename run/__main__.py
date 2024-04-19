@@ -74,14 +74,20 @@ train_result_thread.start()
 test_result_thread.start()
 
 # Start task manager
-Process(target=task_manager, args=(succeed, precede, task_queue, done_queue)).start()
+task_manager_process = Process(
+    target=task_manager, args=(succeed, precede, task_queue, done_queue)
+)
+task_manager_process.start()
 
 # Start workers
+workers: list[Process] = []
 for i in range(args.jobs):
-    Process(
+    worker_process = Process(
         target=worker,
         args=(task_executor, task_queue, done_queue, logging_queue),
-    ).start()
+    )
+    worker_process.start()
+    workers.append(worker_process)
 
 # Start logging thread
 logging.config.dictConfig(create_logging_config_dict(dir))
@@ -95,10 +101,13 @@ task_queue.join()
 for i in range(args.jobs):
     task_queue.put("STOP")
 task_queue.join()
+for i in range(args.jobs):
+    workers[i].join()
 
 # Stop task manager
 done_queue.put("STOP")
 done_queue.join()
+task_manager_process.join()
 
 # Stop result file threads
 train_results_queue.put("STOP")
