@@ -94,7 +94,7 @@ task_queue.join()
 # Stop workers
 for i in range(args.jobs):
     task_queue.put("STOP")
-    task_queue.join()
+task_queue.join()
 
 # Stop task manager
 done_queue.put("STOP")
