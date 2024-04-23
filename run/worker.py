@@ -27,9 +27,9 @@ def worker(
             task_queue.task_done()
         except Exception as e:
             logger.error(e, exc_info=True)
-            logger.info("Kill")
             break
 
+    logger.info("Kill")
     task_queue.task_done()
 
 
