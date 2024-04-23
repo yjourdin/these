@@ -121,17 +121,18 @@ class SimulatedAnnealing(Learner[T]):
                         if self.best_objective <= self.objective.optimum:
                             return self.best_sol
 
-                if self.verbose:
-                    print(
-                        f"{self.it}   "
-                        f"{self.non_improving_it}   "
-                        f"{self.time}   "
-                        f"{neighbor_sol}   "
-                        f"{neighbor_objective:.3f}   "
-                        f"{current_objective:.3f}   "
-                        f"{self.best_objective:.3f}   "
-                        f"{temp}"
+                if self.log_file:
+                    self.log_file.write(
+                        f"{self.it}\t"
+                        f"{self.non_improving_it}\t"
+                        f"{self.time}\t"
+                        f"{temp}\t"
+                        f"{neighbor_sol}\t"
+                        f"{neighbor_objective:.3f}\t"
+                        f"{current_objective:.3f}\t"
+                        f"{self.best_objective:.3f}\n"
                     )
+                    self.log_file.flush()
 
             # Update temperature
             temp = self.cooling_schedule(temp)

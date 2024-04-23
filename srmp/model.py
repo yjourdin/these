@@ -47,8 +47,8 @@ class SRMPModel(Model[NormalScale]):
 
     def __str__(self) -> str:
         return (
-            f"{print_list(self.weights)}   "
-            f"{print_list(self.profiles.data.to_numpy()[0])}   "
+            f"{print_list(self.weights)}\t"
+            f"{print_list(self.profiles.data.to_numpy()[0])}\t"
             f"{self.lexicographic_order.__str__()}"
         )
 

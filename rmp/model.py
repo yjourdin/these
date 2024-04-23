@@ -48,8 +48,8 @@ class RMPModel(Model[NormalScale]):
 
     def __str__(self) -> str:
         return (
-            # f"{self.criteria_capacities.__str__()}   "
-            f"{print_list(self.profiles.data.to_numpy()[0])}   "
+            # f"{self.criteria_capacities.__str__()}\t"
+            f"{print_list(self.profiles.data.to_numpy()[0])}\t"
             f"{self.lexicographic_order.__str__()}"
         )
 
