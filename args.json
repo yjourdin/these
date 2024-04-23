@@ -1,12 +1,13 @@
 {
-    "name": "test_drop",
+    "name": "test_drop2",
     "seed": 0,
     "method": [
         "SA"
     ],
     "N_tr": [
+        10,
         50,
-        500
+        100
     ],
     "N_te": [
         500
