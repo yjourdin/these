@@ -202,7 +202,7 @@ class TaskExecutor:
                     m,
                     n_tr,
                     i,
-                    self.args.config[config].T0[n],
+                    self.args.config[config].T0_coef / n,
                     self.args.config[config].alpha,
                     self.args.config[config].amp,
                     self.args.config[config].max_iter,
