@@ -17,7 +17,7 @@ def random_comparisons(
     ranking_dict = ranking.data.to_dict()
     labels = ranking.labels
     all_pairs = np.array(np.triu_indices(len(alternatives.data), 1)).transpose()
-    pairs = rng.choice(all_pairs, nb, replace=False)
+    pairs = rng.choice(all_pairs, min(nb, len(all_pairs)), replace=False)
     result = PreferenceStructure()
     for ia, ib in pairs:
         a, b = labels[ia], labels[ib]
