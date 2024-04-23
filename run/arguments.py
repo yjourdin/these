@@ -4,7 +4,7 @@ from typing import Literal
 
 from .config import SAConfig
 
-JOBS = 70
+JOBS = 10
 
 Model = Literal["RMP", "SRMP"]
 Method = Literal["MIP", "SA"]
