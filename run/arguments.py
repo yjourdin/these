@@ -4,6 +4,8 @@ from typing import Literal
 
 from .config import SAConfig
 
+JOBS = 10
+
 Model = Literal["RMP", "SRMP"]
 Method = Literal["MIP", "SA"]
 
@@ -23,7 +25,7 @@ def config_hook(dct):
 @dataclass
 class Arguments:
     name: str
-    jobs: int = 1
+    jobs: int = JOBS
     seed: int | None = None
     seeds: list[int] | int = 1
     N_tr: list[int] = field(default_factory=list)
