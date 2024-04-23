@@ -37,3 +37,4 @@ def file_thread(file, q):
     with file.open("a") as f:
         for result in iter(q.get, "STOP"):
             f.write(result)
+            f.flush()
