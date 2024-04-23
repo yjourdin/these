@@ -46,7 +46,7 @@ class SimulatedAnnealing(Learner[T]):
         max_time: int | None = None,
         max_iter: int | None = None,
         max_iter_non_improving: int | None = None,
-        verbose: bool = False,
+        log_file=None,
     ):
         self.T0 = T0
         self.L = L
@@ -59,7 +59,7 @@ class SimulatedAnnealing(Learner[T]):
         self.max_iter_non_improving = max_iter_non_improving
         self.initial_sol = initial_sol
         self.rng = rng
-        self.verbose = verbose
+        self.log_file = log_file
 
     def _learn(
         self,

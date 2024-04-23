@@ -36,7 +36,7 @@ def learn_sa(
     max_time: int | None = None,
     max_iter: int | None = None,
     max_iter_non_improving: int | None = None,
-    verbose: bool = False,
+    log_file=None,
 ):
     alternatives = alternatives.subtable(comparisons.elements)
 
@@ -90,7 +90,7 @@ def learn_sa(
         max_time=max_time,
         max_iter=max_iter,
         max_iter_non_improving=max_iter_non_improving,
-        verbose=verbose,
+        log_file=log_file,
     )
 
     sa.learn()

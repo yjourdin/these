@@ -28,7 +28,7 @@ best_model, best_fitness, time, it = learn_sa(
     args.max_time,
     args.max_iter,
     args.max_iter_non_improving,
-    args.verbose,
+    args.log,
 )
 
 args.output.write(best_model.to_json())

@@ -46,7 +46,7 @@ parser.add_argument(
     type=argparse.FileType("a"),
     help="Result file",
 )
-parser.add_argument("-v", "--verbose", action="store_true", help="Verbose")
+parser.add_argument("-l", "--log", type=argparse.FileType("w"), help="Log file",)
 
 
 def parse_args():
