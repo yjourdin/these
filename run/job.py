@@ -4,7 +4,7 @@ from numpy.random import Generator
 from pandas import read_csv
 from scipy.stats import kendalltau
 
-from fitness import fitness_ranking
+from preference_structure.fitness import fitness_outranking
 from mip.main import learn_mip
 from model import ModelType
 from performance_table.generate import random_alternatives
@@ -179,7 +179,7 @@ def run_test(
     Ro = Mo.rank(A_test)
     Re = Me.rank(A_test)
 
-    test_fitness = fitness_ranking(Ro, Re)
+    test_fitness = fitness_outranking(Ro, Re)
 
     kendall_tau = kendalltau(Ro.data, Re.data).statistic
 
