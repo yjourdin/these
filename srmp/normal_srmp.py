@@ -1,11 +1,11 @@
 from typing import Any
 
 import numpy as np
-from mcda.matrices import PerformanceTable
-from mcda.scales import DiscreteQuantitativeScale, PreferenceDirection
 from mcda.internal.core.scales import NormalScale
-from mcda.values import Values, CommensurableValues
+from mcda.matrices import PerformanceTable
 from mcda.outranking.srmp import SRMP, ProfileWiseOutranking
+from mcda.scales import DiscreteQuantitativeScale, PreferenceDirection
+from mcda.values import CommensurableValues, Values
 from pandas import Series
 from scipy.stats import rankdata
 
