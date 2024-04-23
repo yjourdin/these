@@ -2,9 +2,8 @@ from dataclasses import asdict, dataclass, field
 from json import dumps, loads
 from typing import Literal
 
+from ..jobs import JOBS
 from .config import SAConfig
-
-JOBS = 10
 
 Model = Literal["RMP", "SRMP"]
 Method = Literal["MIP", "SA"]

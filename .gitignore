@@ -166,3 +166,4 @@ cython_debug/
 profiling/*
 results/*
 .old
+jobs.py
