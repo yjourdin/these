@@ -77,6 +77,10 @@ class SimulatedAnnealing(Learner[T]):
         self.it = 0
         self.non_improving_it = 0
 
+        # Stop when optimum reached
+        if self.best_objective <= self.objective.optimum:
+            return self.best_sol
+
         # Stopping criterion
         while (
             (not self.Tf or (temp > self.Tf))
@@ -106,7 +110,7 @@ class SimulatedAnnealing(Learner[T]):
                     except OverflowError:
                         prob = 0
 
-                if rng.random() < prob:
+                if prob >= 1 or rng.random() < prob:
                     # Accepted
                     current_sol = neighbor_sol
                     current_objective = neighbor_objective
@@ -117,7 +121,7 @@ class SimulatedAnnealing(Learner[T]):
                         self.best_sol = current_sol
                         self.best_objective = current_objective
 
-                        # Stop when fitness equals 1
+                        # Stop when optimum reached
                         if self.best_objective <= self.objective.optimum:
                             return self.best_sol
 
