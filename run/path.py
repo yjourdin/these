@@ -19,46 +19,66 @@ class Directory:
         self.log_file = self.root_dir / "log.log"
         self.seeds_file = self.root_dir / "seeds.csv"
 
-    def A_train_file(self, i: int, m: int, n: int):
-        return self.A_train_dir / f"DM_{i}_M_{m}_N_{n}.csv"
+    def A_train_file(self, m: int, n: int, id: int):
+        return self.A_train_dir / f"M_{m}_N_{n}_No_{id}.csv"
 
-    def A_test_file(self, i: int, m: int, n: int):
-        return self.A_test_dir / f"DM_{i}_M_{m}_N_{n}.csv"
+    def A_test_file(self, m: int, n: int, id: int):
+        return self.A_test_dir / f"M_{m}_N_{n}_No_{id}.csv"
 
-    def Mo_file(self, i: int, m: int, model: ModelType, k: int):
-        return self.Mo_dir / f"DM_{i}_M_{m}_model_{model}_K_{k}.json"
+    def Mo_file(self, m: int, model: ModelType, k: int, id: int):
+        return self.Mo_dir / f"M_{m}_model_{model}_K_{k}_No_{id}.json"
 
     def D_file(
-        self, i: int, m: int, n_tr: int, Mo: ModelType, ko: int, n: int, e: float
+        self,
+        m: int,
+        n_tr: int,
+        A_tr_id: int,
+        Mo: ModelType,
+        ko: int,
+        Mo_id: int,
+        n: int,
+        e: float,
     ):
-        return self.D_dir / f"DM_{i}_M_{m}_Ntr_{n_tr}_Mo_{Mo}_Ko_{ko}_N_{n}_E_{e}.csv"
+        return self.D_dir / (
+            f"M_{m}_"
+            f"Ntr_{n_tr}_"
+            f"AtrNo_{A_tr_id}_"
+            f"Mo_{Mo}_"
+            f"Ko_{ko}_"
+            f"MoNo_{Mo_id}_"
+            f"N_{n}_"
+            f"E_{e}"
+            ".csv"
+        )
 
     def Me_file(
         self,
-        i: int,
         m: int,
         n_tr: int,
+        A_tr_id: int,
         Mo: ModelType,
         ko: int,
+        Mo_id: int,
         n: int,
         e: float,
         Me: ModelType,
         ke: int,
         method: Literal["MIP", "SA"],
-        config: int | None = None,
+        config: int,
     ):
         return self.Me_dir / (
-            f"DM_{i}_"
             f"M_{m}_"
             f"Ntr_{n_tr}_"
+            f"AtrNo_{A_tr_id}_"
             f"Mo_{Mo}_"
             f"Ko_{ko}_"
+            f"MoNo_{Mo_id}_"
             f"N_{n}_"
             f"E_{e}_"
             f"Me_{Me}_"
             f"Ke_{ke}_"
-            f"Method_{method}"
-            f"_Config_{config}"
+            f"Method_{method}_"
+            f"Config_{config}"
             ".json"
         )
 
@@ -69,13 +89,17 @@ class Directory:
         self.Mo_dir.mkdir()
         self.D_dir.mkdir()
         self.Me_dir.mkdir()
+        with self.seeds_file.open("w") as f:
+            f.write("Type," "Id," "Seed.\n")
         with self.train_results_file.open("w") as f:
             f.write(
                 "DM,"
                 "M,"
                 "N_tr,"
+                "Atr_id,"
                 "Mo,"
                 "Ko,"
+                "Mo_id,"
                 "N_bc,"
                 "Error,"
                 "Me,"
@@ -91,8 +115,10 @@ class Directory:
                 "DM,"
                 "M,"
                 "N_tr,"
+                "Atr_id,"
                 "Mo,"
                 "Ko,"
+                "Mo_id,"
                 "N_bc,"
                 "Error,"
                 "Me,"
@@ -100,6 +126,7 @@ class Directory:
                 "Method,"
                 "Config,"
                 "N_te,"
+                "Ate_id,"
                 "Fitness,"
                 "Kendall's tau\n"
             )

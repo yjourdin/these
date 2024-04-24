@@ -1,9 +1,9 @@
 {
     "name": "test_drop3",
     "seed": 0,
-    "method": [
-        "SA"
-    ],
+    "A_tr_seeds": 10,
+    "A_te_seeds": 10,
+    "Mo_seeds": 10,
     "N_tr": [
         10,
         20,
@@ -46,7 +46,9 @@
     "error": [
         0
     ],
-    "seeds": 10,
+    "method": [
+        "SA"
+    ],
     "config": {
         "SA": {
             "0": {

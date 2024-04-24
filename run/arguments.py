@@ -24,7 +24,9 @@ class Arguments:
     name: str
     jobs: int = JOBS
     seed: int | None = None
-    seeds: list[int] | int = 1
+    A_tr_seeds: list[int] | int = 1
+    A_te_seeds: list[int] | int = 1
+    Mo_seeds: list[int] | int = 1
     N_tr: list[int] = field(default_factory=list)
     N_te: list[int] = field(default_factory=list)
     method: list[Method] = field(default_factory=list)

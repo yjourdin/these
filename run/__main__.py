@@ -19,17 +19,34 @@ args = parse_args()
 dir = Directory(args.name)
 dir.mkdir()
 
-# Create random generators
-seeds = (
-    args.seeds
-    if isinstance(args.seeds, list)
+# Create random seeds
+seeds = {}
+seeds["A_train"] = (
+    args.A_tr_seeds
+    if isinstance(args.A_tr_seeds, list)
     else cast(
-        list[int], default_rng(args.seed).integers(2**63, size=args.seeds).tolist()
+        list[int], default_rng(args.seed).integers(2**63, size=args.A_tr_seeds).tolist()
+    )
+)
+seeds["A_test"] = (
+    args.A_te_seeds
+    if isinstance(args.A_te_seeds, list)
+    else cast(
+        list[int], default_rng(args.seed).integers(2**63, size=args.A_te_seeds).tolist()
+    )
+)
+seeds["Mo"] = (
+    args.Mo_seeds
+    if isinstance(args.Mo_seeds, list)
+    else cast(
+        list[int], default_rng(args.seed).integers(2**63, size=args.Mo_seeds).tolist()
     )
 )
 with dir.seeds_file.open("w") as f:
-    for i, seed in enumerate(seeds):
-        f.write(f"{i},{seed}\n")
+    for i, seed in enumerate(seeds["A_train"]):
+        f.write(f"A_train,{i},{seed}\n")
+    for i, seed in enumerate(seeds["Mo"]):
+        f.write(f"Mo,{i},{seed}\n")
 
 # Create queues
 task_queue: JoinableQueue = JoinableQueue()
