@@ -40,8 +40,8 @@ def task_D(i: int, m: int, n_tr: int, Mo: ModelType, ko: int, n: int, e: float) 
 
 def task_SA(
     i: int,
-    n_tr: int,
     m: int,
+    n_tr: int,
     Mo: ModelType,
     ko: int,
     n: int,
