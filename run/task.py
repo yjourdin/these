@@ -1,10 +1,11 @@
 from collections import defaultdict
 from multiprocessing import JoinableQueue, Queue
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from numpy.random import default_rng
 
 from model import ModelType
+from run.config import SAConfig
 
 from .arguments import Arguments
 from .job import (
@@ -21,20 +22,20 @@ from .path import Directory
 Task = tuple[Any, ...]
 
 
-def task_A_train(i: int, n: int, m: int) -> Task:
-    return ("A_train", i, n, m)
+def task_A_train(i: int, m: int, n: int) -> Task:
+    return ("A_train", i, m, n)
 
 
-def task_A_test(i: int, n: int, m: int) -> Task:
-    return ("A_test", i, n, m)
+def task_A_test(i: int, m: int, n: int) -> Task:
+    return ("A_test", i, m, n)
 
 
 def task_Mo(i: int, m: int, model: ModelType, k: int) -> Task:
     return ("Mo", i, m, model, k)
 
 
-def task_D(i: int, n_tr: int, m: int, Mo: ModelType, ko: int, n: int, e: float) -> Task:
-    return ("D", i, n_tr, m, Mo, ko, n, e)
+def task_D(i: int, m: int, n_tr: int, Mo: ModelType, ko: int, n: int, e: float) -> Task:
+    return ("D", i, m, n_tr, Mo, ko, n, e)
 
 
 def task_SA(
@@ -49,27 +50,26 @@ def task_SA(
     ke: int,
     config: int,
 ) -> Task:
-    return ("SA", i, n_tr, m, Mo, ko, n, e, Me, ke, config)
+    return ("SA", i, m, n_tr, Mo, ko, n, e, Me, ke, config)
 
 
 def task_MIP(
     i: int,
-    n_tr: int,
     m: int,
+    n_tr: int,
     Mo: ModelType,
     ko: int,
     n: int,
     e: float,
     ke: int,
 ) -> Task:
-    return ("MIP", i, n_tr, m, Mo, ko, n, e, ke)
+    return ("MIP", i, m, n_tr, Mo, ko, n, e, ke)
 
 
 def task_test(
     i: int,
-    n_tr: int,
-    n_te: int,
     m: int,
+    n_tr: int,
     Mo: ModelType,
     ko: int,
     n: int,
@@ -77,9 +77,10 @@ def task_test(
     Me: ModelType,
     ke: int,
     method: Literal["MIP", "SA"],
-    config: int | None = None,
+    config: int,
+    n_te: int,
 ) -> Task:
-    return ("Test", i, n_tr, n_te, m, Mo, ko, n, e, Me, ke, method, config)
+    return ("Test", i, m, n_tr, Mo, ko, n, e, Me, ke, method, config, n_te)
 
 
 class TaskExecutor:
@@ -99,36 +100,36 @@ class TaskExecutor:
 
     def name(self, task: Task):
         match task:
-            case ("A_train", i, n, m):
-                return f"A_train (DM: {i:2} N_tr: {n:4} M: {m:2})"
-            case ("A_test", i, n, m):
-                return f"A_test  (DM: {i:2} N_te: {n:4} M: {m:2})"
+            case ("A_train", i, m, n):
+                return f"A_train (DM: {i:2} M: {m:2} N_tr: {n:4})"
+            case ("A_test", i, m, n):
+                return f"A_test  (DM: {i:2} M: {m:2} N_te: {n:4})"
             case ("Mo", i, m, model, k):
                 return (
                     f"Mo      ("
                     f"DM: {i:2} "
-                    "           "
                     f"M: {m:2} "
+                    "           "
                     f"Mo: {model:4} "
                     f"Ko: {k:2})"
                 )
-            case ("D", i, n_tr, m, Mo, ko, n, e):
+            case ("D", i, m, n_tr, Mo, ko, n, e):
                 return (
                     f"D       ("
                     f"DM: {i:2} "
-                    f"N_tr: {n_tr:4} "
                     f"M: {m:2} "
+                    f"N_tr: {n_tr:4} "
                     f"Mo: {Mo:4} "
                     f"Ko: {ko:2} "
                     f"N: {n:4} "
                     f"Error: {e:4})"
                 )
-            case ("SA", i, n_tr, m, Mo, ko, n, e, Me, ke, config):
+            case ("SA", i, m, n_tr, Mo, ko, n, e, Me, ke, config):
                 return (
                     f"SA      ("
                     f"DM: {i:2} "
-                    f"N_tr: {n_tr:4} "
                     f"M: {m:2} "
+                    f"N_tr: {n_tr:4} "
                     f"Mo: {Mo:4} "
                     f"Ko: {ko:2} "
                     f"N: {n:4} "
@@ -137,12 +138,12 @@ class TaskExecutor:
                     f"Ke: {ke:2} "
                     f"Config: {config:4})"
                 )
-            case ("MIP", i, n_tr, m, Mo, ko, n, e, ke):
+            case ("MIP", i, m, n_tr, Mo, ko, n, e, ke):
                 return (
                     f"MIP     ("
                     f"DM: {i:2} "
-                    f"N_tr: {n_tr:4} "
                     f"M: {m:2} "
+                    f"N_tr: {n_tr:4} "
                     f"Mo: {Mo:4} "
                     f"Ko: {ko:2} "
                     f"N: {n:4} "
@@ -150,13 +151,13 @@ class TaskExecutor:
                     f"Me: SRMP "
                     f"Ke: {ke:2})"
                 )
-            case ("Test", i, n_tr, n_te, m, Mo, ko, n, e, Me, ke, method, config):
+            case ("Test", i, m, n_tr, Mo, ko, n, e, Me, ke, method, config, n_te):
                 config = config or 0
                 return (
                     f"Test    ("
                     f"DM: {i:2} "
-                    f"N_tr: {n_tr:4} "
                     f"M: {m:2} "
+                    f"N_tr: {n_tr:4} "
                     f"Mo: {Mo:4} "
                     f"Ko: {ko:2} "
                     f"N: {n:4} "
@@ -172,47 +173,44 @@ class TaskExecutor:
 
     def execute(self, task: Task):
         match task:
-            case ("A_train", i, n, m):
-                create_A_train(n, m, i, self.dir, default_rng([n, m, self.seeds[i]]))
-            case ("A_test", i, n, m):
-                create_A_test(n, m, i, self.dir, default_rng([n, m, self.seeds[i]]))
+            case ("A_train", i, m, n):
+                create_A_train(i, m, n, self.dir, default_rng([n, m, self.seeds[i]]))
+            case ("A_test", i, m, n):
+                create_A_test(i, m, n, self.dir, default_rng([n, m, self.seeds[i]]))
             case ("Mo", i, m, model, k):
-                create_Mo(model, k, m, i, self.dir, default_rng([k, m, self.seeds[i]]))
-            case ("D", i, n_tr, m, Mo, ko, n, e):
+                create_Mo(i, m, model, k, self.dir, default_rng([k, m, self.seeds[i]]))
+            case ("D", i, m, n_tr, Mo, ko, n, e):
                 create_D(
-                    n,
-                    e,
-                    Mo,
-                    ko,
+                    i,
                     m,
                     n_tr,
-                    i,
+                    Mo,
+                    ko,
+                    n,
+                    e,
                     self.dir,
                     default_rng([n, ko, m, self.seeds[i]]),
                 )
-            case ("SA", i, n_tr, m, Mo, ko, n, e, Me, ke, config):
+            case ("SA", i, m, n_tr, Mo, ko, n, e, Me, ke, config):
                 time, it, best_fitness = run_SA(
-                    config,
-                    Me,
-                    ke,
-                    n,
-                    e,
-                    Mo,
-                    ko,
+                    i,
                     m,
                     n_tr,
-                    i,
-                    self.args.config[config].T0_coef / n,
-                    self.args.config[config].alpha,
-                    self.args.config[config].amp,
-                    self.args.config[config].max_iter,
+                    Mo,
+                    ko,
+                    n,
+                    e,
+                    Me,
+                    ke,
+                    config,
+                    cast(SAConfig, self.args.config["SA"][config]),
                     self.dir,
                     default_rng([ke, n, ko, m, self.seeds[i]]),
                 )
                 self.train_results_queue.put(
                     f"{i},"
-                    f"{n_tr},"
                     f"{m},"
+                    f"{n_tr},"
                     f"{Mo},"
                     f"{ko},"
                     f"{n},"
@@ -225,7 +223,7 @@ class TaskExecutor:
                     f"{best_fitness},"
                     f"{it}\n"
                 )
-            case ("MIP", i, n_tr, m, Mo, ko, n, e, ke):
+            case ("MIP", i, m, n_tr, Mo, ko, n, e, ke):
                 time, best_fitness = run_MIP(
                     ke,
                     n,
@@ -240,8 +238,8 @@ class TaskExecutor:
                 )
                 self.train_results_queue.put(
                     f"{i},"
-                    f"{n_tr},"
                     f"{m},"
+                    f"{n_tr},"
                     f"{Mo},"
                     f"{ko},"
                     f"{n},"
@@ -252,15 +250,14 @@ class TaskExecutor:
                     f"{time},"
                     f"{best_fitness},,\n"
                 )
-            case ("Test", i, n_tr, n_te, m, Mo, ko, n, e, Me, ke, method, config):
+            case ("Test", i, m, n_tr, Mo, ko, n, e, Me, ke, method, config, n_te):
                 test_fitness, kendall_tau = run_test(
-                    config, method, Me, ke, n, e, Mo, ko, m, n_te, n_tr, i, self.dir
+                    i, m, n_tr, Mo, ko, n, e, Me, ke, method, config, n_te, self.dir
                 )
                 self.test_results_queue.put(
                     f"{i},"
-                    f"{n_tr},"
-                    f"{n_te},"
                     f"{m},"
+                    f"{n_tr},"
                     f"{Mo},"
                     f"{ko},"
                     f"{n},"
@@ -269,6 +266,7 @@ class TaskExecutor:
                     f"{ke},"
                     f"{method},"
                     f"{config},"
+                    f"{n_te},"
                     f"{test_fitness},"
                     f"{kendall_tau}\n"
                 )

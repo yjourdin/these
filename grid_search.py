@@ -19,7 +19,7 @@ with open("args.json", "r+") as f:
     args = load(f)
     f.seek(0)
 
-    args["config"] = configs
+    args["config"]["SA"] = configs
 
     dump(args, f, indent=4)
     f.truncate()

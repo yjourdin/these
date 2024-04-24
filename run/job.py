@@ -13,6 +13,7 @@ from preference_structure.generate import noisy_comparisons, random_comparisons
 from preference_structure.io import from_csv, to_csv
 from rmp.generate import random_rmp
 from rmp.model import RMPModel
+from run.config import SAConfig
 from sa.main import learn_sa
 from srmp.generate import random_srmp
 from srmp.model import SRMPModel
@@ -20,19 +21,19 @@ from srmp.model import SRMPModel
 from .path import Directory
 
 
-def create_A_train(n: int, m: int, i: int, dir: Directory, rng: Generator):
+def create_A_train(i: int, m: int, n: int, dir: Directory, rng: Generator):
     A = random_alternatives(n, m, rng)
-    with dir.A_train_file(i, n, m).open("w") as f:
+    with dir.A_train_file(i, m, n).open("w") as f:
         A.data.to_csv(f, header=False, index=False)
 
 
-def create_A_test(n: int, m: int, i: int, dir: Directory, rng: Generator):
+def create_A_test(i: int, m: int, n: int, dir: Directory, rng: Generator):
     A = random_alternatives(n, m, rng)
-    with dir.A_test_file(i, n, m).open("w") as f:
+    with dir.A_test_file(i, m, n).open("w") as f:
         A.data.to_csv(f, header=False, index=False)
 
 
-def create_Mo(model: ModelType, k: int, m: int, i: int, dir: Directory, rng: Generator):
+def create_Mo(i: int, m: int, model: ModelType, k: int, dir: Directory, rng: Generator):
     match model:
         case "RMP":
             Mo = random_rmp(k, m, rng)
@@ -43,13 +44,13 @@ def create_Mo(model: ModelType, k: int, m: int, i: int, dir: Directory, rng: Gen
 
 
 def create_D(
-    n: int,
-    error: float,
-    Mo: ModelType,
-    ko: int,
+    i: int,
     m: int,
     n_tr: int,
-    i: int,
+    Mo: ModelType,
+    ko: int,
+    n: int,
+    error: float,
     dir: Directory,
     rng: Generator,
 ):
@@ -60,7 +61,7 @@ def create_D(
             case "SRMP":
                 model = SRMPModel.from_json(f.read())
 
-    with dir.A_train_file(i, n_tr, m).open("r") as f:
+    with dir.A_train_file(i, m, n_tr).open("r") as f:
         A = NormalPerformanceTable(read_csv(f, header=None))
 
     D = random_comparisons(n, A, model, rng)
@@ -68,25 +69,22 @@ def create_D(
     if error:
         D = noisy_comparisons(D, error, rng)
 
-    with dir.D_file(i, n_tr, m, Mo, ko, n, error).open("w") as f:
+    with dir.D_file(i, m, n_tr, Mo, ko, n, error).open("w") as f:
         f.write(to_csv(D))
 
 
 def run_SA(
-    config: int,
-    Me: ModelType,
-    ke: int,
-    n: int,
-    e: float,
-    Mo: ModelType,
-    ko: int,
+    i: int,
     m: int,
     n_tr: int,
-    i: int,
-    T0: float,
-    alpha: float,
-    amp: float,
-    max_iter: int,
+    Mo: ModelType,
+    ko: int,
+    n: int,
+    e: float,
+    Me: ModelType,
+    ke: int,
+    config_id: int,
+    config: SAConfig,
     dir: Directory,
     rng: Generator,
 ):
@@ -102,29 +100,29 @@ def run_SA(
         ke,
         A,
         D,
-        T0,
-        alpha,
-        amp,
+        config.T0_coef / n,
+        config.alpha,
+        config.amp,
         rng_init,
         rng_sa,
-        max_iter=max_iter,
+        max_iter=config.max_iter,
     )
 
-    with dir.Me_file(i, n_tr, m, Mo, ko, n, e, Me, ke, "SA", config).open("w") as f:
+    with dir.Me_file(i, n_tr, m, Mo, ko, n, e, Me, ke, "SA", config_id).open("w") as f:
         f.write(best_model.to_json())
 
     return (time, it, best_fitness)
 
 
 def run_MIP(
-    ke: int,
-    n: int,
-    e: float,
-    Mo: ModelType,
-    ko: int,
+    i: int,
     m: int,
     n_tr: int,
-    i: int,
+    Mo: ModelType,
+    ko: int,
+    n: int,
+    e: float,
+    ke: int,
     dir: Directory,
     seed: int,
 ):
@@ -143,18 +141,18 @@ def run_MIP(
 
 
 def run_test(
-    config: int,
-    method: Literal["MIP", "SA"],
-    Me_type: ModelType,
-    ke: int,
-    n: int,
-    e: float,
+    i: int,
+    m: int,
+    n_tr: int,
     Mo_type: ModelType,
     ko: int,
-    m: int,
+    n: int,
+    e: float,
+    Me_type: ModelType,
+    ke: int,
+    method: Literal["MIP", "SA"],
+    config: int,
     n_te: int,
-    n_tr: int,
-    i: int,
     dir: Directory,
 ):
     with dir.A_test_file(i, n_te, m).open("r") as f:

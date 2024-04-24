@@ -3,22 +3,20 @@ from json import dumps, loads
 from typing import Literal
 
 from jobs import JOBS
-from .config import SAConfig
+
+from .config import CONFIGS, Config
 
 Model = Literal["RMP", "SRMP"]
 Method = Literal["MIP", "SA"]
 
 
 def config_hook(dct):
-    """Transform dict keys to int if possible
-
-    :param dct: Dict to modify
-    :return : Modified dict
-    """
-    try:
-        return SAConfig.from_dict(dct)
-    except TypeError:
-        return dct
+    for config in CONFIGS:
+        try:
+            return config.from_dict(dct)
+        except TypeError:
+            pass
+    return dct
 
 
 @dataclass
@@ -37,7 +35,7 @@ class Arguments:
     Me: list[Model] = field(default_factory=list)
     Ke: list[int] = field(default_factory=list)
     error: list[float] = field(default_factory=list)
-    config: dict[int, SAConfig] = field(default_factory=dict)
+    config: dict[Method, dict[int, Config]] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, dct):

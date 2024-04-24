@@ -3,12 +3,7 @@ from json import dumps, loads
 
 
 @dataclass(frozen=True)
-class SAConfig:
-    T0_coef: float
-    alpha: float
-    amp: float
-    max_iter: int
-
+class Config:
     @classmethod
     def from_dict(cls, dct):
         return cls(**dct)
@@ -22,3 +17,19 @@ class SAConfig:
 
     def to_json(self):
         return dumps(self.to_dict(), indent=4)
+
+
+@dataclass(frozen=True)
+class MIPConfig(Config):
+    pass
+
+
+@dataclass(frozen=True)
+class SAConfig(Config):
+    T0_coef: float
+    alpha: float
+    amp: float
+    max_iter: int
+
+
+CONFIGS = (MIPConfig, SAConfig)
