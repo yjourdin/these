@@ -2,7 +2,7 @@ from dataclasses import asdict, dataclass, field
 from json import dumps, loads
 from typing import Literal
 
-from ..jobs import JOBS
+from jobs import JOBS
 from .config import SAConfig
 
 Model = Literal["RMP", "SRMP"]
