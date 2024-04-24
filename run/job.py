@@ -88,10 +88,10 @@ def run_SA(
     dir: Directory,
     rng: Generator,
 ):
-    with dir.A_train_file(i, n_tr, m).open("r") as f:
+    with dir.A_train_file(i, m, n_tr).open("r") as f:
         A = NormalPerformanceTable(read_csv(f, header=None))
 
-    with dir.D_file(i, n_tr, m, Mo, ko, n, e).open("r") as f:
+    with dir.D_file(i, m, n_tr, Mo, ko, n, e).open("r") as f:
         D = from_csv(f.read())
 
     rng_init, rng_sa = rng.spawn(2)
@@ -108,7 +108,7 @@ def run_SA(
         max_iter=config.max_iter,
     )
 
-    with dir.Me_file(i, n_tr, m, Mo, ko, n, e, Me, ke, "SA", config_id).open("w") as f:
+    with dir.Me_file(i, m, n_tr, Mo, ko, n, e, Me, ke, "SA", config_id).open("w") as f:
         f.write(best_model.to_json())
 
     return (time, it, best_fitness)
@@ -126,15 +126,15 @@ def run_MIP(
     dir: Directory,
     seed: int,
 ):
-    with dir.A_train_file(i, n_tr, m).open("r") as f:
+    with dir.A_train_file(i, m, n_tr).open("r") as f:
         A = NormalPerformanceTable(read_csv(f, header=None))
 
-    with dir.D_file(i, n_tr, m, Mo, ko, n, e).open("r") as f:
+    with dir.D_file(i, m, n_tr, Mo, ko, n, e).open("r") as f:
         D = from_csv(f.read())
 
     best_model, best_fitness, time = learn_mip(ke, A, D, seed=seed)
 
-    with dir.Me_file(i, n_tr, m, Mo, ko, n, e, "SRMP", ke, "MIP").open("w") as f:
+    with dir.Me_file(i, m, n_tr, Mo, ko, n, e, "SRMP", ke, "MIP").open("w") as f:
         f.write(best_model.to_json())
 
     return (time, best_fitness)
@@ -155,7 +155,7 @@ def run_test(
     n_te: int,
     dir: Directory,
 ):
-    with dir.A_test_file(i, n_te, m).open("r") as f:
+    with dir.A_test_file(i, m, n_te).open("r") as f:
         A_test = NormalPerformanceTable(read_csv(f, header=None))
 
     with dir.Mo_file(i, m, Mo_type, ko).open("r") as f:
@@ -165,7 +165,7 @@ def run_test(
             case "SRMP":
                 Mo = SRMPModel.from_json(f.read())
 
-    with dir.Me_file(i, n_tr, m, Mo_type, ko, n, e, Me_type, ke, method, config).open(
+    with dir.Me_file(i, m, n_tr, Mo_type, ko, n, e, Me_type, ke, method, config).open(
         "r"
     ) as f:
         match Me_type:
