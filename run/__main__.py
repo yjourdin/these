@@ -1,3 +1,4 @@
+import csv
 import logging.config
 from multiprocessing import JoinableQueue, Process, Queue
 from threading import Thread
@@ -8,7 +9,7 @@ from .path import Directory
 from .precedence import task_precedence
 from .seed import create_seeds
 from .task import TaskExecutor, task_manager
-from .worker import file_thread, worker
+from .worker import csv_file_thread, worker
 
 # Parse arguments
 args = parse_args()
@@ -19,13 +20,22 @@ dir.mkdir()
 
 # Create random seeds
 seeds = create_seeds(args)
-with dir.seeds_file.open("w") as f:
+with dir.seeds_file.open("a", newline='') as f:
+    writer = csv.writer(f, "unix")
     for i, seed in enumerate(seeds["A_train"]):
-        f.write(f"A_train,{i},{seed}\n")
+        writer.writerow(["A_train", i, seed])
     for i, seed in enumerate(seeds["A_test"]):
-        f.write(f"A_test,{i},{seed}\n")
+        writer.writerow(["A_test", i, seed])
     for i, seed in enumerate(seeds["Mo"]):
-        f.write(f"Mo,{i},{seed}\n")
+        writer.writerow(["Mo", i, seed])
+
+# Write configs
+with dir.configs_file.open("a", newline='') as f:
+    writer = csv.writer(f, "unix")
+    for method, configs in args.config.items():
+        for id, config in configs.items():
+            writer.writerow([method, id, config])
+
 
 # Create queues
 task_queue: JoinableQueue = JoinableQueue()
@@ -53,14 +63,14 @@ task_executor = TaskExecutor(
 
 # Start result file threads
 train_result_thread = Thread(
-    target=file_thread,
+    target=csv_file_thread,
     args=(
         dir.train_results_file,
         train_results_queue,
     ),
 )
 test_result_thread = Thread(
-    target=file_thread,
+    target=csv_file_thread,
     args=(
         dir.test_results_file,
         test_results_queue,

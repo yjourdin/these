@@ -23,4 +23,4 @@ else:
 if args.error:
     D = noisy_comparisons(D, args.error, default_rng(args.seed))
 
-args.output.write(to_csv(D))
+to_csv(D, args.output)

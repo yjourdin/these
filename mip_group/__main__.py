@@ -12,7 +12,7 @@ A = NormalPerformanceTable(read_csv(args.A, header=None))
 
 D = []
 for d in args.D:
-    D.append(from_csv(d.read()))
+    D.append(from_csv(d))
 
 best_models, best_fitness, time = learn_mip(
     args.k, A, D, args.gamma, not args.no_inconsistencies, args.seed, args.verbose

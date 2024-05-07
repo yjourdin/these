@@ -73,7 +73,7 @@ def create_D(
         D = noisy_comparisons(D, error, rng)
 
     with dir.D_file(m, n_tr, Atr_id, Mo, ko, Mo_id, n, error).open("w") as f:
-        f.write(to_csv(D))
+        to_csv(D, f)
 
 
 def run_SA(
@@ -96,7 +96,7 @@ def run_SA(
         A = NormalPerformanceTable(read_csv(f, header=None))
 
     with dir.D_file(m, n_tr, Atr_id, Mo, ko, Mo_id, n, e).open("r") as f:
-        D = from_csv(f.read())
+        D = from_csv(f)
 
     rng_init, rng_sa = rng.spawn(2)
     best_model, best_fitness, time, it = learn_sa(
@@ -137,7 +137,7 @@ def run_MIP(
         A = NormalPerformanceTable(read_csv(f, header=None))
 
     with dir.D_file(m, n_tr, Atr_id, Mo, ko, Mo_id, n, e).open("r") as f:
-        D = from_csv(f.read())
+        D = from_csv(f)
 
     best_model, best_fitness, time = learn_mip(ke, A, D, seed=seed)
 

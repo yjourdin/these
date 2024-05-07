@@ -1,3 +1,4 @@
+import csv
 from pathlib import Path
 from typing import Literal
 
@@ -18,6 +19,7 @@ class Directory:
         self.test_results_file = self.root_dir / "test_results.csv"
         self.log_file = self.root_dir / "log.log"
         self.seeds_file = self.root_dir / "seeds.csv"
+        self.configs_file = self.root_dir / "configs.csv"
 
     def A_train_file(self, m: int, n: int, id: int):
         return self.A_train_dir / f"M_{m}_N_{n}_No_{id}.csv"
@@ -89,44 +91,58 @@ class Directory:
         self.Mo_dir.mkdir()
         self.D_dir.mkdir()
         self.Me_dir.mkdir()
-        with self.seeds_file.open("w") as f:
-            f.write("Type," "Id," "Seed.\n")
-        with self.train_results_file.open("w") as f:
-            f.write(
-                "DM,"
-                "M,"
-                "N_tr,"
-                "Atr_id,"
-                "Mo,"
-                "Ko,"
-                "Mo_id,"
-                "N_bc,"
-                "Error,"
-                "Me,"
-                "Ke,"
-                "Method,"
-                "Config,"
-                "Time,"
-                "Fitness,"
-                "It.\n"
+
+        with self.seeds_file.open("w", newline="") as f:
+            writer = csv.writer(f, "unix")
+            writer.writerow(["Type", "Id", "Seed"])
+
+        with self.configs_file.open("w", newline="") as f:
+            writer = csv.writer(f, "unix")
+            writer.writerow(["Method", "Id", "Config"])
+
+        with self.train_results_file.open("w", newline="") as f:
+            writer = csv.writer(f, "unix")
+            writer.writerow(
+                [
+                    "DM",
+                    "M",
+                    "N_tr",
+                    "Atr_id",
+                    "Mo",
+                    "Ko",
+                    "Mo_id",
+                    "N_bc",
+                    "Error",
+                    "Me",
+                    "Ke",
+                    "Method",
+                    "Config",
+                    "Time",
+                    "Fitness",
+                    "It.",
+                ]
             )
-        with self.test_results_file.open("w") as f:
-            f.write(
-                "DM,"
-                "M,"
-                "N_tr,"
-                "Atr_id,"
-                "Mo,"
-                "Ko,"
-                "Mo_id,"
-                "N_bc,"
-                "Error,"
-                "Me,"
-                "Ke,"
-                "Method,"
-                "Config,"
-                "N_te,"
-                "Ate_id,"
-                "Fitness,"
-                "Kendall's tau\n"
+
+        with self.test_results_file.open("w", newline="") as f:
+            writer = csv.writer(f, "unix")
+            writer.writerow(
+                [
+                    "DM",
+                    "M",
+                    "N_tr",
+                    "Atr_id",
+                    "Mo",
+                    "Ko",
+                    "Mo_id",
+                    "N_bc",
+                    "Error",
+                    "Me",
+                    "Ke",
+                    "Method",
+                    "Config",
+                    "N_te",
+                    "Ate_id",
+                    "Fitness",
+                    "Kendall's tau",
+                ]
             )

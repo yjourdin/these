@@ -292,21 +292,23 @@ class TaskExecutor:
                     ),
                 )
                 self.train_results_queue.put(
-                    f"{m},"
-                    f"{n_tr},"
-                    f"{Atr_id},"
-                    f"{Mo},"
-                    f"{ko},"
-                    f"{Mo_id},"
-                    f"{n},"
-                    f"{e},"
-                    f"{Me},"
-                    f"{ke},"
-                    f"SA,"
-                    f"{config},"
-                    f"{time},"
-                    f"{best_fitness},"
-                    f"{it}\n"
+                    [
+                        m,
+                        n_tr,
+                        Atr_id,
+                        Mo,
+                        ko,
+                        Mo_id,
+                        n,
+                        e,
+                        Me,
+                        ke,
+                        "SA",
+                        config,
+                        time,
+                        best_fitness,
+                        it,
+                    ]
                 )
             case ("MIP", m, n_tr, Atr_id, Mo, ko, Mo_id, n, e, ke):
                 time, best_fitness = run_MIP(
@@ -333,19 +335,23 @@ class TaskExecutor:
                     ).integers(2_000_000_000),
                 )
                 self.train_results_queue.put(
-                    f"{m},"
-                    f"{n_tr},"
-                    f"{Atr_id},"
-                    f"{Mo},"
-                    f"{ko},"
-                    f"{Mo_id},"
-                    f"{n},"
-                    f"{e},"
-                    f"SRMP,"
-                    f"{ke},"
-                    f"MIP,,"
-                    f"{time},"
-                    f"{best_fitness},,\n"
+                    [
+                        m,
+                        n_tr,
+                        Atr_id,
+                        Mo,
+                        ko,
+                        Mo_id,
+                        n,
+                        e,
+                        "SRMP",
+                        ke,
+                        "MIP",
+                        "",
+                        time,
+                        best_fitness,
+                        "",
+                    ]
                 )
             case (
                 "Test",
@@ -382,22 +388,24 @@ class TaskExecutor:
                     self.dir,
                 )
                 self.test_results_queue.put(
-                    f"{m},"
-                    f"{n_tr},"
-                    f"{Atr_id},"
-                    f"{Mo},"
-                    f"{ko},"
-                    f"{Mo_id},"
-                    f"{n},"
-                    f"{e},"
-                    f"{Me},"
-                    f"{ke},"
-                    f"{method},"
-                    f"{config},"
-                    f"{n_te},"
-                    f"{Atr_id},"
-                    f"{test_fitness},"
-                    f"{kendall_tau}\n"
+                    [
+                        m,
+                        n_tr,
+                        Atr_id,
+                        Mo,
+                        ko,
+                        Mo_id,
+                        n,
+                        e,
+                        Me,
+                        ke,
+                        method,
+                        config,
+                        n_te,
+                        Ate_id,
+                        test_fitness,
+                        kendall_tau,
+                    ]
                 )
             case _:
                 raise ValueError("Unknown task")

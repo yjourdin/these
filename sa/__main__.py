@@ -1,3 +1,5 @@
+import csv
+
 from numpy.random import default_rng
 from pandas import read_csv
 
@@ -11,7 +13,7 @@ args = parse_args()
 
 A = NormalPerformanceTable(read_csv(args.A, header=None))
 
-D = from_csv(args.D.read())
+D = from_csv(args.D)
 
 best_model, best_fitness, time, it = learn_sa(
     args.model,
@@ -32,11 +34,6 @@ best_model, best_fitness, time, it = learn_sa(
 )
 
 args.output.write(best_model.to_json())
-args.result.write(
-    f"{args.A.name},"
-    f"{args.D.name},"
-    f"{args.k},"
-    f"{time},"
-    f"{it},"
-    f"{best_fitness}\n"
-)
+
+writer = csv.writer(args.result, "unix")
+writer.writerow([args.A.name, args.D.name, args.k, time, it, best_fitness])

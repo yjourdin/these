@@ -1,6 +1,7 @@
 import logging
 import logging.handlers
 from multiprocessing import JoinableQueue, Queue
+import csv
 
 from .task import Task, TaskExecutor
 
@@ -33,8 +34,9 @@ def worker(
     task_queue.task_done()
 
 
-def file_thread(file, q):
-    with file.open("a") as f:
+def csv_file_thread(file, q):
+    with file.open("a", newline='') as f:
+        writer = csv.writer(f, "unix")
         for result in iter(q.get, "STOP"):
-            f.write(result)
+            writer.writerow(result)
             f.flush()
