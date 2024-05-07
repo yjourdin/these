@@ -22,12 +22,9 @@ dir.mkdir()
 seeds = create_seeds(args)
 with dir.seeds_file.open("a", newline='') as f:
     writer = csv.writer(f, "unix")
-    for i, seed in enumerate(seeds["A_train"]):
-        writer.writerow(["A_train", i, seed])
-    for i, seed in enumerate(seeds["A_test"]):
-        writer.writerow(["A_test", i, seed])
-    for i, seed in enumerate(seeds["Mo"]):
-        writer.writerow(["Mo", i, seed])
+    writer.writerows([("A_train", i, seed) for i, seed in enumerate(seeds["A_train"])])
+    writer.writerows([("A_test", i, seed) for i, seed in enumerate(seeds["A_test"])])
+    writer.writerows([("Mo", i, seed) for i, seed in enumerate(seeds["Mo"])])
 
 # Write configs
 with dir.configs_file.open("a", newline='') as f:
