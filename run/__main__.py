@@ -1,14 +1,12 @@
 import logging.config
 from multiprocessing import JoinableQueue, Process, Queue
 from threading import Thread
-from typing import cast
-
-from numpy.random import default_rng
 
 from .argument_parser import parse_args
 from .logging import create_logging_config_dict, logger_thread
 from .path import Directory
 from .precedence import task_precedence
+from .seed import create_seeds
 from .task import TaskExecutor, task_manager
 from .worker import file_thread, worker
 
@@ -20,31 +18,12 @@ dir = Directory(args.name)
 dir.mkdir()
 
 # Create random seeds
-seeds = {}
-seeds["A_train"] = (
-    args.A_tr_seeds
-    if isinstance(args.A_tr_seeds, list)
-    else cast(
-        list[int], default_rng(args.seed).integers(2**63, size=args.A_tr_seeds).tolist()
-    )
-)
-seeds["A_test"] = (
-    args.A_te_seeds
-    if isinstance(args.A_te_seeds, list)
-    else cast(
-        list[int], default_rng(args.seed).integers(2**63, size=args.A_te_seeds).tolist()
-    )
-)
-seeds["Mo"] = (
-    args.Mo_seeds
-    if isinstance(args.Mo_seeds, list)
-    else cast(
-        list[int], default_rng(args.seed).integers(2**63, size=args.Mo_seeds).tolist()
-    )
-)
+seeds = create_seeds(args)
 with dir.seeds_file.open("w") as f:
     for i, seed in enumerate(seeds["A_train"]):
         f.write(f"A_train,{i},{seed}\n")
+    for i, seed in enumerate(seeds["A_test"]):
+        f.write(f"A_test,{i},{seed}\n")
     for i, seed in enumerate(seeds["Mo"]):
         f.write(f"Mo,{i},{seed}\n")
 
@@ -71,6 +50,7 @@ task_executor = TaskExecutor(
     test_results_queue,
 )
 
+
 # Start result file threads
 train_result_thread = Thread(
     target=file_thread,
@@ -86,7 +66,6 @@ test_result_thread = Thread(
         test_results_queue,
     ),
 )
-
 train_result_thread.start()
 test_result_thread.start()
 
@@ -111,8 +90,10 @@ logging.config.dictConfig(create_logging_config_dict(dir))
 logging_thread = Thread(target=logger_thread, args=(logging_queue,))
 logging_thread.start()
 
+
 # Wait all tasks to be done
 task_queue.join()
+
 
 # Stop workers
 for i in range(args.jobs):
