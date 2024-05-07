@@ -13,5 +13,6 @@ parser.add_argument(
 
 def parse_args():
     args = parser.parse_args()
-    arguments = Arguments.from_json(args.args.read())
+    with args.args as file:
+        arguments = Arguments.from_json(file.read())
     return arguments
