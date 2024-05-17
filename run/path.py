@@ -104,7 +104,6 @@ class Directory:
             writer = csv.writer(f, "unix")
             writer.writerow(
                 [
-                    "DM",
                     "M",
                     "N_tr",
                     "Atr_id",
@@ -127,7 +126,6 @@ class Directory:
             writer = csv.writer(f, "unix")
             writer.writerow(
                 [
-                    "DM",
                     "M",
                     "N_tr",
                     "Atr_id",
