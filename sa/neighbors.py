@@ -3,8 +3,8 @@ from copy import deepcopy
 from itertools import chain, combinations
 from typing import Any, Collection, TypeVar, cast
 
-from mcda.matrices import PerformanceTable
 import numpy as np
+from mcda.matrices import PerformanceTable
 from numpy.random import Generator
 
 from abstract_model import Model
@@ -77,7 +77,9 @@ class NeighborProfiles(Neighbor[RMPModel | SRMPModel]):
             crit_values.index[new_value_ind]
         ]
 
-        neighbor.profiles.data.transform(np.sort)
+        neighbor.profiles.data.iloc[:, crit_ind] = neighbor.profiles.data.iloc[
+            :, crit_ind
+        ].sort_values()
         return neighbor
 
 
