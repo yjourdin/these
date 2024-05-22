@@ -18,6 +18,13 @@ A = NormalPerformanceTable(read_csv(args.A, header=None))
 
 D = from_csv(args.D)
 
+rng_init, rng_sa = (
+    (default_rng(args.seed_initial), default_rng(args.seed_sa))
+    if (args.seed_initial is not None) and (args.seed_sa is not None)
+    else default_rng(args.seed).spawn(2)
+)
+
+
 # Learn SA
 best_model, best_fitness, time, it = learn_sa(
     args.model,
@@ -27,8 +34,8 @@ best_model, best_fitness, time, it = learn_sa(
     args.T0,
     args.alpha,
     args.amp,
-    default_rng(args.seed_initial),
-    default_rng(args.seed_sa),
+    rng_init,
+    rng_sa,
     args.L,
     args.Tf,
     args.max_time,

@@ -30,6 +30,7 @@ stopping_criterion_group.add_argument(
     type=int,
     help="Max number of non improving iterations",
 )
+parser.add_argument("-s", "--seed", type=int, help="Random seed")
 parser.add_argument("--seed-initial", type=int, help="Initial model random seed")
 parser.add_argument("--seed-sa", type=int, help="Simulated annealing random seed")
 parser.add_argument(
