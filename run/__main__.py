@@ -3,78 +3,90 @@ import logging.config
 from multiprocessing import JoinableQueue, Process, Queue
 from threading import Thread
 
+from numpy.random import default_rng
+
 from .argument_parser import parse_args
 from .logging import create_logging_config_dict, logger_thread
-from .path import Directory
+from .path import FIELDNAMES, Directory
 from .precedence import task_precedence
-from .seed import create_seeds
-from .task import TaskExecutor, task_manager
-from .worker import csv_file_thread, worker
+from .seed import seeds
+from .worker import csv_file_thread, task_manager, worker
 
 # Parse arguments
 args = parse_args()
+
 
 # Create directory
 dir = Directory(args.name)
 dir.mkdir()
 
+
 # Create random seeds
-seeds = create_seeds(args)
-with dir.seeds_file.open("a", newline='') as f:
-    writer = csv.writer(f, "unix")
-    writer.writerows([("A_train", i, seed) for i, seed in enumerate(seeds["A_train"])])
-    writer.writerows([("A_test", i, seed) for i, seed in enumerate(seeds["A_test"])])
-    writer.writerows([("Mo", i, seed) for i, seed in enumerate(seeds["Mo"])])
+rng = default_rng(args.seed)
+
+args.seeds.A_train = args.seeds.A_train or seeds(rng, args.nb_A_tr)
+args.seeds.A_test = args.seeds.A_test or seeds(rng, args.nb_A_te)
+args.seeds.Mo = args.seeds.Mo or seeds(rng, args.nb_Mo)
+
+
+# Write arguments
+with dir.args.open("w") as f:
+    f.write(args.to_json())
+
 
 # Write configs
-with dir.configs_file.open("a", newline='') as f:
-    writer = csv.writer(f, "unix")
+with dir.configs.open("a", newline="") as f:
+    writer = csv.DictWriter(f, FIELDNAMES[dir.configs.stem], dialect="unix")
     for method, configs in args.config.items():
         for id, config in configs.items():
-            writer.writerow([method, id, config])
+            writer.writerow({"Method": method, "Id": id, "Config": config})
 
 
 # Create queues
 task_queue: JoinableQueue = JoinableQueue()
 done_queue: JoinableQueue = JoinableQueue()
 logging_queue: Queue = Queue()
+seeds_queue: Queue = Queue()
 train_results_queue: Queue = Queue()
 test_results_queue: Queue = Queue()
 
+
 # Set up task precedence
 to_do, succeed, precede = task_precedence(args)
+
 
 # Populate task_queue
 for task in to_do:
     task_queue.put(task)
 
-# Create task executor
-task_executor = TaskExecutor(
-    args,
-    dir,
-    seeds,
-    train_results_queue,
-    test_results_queue,
-)
 
-
-# Start result file threads
-train_result_thread = Thread(
+# Start file threads
+seeds_thread = Thread(
     target=csv_file_thread,
     args=(
-        dir.train_results_file,
+        dir.seeds,
+        seeds_queue,
+    ),
+)
+train_results_thread = Thread(
+    target=csv_file_thread,
+    args=(
+        dir.train_results,
         train_results_queue,
     ),
 )
-test_result_thread = Thread(
+test_results_thread = Thread(
     target=csv_file_thread,
     args=(
-        dir.test_results_file,
+        dir.test_results,
         test_results_queue,
     ),
 )
-train_result_thread.start()
-test_result_thread.start()
+
+seeds_thread.start()
+train_results_thread.start()
+test_results_thread.start()
+
 
 # Start task manager
 task_manager_process = Process(
@@ -82,15 +94,29 @@ task_manager_process = Process(
 )
 task_manager_process.start()
 
+
 # Start workers
 workers: list[Process] = []
 for i in range(args.jobs):
     worker_process = Process(
         target=worker,
-        args=(task_executor, task_queue, done_queue, logging_queue),
+        args=(
+            task_queue,
+            done_queue,
+            logging_queue,
+            args.config,
+            dir,
+            args.seeds,
+            {
+                "seeds": seeds_queue,
+                "train": train_results_queue,
+                "test": test_results_queue,
+            },
+        ),
     )
     worker_process.start()
     workers.append(worker_process)
+
 
 # Start logging thread
 logging.config.dictConfig(create_logging_config_dict(dir))
@@ -109,16 +135,22 @@ task_queue.join()
 for i in range(args.jobs):
     workers[i].join()
 
+
 # Stop task manager
 done_queue.put("STOP")
 done_queue.join()
 task_manager_process.join()
 
-# Stop result file threads
+
+# Stop file threads
+seeds_queue.put("STOP")
 train_results_queue.put("STOP")
 test_results_queue.put("STOP")
-train_result_thread.join()
-test_result_thread.join()
+
+seeds_thread.join()
+train_results_thread.join()
+test_results_thread.join()
+
 
 # Stop logging thread
 logging_queue.put("STOP")

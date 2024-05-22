@@ -1,30 +1,33 @@
-from typing import cast
+from dataclasses import asdict, dataclass, field
+from json import dumps, loads
 
-from numpy.random import default_rng
-
-from .arguments import Arguments
+from numpy.random import Generator
 
 
-def create_seeds(args: Arguments):
-    seeds = {}
-    rng = default_rng(args.seed)
+@dataclass
+class Seeds:
+    A_train: list[int] = field(default_factory=list)
+    A_test: list[int] = field(default_factory=list)
+    Mo: list[int] = field(default_factory=list)
 
-    seeds["A_train"] = (
-        args.A_tr_seeds
-        if isinstance(args.A_tr_seeds, list)
-        else cast(list[int], rng.integers(2**63, size=args.A_tr_seeds).tolist())
-    )
+    @classmethod
+    def from_dict(cls, dct):
+        return cls(**dct)
 
-    seeds["A_test"] = (
-        args.A_te_seeds
-        if isinstance(args.A_te_seeds, list)
-        else cast(list[int], rng.integers(2**63, size=args.A_te_seeds).tolist())
-    )
+    @classmethod
+    def from_json(cls, s):
+        return cls.from_dict(loads(s))
 
-    seeds["Mo"] = (
-        args.Mo_seeds
-        if isinstance(args.Mo_seeds, list)
-        else cast(list[int], rng.integers(2**63, size=args.Mo_seeds).tolist())
-    )
+    def to_dict(self):
+        return asdict(self)
 
-    return seeds
+    def to_json(self):
+        return dumps(self.to_dict(), indent=4)
+
+
+def seed(rng: Generator) -> int:
+    return rng.integers(2**63)
+
+
+def seeds(rng: Generator, nb: int = 1) -> list[int]:
+    return rng.integers(2**63, size=nb).tolist()

@@ -3,6 +3,7 @@ from json import dumps, loads
 from typing import Literal
 
 from jobs import JOBS
+from .seed import Seeds
 
 from .config import CONFIGS, Config
 
@@ -25,9 +26,10 @@ class Arguments:
     name: str
     jobs: int = JOBS
     seed: int | None = None
-    A_tr_seeds: list[int] | int = 1
-    A_te_seeds: list[int] | int = 1
-    Mo_seeds: list[int] | int = 1
+    nb_A_tr: int = 1
+    nb_A_te: int = 1
+    nb_Mo: int = 1
+    seeds: Seeds = Seeds()
     N_tr: list[int] = field(default_factory=list)
     N_te: list[int] = field(default_factory=list)
     method: list[Method] = field(default_factory=list)
