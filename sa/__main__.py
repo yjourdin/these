@@ -9,12 +9,16 @@ from preference_structure.io import from_csv
 from .argument_parser import parse_args
 from .main import learn_sa
 
+# Parse arguments
 args = parse_args()
 
+
+# Import data
 A = NormalPerformanceTable(read_csv(args.A, header=None))
 
 D = from_csv(args.D)
 
+# Learn SA
 best_model, best_fitness, time, it = learn_sa(
     args.model,
     args.k,
@@ -33,6 +37,8 @@ best_model, best_fitness, time, it = learn_sa(
     args.log,
 )
 
+
+# Write results
 args.output.write(best_model.to_json())
 
 writer = csv.writer(args.result, "unix")
