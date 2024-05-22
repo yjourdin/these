@@ -6,6 +6,46 @@ from model import ModelType
 
 RESULTS_DIR = Path("results")
 
+FIELDNAMES = {
+    "train_results": [
+        "M",
+        "N_tr",
+        "Atr_id",
+        "Mo",
+        "Ko",
+        "Mo_id",
+        "N_bc",
+        "Error",
+        "Me",
+        "Ke",
+        "Method",
+        "Config",
+        "Time",
+        "Fitness",
+        "It.",
+    ],
+    "test_results": [
+        "M",
+        "N_tr",
+        "Atr_id",
+        "Mo",
+        "Ko",
+        "Mo_id",
+        "N_bc",
+        "Error",
+        "Me",
+        "Ke",
+        "Method",
+        "Config",
+        "N_te",
+        "Ate_id",
+        "Fitness",
+        "Kendall's tau",
+    ],
+    "configs": ["Method", "Id", "Config"],
+    "seeds": ["Task", "Seed"],
+}
+
 
 class Directory:
     def __init__(self, name: str):
@@ -15,22 +55,23 @@ class Directory:
         self.Mo_dir = self.root_dir / "Mo"
         self.D_dir = self.root_dir / "D"
         self.Me_dir = self.root_dir / "Me"
-        self.train_results_file = self.root_dir / "train_results.csv"
-        self.test_results_file = self.root_dir / "test_results.csv"
-        self.log_file = self.root_dir / "log.log"
-        self.seeds_file = self.root_dir / "seeds.csv"
-        self.configs_file = self.root_dir / "configs.csv"
+        self.train_results = self.root_dir / "train_results.csv"
+        self.test_results = self.root_dir / "test_results.csv"
+        self.log = self.root_dir / "log.log"
+        self.args = self.root_dir / "args.json"
+        self.seeds = self.root_dir / "seeds.csv"
+        self.configs = self.root_dir / "configs.csv"
 
-    def A_train_file(self, m: int, n: int, id: int):
-        return self.A_train_dir / f"M_{m}_N_{n}_No_{id}.csv"
+    def A_train(self, m: int, n: int, id: int):
+        return self.A_train_dir / f"M_{m}_N_{n}_Id_{id}.csv"
 
-    def A_test_file(self, m: int, n: int, id: int):
-        return self.A_test_dir / f"M_{m}_N_{n}_No_{id}.csv"
+    def A_test(self, m: int, n: int, id: int):
+        return self.A_test_dir / f"M_{m}_N_{n}_Id_{id}.csv"
 
-    def Mo_file(self, m: int, model: ModelType, k: int, id: int):
-        return self.Mo_dir / f"M_{m}_model_{model}_K_{k}_No_{id}.json"
+    def Mo(self, m: int, model: ModelType, k: int, id: int):
+        return self.Mo_dir / f"M_{m}_model_{model}_K_{k}_Id_{id}.json"
 
-    def D_file(
+    def D(
         self,
         m: int,
         n_tr: int,
@@ -44,16 +85,16 @@ class Directory:
         return self.D_dir / (
             f"M_{m}_"
             f"Ntr_{n_tr}_"
-            f"AtrNo_{A_tr_id}_"
+            f"AtrId_{A_tr_id}_"
             f"Mo_{Mo}_"
             f"Ko_{ko}_"
-            f"MoNo_{Mo_id}_"
+            f"MoId_{Mo_id}_"
             f"N_{n}_"
             f"E_{e}"
             ".csv"
         )
 
-    def Me_file(
+    def Me(
         self,
         m: int,
         n_tr: int,
@@ -71,10 +112,10 @@ class Directory:
         return self.Me_dir / (
             f"M_{m}_"
             f"Ntr_{n_tr}_"
-            f"AtrNo_{A_tr_id}_"
+            f"AtrId_{A_tr_id}_"
             f"Mo_{Mo}_"
             f"Ko_{ko}_"
-            f"MoNo_{Mo_id}_"
+            f"MoId_{Mo_id}_"
             f"N_{n}_"
             f"E_{e}_"
             f"Me_{Me}_"
@@ -92,55 +133,22 @@ class Directory:
         self.D_dir.mkdir()
         self.Me_dir.mkdir()
 
-        with self.seeds_file.open("w", newline="") as f:
-            writer = csv.writer(f, "unix")
-            writer.writerow(["Type", "Id", "Seed"])
+        with self.seeds.open("w", newline="") as f:
+            writer = csv.DictWriter(f, FIELDNAMES[self.seeds.stem], dialect="unix")
+            writer.writeheader()
 
-        with self.configs_file.open("w", newline="") as f:
-            writer = csv.writer(f, "unix")
-            writer.writerow(["Method", "Id", "Config"])
+        with self.configs.open("w", newline="") as f:
+            writer = csv.DictWriter(f, FIELDNAMES[self.configs.stem], dialect="unix")
+            writer.writeheader()
 
-        with self.train_results_file.open("w", newline="") as f:
-            writer = csv.writer(f, "unix")
-            writer.writerow(
-                [
-                    "M",
-                    "N_tr",
-                    "Atr_id",
-                    "Mo",
-                    "Ko",
-                    "Mo_id",
-                    "N_bc",
-                    "Error",
-                    "Me",
-                    "Ke",
-                    "Method",
-                    "Config",
-                    "Time",
-                    "Fitness",
-                    "It.",
-                ]
+        with self.train_results.open("w", newline="") as f:
+            writer = csv.DictWriter(
+                f, FIELDNAMES[self.train_results.stem], dialect="unix"
             )
+            writer.writeheader()
 
-        with self.test_results_file.open("w", newline="") as f:
-            writer = csv.writer(f, "unix")
-            writer.writerow(
-                [
-                    "M",
-                    "N_tr",
-                    "Atr_id",
-                    "Mo",
-                    "Ko",
-                    "Mo_id",
-                    "N_bc",
-                    "Error",
-                    "Me",
-                    "Ke",
-                    "Method",
-                    "Config",
-                    "N_te",
-                    "Ate_id",
-                    "Fitness",
-                    "Kendall's tau",
-                ]
+        with self.test_results.open("w", newline="") as f:
+            writer = csv.DictWriter(
+                f, FIELDNAMES[self.test_results.stem], dialect="unix"
             )
+            writer.writeheader()

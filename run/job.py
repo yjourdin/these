@@ -23,13 +23,13 @@ from .path import Directory
 
 def create_A_train(m: int, n: int, id: int, dir: Directory, rng: Generator):
     A = random_alternatives(n, m, rng)
-    with dir.A_train_file(m, n, id).open("w") as f:
+    with dir.A_train(m, n, id).open("w") as f:
         A.data.to_csv(f, header=False, index=False)
 
 
 def create_A_test(m: int, n: int, id: int, dir: Directory, rng: Generator):
     A = random_alternatives(n, m, rng)
-    with dir.A_test_file(m, n, id).open("w") as f:
+    with dir.A_test(m, n, id).open("w") as f:
         A.data.to_csv(f, header=False, index=False)
 
 
@@ -41,7 +41,7 @@ def create_Mo(
             Mo = random_rmp(k, m, rng)
         case "SRMP":
             Mo = random_srmp(k, m, rng)
-    with dir.Mo_file(m, model, k, id).open("w") as f:
+    with dir.Mo(m, model, k, id).open("w") as f:
         f.write(Mo.to_json())
 
 
@@ -57,14 +57,14 @@ def create_D(
     dir: Directory,
     rng: Generator,
 ):
-    with dir.Mo_file(m, Mo, ko, Mo_id).open("r") as f:
+    with dir.Mo(m, Mo, ko, Mo_id).open("r") as f:
         match Mo:
             case "RMP":
                 model = RMPModel.from_json(f.read())
             case "SRMP":
                 model = SRMPModel.from_json(f.read())
 
-    with dir.A_train_file(m, n_tr, Atr_id).open("r") as f:
+    with dir.A_train(m, n_tr, Atr_id).open("r") as f:
         A = NormalPerformanceTable(read_csv(f, header=None))
 
     D = random_comparisons(n, A, model, rng)
@@ -72,7 +72,7 @@ def create_D(
     if error:
         D = noisy_comparisons(D, error, rng)
 
-    with dir.D_file(m, n_tr, Atr_id, Mo, ko, Mo_id, n, error).open("w") as f:
+    with dir.D(m, n_tr, Atr_id, Mo, ko, Mo_id, n, error).open("w") as f:
         to_csv(D, f)
 
 
@@ -92,10 +92,10 @@ def run_SA(
     dir: Directory,
     rng: Generator,
 ):
-    with dir.A_train_file(m, n_tr, Atr_id).open("r") as f:
+    with dir.A_train(m, n_tr, Atr_id).open("r") as f:
         A = NormalPerformanceTable(read_csv(f, header=None))
 
-    with dir.D_file(m, n_tr, Atr_id, Mo, ko, Mo_id, n, e).open("r") as f:
+    with dir.D(m, n_tr, Atr_id, Mo, ko, Mo_id, n, e).open("r") as f:
         D = from_csv(f)
 
     rng_init, rng_sa = rng.spawn(2)
@@ -112,9 +112,9 @@ def run_SA(
         max_iter=config.max_iter,
     )
 
-    with dir.Me_file(
-        m, n_tr, Atr_id, Mo, ko, Mo_id, n, e, Me, ke, "SA", config_id
-    ).open("w") as f:
+    with dir.Me(m, n_tr, Atr_id, Mo, ko, Mo_id, n, e, Me, ke, "SA", config_id).open(
+        "w"
+    ) as f:
         f.write(best_model.to_json())
 
     return (time, it, best_fitness)
@@ -133,18 +133,18 @@ def run_MIP(
     dir: Directory,
     seed: int,
 ):
-    with dir.A_train_file(m, n_tr, Atr_id).open("r") as f:
+    with dir.A_train(m, n_tr, Atr_id).open("r") as f:
         A = NormalPerformanceTable(read_csv(f, header=None))
 
-    with dir.D_file(m, n_tr, Atr_id, Mo, ko, Mo_id, n, e).open("r") as f:
+    with dir.D(m, n_tr, Atr_id, Mo, ko, Mo_id, n, e).open("r") as f:
         D = from_csv(f)
 
     best_model, best_fitness, time = learn_mip(ke, A, D, seed=seed)
 
-    with dir.Me_file(m, n_tr, Atr_id, Mo, ko, Mo_id, n, e, "SRMP", ke, "MIP", 0).open(
+    with dir.Me(m, n_tr, Atr_id, Mo, ko, Mo_id, n, e, "SRMP", ke, "MIP", 0).open(
         "w"
     ) as f:
-        f.write(best_model.to_json())
+        f.write(best_model.to_json() if best_model else "None")
 
     return (time, best_fitness)
 
@@ -166,17 +166,17 @@ def run_test(
     Ate_id: int,
     dir: Directory,
 ):
-    with dir.A_test_file(m, n_te, Ate_id).open("r") as f:
+    with dir.A_test(m, n_te, Ate_id).open("r") as f:
         A_test = NormalPerformanceTable(read_csv(f, header=None))
 
-    with dir.Mo_file(m, Mo_type, ko, Mo_id).open("r") as f:
+    with dir.Mo(m, Mo_type, ko, Mo_id).open("r") as f:
         match Mo_type:
             case "RMP":
                 Mo = RMPModel.from_json(f.read())
             case "SRMP":
                 Mo = SRMPModel.from_json(f.read())
 
-    with dir.Me_file(
+    with dir.Me(
         m, n_tr, Atr_id, Mo_type, ko, Mo_id, n, e, Me_type, ke, method, config
     ).open("r") as f:
         match Me_type:

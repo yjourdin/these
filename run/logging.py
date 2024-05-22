@@ -25,7 +25,7 @@ def create_logging_config_dict(dir: Directory):
             },
             "file": {
                 "class": "logging.FileHandler",
-                "filename": dir.log_file,
+                "filename": dir.log,
                 "mode": "w",
                 "formatter": "detailed",
             },
