@@ -1,16 +1,7 @@
 from collections import defaultdict
 
 from .arguments import Arguments
-from .task import (
-    Task,
-    task_A_test,
-    task_A_train,
-    task_D,
-    task_MIP,
-    task_Mo,
-    task_SA,
-    task_test,
-)
+from .task import ATestTask, ATrainTask, DTask, MIPTask, MoTask, SATask, Task, TestTask
 
 
 def task_precedence(args: Arguments):
@@ -19,39 +10,43 @@ def task_precedence(args: Arguments):
     to_do: list[Task] = []
 
     nb_A_tr = (
-        args.A_tr_seeds if isinstance(args.A_tr_seeds, int) else len(args.A_tr_seeds)
+        args.seeds.A_train
+        if isinstance(args.seeds.A_train, int)
+        else len(args.seeds.A_train)
     )
-    nb_Mo = args.Mo_seeds if isinstance(args.Mo_seeds, int) else len(args.Mo_seeds)
+    nb_Mo = args.seeds.Mo if isinstance(args.seeds.Mo, int) else len(args.seeds.Mo)
     nb_A_te = (
-        args.A_te_seeds if isinstance(args.A_te_seeds, int) else len(args.A_te_seeds)
+        args.seeds.A_test
+        if isinstance(args.seeds.A_test, int)
+        else len(args.seeds.A_test)
     )
 
     for m in args.M:
         for n_tr in args.N_tr:
             for A_tr_id in range(nb_A_tr):
-                to_do.append(task_A_train(m, n_tr, A_tr_id))  # Put task in task queue
+                to_do.append(ATrainTask(m, n_tr, A_tr_id))  # Put task in task queue
 
         for n_te in args.N_te:
             for A_te_id in range(nb_A_te):
-                to_do.append(task_A_test(m, n_te, A_te_id))  # Put task in task queue
+                to_do.append(ATestTask(m, n_te, A_te_id))  # Put task in task queue
 
         for Mo in args.Mo:
             for ko in args.Ko:
                 for Mo_id in range(nb_Mo):
-                    to_do.append(task_Mo(m, Mo, ko, Mo_id))  # Put task in task queue
+                    to_do.append(MoTask(m, Mo, ko, Mo_id))  # Put task in task queue
 
         for n_tr in args.N_tr:
             for A_tr_id in range(nb_A_tr):
-                t_A_train = task_A_train(m, n_tr, A_tr_id)
+                t_A_train = ATrainTask(m, n_tr, A_tr_id)
 
                 for Mo in args.Mo:
                     for ko in args.Ko:
                         for Mo_id in range(nb_Mo):
-                            t_Mo = task_Mo(m, Mo, ko, Mo_id)
+                            t_Mo = MoTask(m, Mo, ko, Mo_id)
 
                             for n_bc in args.N_bc:
                                 for e in args.error:
-                                    t_D = task_D(
+                                    t_D = DTask(
                                         m, n_tr, A_tr_id, Mo, ko, Mo_id, n_bc, e
                                     )
 
@@ -64,9 +59,10 @@ def task_precedence(args: Arguments):
                                             for ke in args.Ke:
                                                 for method in args.method:
                                                     for config in args.config[method]:
+                                                        t_Me: Task
                                                         match method:
                                                             case "SA":
-                                                                t_Me = task_SA(
+                                                                t_Me = SATask(
                                                                     m,
                                                                     n_tr,
                                                                     A_tr_id,
@@ -79,9 +75,8 @@ def task_precedence(args: Arguments):
                                                                     ke,
                                                                     config,
                                                                 )
-
                                                             case "MIP" if Me == "SRMP":
-                                                                t_Me = task_MIP(
+                                                                t_Me = MIPTask(
                                                                     m,
                                                                     n_tr,
                                                                     A_tr_id,
@@ -92,7 +87,6 @@ def task_precedence(args: Arguments):
                                                                     e,
                                                                     ke,
                                                                 )
-
                                                             case _:
                                                                 break
 
@@ -103,10 +97,10 @@ def task_precedence(args: Arguments):
                                                             for A_te_id in range(
                                                                 nb_A_te
                                                             ):
-                                                                t_A_test = task_A_test(
+                                                                t_A_test = ATestTask(
                                                                     m, n_te, A_te_id
                                                                 )
-                                                                t_test = task_test(
+                                                                t_test = TestTask(
                                                                     m,
                                                                     n_tr,
                                                                     A_tr_id,

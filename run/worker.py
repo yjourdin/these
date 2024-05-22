@@ -1,16 +1,24 @@
+import csv
 import logging
 import logging.handlers
+from collections import defaultdict
 from multiprocessing import JoinableQueue, Queue
-import csv
 
-from .task import Task, TaskExecutor
+from .arguments import ConfigDict
+from .path import Directory, FIELDNAMES
+from .seed import Seeds
+from .task import Task
+from pathlib import Path
 
 
 def worker(
-    task_executor: TaskExecutor,
     task_queue: "JoinableQueue[Task]",
     done_queue: "JoinableQueue[Task]",
     logging_queue: Queue,
+    configs: ConfigDict,
+    dir: Directory,
+    seeds: Seeds,
+    queues: dict[str, Queue]
 ):
     logging_qh = logging.handlers.QueueHandler(logging_queue)
     logging_root = logging.getLogger()
@@ -20,11 +28,11 @@ def worker(
     logger = logging.getLogger("log")
     for task in iter(task_queue.get, "STOP"):
         try:
-            logger.info(task_executor.name(task) + " running...")
-            task_executor.execute(task)
+            logger.info("execute " + str(task))
+            task(configs, dir, seeds, queues)
             done_queue.put(task)
             done_queue.join()
-            logger.info(task_executor.name(task) + " done")
+            logger.info("done    " + str(task))
             task_queue.task_done()
         except Exception as e:
             logger.error(e, exc_info=True)
@@ -34,9 +42,28 @@ def worker(
     task_queue.task_done()
 
 
-def csv_file_thread(file, q):
-    with file.open("a", newline='') as f:
-        writer = csv.writer(f, "unix")
+def task_manager(
+    succeed: defaultdict[Task, list[Task]],
+    precede: defaultdict[Task, list[Task]],
+    task_queue: "JoinableQueue[Task]",
+    done_queue: "JoinableQueue[Task]",
+):
+    task_set = set()
+    done_set = set()
+    for task in iter(done_queue.get, "STOP"):
+        done_set.add(task)
+        for next_task in succeed[task]:
+            if next_task not in task_set:
+                if all(t in done_set for t in precede[next_task]):
+                    task_queue.put(next_task)
+                    task_set.add(next_task)
+        done_queue.task_done()
+    done_queue.task_done()
+
+
+def csv_file_thread(file: Path, q: Queue):
+    with file.open("a", newline="") as f:
+        writer = csv.DictWriter(f, FIELDNAMES[file.stem], dialect="unix")
         for result in iter(q.get, "STOP"):
             writer.writerow(result)
             f.flush()
