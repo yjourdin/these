@@ -8,6 +8,7 @@ from .config import CONFIGS, Config
 
 Model = Literal["RMP", "SRMP"]
 Method = Literal["MIP", "SA"]
+ConfigDict = dict[Method, dict[int, Config]]
 
 
 def config_hook(dct):
@@ -37,7 +38,7 @@ class Arguments:
     Me: list[Model] = field(default_factory=list)
     Ke: list[int] = field(default_factory=list)
     error: list[float] = field(default_factory=list)
-    config: dict[Method, dict[int, Config]] = field(default_factory=dict)
+    config: ConfigDict = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, dct):

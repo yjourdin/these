@@ -7,7 +7,7 @@ from numpy.random import default_rng
 from model import ModelType
 from run.config import SAConfig
 
-from .arguments import Arguments
+from .arguments import ConfigDict
 from .job import (
     create_A_test,
     create_A_train,
