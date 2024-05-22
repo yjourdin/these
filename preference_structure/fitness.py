@@ -2,6 +2,7 @@ from typing import cast
 
 import numpy as np
 from mcda.internal.core.matrices import OutrankingMatrix
+from mcda.internal.core.relations import Relation
 from mcda.internal.core.values import Ranking
 from mcda.relations import I, P, PreferenceStructure
 
@@ -14,58 +15,69 @@ def fitness_comparisons(Co: PreferenceStructure, Ce: PreferenceStructure) -> flo
 
 def fitness_comparisons_ranking(Co: PreferenceStructure, Re: Ranking) -> float:
     Re_dict = Re.data.to_dict()
-    s: int = 0
-    for r in Co:
+
+    def correct(r: Relation):
         a, b = r.elements
         match r:
             case P():
-                s += Re_dict[a] < Re_dict[b]
+                return Re_dict[a] < Re_dict[b]
             case I():
-                s += Re_dict[a] == Re_dict[b]
-    return s / len(Co)
+                return Re_dict[a] == Re_dict[b]
+            case _:
+                return False
+
+    return sum(map(correct, Co)) / len(Co)
 
 
 def fitness_comparisons_outranking(
     Co: PreferenceStructure, Oe: OutrankingMatrix
 ) -> float:
-    s: int = 0
-    for r in Co:
+    def correct(r: Relation):
         a, b = r.elements
         match r:
             case P():
-                s += Oe.cell[a, b] * (1 - Oe.cell[b, a])
+                return Oe.cell[a, b] * (1 - Oe.cell[b, a])
             case I():
-                s += Oe.cell[a, b] * Oe.cell[b, a]
-    return s / len(Co)
+                return Oe.cell[a, b] * Oe.cell[b, a]
+            case _:
+                return False
+
+    return sum(map(correct, Co)) / len(Co)
 
 
 def fitness_ranking_comparisons(Ro: Ranking, Ce: PreferenceStructure) -> float:
+    n = len(Ro)
     Ro_dict = Ro.data.to_dict()
-    s: int = 0
-    for r in Ce:
+
+    def correct(r: Relation):
         a, b = r.elements
         match r:
             case P():
-                s += Ro_dict[a] > Ro_dict[b]
+                return Ro_dict[a] < Ro_dict[b]
             case I():
-                s += Ro_dict[a] == Ro_dict[b]
-    n = len(Ro)
-    return s / (n * (n - 1) / 2)
+                return Ro_dict[a] == Ro_dict[b]
+            case _:
+                return False
+
+    return sum(map(correct, Ce)) / (n * (n - 1) / 2)
 
 
 def fitness_outranking_comparisons(
     Oo: OutrankingMatrix, Ce: PreferenceStructure
 ) -> float:
-    s: int = 0
-    for r in Ce:
+    n = len(Oo.data)
+
+    def correct(r: Relation):
         a, b = r.elements
         match r:
             case P():
-                s += Oo.cell[a, b] * (1 - Oo.cell[b, a])
+                return Oo.cell[a, b] * (1 - Oo.cell[b, a])
             case I():
-                s += Oo.cell[a, b] * Oo.cell[b, a]
-    n = len(Oo.data)
-    return s / (n * (n - 1) / 2)
+                return Oo.cell[a, b] * Oo.cell[b, a]
+            case _:
+                return False
+
+    return sum(map(correct, Ce)) / (n * (n - 1) / 2)
 
 
 def fitness_outranking_numpy(Oo: np.ndarray, Oe: np.ndarray) -> float:
