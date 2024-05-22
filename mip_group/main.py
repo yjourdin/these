@@ -1,13 +1,19 @@
-from collections import namedtuple
 from itertools import permutations
-from typing import cast
+from typing import NamedTuple, cast
 
 from mcda.relations import I, P, PreferenceStructure
 from pulp import value
 
 from performance_table.normal_performance_table import NormalPerformanceTable
+from srmp.model import SRMPModel
 
 from .mip import MIPGroup
+
+
+class MIPGroupResult(NamedTuple):
+    best_models: list[SRMPModel] | None
+    best_fitness: float
+    time: float | None
 
 
 def learn_mip(
@@ -69,6 +75,4 @@ def learn_mip(
                 if best_fitness == 1:
                     break
 
-    return namedtuple("MIPGroupResult", ["best_models", "best_fitness", "time"])(
-        best_models, best_fitness, time  # type: ignore
-    )  # type: ignore
+    return MIPGroupResult(best_models, best_fitness, time)
