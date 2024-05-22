@@ -21,5 +21,4 @@ def from_csv(csvfile) -> PreferenceStructure:
 
 def to_csv(comparisons: PreferenceStructure, csvfile):
     writer = csv.writer(csvfile, "unix")
-    for r in comparisons.relations:
-        writer.writerows([(r.a, r._RELATION_TYPE, r.b) for r in comparisons.relations])
+    writer.writerows([(r.a, r._RELATION_TYPE, r.b) for r in comparisons.relations])
