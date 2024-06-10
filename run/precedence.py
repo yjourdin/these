@@ -39,7 +39,7 @@ def task_precedence(args: Arguments):
                     succeed[t_Mo] += [t_D]
                     precede[t_D] += [t_A_train, t_Mo]
 
-                    for Me, ke, method in product(args.Me, args.Ke, args.methods):
+                    for Me, ke, method in product(args.Me, args.Ke, args.method):
                         for config in (
                             config for config in args.config if config.method == method
                         ):

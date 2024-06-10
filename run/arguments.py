@@ -19,7 +19,7 @@ class Arguments:
     seeds: Seeds = Seeds()
     N_tr: list[int] = field(default_factory=list)
     N_te: list[int] = field(default_factory=list)
-    methods: list[Method] = field(default_factory=list)
+    method: list[Method] = field(default_factory=list)
     M: list[int] = field(default_factory=list)
     Mo: list[Model] = field(default_factory=list)
     Ko: list[int] = field(default_factory=list)

@@ -40,9 +40,10 @@ class SAConfig(Config):
 
 
 def create_config(dct: dict) -> Config | dict:
-    id = dct.pop("id", None)
+    id = dct.get("id", None)
     if id is not None:
-        match dct["method"]:
+        method = dct.pop("method", None)
+        match method:
             case "MIP":
                 return MIPConfig.from_dict(dct)
             case "SA":
