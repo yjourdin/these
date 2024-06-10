@@ -1,9 +1,15 @@
 from dataclasses import asdict, dataclass
 from json import dumps, loads
+from typing import ClassVar
+
+from .types import Method
 
 
 @dataclass(frozen=True)
 class Config:
+    id: int
+    method: ClassVar[Method]
+
     @classmethod
     def from_dict(cls, dct):
         return cls(**dct)
@@ -21,15 +27,27 @@ class Config:
 
 @dataclass(frozen=True)
 class MIPConfig(Config):
-    pass
+    method = "MIP"
 
 
 @dataclass(frozen=True)
 class SAConfig(Config):
+    method = "SA"
     T0_coef: float
     alpha: float
     amp: float
     max_iter: int
 
 
-CONFIGS = (MIPConfig, SAConfig)
+def create_config(dct: dict) -> Config | dict:
+    id = dct.pop("id", None)
+    if id is not None:
+        match dct["method"]:
+            case "MIP":
+                return MIPConfig.from_dict(dct)
+            case "SA":
+                return SAConfig.from_dict(dct)
+            case _:
+                raise ValueError("Unknown method")
+    else:
+        return dct

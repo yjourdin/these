@@ -42,7 +42,7 @@ FIELDNAMES = {
         "Fitness",
         "Kendall's tau",
     ],
-    "configs": ["Method", "Id", "Config"],
+    "configs": ["Id", "Method", "Config"],
     "seeds": ["Task", "Seed"],
 }
 

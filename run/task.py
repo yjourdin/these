@@ -1,14 +1,13 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from multiprocessing import Queue
-from typing import Any, ClassVar, Literal, cast
+from typing import Any, ClassVar, Literal
 
 from numpy.random import default_rng
 
 from model import ModelType
 
-from .arguments import ConfigDict
-from .config import SAConfig
+from .config import Config, SAConfig
 from .job import (
     create_A_test,
     create_A_train,
@@ -24,6 +23,8 @@ from .seed import Seeds, seed
 
 def print_attribute(name: str, value: Any | None, width: int) -> str:
     if value is not None:
+        if isinstance(value, Config):
+            value = value.id
         return f"{name.capitalize()}: {value:{width}}"
     else:
         return f"{'':{len(name)}}  {'':{width}}"
@@ -61,11 +62,17 @@ class Task(ABC):
     @abstractmethod
     def __call__(
         self,
-        configs: ConfigDict,
         dir: Directory,
         seeds: Seeds,
         queues: dict[str, Queue],
     ) -> None:
+        pass
+
+    @abstractmethod
+    def seed(
+        self,
+        seeds: Seeds,
+    ) -> int | None:
         pass
 
 
@@ -76,7 +83,7 @@ class ATrainTask(Task):
     n: int
     Atr_id: int
 
-    def __call__(self, configs, dir, seeds, queues):
+    def __call__(self, dir, seeds, queues):
         seed = self.seed(seeds)
         queues["seeds"].put({"Task": str(self), "Seed": seed})
 
@@ -99,7 +106,7 @@ class ATestTask(Task):
     n: int
     Ate_id: int
 
-    def __call__(self, configs, dir, seeds, queues):
+    def __call__(self, dir, seeds, queues):
         seed = self.seed(seeds)
         queues["seeds"].put({"Task": str(self), "Seed": seed})
 
@@ -123,7 +130,7 @@ class MoTask(Task):
     ko: int
     Mo_id: int
 
-    def __call__(self, configs, dir, seeds, queues):
+    def __call__(self, dir, seeds, queues):
         seed = self.seed(seeds)
         queues["seeds"].put({"Task": str(self), "Seed": seed})
 
@@ -152,7 +159,7 @@ class DTask(Task):
     n: int
     error: float
 
-    def __call__(self, configs, dir, seeds, queues):
+    def __call__(self, dir, seeds, queues):
         seed = self.seed(seeds)
         queues["seeds"].put({"Task": str(self), "Seed": seed})
 
@@ -197,9 +204,9 @@ class SATask(Task):
     error: float
     Me: ModelType
     ke: int
-    config: int
+    config: SAConfig
 
-    def __call__(self, configs, dir, seeds, queues):
+    def __call__(self, dir, seeds, queues):
         seed = self.seed(seeds)
         queues["seeds"].put({"Task": str(self), "Seed": seed})
 
@@ -215,7 +222,6 @@ class SATask(Task):
             self.Me,
             self.ke,
             self.config,
-            cast(SAConfig, configs["SA"][self.config]),
             dir,
             default_rng(seed),
         )
@@ -268,7 +274,7 @@ class MIPTask(Task):
     error: float
     ke: int
 
-    def __call__(self, configs, dir, seeds, queues):
+    def __call__(self, dir, seeds, queues):
         seed = self.seed(seeds)
         queues["seeds"].put({"Task": str(self), "Seed": seed})
 
@@ -337,7 +343,7 @@ class TestTask(Task):
     n_te: int
     Ate_id: int
 
-    def __call__(self, configs, dir, seeds, queues):
+    def __call__(self, dir, seeds, queues):
         test_fitness, kendall_tau = run_test(
             self.m,
             self.n_tr,
@@ -375,3 +381,6 @@ class TestTask(Task):
                 "Kendall's tau": kendall_tau,
             }
         )
+
+    def seed(self, seeds: Seeds):
+        return None

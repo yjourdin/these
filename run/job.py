@@ -87,7 +87,6 @@ def run_SA(
     e: float,
     Me: ModelType,
     ke: int,
-    config_id: int,
     config: SAConfig,
     dir: Directory,
     rng: Generator,
@@ -112,7 +111,7 @@ def run_SA(
         max_iter=config.max_iter,
     )
 
-    with dir.Me(m, n_tr, Atr_id, Mo, ko, Mo_id, n, e, Me, ke, "SA", config_id).open(
+    with dir.Me(m, n_tr, Atr_id, Mo, ko, Mo_id, n, e, Me, ke, "SA", config.id).open(
         "w"
     ) as f:
         f.write(best_model.to_json())

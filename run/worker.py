@@ -4,7 +4,6 @@ import logging.handlers
 from collections import defaultdict
 from multiprocessing import JoinableQueue, Queue
 
-from .arguments import ConfigDict
 from .path import Directory, FIELDNAMES
 from .seed import Seeds
 from .task import Task
@@ -15,7 +14,6 @@ def worker(
     task_queue: "JoinableQueue[Task]",
     done_queue: "JoinableQueue[Task]",
     logging_queue: Queue,
-    configs: ConfigDict,
     dir: Directory,
     seeds: Seeds,
     queues: dict[str, Queue]
@@ -29,7 +27,7 @@ def worker(
     for task in iter(task_queue.get, "STOP"):
         try:
             logger.info("execute " + str(task))
-            task(configs, dir, seeds, queues)
+            task(dir, seeds, queues)
             done_queue.put(task)
             done_queue.join()
             logger.info("done    " + str(task))

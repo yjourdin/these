@@ -24,9 +24,15 @@ dir.mkdir()
 # Create random seeds
 rng = default_rng(args.seed)
 
-args.seeds.A_train = args.seeds.A_train or seeds(rng, args.nb_A_tr)
-args.seeds.A_test = args.seeds.A_test or seeds(rng, args.nb_A_te)
-args.seeds.Mo = args.seeds.Mo or seeds(rng, args.nb_Mo)
+args.seeds.A_train = args.seeds.A_train + seeds(
+    rng, args.nb_A_tr - len(args.seeds.A_train)
+)
+args.seeds.Mo = args.seeds.Mo + seeds(
+    rng, (args.nb_Mo or args.nb_A_tr) - len(args.seeds.Mo)
+)
+args.seeds.A_test = args.seeds.A_test or seeds(
+    rng, (args.nb_A_te or args.nb_Mo or args.nb_A_tr) - len(args.seeds.A_test)
+)
 
 
 # Write arguments
@@ -37,9 +43,8 @@ with dir.args.open("w") as f:
 # Write configs
 with dir.configs.open("a", newline="") as f:
     writer = csv.DictWriter(f, FIELDNAMES[dir.configs.stem], dialect="unix")
-    for method, configs in args.config.items():
-        for id, config in configs.items():
-            writer.writerow({"Method": method, "Id": id, "Config": config})
+    for config in args.config:
+        writer.writerow({"Id": config.id, "Method": config.method, "Config": config})
 
 
 # Create queues
@@ -104,7 +109,6 @@ for i in range(args.jobs):
             task_queue,
             done_queue,
             logging_queue,
-            args.config,
             dir,
             args.seeds,
             {
@@ -129,11 +133,11 @@ task_queue.join()
 
 
 # Stop workers
-for i in range(args.jobs):
+for _ in range(args.jobs):
     task_queue.put("STOP")
 task_queue.join()
-for i in range(args.jobs):
-    workers[i].join()
+for worker_process in workers:
+    worker_process.join()
 
 
 # Stop task manager
