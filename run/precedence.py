@@ -2,9 +2,8 @@ from collections import defaultdict
 from itertools import product
 from typing import cast
 
-from run.config import SAConfig
-
 from .arguments import Arguments
+from .config import MIPConfig, SAConfig
 from .task import ATestTask, ATrainTask, DTask, MIPTask, MoTask, SATask, Task, TestTask
 
 
@@ -61,7 +60,16 @@ def task_precedence(args: Arguments):
                                     )
                                 case "MIP" if Me == "SRMP":
                                     t_Me = MIPTask(
-                                        m, n_tr, A_tr_id, Mo, ko, Mo_id, n_bc, e, ke
+                                        m,
+                                        n_tr,
+                                        A_tr_id,
+                                        Mo,
+                                        ko,
+                                        Mo_id,
+                                        n_bc,
+                                        e,
+                                        ke,
+                                        cast(MIPConfig, config),
                                     )
                                 case _:
                                     break

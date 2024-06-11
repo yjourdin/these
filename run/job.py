@@ -13,11 +13,11 @@ from preference_structure.generate import noisy_comparisons, random_comparisons
 from preference_structure.io import from_csv, to_csv
 from rmp.generate import random_rmp
 from rmp.model import RMPModel
-from run.config import SAConfig
 from sa.main import learn_sa
 from srmp.generate import random_srmp
 from srmp.model import SRMPModel
 
+from .config import MIPConfig, SAConfig
 from .path import Directory
 
 
@@ -129,6 +129,7 @@ def run_MIP(
     n: int,
     e: float,
     ke: int,
+    config: MIPConfig,
     dir: Directory,
     seed: int,
 ):
@@ -138,11 +139,11 @@ def run_MIP(
     with dir.D(m, n_tr, Atr_id, Mo, ko, Mo_id, n, e).open("r") as f:
         D = from_csv(f)
 
-    best_model, best_fitness, time = learn_mip(ke, A, D, seed=seed)
+    best_model, best_fitness, time = learn_mip(ke, A, D, seed=seed, gamma=config.gamma)
 
-    with dir.Me(m, n_tr, Atr_id, Mo, ko, Mo_id, n, e, "SRMP", ke, "MIP", 0).open(
-        "w"
-    ) as f:
+    with dir.Me(
+        m, n_tr, Atr_id, Mo, ko, Mo_id, n, e, "SRMP", ke, "MIP", config.id
+    ).open("w") as f:
         f.write(best_model.to_json() if best_model else "None")
 
     return (time, best_fitness)
@@ -160,7 +161,7 @@ def run_test(
     Me_type: ModelType,
     ke: int,
     method: Literal["MIP", "SA"],
-    config: int,
+    config_id: int,
     n_te: int,
     Ate_id: int,
     dir: Directory,
@@ -176,7 +177,7 @@ def run_test(
                 Mo = SRMPModel.from_json(f.read())
 
     with dir.Me(
-        m, n_tr, Atr_id, Mo_type, ko, Mo_id, n, e, Me_type, ke, method, config
+        m, n_tr, Atr_id, Mo_type, ko, Mo_id, n, e, Me_type, ke, method, config_id
     ).open("r") as f:
         match Me_type:
             case "RMP":

@@ -3,11 +3,11 @@ from dataclasses import dataclass
 from multiprocessing import Queue
 from typing import Any, ClassVar, Literal
 
-from numpy.random import default_rng
+from numpy.random import SeedSequence, default_rng
 
 from model import ModelType
 
-from .config import Config, SAConfig
+from .config import Config, MIPConfig, SAConfig
 from .job import (
     create_A_test,
     create_A_train,
@@ -18,7 +18,7 @@ from .job import (
     run_test,
 )
 from .path import Directory
-from .seed import Seeds, seed
+from .seed import Seeds
 
 
 def print_attribute(name: str, value: Any | None, width: int) -> str:
@@ -69,11 +69,14 @@ class Task(ABC):
         pass
 
     @abstractmethod
+    def seed_sequence(self, seeds: Seeds) -> SeedSequence:
+        pass
+
     def seed(
         self,
         seeds: Seeds,
     ) -> int | None:
-        pass
+        return default_rng(self.seed_sequence(seeds)).integers(2**63)
 
 
 @dataclass(frozen=True)
@@ -95,8 +98,8 @@ class ATrainTask(Task):
             default_rng(seed),
         )
 
-    def seed(self, seeds):
-        return seed(default_rng([self.n, self.m, seeds.A_train[self.Atr_id]]))
+    def seed_sequence(self, seeds):
+        return SeedSequence([self.n, self.m, seeds.A_train[self.Atr_id]])
 
 
 @dataclass(frozen=True)
@@ -118,8 +121,8 @@ class ATestTask(Task):
             default_rng(seed),
         )
 
-    def seed(self, seeds: Seeds):
-        return seed(default_rng([self.n, self.m, seeds.A_test[self.Ate_id]]))
+    def seed_sequence(self, seeds: Seeds):
+        return SeedSequence([self.n, self.m, seeds.A_test[self.Ate_id]])
 
 
 @dataclass(frozen=True)
@@ -143,8 +146,8 @@ class MoTask(Task):
             default_rng(seed),
         )
 
-    def seed(self, seeds: Seeds):
-        return seed(default_rng([self.ko, self.m, seeds.Mo[self.Mo_id]]))
+    def seed_sequence(self, seeds: Seeds):
+        return SeedSequence([self.ko, self.m, seeds.Mo[self.Mo_id]])
 
 
 @dataclass(frozen=True)
@@ -176,18 +179,16 @@ class DTask(Task):
             default_rng(seed),
         )
 
-    def seed(self, seeds: Seeds):
-        return seed(
-            default_rng(
-                [
-                    self.n,
-                    seeds.Mo[self.Mo_id],
-                    self.ko,
-                    seeds.A_train[self.Atr_id],
-                    self.n_tr,
-                    self.m,
-                ]
-            )
+    def seed_sequence(self, seeds: Seeds):
+        return SeedSequence(
+            [
+                self.n,
+                seeds.Mo[self.Mo_id],
+                self.ko,
+                seeds.A_train[self.Atr_id],
+                self.n_tr,
+                self.m,
+            ]
         )
 
 
@@ -238,26 +239,24 @@ class SATask(Task):
                 "Me": self.Me,
                 "Ke": self.ke,
                 "Method": "SA",
-                "Config": self.config,
+                "Config": self.config.id,
                 "Time": time,
                 "Fitness": best_fitness,
                 "It.": it,
             }
         )
 
-    def seed(self, seeds: Seeds):
-        return seed(
-            default_rng(
-                [
-                    self.ke,
-                    self.n,
-                    seeds.Mo[self.Mo_id],
-                    self.ko,
-                    seeds.A_train[self.Atr_id],
-                    self.n_tr,
-                    self.m,
-                ]
-            )
+    def seed_sequence(self, seeds: Seeds):
+        return SeedSequence(
+            [
+                self.ke,
+                self.n,
+                seeds.Mo[self.Mo_id],
+                self.ko,
+                seeds.A_train[self.Atr_id],
+                self.n_tr,
+                self.m,
+            ]
         )
 
 
@@ -273,6 +272,7 @@ class MIPTask(Task):
     n: int
     error: float
     ke: int
+    config: MIPConfig
 
     def __call__(self, dir, seeds, queues):
         seed = self.seed(seeds)
@@ -288,6 +288,7 @@ class MIPTask(Task):
             self.n,
             self.error,
             self.ke,
+            self.config,
             dir,
             default_rng(seed).integers(2_000_000_000),
         )
@@ -304,24 +305,23 @@ class MIPTask(Task):
                 "Me": "SRMP",
                 "Ke": self.ke,
                 "Method": "MIP",
+                "Config": self.config.id,
                 "Time": time,
                 "Fitness": best_fitness,
             }
         )
 
-    def seed(self, seeds: Seeds):
-        return seed(
-            default_rng(
-                [
-                    self.ke,
-                    self.n,
-                    seeds.Mo[self.Mo_id],
-                    self.ko,
-                    seeds.A_train[self.Atr_id],
-                    self.n_tr,
-                    self.m,
-                ]
-            )
+    def seed_sequence(self, seeds: Seeds):
+        return SeedSequence(
+            [
+                self.ke,
+                self.n,
+                seeds.Mo[self.Mo_id],
+                self.ko,
+                seeds.A_train[self.Atr_id],
+                self.n_tr,
+                self.m,
+            ]
         )
 
 
@@ -339,7 +339,7 @@ class TestTask(Task):
     Me: ModelType
     ke: int
     method: Literal["MIP", "SA"]
-    config: int
+    config_id: int
     n_te: int
     Ate_id: int
 
@@ -356,7 +356,7 @@ class TestTask(Task):
             self.Me,
             self.ke,
             self.method,
-            self.config,
+            self.config_id,
             self.n_te,
             self.Ate_id,
             dir,
@@ -374,7 +374,7 @@ class TestTask(Task):
                 "Me": self.Me,
                 "Ke": self.ke,
                 "Method": self.method,
-                "Config": self.config,
+                "Config": self.config_id,
                 "N_te": self.n_te,
                 "Ate_id": self.Ate_id,
                 "Fitness": test_fitness,
@@ -382,5 +382,5 @@ class TestTask(Task):
             }
         )
 
-    def seed(self, seeds: Seeds):
-        return None
+    def seed_sequence(self, seeds: Seeds):
+        return SeedSequence()

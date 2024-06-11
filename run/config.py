@@ -1,4 +1,6 @@
-from dataclasses import asdict, dataclass
+from abc import ABC
+from dataclasses import asdict, dataclass, field
+from itertools import count
 from json import dumps, loads
 from typing import ClassVar
 
@@ -6,8 +8,8 @@ from .types import Method
 
 
 @dataclass(frozen=True)
-class Config:
-    id: int
+class Config(ABC):
+    id: int = field(default_factory=count().__next__, init=False)
     method: ClassVar[Method]
 
     @classmethod
@@ -19,7 +21,7 @@ class Config:
         return cls.from_dict(loads(s))
 
     def to_dict(self):
-        return asdict(self)
+        return asdict(self) | {"method": self.method}
 
     def to_json(self):
         return dumps(self.to_dict(), indent=4)
@@ -28,27 +30,24 @@ class Config:
 @dataclass(frozen=True)
 class MIPConfig(Config):
     method = "MIP"
+    gamma: float = 0.001
 
 
 @dataclass(frozen=True)
 class SAConfig(Config):
     method = "SA"
-    T0_coef: float
-    alpha: float
-    amp: float
-    max_iter: int
+    T0_coef: float = 1
+    alpha: float = 0.9999
+    amp: float = 0.1
+    max_iter: int = 20_000
 
 
-def create_config(dct: dict) -> Config | dict:
-    id = dct.get("id", None)
-    if id is not None:
-        method = dct.pop("method", None)
-        match method:
-            case "MIP":
-                return MIPConfig.from_dict(dct)
-            case "SA":
-                return SAConfig.from_dict(dct)
-            case _:
-                raise ValueError("Unknown method")
-    else:
-        return dct
+def create_config(**kwargs) -> Config:
+    method = kwargs.pop("method", None)
+    match method:
+        case "MIP":
+            return MIPConfig.from_dict(kwargs)
+        case "SA":
+            return SAConfig.from_dict(kwargs)
+        case _:
+            raise TypeError(f"Unknown method : {method}")

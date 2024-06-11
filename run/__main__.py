@@ -1,11 +1,13 @@
 import csv
 import logging.config
+from dataclasses import asdict
 from multiprocessing import JoinableQueue, Process, Queue
 from threading import Thread
 
 from numpy.random import default_rng
 
 from .argument_parser import parse_args
+from .config import create_config
 from .logging import create_logging_config_dict, logger_thread
 from .path import FIELDNAMES, Directory
 from .precedence import task_precedence
@@ -34,6 +36,11 @@ args.seeds.A_test = args.seeds.A_test or seeds(
     rng, (args.nb_A_te or args.nb_Mo or args.nb_A_tr) - len(args.seeds.A_test)
 )
 
+# Create missing configs
+for method in args.method:
+    if not any(config.method == method for config in args.config):
+        args.config.append(create_config(method=method))
+
 
 # Write arguments
 with dir.args.open("w") as f:
@@ -44,7 +51,13 @@ with dir.args.open("w") as f:
 with dir.configs.open("a", newline="") as f:
     writer = csv.DictWriter(f, FIELDNAMES[dir.configs.stem], dialect="unix")
     for config in args.config:
-        writer.writerow({"Id": config.id, "Method": config.method, "Config": config})
+        writer.writerow(
+            {
+                "Id": config.id,
+                "Method": config.method,
+                "Config": {k: v for k, v in asdict(config).items() if k != "id"},
+            }
+        )
 
 
 # Create queues

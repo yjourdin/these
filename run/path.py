@@ -107,7 +107,7 @@ class Directory:
         Me: ModelType,
         ke: int,
         method: Literal["MIP", "SA"],
-        config: int,
+        config_id: int,
     ):
         return self.Me_dir / (
             f"M_{m}_"
@@ -121,7 +121,7 @@ class Directory:
             f"Me_{Me}_"
             f"Ke_{ke}_"
             f"Method_{method}_"
-            f"Config_{config}"
+            f"Config_{config_id}"
             ".json"
         )
 

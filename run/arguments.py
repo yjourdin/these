@@ -8,6 +8,13 @@ from .seed import Seeds
 from .types import Method, Model
 
 
+def config_hook(dct: dict):
+    try:
+        return create_config(**dct)
+    except TypeError:
+        return dct
+
+
 @dataclass
 class Arguments:
     name: str
@@ -35,7 +42,7 @@ class Arguments:
 
     @classmethod
     def from_json(cls, s):
-        return cls.from_dict(loads(s, object_hook=create_config))
+        return cls.from_dict(loads(s, object_hook=config_hook))
 
     def to_dict(self):
         return asdict(self)
