@@ -339,7 +339,7 @@ class TestTask(Task):
     Me: ModelType
     ke: int
     method: Literal["MIP", "SA"]
-    config_id: int
+    config: int
     n_te: int
     Ate_id: int
 
@@ -356,7 +356,7 @@ class TestTask(Task):
             self.Me,
             self.ke,
             self.method,
-            self.config_id,
+            self.config,
             self.n_te,
             self.Ate_id,
             dir,
@@ -374,7 +374,7 @@ class TestTask(Task):
                 "Me": self.Me,
                 "Ke": self.ke,
                 "Method": self.method,
-                "Config": self.config_id,
+                "Config": self.config,
                 "N_te": self.n_te,
                 "Ate_id": self.Ate_id,
                 "Fitness": test_fitness,

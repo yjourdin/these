@@ -43,6 +43,7 @@ class SAConfig(Config):
 
 
 def create_config(**kwargs) -> Config:
+    kwargs.pop("id", None)
     method = kwargs.pop("method", None)
     match method:
         case "MIP":
