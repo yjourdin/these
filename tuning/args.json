@@ -1,7 +1,7 @@
 {
     "dir": "Instances",
     "seed": 0,
-    "nb_A_tr": 20,
+    "nb_A_tr": 60,
     "N_tr": [
         50
     ],

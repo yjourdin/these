@@ -63,7 +63,7 @@ testType = "t-test"
 
 ## Number of instances evaluated before the first elimination test. It must be
 ## a multiple of eachTest.
-# firstTest = 5
+firstTest = 10
 
 ## Number of instances evaluated between elimination tests.
 # eachTest = 1
@@ -163,7 +163,7 @@ parallel = 10
 
 ## Number of instances added to the execution list before previous instances
 ## in elitist irace.
-# elitistNewInstances = 1
+elitistNewInstances = 5
 
 ## In elitist irace, maximum number per race of elimination tests that do not
 ## eliminate a configuration. Use 0 for no limit.
