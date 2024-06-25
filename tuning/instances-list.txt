@@ -1,0 +1,19 @@
+## This is an example of specifying a list of instances.
+
+# Each line is an instance relative to trainInstancesDir/testInstancesdir
+# unless set to "" (see scenario.txt.tmpl) and an optional sequence of
+# instance-specific parameters that will be passed to target-runner when
+# invoked on that instance.
+
+# Empty lines and comments are ignored.
+
+"SRMP 3 Instances/A_train/M_11_N_50_Id_0.csv Instances/D/M_11_Ntr_50_AtrId_0_Mo_SRMP_Ko_3_MoId_0_N_100_E_0_Id_0.csv --max-iter 20000"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_1.csv Instances/D/M_11_Ntr_50_AtrId_1_Mo_SRMP_Ko_3_MoId_1_N_100_E_0_Id_1.csv --max-iter 20000"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_2.csv Instances/D/M_11_Ntr_50_AtrId_2_Mo_SRMP_Ko_3_MoId_2_N_100_E_0_Id_2.csv --max-iter 20000"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_3.csv Instances/D/M_11_Ntr_50_AtrId_3_Mo_SRMP_Ko_3_MoId_3_N_100_E_0_Id_3.csv --max-iter 20000"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_4.csv Instances/D/M_11_Ntr_50_AtrId_4_Mo_SRMP_Ko_3_MoId_4_N_100_E_0_Id_4.csv --max-iter 20000"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_5.csv Instances/D/M_11_Ntr_50_AtrId_5_Mo_SRMP_Ko_3_MoId_5_N_100_E_0_Id_5.csv --max-iter 20000"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_6.csv Instances/D/M_11_Ntr_50_AtrId_6_Mo_SRMP_Ko_3_MoId_6_N_100_E_0_Id_6.csv --max-iter 20000"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_7.csv Instances/D/M_11_Ntr_50_AtrId_7_Mo_SRMP_Ko_3_MoId_7_N_100_E_0_Id_7.csv --max-iter 20000"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_8.csv Instances/D/M_11_Ntr_50_AtrId_8_Mo_SRMP_Ko_3_MoId_8_N_100_E_0_Id_8.csv --max-iter 20000"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_9.csv Instances/D/M_11_Ntr_50_AtrId_9_Mo_SRMP_Ko_3_MoId_9_N_100_E_0_Id_9.csv --max-iter 20000"

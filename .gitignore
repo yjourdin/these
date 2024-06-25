@@ -168,3 +168,7 @@ results/*
 .old
 jobs.py
 test*
+Instances
+irace.Rdata
+report_files
+report.html

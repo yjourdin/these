@@ -1,0 +1,23 @@
+{
+    "dir": "tuning/Instances",
+    "seed": 0,
+    "nb_A_tr": 20,
+    "N_tr": [
+        50
+    ],
+    "M": [
+        11
+    ],
+    "Mo": [
+        "SRMP"
+    ],
+    "Ko": [
+        3
+    ],
+    "N_bc": [
+        100
+    ],
+    "error": [
+        0
+    ]
+}
