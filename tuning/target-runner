@@ -34,7 +34,7 @@ CONFIG_PARAMS=$*
 # BINDIR=$(dirname "$(readlink -f "$(type -P $0 || echo $0)")")
 
 # EDIT THIS: Path to your executable
-EXE="python -m src.sa"
+EXE="python -Wi -m src.sa"
 # EDIT THIS: Specify how parameters are given to your executable
 EXE_PARAMS="$INSTANCE --seed ${SEED} ${CONFIG_PARAMS} "
 
