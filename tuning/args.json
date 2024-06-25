@@ -1,5 +1,5 @@
 {
-    "dir": "tuning/Instances",
+    "dir": "Instances",
     "seed": 0,
     "nb_A_tr": 20,
     "N_tr": [
