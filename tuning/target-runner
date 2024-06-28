@@ -36,7 +36,7 @@ CONFIG_PARAMS=$*
 # EDIT THIS: Path to your executable
 EXE="python -Wi -m src.sa"
 # EDIT THIS: Specify how parameters are given to your executable
-EXE_PARAMS="$INSTANCE --seed ${SEED} ${CONFIG_PARAMS} "
+EXE_PARAMS="$INSTANCE --seed ${SEED} ${CONFIG_PARAMS} --max-it 20000"
 
 # if [ ! -x "$(command -v "${EXE}")" ]; then
 #     error "${EXE}: not found or not executable (pwd: $(pwd))"

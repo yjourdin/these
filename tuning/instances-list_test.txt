@@ -7,8 +7,8 @@
 
 # Empty lines and comments are ignored.
 
-"SRMP 3 Instances/A_train/M_11_N_50_Id_10.csv Instances/D/M_11_Ntr_50_AtrId_10_Mo_SRMP_Ko_3_MoId_10_N_100_E_0_Id_10.csv --max-iter 20000"
-"SRMP 3 Instances/A_train/M_11_N_50_Id_10.csv Instances/D/M_11_Ntr_50_AtrId_10_Mo_SRMP_Ko_3_MoId_10_N_300_E_0_Id_10.csv --max-iter 20000"
-"SRMP 3 Instances/A_train/M_11_N_50_Id_10.csv Instances/D/M_11_Ntr_50_AtrId_10_Mo_SRMP_Ko_3_MoId_10_N_500_E_0_Id_10.csv --max-iter 20000"
-"SRMP 3 Instances/A_train/M_11_N_50_Id_10.csv Instances/D/M_11_Ntr_50_AtrId_10_Mo_SRMP_Ko_3_MoId_10_N_1000_E_0_Id_10.csv --max-iter 20000"
-"SRMP 3 Instances/A_train/M_11_N_50_Id_10.csv Instances/D/M_11_Ntr_50_AtrId_10_Mo_SRMP_Ko_3_MoId_10_N_2000_E_0_Id_10.csv --max-iter 20000"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_10.csv Instances/D/M_11_Ntr_50_AtrId_10_Mo_SRMP_Ko_3_MoId_10_N_100_E_0_Id_10.csv"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_10.csv Instances/D/M_11_Ntr_50_AtrId_10_Mo_SRMP_Ko_3_MoId_10_N_300_E_0_Id_10.csv"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_10.csv Instances/D/M_11_Ntr_50_AtrId_10_Mo_SRMP_Ko_3_MoId_10_N_500_E_0_Id_10.csv"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_10.csv Instances/D/M_11_Ntr_50_AtrId_10_Mo_SRMP_Ko_3_MoId_10_N_1000_E_0_Id_10.csv"
+"SRMP 3 Instances/A_train/M_11_N_50_Id_10.csv Instances/D/M_11_Ntr_50_AtrId_10_Mo_SRMP_Ko_3_MoId_10_N_2000_E_0_Id_10.csv"
