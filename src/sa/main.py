@@ -96,21 +96,17 @@ def learn_sa(
 
     cooling_schedule = GeometricSchedule(alpha)
 
-    if accept is not None:
-        if max_time is not None and max_it is not None:
-            T0 = T0 or initial_temperature(
-                accept,
-                neighbor,
-                objective,
-                init_model,
-                rng_sa,
-                max_time // 100,
-                max_it // 100,
-            )
-        else:
-            raise ValueError("At least max_time or max_it must not be None")
-    else:
-        raise ValueError("accept must not be None")
+    if T0 is None:
+        assert accept
+        T0 = initial_temperature(
+            accept,
+            neighbor,
+            objective,
+            init_model,
+            rng_sa,
+            max_time // 100 if max_time else None,
+            max_it // 100 if max_it else None,
+        )
 
     sa = SimulatedAnnealing(
         T0,
