@@ -7,12 +7,9 @@ parser.add_argument("A", type=argparse.FileType("r"), help="Alternatives")
 parser.add_argument("D", type=argparse.FileType("r"), help="Comparisons")
 
 init_group = parser.add_mutually_exclusive_group(required=True)
-init_group.add_argument("--T0", type=float, required=True, help="Initial temperature")
+init_group.add_argument("--T0", type=float, help="Initial temperature")
 init_group.add_argument(
-    "--accept",
-    type=float,
-    required=True,
-    help="Acceptance rate to determine initial temperature",
+    "--accept", type=float, help="Acceptance rate to determine initial temperature"
 )
 
 parser.add_argument("--alpha", type=float, required=True, help="Cooling coefficient")
