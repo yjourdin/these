@@ -1,4 +1,10 @@
-from .sa import CoolingSchedule
+from abc import ABC, abstractmethod
+
+
+class CoolingSchedule(ABC):
+    @abstractmethod
+    def __call__(self, temp: float) -> float:
+        pass
 
 
 class GeometricSchedule(CoolingSchedule):

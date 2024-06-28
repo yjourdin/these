@@ -1,21 +1,22 @@
+from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from copy import deepcopy
 from itertools import chain, combinations
-from typing import Any, Collection, TypeVar, cast
+from typing import Any, Collection, Generic, cast
 
 import numpy as np
 from mcda.matrices import PerformanceTable
 from numpy.random import Generator
 
-from ..abstract_model import Model
 from ..rmp.model import RMPModel
 from ..srmp.model import SRMPModel
-from .sa import Neighbor
-
-# from utils import max_weight
+from .type import T
 
 
-T = TypeVar("T", bound=Model)
+class Neighbor(Generic[T], ABC):
+    @abstractmethod
+    def __call__(self, sol: T, rng: Generator) -> T:
+        pass
 
 
 class RandomNeighbor(Neighbor[T]):
@@ -29,17 +30,17 @@ class RandomNeighbor(Neighbor[T]):
         else:
             self.prob = None
 
-    def __call__(self, model: T, rng: Generator) -> T:
+    def __call__(self, sol, rng):
         i = rng.choice(len(self.neighbors), p=self.prob)
-        return self.neighbors[i](model, rng)
+        return self.neighbors[i](sol, rng)
 
 
 class NeighborProfiles(Neighbor[RMPModel | SRMPModel]):
     def __init__(self, values: PerformanceTable):
         self.values = values
 
-    def __call__(self, model, rng):
-        neighbor = deepcopy(model)
+    def __call__(self, sol, rng):
+        neighbor = deepcopy(sol)
 
         # crit_ind = rng.choice(len(neighbor.profiles.criteria))
         # profile_ind = rng.choice(len(neighbor.profiles.alternatives))
@@ -86,8 +87,8 @@ class NeighborProfilesSRMP(Neighbor[SRMPModel]):
     def __init__(self, values: PerformanceTable):
         self.values = values
 
-    def __call__(self, model, rng):
-        neighbor = deepcopy(model)
+    def __call__(self, sol, rng):
+        neighbor = deepcopy(sol)
 
         crit_ind = rng.choice(
             [
@@ -124,8 +125,8 @@ class NeighborWeights(Neighbor[SRMPModel]):
     def __init__(self, amp: float):
         self.amp = amp
 
-    def __call__(self, model, rng):
-        neighbor = deepcopy(model)
+    def __call__(self, sol, rng):
+        neighbor = deepcopy(sol)
 
         crit_ind = rng.choice(len(neighbor.weights))
 
@@ -171,8 +172,8 @@ class NeighborCapacities(Neighbor[RMPModel]):
         self.supremum = {ss: {ss | {i} for i in (s - ss)} for ss in power_set}
         self.infimum = {ss: {ss - {i} for i in ss} for ss in power_set}
 
-    def __call__(self, model, rng):
-        neighbor = deepcopy(model)
+    def __call__(self, sol, rng):
+        neighbor = deepcopy(sol)
 
         capacities = neighbor.capacities
         keys = list(capacities)
@@ -200,8 +201,8 @@ class NeighborCapacities(Neighbor[RMPModel]):
 
 
 class NeighborLexOrder(Neighbor[RMPModel | SRMPModel]):
-    def __call__(self, model, rng):
-        neighbor = deepcopy(model)
+    def __call__(self, sol, rng):
+        neighbor = deepcopy(sol)
         lex_order = neighbor.lexicographic_order
         i = rng.choice(len(lex_order))
         j = rng.choice([x for x in range(len(lex_order)) if x != i])

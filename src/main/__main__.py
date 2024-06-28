@@ -6,7 +6,7 @@ from threading import Thread
 
 from .argument_parser import parse_args
 from .logging import create_logging_config_dict, logger_thread
-from .path import FIELDNAMES, Directory
+from .directory import FIELDNAMES, Directory
 from .precedence import task_precedence
 from .worker import csv_file_thread, task_manager, worker
 

@@ -4,7 +4,7 @@ from itertools import count
 from json import dumps, loads
 from typing import ClassVar
 
-from .types import Method
+from .type import Method
 
 
 @dataclass(frozen=True)
@@ -36,10 +36,10 @@ class MIPConfig(Config):
 @dataclass(frozen=True)
 class SAConfig(Config):
     method = "SA"
-    T0_coef: float = 1
-    alpha: float = 0.9999
+    accept: float = 0.5
+    alpha: float = 0.99
     amp: float = 0.1
-    max_iter: int = 20_000
+    max_it: int = 20_000
 
 
 def create_config(**kwargs) -> Config:

@@ -5,9 +5,9 @@ from numpy.random import default_rng
 
 from ..jobs import JOBS
 from .config import Config, create_config
-from .path import RESULTS_DIR
+from .directory import RESULTS_DIR
 from .seed import Seeds, seeds
-from .types import Method, Model
+from .type import Method, Model
 
 
 def config_hook(dct: dict):

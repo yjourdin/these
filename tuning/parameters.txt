@@ -26,6 +26,6 @@
 ##    condition is satisfied, FALSE otherwise.
 
 # 1:            2:                   3:     4:      5:
-T0              "--T0 "              r,log  (0.1, 10)
+accept          "--accept "          r      (0, 1)
 alpha           "--alpha "           r,log  (0.9, 1)
 amp             "--amp "             r      (0, 1)

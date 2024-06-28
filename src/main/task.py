@@ -16,7 +16,7 @@ from .job import (
     run_SA,
     run_test,
 )
-from .path import Directory
+from .directory import Directory
 from .seed import Seeds
 
 

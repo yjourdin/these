@@ -10,7 +10,8 @@ from ..rmp.generate import balanced_rmp
 from ..srmp.generate import balanced_srmp
 from ..utils import midpoints
 from .cooling_schedule import GeometricSchedule
-from .neighbors import (
+from .initial_temperature import initial_temperature
+from .neighbor import (
     NeighborCapacities,
     NeighborLexOrder,
     NeighborProfiles,
@@ -33,21 +34,40 @@ def learn_sa(
     k: int,
     alternatives: NormalPerformanceTable,
     comparisons: PreferenceStructure,
-    T0: float,
     alpha: float,
-    amp: float,
     rng_init: Generator,
     rng_sa: Generator,
+    T0: float | None = None,
+    accept: float | None = None,
     L: int = 1,
+    amp: float | None = None,
     Tf: float | None = None,
     max_time: int | None = None,
-    max_iter: int | None = None,
-    max_iter_non_improving: int | None = None,
+    max_it: int | None = None,
+    max_it_non_improving: int | None = None,
     log_file=None,
 ):
     alternatives = alternatives.subtable(comparisons.elements)
 
     M = len(alternatives.criteria)
+
+    init_model = None
+    match model:
+        case "RMP":
+            init_model = balanced_rmp(
+                k,
+                M,
+                rng_init,
+                midpoints(alternatives),
+            )
+        case "SRMP":
+            init_model = balanced_srmp(
+                k,
+                M,
+                rng_init,
+                midpoints(alternatives),
+            )
+    assert init_model
 
     neighbors: list[Neighbor] = []
     prob: list[int] = []
@@ -60,46 +80,53 @@ def learn_sa(
             neighbors.append(NeighborCapacities(alternatives.criteria))
             prob.append(2**M)
         case "SRMP":
-            neighbors.append(NeighborWeights(amp))
+            if amp is not None:
+                neighbors.append(NeighborWeights(amp))
+            else:
+                raise ValueError("amp must not be None")
             prob.append(M)
 
     if k >= 2:
         neighbors.append(NeighborLexOrder())
         prob.append(k)
 
-    initial_model = None
-    match model:
-        case "RMP":
-            initial_model = balanced_rmp(
-                k,
-                M,
-                rng_init,
-                midpoints(alternatives),
+    neighbor = RandomNeighbor(neighbors, prob)
+
+    objective = FitnessObjective(alternatives, comparisons)
+
+    cooling_schedule = GeometricSchedule(alpha)
+
+    if accept is not None:
+        if max_time is not None and max_it is not None:
+            T0 = T0 or initial_temperature(
+                accept,
+                neighbor,
+                objective,
+                init_model,
+                rng_sa,
+                max_time // 100,
+                max_it // 100,
             )
-        case "SRMP":
-            initial_model = balanced_srmp(
-                k,
-                M,
-                rng_init,
-                midpoints(alternatives),
-            )
-    assert initial_model
+        else:
+            raise ValueError("At least max_time or max_it must not be None")
+    else:
+        raise ValueError("accept must not be None")
 
     sa = SimulatedAnnealing(
-        T0=T0,
-        L=L,
-        neighbor=RandomNeighbor(neighbors, prob),
-        objective=FitnessObjective(alternatives, comparisons),
-        cooling_schedule=GeometricSchedule(alpha),
-        initial_sol=initial_model,
-        rng=rng_sa,
-        Tf=Tf,
-        max_time=max_time,
-        max_iter=max_iter,
-        max_iter_non_improving=max_iter_non_improving,
-        log_file=log_file,
+        T0,
+        L,
+        neighbor,
+        objective,
+        cooling_schedule,
+        init_model,
+        rng_sa,
+        Tf,
+        max_time,
+        max_it,
+        max_it_non_improving,
+        log_file,
     )
 
     sa.learn()
 
-    return SAResult(sa.best_sol, 1 - sa.best_objective, sa.time, sa.it)
+    return SAResult(sa.best_sol, 1 - sa.best_obj, sa.time, sa.it)

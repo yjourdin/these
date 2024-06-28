@@ -17,7 +17,7 @@ from ..sa.main import learn_sa
 from ..srmp.generate import random_srmp
 from ..srmp.model import SRMPModel
 from .config import MIPConfig, SAConfig
-from .path import Directory
+from .directory import Directory
 
 
 def create_A_train(m: int, n: int, id: int, dir: Directory, rng: Generator):
@@ -137,12 +137,12 @@ def run_SA(
         ke,
         A,
         D,
-        config.T0_coef / n,
         config.alpha,
-        config.amp,
         rng_init,
         rng_sa,
-        max_iter=config.max_iter,
+        accept=config.accept,
+        amp=config.amp,
+        max_it=config.max_it,
     )
 
     with dir.Me(

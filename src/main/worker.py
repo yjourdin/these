@@ -5,7 +5,8 @@ from collections import defaultdict
 from multiprocessing import JoinableQueue, Queue
 from pathlib import Path
 
-from .path import FIELDNAMES, Directory
+from .fieldnames import FIELDNAMES
+from .directory import Directory
 from .task import Task
 
 

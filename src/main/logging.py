@@ -1,6 +1,6 @@
 import logging
 
-from .path import Directory
+from .directory import Directory
 
 
 def logger_thread(q):

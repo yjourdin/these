@@ -4,52 +4,9 @@ from pathlib import Path
 from typing import Any, Literal
 
 from ..model import ModelType
+from .fieldnames import FIELDNAMES
 
 RESULTS_DIR = "results"
-
-FIELDNAMES = {
-    "train_results": [
-        "M",
-        "N_tr",
-        "Atr_id",
-        "Mo",
-        "Ko",
-        "Mo_id",
-        "N_bc",
-        "Error",
-        "D_id",
-        "Me",
-        "Ke",
-        "Method",
-        "Config",
-        "Me_id",
-        "Time",
-        "Fitness",
-        "It.",
-    ],
-    "test_results": [
-        "M",
-        "N_tr",
-        "Atr_id",
-        "Mo",
-        "Ko",
-        "Mo_id",
-        "N_bc",
-        "Error",
-        "D_id",
-        "Me",
-        "Ke",
-        "Method",
-        "Config",
-        "Me_id",
-        "N_te",
-        "Ate_id",
-        "Fitness",
-        "Kendall's tau",
-    ],
-    "configs": ["Id", "Method", "Config"],
-    "seeds": ["Task", "Seed"],
-}
 
 
 def filename(dct: dict[str, Any], ext: str):
