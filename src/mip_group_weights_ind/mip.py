@@ -17,7 +17,7 @@ from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..srmp.model import SRMPModel
 
 
-class MIP(Learner[SRMPModel | None]):
+class MIP(Learner[list[SRMPModel] | None]):
     def __init__(
         self,
         alternatives: NormalPerformanceTable,
@@ -80,7 +80,7 @@ class MIP(Learner[SRMPModel | None]):
         #############
 
         # Weights
-        w = LpVariable.dicts("Weight", M, lowBound=0, upBound=1)
+        w = LpVariable.dicts("Weight", (M, L), lowBound=0, upBound=1)
         # Reference profiles
         p = LpVariable.dicts("Profile", (profile_indices, M))
         # Local concordance to a reference point
@@ -92,7 +92,7 @@ class MIP(Learner[SRMPModel | None]):
         # Weighted local concordance to a reference point
         omega = LpVariable.dicts(
             "WeightedLocalConcordance",
-            (A_star, profile_indices, M),
+            (A_star, profile_indices, M, L),
             lowBound=0,
             upBound=1,
         )
@@ -138,11 +138,13 @@ class MIP(Learner[SRMPModel | None]):
         ###############
 
         # Normalized weights
-        self.prob += lpSum([w[j] for j in M]) == 1
+        for i in L:
+            self.prob += lpSum([w[j][i] for j in M]) == 1
 
         for j in M:
             # Non-zero weights
-            self.prob += w[j] >= self.gamma
+            for i in L:
+                self.prob += w[j][i] >= self.gamma
 
             # Constraints on the reference profiles
             self.prob += p[1][j] >= 0
@@ -161,17 +163,18 @@ class MIP(Learner[SRMPModel | None]):
                     )
 
                     # Constraints on the weighted local concordances
-                    self.prob += omega[a][h][j] <= w[j]
-                    self.prob += omega[a][h][j] >= 0
-                    self.prob += omega[a][h][j] <= delta[a][h][j]
-                    self.prob += omega[a][h][j] >= delta[a][h][j] + w[j] - 1
+                    for i in L:
+                        self.prob += omega[a][h][j][i] <= w[j][i]
+                        self.prob += omega[a][h][j][i] >= 0
+                        self.prob += omega[a][h][j][i] <= delta[a][h][j]
+                        self.prob += omega[a][h][j][i] >= delta[a][h][j] + w[j][i] - 1
 
         # Constraints on the preference ranking variables
         for i in L:
             for index in preference_relations_indices[i]:
                 if not self.inconsistencies:
-                    self.prob += s[index][lexicographic_order[0]][i] == 1
-                self.prob += s[index][lexicographic_order[k]][i] == 0
+                    self.prob += s[i][index][lexicographic_order[0]] == 1
+                self.prob += s[i][index][lexicographic_order[k]] == 0
 
         for h in profile_indices:
             # Constraints on the preferences
@@ -180,26 +183,26 @@ class MIP(Learner[SRMPModel | None]):
                     a, b = relation.a, relation.b
 
                     self.prob += lpSum(
-                        [omega[a][lexicographic_order[h]][j] for j in M]
+                        [omega[a][lexicographic_order[h]][j][i] for j in M]
                     ) >= (
-                        lpSum([omega[b][lexicographic_order[h]][j] for j in M])
+                        lpSum([omega[b][lexicographic_order[h]][j][i] for j in M])
                         + self.gamma
                         - s[i][index][lexicographic_order[h]] * (1 + self.gamma)
                         - (1 - s[i][index][lexicographic_order[h - 1]])
                     )
 
                     self.prob += lpSum(
-                        [omega[a][lexicographic_order[h]][j] for j in M]
+                        [omega[a][lexicographic_order[h]][j][i] for j in M]
                     ) >= (
-                        lpSum([omega[b][lexicographic_order[h]][j] for j in M])
+                        lpSum([omega[b][lexicographic_order[h]][j][i] for j in M])
                         - (1 - s[i][index][lexicographic_order[h]])
                         - (1 - s[i][index][lexicographic_order[h - 1]])
                     )
 
                     self.prob += lpSum(
-                        [omega[a][lexicographic_order[h]][j] for j in M]
+                        [omega[a][lexicographic_order[h]][j][i] for j in M]
                     ) <= (
-                        lpSum([omega[b][lexicographic_order[h]][j] for j in M])
+                        lpSum([omega[b][lexicographic_order[h]][j][i] for j in M])
                         + (1 - s[i][index][lexicographic_order[h]])
                         + (1 - s[i][index][lexicographic_order[h - 1]])
                     )
@@ -209,20 +212,20 @@ class MIP(Learner[SRMPModel | None]):
                     a, b = relation.a, relation.b
                     if not self.inconsistencies:
                         self.prob += lpSum(
-                            [omega[a][lexicographic_order[h]][j] for j in M]
-                        ) == lpSum([omega[b][lexicographic_order[h]][j] for j in M])
+                            [omega[a][lexicographic_order[h]][j][i] for j in M]
+                        ) == lpSum([omega[b][lexicographic_order[h]][j][i] for j in M])
                     else:
                         self.prob += lpSum(
-                            [omega[a][lexicographic_order[h]][j] for j in M]
+                            [omega[a][lexicographic_order[h]][j][i] for j in M]
                         ) <= (
-                            lpSum([omega[b][lexicographic_order[h]][j] for j in M])
+                            lpSum([omega[b][lexicographic_order[h]][j][i] for j in M])
                             - (1 - s_star[i][index])
                         )
 
                         self.prob += lpSum(
-                            [omega[b][lexicographic_order[h]][j] for j in M]
+                            [omega[b][lexicographic_order[h]][j][i] for j in M]
                         ) <= (
-                            lpSum([omega[a][lexicographic_order[h]][j] for j in M])
+                            lpSum([omega[a][lexicographic_order[h]][j][i] for j in M])
                             - (1 - s_star[i][index])
                         )
 
@@ -233,11 +236,14 @@ class MIP(Learner[SRMPModel | None]):
             return None
 
         # Compute optimum solution
-        weights = [value(w[j]) for j in M]
+        weights = [[value(w[j][i]) for j in M] for i in L]
         profiles = NormalPerformanceTable(
             [[value(p[h][j]) for j in M] for h in profile_indices]
         )
-        return SRMPModel(profiles, weights, [p - 1 for p in lexicographic_order[1:]])
+        return [
+            SRMPModel(profiles, weights[i], [p - 1 for p in lexicographic_order[1:]])
+            for i in L
+        ]
 
     def learn(self):
         return self._learn(

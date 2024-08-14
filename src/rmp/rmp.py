@@ -7,7 +7,7 @@ Implementation and naming conventions are taken from
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import cast
 
 import numpy as np
 from mcda.internal.core.interfaces import Ranker
@@ -19,7 +19,6 @@ from mcda.plot import (
     Annotation,
     AreaPlot,
     Axis,
-    BarPlot,
     Figure,
     HorizontalStripes,
     LinePlot,
@@ -28,9 +27,11 @@ from mcda.plot import (
 )
 from mcda.scales import DiscreteQuantitativeScale, PreferenceDirection
 from mcda.transformers import ClosestTransformer
-from mcda.values import Values, CommensurableValues
+from mcda.values import CommensurableValues, Values
 from pandas import DataFrame, Series, concat
 from scipy.stats import rankdata
+
+from .importance_relation import ImportanceRelation
 
 
 class ProfileWiseOutranking(Ranker):
@@ -49,11 +50,11 @@ class ProfileWiseOutranking(Ranker):
     def __init__(
         self,
         performance_table: PerformanceTable,
-        criteria_capacities: dict[frozenset[Any], float],
+        importance_relation: ImportanceRelation,
         profile: Values,
     ):
         self.performance_table = performance_table
-        self.criteria_capacities = criteria_capacities
+        self.importance_relation = importance_relation
         self.profile = profile
 
     def rank(self, **kwargs) -> OutrankingMatrix:
@@ -61,32 +62,26 @@ class ProfileWiseOutranking(Ranker):
 
         :return:
         """
-        capacities = Series(
-            {
-                a: self.criteria_capacities[
-                    frozenset(
-                        [
-                            c
-                            for c, s in av.scales.items()
-                            if s.is_better_or_equal(av[c], self.profile[c])
-                        ]
-                    )
+        criteria_subset = {
+            a: frozenset(
+                [
+                    c
+                    for c, s in av.scales.items()
+                    if s.is_better_or_equal(av[c], self.profile[c])
                 ]
-                for a, av in self.performance_table.alternatives_values.items()
-            }
-        )
+            )
+            for a, av in self.performance_table.alternatives_values.items()
+        }
 
         return create_outranking_matrix(
             DataFrame(
-                [
-                    [
-                        capacities[ai] >= capacities[aj]
-                        for aj in self.performance_table.alternatives
-                    ]
-                    for ai in self.performance_table.alternatives
-                ],
-                index=self.performance_table.alternatives,
-                columns=self.performance_table.alternatives,
+                self.importance_relation.sub(
+                    "strict",
+                    list(criteria_subset.values()),
+                    list(criteria_subset.values()),
+                ),
+                index=list(criteria_subset.keys()),
+                columns=list(criteria_subset.keys()),
                 dtype="int64",
             )
         )
@@ -108,11 +103,11 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
     def __init__(
         self,
         performance_table: PerformanceTable[NormalScale],
-        criteria_capacities: dict[frozenset[Any], float],
+        importance_relation: ImportanceRelation,
         profile: Values[NormalScale],
     ):
         self.performance_table = performance_table
-        self.criteria_capacities = criteria_capacities
+        self.importance_relation = importance_relation
         self.profile = profile
 
     def rank(self, **kwargs):
@@ -122,14 +117,9 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
         """
         comp_df = self.performance_table.data.ge(self.profile.data)
 
-        capacities = np.array(
-            [
-                self.criteria_capacities[frozenset(np.nonzero(a)[0])]
-                for a in comp_df.values
-            ]
-        )
+        criteria_subset = [frozenset(a.nonzero()[0]) for a in comp_df.values]
 
-        return np.greater_equal.outer(capacities, capacities)
+        return self.importance_relation.sub("strict", criteria_subset, criteria_subset)
 
 
 class RMP(Ranker):
@@ -144,12 +134,12 @@ class RMP(Ranker):
     def __init__(
         self,
         performance_table: PerformanceTable,
-        criteria_capacities: dict[frozenset[Any], float],
+        importance_relation: ImportanceRelation,
         profiles: PerformanceTable,
         lexicographic_order: list[int],
     ):
         self.performance_table = performance_table
-        self.criteria_capacities = criteria_capacities
+        self.importance_relation = importance_relation
         self.profiles = profiles
         self.lexicographic_order = lexicographic_order
 
@@ -162,7 +152,7 @@ class RMP(Ranker):
         return [
             ProfileWiseOutranking(
                 self.performance_table,
-                self.criteria_capacities,
+                self.importance_relation,
                 self.profiles.alternatives_values[profile],
             )
             for profile in self.profiles.alternatives
@@ -435,72 +425,6 @@ class RMP(Ranker):
             ax.add_plot(text)
         fig.draw()
 
-    def plot_concordance_index(
-        self,
-        performance_table: PerformanceTable,
-        figsize: tuple[float, float] | None = None,
-        ncols: int = 0,
-        nrows: int = 0,
-        xlabels_tilted: bool = False,
-        **kwargs,
-    ):  # pragma: nocover
-        """Visualize concordance index between alternatives and profiles
-
-        :param performance_table:
-        :param figsize: figure size in inches as a tuple (`width`, `height`)
-        :param xlabels_tilted:
-            if ``True`` `xlabels` are tilted to better fit
-        """
-        # Create constants
-        nb_alt = len(performance_table.alternatives)
-        nb_profiles = len(self.profiles.alternatives)
-        capacities_sum = self.criteria_capacities[
-            frozenset(performance_table.data.columns)
-        ]
-
-        # Create figure and axes
-        fig = Figure(figsize=figsize, ncols=ncols, nrows=nrows)
-
-        for ind_alt in range(nb_alt):
-            ax = Axis(
-                xlabel=f"{performance_table.data.index[ind_alt]}",
-                xlabel_tilted=xlabels_tilted,
-            )
-            # Axis properties
-            x = cast(list[float], range(nb_profiles))
-            xticks = cast(list[float], range(nb_profiles))
-            xticklabels = [f"$P^{profile}$" for profile in self.lexicographic_order]
-            ylim = (0.0, 1.0)
-
-            values = [
-                self.criteria_capacities[
-                    frozenset(
-                        [
-                            crit
-                            for ind_crit, crit in enumerate(performance_table.criteria)
-                            if performance_table.scales[crit].is_better_or_equal(
-                                performance_table.data.iloc[ind_alt, ind_crit],
-                                self.profiles.data.iloc[profile, ind_crit],
-                            )
-                        ]
-                    )
-                ]
-                / capacities_sum
-                for profile in self.lexicographic_order
-            ]
-            ax.add_plot(
-                BarPlot(
-                    x,
-                    values,
-                    ylim=ylim,
-                    xticks=xticks,
-                    xticklabels=xticklabels,
-                )
-            )
-            fig.add_axis(ax)
-        fig.axes[-1].add_legend(title="Criteria :", location="right")
-        fig.draw()
-
     def plot_progressive_ranking(
         self,
         performance_table: PerformanceTable,
@@ -619,12 +543,12 @@ class NormalRMP(RMP):
     def __init__(
         self,
         performance_table: PerformanceTable[NormalScale],
-        criteria_capacities: dict[frozenset[Any], float],
+        importance_relation: ImportanceRelation,
         profiles: PerformanceTable[NormalScale],
         lexicographic_order: list[int],
     ):
         self.performance_table = performance_table
-        self.criteria_capacities = criteria_capacities
+        self.importance_relation = importance_relation
         self.profiles = profiles
         self.lexicographic_order = lexicographic_order
 
@@ -637,7 +561,7 @@ class NormalRMP(RMP):
         return [
             NormalProfileWiseOutranking(
                 self.performance_table,
-                self.criteria_capacities,
+                self.importance_relation,
                 self.profiles.alternatives_values[profile],
             )
             for profile in self.profiles.alternatives

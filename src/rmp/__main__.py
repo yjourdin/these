@@ -1,7 +1,7 @@
 from numpy.random import default_rng
 
 from .argument_parser import parse_args
-from .generate import balanced_rmp, random_rmp
+from .model import RMPModel
 
 # Parse arguments
 args = parse_args()
@@ -9,9 +9,13 @@ args = parse_args()
 
 # Create model
 if args.balanced:
-    model = balanced_rmp(args.k, args.m, default_rng(args.seed), args.profiles_values)
+    model = RMPModel.balanced(
+        args.k, args.m, default_rng(args.seed), args.profiles_values
+    )
 else:
-    model = random_rmp(args.k, args.m, default_rng(args.seed), args.profiles_values)
+    model = RMPModel.random(
+        args.k, args.m, default_rng(args.seed), args.profiles_values
+    )
 
 
 # Write results

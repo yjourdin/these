@@ -1,6 +1,5 @@
 import csv
 import logging.config
-from dataclasses import asdict
 from multiprocessing import JoinableQueue, Process, Queue
 from threading import Thread
 
@@ -36,7 +35,7 @@ with dir.configs.open("a", newline="") as f:
             {
                 "Id": config.id,
                 "Method": config.method,
-                "Config": {k: v for k, v in asdict(config).items() if k != "id"},
+                "Config": {k: v for k, v in config.to_dict().items() if k != "id"},
             }
         )
 

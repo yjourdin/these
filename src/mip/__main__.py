@@ -13,14 +13,22 @@ args = parse_args()
 # Import data
 A = NormalPerformanceTable(read_csv(args.A, header=None))
 
-D = PreferenceStructure()
+D: list[PreferenceStructure] = []
 for d in args.D:
-    D._relations += from_csv(d)._relations
+    D.append(from_csv(d))
 
 
 # Learn MIP
 best_model, best_fitness, time = learn_mip(
-    args.k, A, D, args.gamma, not args.no_inconsistencies, args.seed, args.verbose
+    args.model,
+    args.k,
+    A,
+    D,
+    set(),
+    args.gamma,
+    not args.no_inconsistencies,
+    args.seed,
+    args.verbose,
 )
 
 
@@ -28,4 +36,4 @@ best_model, best_fitness, time = learn_mip(
 if args.output is not None:
     args.output.write(best_model.to_json() if best_model is not None else "None")
 if args.result is not None:
-    args.result.write(f"{best_fitness} {best_fitness}\n")
+    args.result.write(f"{best_fitness} {time}\n")

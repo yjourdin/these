@@ -4,7 +4,7 @@ from mcda.matrices import PerformanceTable
 from mcda.relations import I, P, PreferenceStructure
 from numpy.random import Generator
 
-from ..abstract_model import Model
+from ..model import Model
 
 
 def random_comparisons(

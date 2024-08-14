@@ -1,28 +1,12 @@
 import csv
-from functools import partial
 from pathlib import Path
-from typing import Any, Literal
 
-from ..model import ModelType
+from ..methods import MethodEnum
+from ..models import GroupModelEnum
+from ..utils import filename_csv, filename_json
 from .fieldnames import FIELDNAMES
 
 RESULTS_DIR = "results"
-
-
-def filename(dct: dict[str, Any], ext: str):
-    return (
-        "_".join(
-            k.title().replace("_", "") + "_" + str(v)
-            for k, v in dct.items()
-            if k != "self"
-        )
-        + "."
-        + ext
-    )
-
-
-filename_csv = partial(filename, ext="csv")
-filename_json = partial(filename, ext="json")
 
 
 class Directory:
@@ -46,7 +30,15 @@ class Directory:
     def A_test(self, m: int, n: int, id: int):
         return self.A_test_dir / filename_csv(locals())
 
-    def Mo(self, m: int, model: ModelType, k: int, id: int):
+    def Mo(
+        self,
+        m: int,
+        model: GroupModelEnum,
+        k: int,
+        group_size: int,
+        group_id: int,
+        dm_id: int,
+    ):
         return self.Mo_dir / filename_json(locals())
 
     def D(
@@ -54,9 +46,11 @@ class Directory:
         m: int,
         ntr: int,
         Atr_id: int,
-        Mo: ModelType,
+        Mo: GroupModelEnum,
         ko: int,
-        Mo_id: int,
+        group_size: int,
+        group_id: int,
+        dm_id: int,
         n: int,
         e: float,
         id: int,
@@ -68,15 +62,16 @@ class Directory:
         m: int,
         ntr: int,
         Atr_id: int,
-        Mo: ModelType,
+        Mo: GroupModelEnum,
         ko: int,
-        Mo_id: int,
+        group_size: int,
+        group_id: int,
         n: int,
         e: float,
         D_id: int,
-        Me: ModelType,
+        Me: GroupModelEnum,
         ke: int,
-        method: Literal["MIP", "SA"],
+        method: MethodEnum,
         config_id: int,
         id: int,
     ):

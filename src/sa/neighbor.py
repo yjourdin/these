@@ -8,20 +8,22 @@ import numpy as np
 from mcda.matrices import PerformanceTable
 from numpy.random import Generator
 
-from ..rmp.model import RMPModel
 from ..srmp.model import SRMPModel
-from .type import T
+from ..rmp.model import RMPModelCapacity
+from .type import Solution
 
 
-class Neighbor(Generic[T], ABC):
+class Neighbor(Generic[Solution], ABC):
     @abstractmethod
-    def __call__(self, sol: T, rng: Generator) -> T:
+    def __call__(self, sol: Solution, rng: Generator) -> Solution:
         pass
 
 
-class RandomNeighbor(Neighbor[T]):
+class RandomNeighbor(Neighbor[Solution]):
     def __init__(
-        self, neighbors: Sequence[Neighbor[T]], prob: Sequence[float] | None = None
+        self,
+        neighbors: Sequence[Neighbor[Solution]],
+        prob: Sequence[float] | None = None,
     ):
         self.neighbors = neighbors
         if prob:
@@ -35,7 +37,7 @@ class RandomNeighbor(Neighbor[T]):
         return self.neighbors[i](sol, rng)
 
 
-class NeighborProfiles(Neighbor[RMPModel | SRMPModel]):
+class NeighborProfiles(Neighbor[SRMPModel | RMPModelCapacity]):
     def __init__(self, values: PerformanceTable):
         self.values = values
 
@@ -160,7 +162,7 @@ class NeighborWeights(Neighbor[SRMPModel]):
         return neighbor
 
 
-class NeighborCapacities(Neighbor[RMPModel]):
+class NeighborCapacity(Neighbor[RMPModelCapacity]):
     def __init__(self, s: Collection[Any]):
         s = set(s)
 
@@ -175,7 +177,7 @@ class NeighborCapacities(Neighbor[RMPModel]):
     def __call__(self, sol, rng):
         neighbor = deepcopy(sol)
 
-        capacities = neighbor.capacities
+        capacities = neighbor.capacity
         keys = list(capacities)
         crits = keys[rng.choice(len(keys))]
 
@@ -196,11 +198,11 @@ class NeighborCapacities(Neighbor[RMPModel]):
         #         f"{capacity} is not between {power_set.min_capacity(crits)}"
         #         f" and {power_set.max_capacity(crits)}"
         #     )
-        neighbor.capacities[crits] = new_capa
+        neighbor.capacity[crits] = new_capa
         return neighbor
 
 
-class NeighborLexOrder(Neighbor[RMPModel | SRMPModel]):
+class NeighborLexOrder(Neighbor[SRMPModel | RMPModelCapacity]):
     def __call__(self, sol, rng):
         neighbor = deepcopy(sol)
         lex_order = neighbor.lexicographic_order

@@ -18,13 +18,14 @@ for d in args.D:
 
 
 # Learn MIP
-best_model, best_fitness, time = learn_mip(
+best_models, best_fitness, time = learn_mip(
     args.k, A, D, args.gamma, not args.no_inconsistencies, args.seed, args.verbose
 )
 
 
 # Write results
 if args.output is not None:
-    args.output.write(best_model.to_json() if best_model is not None else "None")
+    for i, o in enumerate(args.output):
+        o.write(best_models[i].to_json() if best_models is not None else "None")
 if args.result is not None:
-    args.result.write(f"{best_fitness} {best_fitness}\n")
+    args.result.write(f"{best_fitness} {time}\n")

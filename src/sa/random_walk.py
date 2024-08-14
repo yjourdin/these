@@ -6,15 +6,15 @@ from numpy.random import Generator
 
 from .neighbor import Neighbor
 from .objective import Objective
-from .type import T
+from .type import Solution
 
 
-class RandomWalk(Learner[T]):
+class RandomWalk(Learner[Solution]):
     def __init__(
         self,
-        neighbor: Neighbor[T],
-        objective: Objective,
-        init_sol: T,
+        neighbor: Neighbor[Solution],
+        objective: Objective[Solution],
+        init_sol: Solution,
         rng: Generator,
         max_time: int | None = None,
         max_it: int | None = None,
@@ -30,7 +30,7 @@ class RandomWalk(Learner[T]):
 
     def _learn(
         self,
-        initial_sol: T,
+        initial_sol: Solution,
         rng: Generator,
     ):
         # Initialise
@@ -40,8 +40,9 @@ class RandomWalk(Learner[T]):
         self.time = time() - start_time
         self.it = 0
         self.non_improving_it = 0
-        log_writer = (
-            csv.DictWriter(
+
+        if self.log_file:
+            log_writer = csv.DictWriter(
                 self.log_file,
                 (
                     "It",
@@ -52,10 +53,6 @@ class RandomWalk(Learner[T]):
                 ),
                 dialect="unix",
             )
-            if self.log_file
-            else None
-        )
-        if log_writer:
             log_writer.writeheader()
 
         # Stopping criterion

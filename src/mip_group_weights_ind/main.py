@@ -9,8 +9,8 @@ from ..srmp.model import SRMPModel
 from .mip import MIP
 
 
-class MIPResult(NamedTuple):
-    best_model: SRMPModel | None
+class MIPGroupResult(NamedTuple):
+    best_models: list[SRMPModel] | None
     best_fitness: float
     time: float | None
 
@@ -21,14 +21,14 @@ def learn_mip(
     comparisons: list[PreferenceStructure],
     gamma: float = 0.001,
     inconsistencies: bool = True,
-    *args,
-    **kwargs,
+    seed: int = 0,
+    verbose: bool = False,
 ):
     alternatives = alternatives.subtable(
         list(set().union(comp.elements for comp in comparisons))
     )
 
-    best_model = None
+    best_models = None
     best_fitness: float = 0
     time = None
 
@@ -57,8 +57,8 @@ def learn_mip(
             seed=seed,
             verbose=verbose,
         )
-        model = mip.learn()
-        if model is not None:
+        models = mip.learn()
+        if models is not None:
             objective = mip.prob.objective
             fitness = (
                 cast(int, value(objective)) / (sum(len(comp) for comp in comparisons))
@@ -67,11 +67,11 @@ def learn_mip(
             )
 
             if fitness > best_fitness:
-                best_model = model
+                best_models = models
                 best_fitness = fitness
                 time = mip.prob.solutionCpuTime
 
                 if best_fitness == 1:
                     break
 
-    return MIPResult(best_model, best_fitness, time)
+    return MIPGroupResult(best_models, best_fitness, time)

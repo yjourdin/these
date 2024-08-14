@@ -1,14 +1,14 @@
 from numpy.random import default_rng
 
 from .argument_parser import parse_args
-from .generate import random_alternatives
+from .normal_performance_table import NormalPerformanceTable
 
 # Parse arguments
 args = parse_args()
 
 
 # Create performance table
-A = random_alternatives(args.n, args.m, default_rng(args.seed))
+A = NormalPerformanceTable.random(args.n, args.m, default_rng(args.seed))
 
 
 # Write results

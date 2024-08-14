@@ -36,12 +36,12 @@ best_model, best_fitness, time, it = learn_sa(
     args.T0,
     args.accept,
     args.L,
-    args.amp,
     args.Tf,
     args.max_time,
     args.max_it,
     args.max_it_non_improving,
     args.log,
+    **({"amp": args.amp} if hasattr(args, "amp") else {}),
 )
 
 

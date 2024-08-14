@@ -1,12 +1,15 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import InitVar, dataclass, field
 from multiprocessing import Queue
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar
 
 from numpy.random import Generator, default_rng
 
-from ..model import ModelType
+from ..dataclass import FrozenDataclass
+from ..methods import MethodEnum
+from ..models import GroupModelEnum
 from .config import Config, MIPConfig, SAConfig
+from .directory import Directory
 from .job import (
     create_A_test,
     create_A_train,
@@ -16,8 +19,7 @@ from .job import (
     run_SA,
     run_test,
 )
-from .directory import Directory
-from .seed import Seeds
+from .seeds import Seeds
 
 
 def print_attribute(name: str, value: Any | None, width: int) -> str:
@@ -50,7 +52,7 @@ WIDTH = {
 
 
 @dataclass(frozen=True)
-class Task(ABC):
+class Task(FrozenDataclass):
     name: ClassVar[str]
     seeds: InitVar[Seeds]
 
@@ -90,7 +92,7 @@ class ATrainTask(Task):
     Atr_seed: int = field(init=False)
 
     def __post_init__(self, seeds: Seeds):
-        object.__setattr__(self, "Atr_seed", seeds.A_train[self.Atr_id])
+        object.__setattr__(self, "Atr_seed", seeds.A_tr[self.Atr_id])
 
     def __call__(self, dir, queues):
         self.print_seed(queues["seeds"])
@@ -112,7 +114,7 @@ class ATestTask(Task):
     Ate_seed: int = field(init=False)
 
     def __post_init__(self, seeds: Seeds):
-        object.__setattr__(self, "Ate_seed", seeds.A_test[self.Ate_id])
+        object.__setattr__(self, "Ate_seed", seeds.A_te[self.Ate_id])
 
     def __call__(self, dir, queues):
         self.print_seed(queues["seeds"])
@@ -129,13 +131,17 @@ class ATestTask(Task):
 class MoTask(Task):
     name = "Mo"
     m: int
-    Mo: ModelType
+    Mo: GroupModelEnum
     ko: int
-    Mo_id: int = field(compare=False)
+    group_size: int
+    group_id: int = field(compare=False)
+    dm_id: int = field(compare=False)
     Mo_seed: int = field(init=False)
 
     def __post_init__(self, seeds: Seeds):
-        object.__setattr__(self, "Mo_seed", seeds.Mo[self.Mo_id])
+        object.__setattr__(
+            self, "Mo_seed", seeds.Mo[self.group_size][self.group_id].dm[self.dm_id]
+        )
 
     def __call__(self, dir, queues):
         self.print_seed(queues["seeds"])
@@ -143,7 +149,9 @@ class MoTask(Task):
             self.m,
             self.Mo,
             self.ko,
-            self.Mo_id,
+            self.group_size,
+            self.group_id,
+            self.dm_id,
             dir,
             self.rng(),
         )
@@ -156,9 +164,11 @@ class DTask(Task):
     ntr: int
     Atr_id: int = field(compare=False)
     Atr_seed: int = field(init=False)
-    Mo: ModelType
+    Mo: GroupModelEnum
     ko: int
-    Mo_id: int = field(compare=False)
+    group_size: int
+    group_id: int = field(compare=False)
+    dm_id: int = field(compare=False)
     Mo_seed: int = field(init=False)
     n: int
     error: float
@@ -166,8 +176,10 @@ class DTask(Task):
     D_seed: int = field(init=False)
 
     def __post_init__(self, seeds: Seeds):
-        object.__setattr__(self, "Atr_seed", seeds.A_train[self.Atr_id])
-        object.__setattr__(self, "Mo_seed", seeds.Mo[self.Mo_id])
+        object.__setattr__(self, "Atr_seed", seeds.A_tr[self.Atr_id])
+        object.__setattr__(
+            self, "Mo_seed", seeds.Mo[self.group_size][self.group_id].dm[self.dm_id]
+        )
         object.__setattr__(self, "D_seed", seeds.D[self.D_id])
 
     def __call__(self, dir, queues):
@@ -178,7 +190,9 @@ class DTask(Task):
             self.Atr_id,
             self.Mo,
             self.ko,
-            self.Mo_id,
+            self.group_size,
+            self.group_id,
+            self.dm_id,
             self.n,
             self.error,
             self.D_id,
@@ -194,22 +208,26 @@ class MIPTask(Task):
     ntr: int
     Atr_id: int = field(compare=False)
     Atr_seed: int = field(init=False)
-    Mo: ModelType
+    Mo: GroupModelEnum
     ko: int
-    Mo_id: int = field(compare=False)
+    group_size: int
+    group_id: int = field(compare=False)
     Mo_seed: int = field(init=False)
     n: int
     error: float
     D_id: int = field(compare=False)
     D_seed: int = field(init=False)
+    Me: GroupModelEnum
     ke: int
     config: MIPConfig
     Me_id: int = field(compare=False)
     Me_seed: int = field(init=False)
 
     def __post_init__(self, seeds: Seeds):
-        object.__setattr__(self, "Atr_seed", seeds.A_train[self.Atr_id])
-        object.__setattr__(self, "Mo_seed", seeds.Mo[self.Mo_id])
+        object.__setattr__(self, "Atr_seed", seeds.A_tr[self.Atr_id])
+        object.__setattr__(
+            self, "Mo_seed", seeds.Mo[self.group_size][self.group_id].group
+        )
         object.__setattr__(self, "D_seed", seeds.D[self.D_id])
         object.__setattr__(self, "Me_seed", seeds.Me[self.Me_id])
 
@@ -221,10 +239,12 @@ class MIPTask(Task):
             self.Atr_id,
             self.Mo,
             self.ko,
-            self.Mo_id,
+            self.group_size,
+            self.group_id,
             self.n,
             self.error,
             self.D_id,
+            self.Me,
             self.ke,
             self.config,
             self.Me_id,
@@ -238,12 +258,13 @@ class MIPTask(Task):
                 "Atr_id": self.Atr_id,
                 "Mo": self.Mo,
                 "Ko": self.ko,
-                "Mo_id": self.Mo_id,
+                "Group_size": self.group_size,
+                "Group_id": self.group_id,
                 "N_bc": self.n,
                 "Error": self.error,
-                "Me": "SRMP",
+                "Me": self.Me,
                 "Ke": self.ke,
-                "Method": "MIP",
+                "Method": MethodEnum.MIP,
                 "Config": self.config.id,
                 "Time": time,
                 "Fitness": best_fitness,
@@ -258,23 +279,26 @@ class SATask(Task):
     ntr: int
     Atr_id: int = field(compare=False)
     Atr_seed: int = field(init=False)
-    Mo: ModelType
+    Mo: GroupModelEnum
     ko: int
-    Mo_id: int = field(compare=False)
+    group_size: int
+    group_id: int = field(compare=False)
     Mo_seed: int = field(init=False)
     n: int
     error: float
     D_id: int = field(compare=False)
     D_seed: int = field(init=False)
-    Me: ModelType
+    Me: GroupModelEnum
     ke: int
     config: SAConfig
     Me_id: int = field(compare=False)
     Me_seed: int = field(init=False)
 
     def __post_init__(self, seeds: Seeds):
-        object.__setattr__(self, "Atr_seed", seeds.A_train[self.Atr_id])
-        object.__setattr__(self, "Mo_seed", seeds.Mo[self.Mo_id])
+        object.__setattr__(self, "Atr_seed", seeds.A_tr[self.Atr_id])
+        object.__setattr__(
+            self, "Mo_seed", seeds.Mo[self.group_size][self.group_id].group
+        )
         object.__setattr__(self, "D_seed", seeds.D[self.D_id])
         object.__setattr__(self, "Me_seed", seeds.Me[self.Me_id])
 
@@ -286,7 +310,8 @@ class SATask(Task):
             self.Atr_id,
             self.Mo,
             self.ko,
-            self.Mo_id,
+            self.group_size,
+            self.group_id,
             self.n,
             self.error,
             self.D_id,
@@ -304,12 +329,13 @@ class SATask(Task):
                 "Atr_id": self.Atr_id,
                 "Mo": self.Mo,
                 "Ko": self.ko,
-                "Mo_id": self.Mo_id,
+                "Group_size": self.group_size,
+                "Group_id": self.group_id,
                 "N_bc": self.n,
                 "Error": self.error,
                 "Me": self.Me,
                 "Ke": self.ke,
-                "Method": "SA",
+                "Method": MethodEnum.SA,
                 "Config": self.config.id,
                 "Time": time,
                 "Fitness": best_fitness,
@@ -325,17 +351,18 @@ class TestTask(Task):
     ntr: int
     Atr_id: int = field(compare=False)
     Atr_seed: int = field(init=False)
-    Mo: ModelType
+    Mo: GroupModelEnum
     ko: int
-    Mo_id: int = field(compare=False)
+    group_size: int
+    group_id: int = field(compare=False)
     Mo_seed: int = field(init=False)
     n: int
     error: float
     D_id: int = field(compare=False)
     D_seed: int = field(init=False)
-    Me: ModelType
+    Me: GroupModelEnum
     ke: int
-    method: Literal["MIP", "SA"]
+    method: MethodEnum
     config: int
     Me_id: int = field(compare=False)
     Me_seed: int = field(init=False)
@@ -344,11 +371,13 @@ class TestTask(Task):
     Ate_seed: int = field(init=False)
 
     def __post_init__(self, seeds: Seeds):
-        object.__setattr__(self, "Atr_seed", seeds.A_train[self.Atr_id])
-        object.__setattr__(self, "Mo_seed", seeds.Mo[self.Mo_id])
+        object.__setattr__(self, "Atr_seed", seeds.A_tr[self.Atr_id])
+        object.__setattr__(
+            self, "Mo_seed", seeds.Mo[self.group_size][self.group_id].group
+        )
         object.__setattr__(self, "D_seed", seeds.D[self.D_id])
         object.__setattr__(self, "Me_seed", seeds.Me[self.Me_id])
-        object.__setattr__(self, "Ate_seed", seeds.A_test[self.Ate_id])
+        object.__setattr__(self, "Ate_seed", seeds.A_te[self.Ate_id])
 
     def __call__(self, dir, queues):
         test_fitness, kendall_tau = run_test(
@@ -357,7 +386,8 @@ class TestTask(Task):
             self.Atr_id,
             self.Mo,
             self.ko,
-            self.Mo_id,
+            self.group_size,
+            self.group_id,
             self.n,
             self.error,
             self.D_id,
@@ -377,7 +407,8 @@ class TestTask(Task):
                 "Atr_id": self.Atr_id,
                 "Mo": self.Mo,
                 "Ko": self.ko,
-                "Mo_id": self.Mo_id,
+                "Group_size": self.group_size,
+                "Group_id": self.group_id,
                 "N_bc": self.n,
                 "Error": self.error,
                 "Me": self.Me,

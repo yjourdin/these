@@ -1,3 +1,3 @@
 from typing import TypeVar
 
-T = TypeVar("T")
+Solution = TypeVar("Solution")

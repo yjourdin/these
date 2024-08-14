@@ -8,18 +8,18 @@ from numpy.random import Generator
 from .cooling_schedule import CoolingSchedule
 from .neighbor import Neighbor
 from .objective import Objective
-from .type import T
+from .type import Solution
 
 
-class SimulatedAnnealing(Learner[T]):
+class SimulatedAnnealing(Learner[Solution]):
     def __init__(
         self,
         T0: float,
         L: int,
-        neighbor: Neighbor[T],
-        objective: Objective,
+        neighbor: Neighbor[Solution],
+        objective: Objective[Solution],
         cooling_schedule: CoolingSchedule,
-        init_sol: T,
+        init_sol: Solution,
         rng: Generator,
         Tf: float | None = None,
         max_time: int | None = None,
@@ -42,7 +42,7 @@ class SimulatedAnnealing(Learner[T]):
 
     def _learn(
         self,
-        initial_sol: T,
+        initial_sol: Solution,
         rng: Generator,
     ):
         # Initialise
@@ -55,8 +55,9 @@ class SimulatedAnnealing(Learner[T]):
         self.time = time() - start_time
         self.it = 0
         self.non_improving_it = 0
-        log_writer = (
-            csv.DictWriter(
+
+        if self.log_file:
+            log_writer = csv.DictWriter(
                 self.log_file,
                 (
                     "It",
@@ -70,10 +71,6 @@ class SimulatedAnnealing(Learner[T]):
                 ),
                 dialect="unix",
             )
-            if self.log_file
-            else None
-        )
-        if log_writer:
             log_writer.writeheader()
 
         # Stop when optimum reached

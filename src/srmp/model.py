@@ -1,69 +1,44 @@
-from dataclasses import asdict, dataclass
-from json import JSONDecoder, JSONEncoder, dumps, loads
+from dataclasses import dataclass
+from enum import Enum
 
 from mcda.internal.core.scales import NormalScale
 
-from ..abstract_model import Model
-from ..performance_table.normal_performance_table import NormalPerformanceTable
+from ..dataclass import GeneratedDataclass
+from ..model import GroupModel, Model
+from ..rmp.field import (
+    GroupLexicographicOrderField,
+    GroupProfilesField,
+    LexicographicOrderField,
+    ProfilesField,
+)
+from ..rmp.model import RMPParamEnum
 from ..utils import print_list
+from .field import GroupWeightsField, WeightsField
 from .normal_srmp import NormalSRMP
 
 
-class SRMPEncoder(JSONEncoder):
-    def default(self, o):
-        try:
-            return {
-                "profiles": o.profiles.data.values.tolist(),
-                "weights": list(o.weights),
-                "lexicographic_order": list(o.lexicographic_order),
-            }
-        except TypeError:
-            return super().default(o)
-
-
-class SRMPDecoder(JSONDecoder):
-    def __init__(self, *args, **kwargs):
-        super().__init__(object_hook=self.object_hook, *args, **kwargs)
-
-    def object_hook(self, dct):
-        if all(k in dct for k in ("profiles", "weights", "lexicographic_order")):
-            profiles = NormalPerformanceTable(dct["profiles"])
-            weights = list(dct["weights"])
-            lexicographic_order = list(dct["lexicographic_order"])
-            return SRMPModel(
-                profiles=profiles,
-                weights=weights,
-                lexicographic_order=lexicographic_order,
-            )
-        return dct
+class SRMPParamEnum(Enum):
+    PROFILES = RMPParamEnum.PROFILES
+    WEIGHTS = "weights"
+    LEXICOGRAPHIC_ORDER = RMPParamEnum.LEXICOGRAPHIC_ORDER
 
 
 @dataclass
-class SRMPModel(Model[NormalScale]):
-    profiles: NormalPerformanceTable
-    weights: list[float]
-    lexicographic_order: list[int]
-
+class SRMPModel(
+    Model[NormalScale],
+    GeneratedDataclass,
+    ProfilesField,
+    WeightsField,
+    LexicographicOrderField,
+):
     def __str__(self) -> str:
-        return (
-            f"{print_list(self.weights)}\t"
-            f"{print_list(self.profiles.data.to_numpy()[0])}\t"
-            f"{self.lexicographic_order.__str__()}"
+        return "\t".join(
+            [
+                print_list(self.weights),
+                print_list(self.profiles.data.to_numpy()[0]),
+                self.lexicographic_order.__str__(),
+            ]
         )
-
-    @classmethod
-    def from_dict(cls, dct):
-        return cls(**dct)
-
-    @classmethod
-    def from_json(cls, s):
-        return loads(s, cls=SRMPDecoder)
-
-    def to_dict(self):
-        return asdict(self)
-
-    def to_json(self):
-        return dumps(self, cls=SRMPEncoder, indent=4)
 
     def rank(self, performance_table):
         return NormalSRMP(
@@ -72,3 +47,156 @@ class SRMPModel(Model[NormalScale]):
             self.profiles,
             self.lexicographic_order,
         ).rank()
+
+
+@dataclass
+class SRMPGroupModelWeightsProfilesLexicographic(
+    GroupModel[NormalScale],
+    GeneratedDataclass,
+    ProfilesField,
+    WeightsField,
+    LexicographicOrderField,
+):
+    def __getitem__(self, i):
+        return SRMPModel(
+            profiles=self.profiles,
+            weights=self.weights,
+            lexicographic_order=self.lexicographic_order,
+        )
+
+
+@dataclass
+class SRMPGroupModelWeightsProfiles(
+    GroupModel[NormalScale],
+    GeneratedDataclass,
+    ProfilesField,
+    WeightsField,
+    GroupLexicographicOrderField,
+):
+    def __getitem__(self, i):
+        return SRMPModel(
+            profiles=self.profiles,
+            weights=self.weights,
+            lexicographic_order=self.lexicographic_order[i],
+        )
+
+
+@dataclass
+class SRMPGroupModelWeightsLexicographic(
+    GroupModel[NormalScale],
+    GeneratedDataclass,
+    GroupProfilesField,
+    WeightsField,
+    LexicographicOrderField,
+):
+    def __getitem__(self, i):
+        return SRMPModel(
+            profiles=self.profiles[i],
+            weights=self.weights,
+            lexicographic_order=self.lexicographic_order,
+        )
+
+
+@dataclass
+class SRMPGroupModelProfilesLexicographic(
+    GroupModel[NormalScale],
+    GeneratedDataclass,
+    ProfilesField,
+    GroupWeightsField,
+    LexicographicOrderField,
+):
+    def __getitem__(self, i):
+        return SRMPModel(
+            profiles=self.profiles,
+            weights=self.weights[i],
+            lexicographic_order=self.lexicographic_order,
+        )
+
+
+@dataclass
+class SRMPGroupModelWeights(
+    GroupModel[NormalScale],
+    GeneratedDataclass,
+    GroupProfilesField,
+    WeightsField,
+    GroupLexicographicOrderField,
+):
+    def __getitem__(self, i):
+        return SRMPModel(
+            profiles=self.profiles[i],
+            weights=self.weights,
+            lexicographic_order=self.lexicographic_order[i],
+        )
+
+
+@dataclass
+class SRMPGroupModelProfiles(
+    GroupModel[NormalScale],
+    GeneratedDataclass,
+    ProfilesField,
+    GroupWeightsField,
+    GroupLexicographicOrderField,
+):
+    def __getitem__(self, i):
+        return SRMPModel(
+            profiles=self.profiles,
+            weights=self.weights[i],
+            lexicographic_order=self.lexicographic_order[i],
+        )
+
+
+@dataclass
+class SRMPGroupModelLexicographic(
+    GroupModel[NormalScale],
+    GeneratedDataclass,
+    GroupProfilesField,
+    GroupWeightsField,
+    LexicographicOrderField,
+):
+    def __getitem__(self, i):
+        return SRMPModel(
+            profiles=self.profiles[i],
+            weights=self.weights[i],
+            lexicographic_order=self.lexicographic_order,
+        )
+
+
+@dataclass
+class SRMPGroupModel(
+    GroupModel[NormalScale],
+    GeneratedDataclass,
+    GroupProfilesField,
+    GroupWeightsField,
+    GroupLexicographicOrderField,
+):
+    def __getitem__(self, i):
+        return SRMPModel(
+            profiles=self.profiles[i],
+            weights=self.weights[i],
+            lexicographic_order=self.lexicographic_order[i],
+        )
+
+
+def SRMP_model(shared_params: set[SRMPParamEnum]):
+    if SRMPParamEnum.PROFILES in shared_params:
+        if SRMPParamEnum.WEIGHTS in shared_params:
+            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+                return SRMPGroupModelWeightsProfilesLexicographic
+            else:
+                return SRMPGroupModelWeightsProfiles
+        else:
+            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+                return SRMPGroupModelProfilesLexicographic
+            else:
+                return SRMPGroupModelProfiles
+    else:
+        if SRMPParamEnum.WEIGHTS in shared_params:
+            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+                return SRMPGroupModelWeightsLexicographic
+            else:
+                return SRMPGroupModelWeights
+        else:
+            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+                return SRMPGroupModelLexicographic
+            else:
+                return SRMPGroupModel

@@ -3,16 +3,16 @@ from typing import NamedTuple
 from mcda.relations import PreferenceStructure
 from numpy.random import Generator
 
-from ..abstract_model import Model
-from ..model import ModelType
+from ..model import Model
+from ..models import ModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..rmp.generate import balanced_rmp
-from ..srmp.generate import balanced_srmp
+from ..rmp.model import RMPModelCapacity
+from ..srmp.model import SRMPModel
 from ..utils import midpoints
 from .cooling_schedule import GeometricSchedule
 from .initial_temperature import initial_temperature
 from .neighbor import (
-    NeighborCapacities,
+    NeighborCapacity,
     NeighborLexOrder,
     NeighborProfiles,
     NeighborWeights,
@@ -30,7 +30,7 @@ class SAResult(NamedTuple):
 
 
 def learn_sa(
-    model: ModelType,
+    model: ModelEnum,
     k: int,
     alternatives: NormalPerformanceTable,
     comparisons: PreferenceStructure,
@@ -40,34 +40,34 @@ def learn_sa(
     T0: float | None = None,
     accept: float | None = None,
     L: int = 1,
-    amp: float | None = None,
     Tf: float | None = None,
     max_time: int | None = None,
     max_it: int | None = None,
     max_it_non_improving: int | None = None,
     log_file=None,
+    **kwargs,
 ):
     alternatives = alternatives.subtable(comparisons.elements)
 
     M = len(alternatives.criteria)
 
-    init_model = None
+    init_sol = None
     match model:
-        case "RMP":
-            init_model = balanced_rmp(
+        case ModelEnum.RMP:
+            init_sol = RMPModelCapacity.balanced(
                 k,
                 M,
                 rng_init,
                 midpoints(alternatives),
             )
-        case "SRMP":
-            init_model = balanced_srmp(
+        case ModelEnum.SRMP:
+            init_sol = SRMPModel.balanced(
                 k,
                 M,
                 rng_init,
                 midpoints(alternatives),
             )
-    assert init_model
+    assert init_sol
 
     neighbors: list[Neighbor] = []
     prob: list[int] = []
@@ -76,14 +76,14 @@ def learn_sa(
     prob.append(k * M)
 
     match model:
-        case "RMP":
-            neighbors.append(NeighborCapacities(alternatives.criteria))
+        case ModelEnum.RMP:
+            neighbors.append(NeighborCapacity(alternatives.criteria))
             prob.append(2**M)
-        case "SRMP":
-            if amp is not None:
-                neighbors.append(NeighborWeights(amp))
+        case ModelEnum.SRMP:
+            if "amp" in kwargs:
+                neighbors.append(NeighborWeights(kwargs["amp"]))
             else:
-                raise ValueError("amp must not be None")
+                raise ValueError("amp must be specified")
             prob.append(M)
 
     if k >= 2:
@@ -102,7 +102,7 @@ def learn_sa(
             accept,
             neighbor,
             objective,
-            init_model,
+            init_sol,
             rng_sa,
             max_time // 100 if max_time else None,
             max_it // 100 if max_it else None,
@@ -114,7 +114,7 @@ def learn_sa(
         neighbor,
         objective,
         cooling_schedule,
-        init_model,
+        init_sol,
         rng_sa,
         Tf,
         max_time,

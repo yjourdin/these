@@ -4,13 +4,13 @@ from typing import Generic
 from mcda.matrices import PerformanceTable
 from mcda.relations import PreferenceStructure
 
-from ..abstract_model import Model
-from .type import T
+from ..model import Model
+from .type import Solution
 
 
-class Objective(Generic[T], ABC):
+class Objective(Generic[Solution], ABC):
     @abstractmethod
-    def __call__(self, sol: T) -> float:
+    def __call__(self, sol: Solution) -> float:
         pass
 
     @property

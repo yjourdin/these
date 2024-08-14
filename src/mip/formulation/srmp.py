@@ -1,53 +1,37 @@
 from collections.abc import Sequence
-
-from mcda.internal.core.interfaces import Learner
 from mcda.relations import PreferenceStructure
-from pulp import (
-    LpBinary,
-    LpMaximize,
-    LpProblem,
-    LpVariable,
-    getSolver,
-    listSolvers,
-    lpSum,
-    value,
-)
+from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
 
-from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..srmp.model import SRMPModel
+from ...performance_table.normal_performance_table import NormalPerformanceTable
+from ...srmp.model import SRMPModel
+from ..mip import MIP
 
 
-class MIP(Learner[SRMPModel | None]):
+class MIPSRMP(MIP[SRMPModel]):
     def __init__(
         self,
         alternatives: NormalPerformanceTable,
-        preference_relations: list[PreferenceStructure],
-        indifference_relations: list[PreferenceStructure],
+        preference_relations: PreferenceStructure,
+        indifference_relations: PreferenceStructure,
         lexicographic_order: Sequence[int],
-        gamma: float,
-        inconsistencies: bool,
-        seed: int,
-        verbose: bool,
+        gamma: float = 0.001,
+        inconsistencies: bool = True,
+        *args,
+        **kwargs,
     ):
+        super().__init__(*args, **kwargs)
         self.alternatives = alternatives
         self.preference_relations = preference_relations
         self.indifference_relations = indifference_relations
         self.lexicographic_order = lexicographic_order
-        self.gamma = gamma
         self.inconsistencies = inconsistencies
-
-        if "GUROBI" in listSolvers(True):
-            self.solver = getSolver(
-                "GUROBI", msg=verbose, seed=seed % 2_000_000_000, threads=1
-            )
-        else:
-            self.solver = getSolver("PULP_CBC_CMD", msg=verbose)
+        self.gamma = gamma
 
     def _learn(
         self,
         alternatives: NormalPerformanceTable,
-        preference_relations: list[PreferenceStructure],
-        indifference_relations: list[PreferenceStructure],
+        preference_relations: PreferenceStructure,
+        indifference_relations: PreferenceStructure,
         lexicographic_order: Sequence[int],
     ):
         ##############
@@ -64,16 +48,10 @@ class MIP(Learner[SRMPModel | None]):
         profile_indices = list(range(1, k + 1))
         # Lexicographic order
         lexicographic_order = [0] + [profile + 1 for profile in lexicographic_order]
-        # Number of DMs
-        L = list(range(len(preference_relations)))
         # Binary comparisons with preference
-        preference_relations_indices = [
-            list(range(len(preference_relations[i]))) for i in L
-        ]
+        preference_relations_indices = range(len(preference_relations))
         # Binary comparisons with indifference
-        indifference_relations_indices = [
-            list(range(len(indifference_relations[i]))) for i in L
-        ]
+        indifference_relations_indices = range(len(indifference_relations))
 
         #############
         # Variables #
@@ -97,24 +75,23 @@ class MIP(Learner[SRMPModel | None]):
             upBound=1,
         )
         # Variables used to model the ranking rule with preference relations
-        s = {}
-        for i in L:
-            s[i] = LpVariable.dicts(
-                "PreferenceRankingVariable",
-                (preference_relations_indices[i], [0] + profile_indices),
-                cat=LpBinary,
-            )
+        s = LpVariable.dicts(
+            "PreferenceRankingVariable",
+            (
+                preference_relations_indices,
+                [0] + profile_indices,
+            ),
+            cat=LpBinary,
+        )
 
         if self.inconsistencies:
             # Variables used to model the ranking rule with indifference
             # relations
-            s_star = {}
-            for i in L:
-                s_star[i] = LpVariable.dicts(
-                    "IndifferenceRankingVariable",
-                    indifference_relations_indices[i],
-                    cat=LpBinary,
-                )
+            s_star = LpVariable.dicts(
+                "IndifferenceRankingVariable",
+                indifference_relations_indices,
+                cat=LpBinary,
+            )
 
         ##############
         # LP problem #
@@ -124,14 +101,8 @@ class MIP(Learner[SRMPModel | None]):
 
         if self.inconsistencies:
             self.prob += lpSum(
-                [s[i][index][0] for index in preference_relations_indices[i] for i in L]
-            ) + lpSum(
-                [
-                    s_star[i][index]
-                    for index in indifference_relations_indices[i]
-                    for i in L
-                ]
-            )
+                [s[index][0] for index in preference_relations_indices]
+            ) + lpSum([s_star[index] for index in indifference_relations_indices])
 
         ###############
         # Constraints #
@@ -167,64 +138,62 @@ class MIP(Learner[SRMPModel | None]):
                     self.prob += omega[a][h][j] >= delta[a][h][j] + w[j] - 1
 
         # Constraints on the preference ranking variables
-        for i in L:
-            for index in preference_relations_indices[i]:
-                if not self.inconsistencies:
-                    self.prob += s[index][lexicographic_order[0]][i] == 1
-                self.prob += s[index][lexicographic_order[k]][i] == 0
+        for index in preference_relations_indices:
+            if not self.inconsistencies:
+                self.prob += s[index][lexicographic_order[0]] == 1
+            self.prob += s[index][lexicographic_order[k]] == 0
 
         for h in profile_indices:
             # Constraints on the preferences
-            for i in L:
-                for index, relation in enumerate(preference_relations[i]):
-                    a, b = relation.a, relation.b
+            for index, relation in enumerate(preference_relations):
+                a, b = relation.a, relation.b
 
+                self.prob += lpSum(
+                    [omega[a][lexicographic_order[h]][j] for j in M]
+                ) >= (
+                    lpSum([omega[b][lexicographic_order[h]][j] for j in M])
+                    + self.gamma
+                    - s[index][lexicographic_order[h]] * (1 + self.gamma)
+                    - (1 - s[index][lexicographic_order[h - 1]])
+                )
+
+                self.prob += lpSum(
+                    [omega[a][lexicographic_order[h]][j] for j in M]
+                ) >= (
+                    lpSum([omega[b][lexicographic_order[h]][j] for j in M])
+                    - (1 - s[index][lexicographic_order[h]])
+                    - (1 - s[index][lexicographic_order[h - 1]])
+                )
+
+                self.prob += lpSum(
+                    [omega[a][lexicographic_order[h]][j] for j in M]
+                ) <= (
+                    lpSum([omega[b][lexicographic_order[h]][j] for j in M])
+                    + (1 - s[index][lexicographic_order[h]])
+                    + (1 - s[index][lexicographic_order[h - 1]])
+                )
+
+            # Constraints on the indifferences
+            for index, relation in enumerate(indifference_relations):
+                a, b = relation.a, relation.b
+                if not self.inconsistencies:
                     self.prob += lpSum(
                         [omega[a][lexicographic_order[h]][j] for j in M]
-                    ) >= (
-                        lpSum([omega[b][lexicographic_order[h]][j] for j in M])
-                        + self.gamma
-                        - s[i][index][lexicographic_order[h]] * (1 + self.gamma)
-                        - (1 - s[i][index][lexicographic_order[h - 1]])
-                    )
-
-                    self.prob += lpSum(
-                        [omega[a][lexicographic_order[h]][j] for j in M]
-                    ) >= (
-                        lpSum([omega[b][lexicographic_order[h]][j] for j in M])
-                        - (1 - s[i][index][lexicographic_order[h]])
-                        - (1 - s[i][index][lexicographic_order[h - 1]])
-                    )
-
+                    ) == lpSum([omega[b][lexicographic_order[h]][j] for j in M])
+                else:
                     self.prob += lpSum(
                         [omega[a][lexicographic_order[h]][j] for j in M]
                     ) <= (
                         lpSum([omega[b][lexicographic_order[h]][j] for j in M])
-                        + (1 - s[i][index][lexicographic_order[h]])
-                        + (1 - s[i][index][lexicographic_order[h - 1]])
+                        - (1 - s_star[index])
                     )
 
-                # Constraints on the indifferences
-                for index, relation in enumerate(indifference_relations[i]):
-                    a, b = relation.a, relation.b
-                    if not self.inconsistencies:
-                        self.prob += lpSum(
-                            [omega[a][lexicographic_order[h]][j] for j in M]
-                        ) == lpSum([omega[b][lexicographic_order[h]][j] for j in M])
-                    else:
-                        self.prob += lpSum(
-                            [omega[a][lexicographic_order[h]][j] for j in M]
-                        ) <= (
-                            lpSum([omega[b][lexicographic_order[h]][j] for j in M])
-                            - (1 - s_star[i][index])
-                        )
-
-                        self.prob += lpSum(
-                            [omega[b][lexicographic_order[h]][j] for j in M]
-                        ) <= (
-                            lpSum([omega[a][lexicographic_order[h]][j] for j in M])
-                            - (1 - s_star[i][index])
-                        )
+                    self.prob += lpSum(
+                        [omega[b][lexicographic_order[h]][j] for j in M]
+                    ) <= (
+                        lpSum([omega[a][lexicographic_order[h]][j] for j in M])
+                        - (1 - s_star[index])
+                    )
 
         # Solve problem
         status = self.prob.solve(self.solver)
@@ -237,7 +206,12 @@ class MIP(Learner[SRMPModel | None]):
         profiles = NormalPerformanceTable(
             [[value(p[h][j]) for j in M] for h in profile_indices]
         )
-        return SRMPModel(profiles, weights, [p - 1 for p in lexicographic_order[1:]])
+
+        return SRMPModel(
+            profiles=profiles,
+            weights=weights,
+            lexicographic_order=[p - 1 for p in lexicographic_order[1:]],
+        )
 
     def learn(self):
         return self._learn(

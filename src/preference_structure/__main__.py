@@ -1,7 +1,7 @@
 from numpy.random import default_rng
 from pandas import read_csv
 
-from ..model import import_model
+from ..model import Model
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from .argument_parser import parse_args
 from .generate import all_comparisons, noisy_comparisons, random_comparisons
@@ -12,8 +12,7 @@ args = parse_args()
 
 
 # Import data
-s = args.model.read()
-model = import_model(s)
+model = Model.from_json(args.model.read())
 
 A = NormalPerformanceTable(read_csv(args.A, header=None))
 

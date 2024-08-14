@@ -1,9 +1,20 @@
 import argparse
 
+from ..models import ModelEnum
+from ..srmp.model import SRMPParamEnum
+
 parser = argparse.ArgumentParser()
+parser.add_argument("model", choices=ModelEnum, help="Model")
 parser.add_argument("k", type=int, help="Number of profiles")
 parser.add_argument("A", type=argparse.FileType("r"), help="Alternatives")
 parser.add_argument("D", nargs="+", type=argparse.FileType("r"), help="Comparisons")
+parser.add_argument(
+    "--shared",
+    nargs="*",
+    default=[],
+    choices=SRMPParamEnum,
+    help="Parameters shared between decision makers",
+)
 parser.add_argument(
     "-g",
     "--gamma",
@@ -15,7 +26,7 @@ parser.add_argument(
     "-n",
     "--no-inconsistencies",
     action="store_true",
-    help="inconsistent comparisons will not be taken into account",
+    help="Inconsistent comparisons will not be taken into account",
 )
 parser.add_argument("-o", "--output", type=argparse.FileType("w"), help="Output file")
 parser.add_argument("-r", "--result", type=argparse.FileType("a"), help="Result file")

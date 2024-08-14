@@ -17,7 +17,9 @@ parser.add_argument(
     action="store_true",
     help="inconsistent comparisons will not be taken into account",
 )
-parser.add_argument("-o", "--output", type=argparse.FileType("w"), help="Output file")
+parser.add_argument(
+    "-o", "--output", nargs="*", type=argparse.FileType("w"), help="Output files"
+)
 parser.add_argument("-r", "--result", type=argparse.FileType("a"), help="Result file")
 parser.add_argument("-s", "--seed", default=0, type=int, help="Random seed")
 parser.add_argument("-v", "--verbose", action="store_true", help="Verbose")
