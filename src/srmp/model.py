@@ -18,9 +18,9 @@ from .normal_srmp import NormalSRMP
 
 
 class SRMPParamEnum(Enum):
-    PROFILES = RMPParamEnum.PROFILES
+    PROFILES = RMPParamEnum.PROFILES.value
     WEIGHTS = "weights"
-    LEXICOGRAPHIC_ORDER = RMPParamEnum.LEXICOGRAPHIC_ORDER
+    LEXICOGRAPHIC_ORDER = RMPParamEnum.LEXICOGRAPHIC_ORDER.value
 
 
 @dataclass
@@ -175,28 +175,3 @@ class SRMPGroupModel(
             weights=self.weights[i],
             lexicographic_order=self.lexicographic_order[i],
         )
-
-
-def SRMP_model(shared_params: set[SRMPParamEnum]):
-    if SRMPParamEnum.PROFILES in shared_params:
-        if SRMPParamEnum.WEIGHTS in shared_params:
-            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
-                return SRMPGroupModelWeightsProfilesLexicographic
-            else:
-                return SRMPGroupModelWeightsProfiles
-        else:
-            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
-                return SRMPGroupModelProfilesLexicographic
-            else:
-                return SRMPGroupModelProfiles
-    else:
-        if SRMPParamEnum.WEIGHTS in shared_params:
-            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
-                return SRMPGroupModelWeightsLexicographic
-            else:
-                return SRMPGroupModelWeights
-        else:
-            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
-                return SRMPGroupModelLexicographic
-            else:
-                return SRMPGroupModel

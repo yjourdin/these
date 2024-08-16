@@ -4,7 +4,7 @@ from enum import Enum
 from mcda.internal.core.scales import NormalScale
 
 from ..dataclass import GeneratedDataclass
-from ..model import Model
+from ..model import GroupModel, Model
 from ..utils import print_list
 from .field import (
     CapacityField,
@@ -75,7 +75,7 @@ class RMPModelCapacity(
 
 @dataclass
 class RMPGroupModelImportanceProfilesLexicographic(
-    Model[NormalScale],
+    GroupModel[NormalScale],
     GeneratedDataclass,
     ProfilesField,
     ImportanceRelationField,
@@ -92,7 +92,7 @@ class RMPGroupModelImportanceProfilesLexicographic(
 
 @dataclass
 class RMPGroupModelImportanceProfiles(
-    Model[NormalScale],
+    GroupModel[NormalScale],
     GeneratedDataclass,
     ProfilesField,
     ImportanceRelationField,
@@ -109,7 +109,7 @@ class RMPGroupModelImportanceProfiles(
 
 @dataclass
 class RMPGroupModelImportanceLexicographic(
-    Model[NormalScale],
+    GroupModel[NormalScale],
     GeneratedDataclass,
     GroupProfilesField,
     ImportanceRelationField,
@@ -126,7 +126,7 @@ class RMPGroupModelImportanceLexicographic(
 
 @dataclass
 class RMPGroupModelProfilesLexicographic(
-    Model[NormalScale],
+    GroupModel[NormalScale],
     GeneratedDataclass,
     ProfilesField,
     GroupImportanceRelationField,
@@ -143,7 +143,7 @@ class RMPGroupModelProfilesLexicographic(
 
 @dataclass
 class RMPGroupModelImportance(
-    Model[NormalScale],
+    GroupModel[NormalScale],
     GeneratedDataclass,
     GroupProfilesField,
     ImportanceRelationField,
@@ -160,7 +160,7 @@ class RMPGroupModelImportance(
 
 @dataclass
 class RMPGroupModelProfiles(
-    Model[NormalScale],
+    GroupModel[NormalScale],
     GeneratedDataclass,
     ProfilesField,
     GroupImportanceRelationField,
@@ -177,7 +177,7 @@ class RMPGroupModelProfiles(
 
 @dataclass
 class RMPGroupModelLexicographic(
-    Model[NormalScale],
+    GroupModel[NormalScale],
     GeneratedDataclass,
     GroupProfilesField,
     GroupImportanceRelationField,
@@ -194,7 +194,7 @@ class RMPGroupModelLexicographic(
 
 @dataclass
 class RMPGroupModel(
-    Model[NormalScale],
+    GroupModel[NormalScale],
     GeneratedDataclass,
     GroupProfilesField,
     GroupImportanceRelationField,

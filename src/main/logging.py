@@ -1,6 +1,6 @@
 import logging
-
-from .directory import Directory
+import logging.handlers
+from pathlib import Path
 
 
 def logger_thread(q):
@@ -9,7 +9,7 @@ def logger_thread(q):
         logger.handle(record)
 
 
-def create_logging_config_dict(dir: Directory):
+def create_logging_config_dict(logfile: Path):
     return {
         "version": 1,
         "formatters": {
@@ -25,7 +25,7 @@ def create_logging_config_dict(dir: Directory):
             },
             "file": {
                 "class": "logging.FileHandler",
-                "filename": dir.log,
+                "filename": logfile,
                 "mode": "w",
                 "formatter": "detailed",
             },

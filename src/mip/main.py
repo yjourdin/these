@@ -1,11 +1,11 @@
-from itertools import chain, permutations, product
+from itertools import permutations, product
 from typing import NamedTuple, cast
 
 from mcda.relations import I, P, PreferenceStructure
 from pulp import value
 
 from ..model import Model
-from ..models import ModelEnum
+from ..models import GroupModelEnum, ModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..srmp.model import SRMPParamEnum
 from .formulation.srmp import MIPSRMP
@@ -21,11 +21,10 @@ class MIPResult(NamedTuple):
 
 
 def learn_mip(
-    model_type: ModelEnum,
+    model_type: GroupModelEnum,
     k: int,
     alternatives: NormalPerformanceTable,
     comparisons: list[PreferenceStructure],
-    shared_params: set[SRMPParamEnum] = set(),
     *args,
     **kwargs,
 ):
@@ -33,7 +32,7 @@ def learn_mip(
     DMS = range(NB_DM)
 
     alternatives = alternatives.subtable(
-        list(set(chain(comparisons[dm].elements for dm in DMS)))
+        list(set.union(*map(set, (comparisons[dm].elements for dm in DMS))))
     )
 
     best_model = None
@@ -54,19 +53,24 @@ def learn_mip(
         preference_relations_list.append(preference_relations_dm)
         indifference_relations_list.append(indifference_relations_dm)
 
-    if model_type == ModelEnum.SRMP:
+    lex_order_shared = (SRMPParamEnum.LEXICOGRAPHIC_ORDER in model_type.value[1]) or (
+        NB_DM == 1
+    )
+
+    if model_type.value[0] == ModelEnum.SRMP:
+        shared_params = cast(set[SRMPParamEnum], model_type.value[1])
+
         if NB_DM == 1:
             preference_relations = preference_relations_list[0]
             indifference_relations = indifference_relations_list[0]
-            shared_params = set(SRMPParamEnum)
 
         for lexicographic_order in (
             permutations(range(k))
-            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params
+            if lex_order_shared
             else product(permutations(range(k)), repeat=NB_DM)
         ):
             mip: MIP
-            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+            if lex_order_shared:
                 lexicographic_order = cast(tuple[int, ...], lexicographic_order)
                 if NB_DM == 1:
                     mip = MIPSRMP(
@@ -83,6 +87,7 @@ def learn_mip(
                         preference_relations_list,
                         indifference_relations_list,
                         lexicographic_order,
+                        shared_params,
                         *args,
                         **kwargs,
                     )
@@ -93,6 +98,7 @@ def learn_mip(
                     preference_relations_list,
                     indifference_relations_list,
                     lexicographic_order,
+                    shared_params,
                     *args,
                     **kwargs,
                 )

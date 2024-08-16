@@ -22,10 +22,8 @@ def task_precedence(args: Arguments):
             to_do.append(ATestTask(args.seeds, m, n_te, Ate_id))
 
         for Mo, ko, group_size in product(args.Mo, args.Ko, args.group_size):
-            for group_id, dm_id in product(
-                range(len(args.seeds.Mo[group_size])), range(group_size)
-            ):
-                to_do.append(MoTask(args.seeds, m, Mo, ko, group_size, group_id, dm_id))
+            for Mo_id in range(len(args.seeds.Mo[group_size])):
+                to_do.append(MoTask(args.seeds, m, Mo, ko, group_size, Mo_id))
 
         for n_tr, Atr_id in product(args.N_tr, range(args.nb_A_tr)):
             t_A_train = ATrainTask(args.seeds, m, n_tr, Atr_id)
@@ -35,38 +33,38 @@ def task_precedence(args: Arguments):
                 args.Ko,
                 args.group_size,
             ):
-                for group_id, dm_id in product(
-                    range(len(args.seeds.Mo[group_size])), range(group_size)
-                ):
-                    t_Mo = MoTask(args.seeds, m, Mo, ko, group_size, group_id, dm_id)
+                for Mo_id in range(len(args.seeds.Mo[group_size])):
+                    t_Mo = MoTask(args.seeds, m, Mo, ko, group_size, Mo_id)
 
                     for n_bc, e, D_id in product(
                         args.N_bc,
                         args.error,
-                        range(args.nb_D) if args.nb_D else [group_id],
+                        range(args.nb_D) if args.nb_D else [Mo_id],
                     ):
-                        t_D = DTask(
-                            args.seeds,
-                            m,
-                            n_tr,
-                            Atr_id,
-                            Mo,
-                            ko,
-                            group_size,
-                            group_id,
-                            dm_id,
-                            n_bc,
-                            e,
-                            D_id,
-                        )
+                        t_Ds = []
+                        for dm_id in range(group_size):
+                            t_D = DTask(
+                                args.seeds,
+                                m,
+                                n_tr,
+                                Atr_id,
+                                Mo,
+                                ko,
+                                group_size,
+                                Mo_id,
+                                n_bc,
+                                e,
+                                dm_id,
+                                D_id,
+                            )
 
-                        succeed[t_A_train] += [t_D]
-                        succeed[t_Mo] += [t_D]
-                        precede[t_D] += [t_A_train, t_Mo]
+                            succeed[t_A_train] += [t_D]
+                            succeed[t_Mo] += [t_D]
+                            precede[t_D] += [t_A_train, t_Mo]
+                            t_Ds.append(t_D)
 
-                        for Me, shared_params, ke, method, Me_id in product(
+                        for Me, ke, method, Me_id in product(
                             args.Me,
-                            args.Me_shared_params,
                             args.Ke,
                             args.method,
                             range(args.nb_Me) if args.nb_Me else [D_id],
@@ -87,17 +85,18 @@ def task_precedence(args: Arguments):
                                             Mo,
                                             ko,
                                             group_size,
-                                            group_id,
+                                            Mo_id,
                                             n_bc,
                                             e,
                                             D_id,
                                             Me,
-                                            shared_params,
                                             ke,
                                             cast(SAConfig, config),
                                             Me_id,
                                         )
-                                    case MethodEnum.MIP if Me == ModelEnum.SRMP:
+                                    case MethodEnum.MIP if Me.value[
+                                        0
+                                    ] == ModelEnum.SRMP:
                                         t_Me = MIPTask(
                                             args.seeds,
                                             m,
@@ -106,12 +105,11 @@ def task_precedence(args: Arguments):
                                             Mo,
                                             ko,
                                             group_size,
-                                            group_id,
+                                            Mo_id,
                                             n_bc,
                                             e,
                                             D_id,
                                             Me,
-                                            shared_params,
                                             ke,
                                             cast(MIPConfig, config),
                                             Me_id,
@@ -119,8 +117,9 @@ def task_precedence(args: Arguments):
                                     case _:
                                         break
 
-                                succeed[t_D] += [t_Me]
-                                precede[t_Me] += [t_D]
+                                for t_D in t_Ds:
+                                    succeed[t_D] += [t_Me]
+                                    precede[t_Me] += [t_D]
 
                                 for n_te, Ate_id in product(
                                     args.N_te,
@@ -135,12 +134,11 @@ def task_precedence(args: Arguments):
                                         Mo,
                                         ko,
                                         group_size,
-                                        group_id,
+                                        Mo_id,
                                         n_bc,
                                         e,
                                         D_id,
                                         Me,
-                                        shared_params,
                                         ke,
                                         method,
                                         config.id,

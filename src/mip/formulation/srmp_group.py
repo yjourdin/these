@@ -3,9 +3,9 @@ from collections.abc import Sequence
 from mcda.relations import PreferenceStructure
 from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
 
+from ...models import ModelEnum, group_model  # type: ignore
 from ...performance_table.normal_performance_table import NormalPerformanceTable
-from ...srmp.model import (
-    SRMP_model,
+from ...srmp.model import (  # type: ignore
     SRMPGroupModel,
     SRMPGroupModelProfiles,
     SRMPGroupModelWeights,
@@ -146,7 +146,7 @@ class MIPSRMPGroup(
         s = {}
         for dm in DM:
             s[dm] = LpVariable.dicts(
-                "PreferenceRankingVariable",
+                f"PreferenceRankingVariable_{dm}",
                 (
                     preference_relations_indices[dm],
                     [0] + profile_indices,
@@ -159,7 +159,7 @@ class MIPSRMPGroup(
             s_star = {}
             for dm in DM:
                 s_star[dm] = LpVariable.dicts(
-                    "IndifferenceRankingVariable",
+                    f"IndifferenceRankingVariable_{dm}",
                     indifference_relations_indices[dm],
                     cat=LpBinary,
                 )
@@ -173,7 +173,7 @@ class MIPSRMPGroup(
         if self.inconsistencies:
             self.prob += lpSum(
                 [
-                    [s[dm][index][0] for index in preference_relations_indices]
+                    [s[dm][index][0] for index in preference_relations_indices[dm]]
                     for dm in DM
                 ]
             ) + lpSum(
@@ -229,7 +229,9 @@ class MIPSRMPGroup(
                         )
                         self.prob += (
                             omega[dm][a][h][j]
-                            >= delta[dm_profiles(dm)][a][h][j] + w[j] - 1
+                            >= delta[dm_profiles(dm)][a][h][j]
+                            + w[dm_weights(dm)][j]
+                            - 1
                         )
 
         # Constraints on the preference ranking variables
@@ -389,7 +391,7 @@ class MIPSRMPGroup(
             ]
         )
 
-        return SRMP_model(shared_params)(
+        return group_model(ModelEnum.SRMP, shared_params)(
             size=len(DM),
             profiles=profiles,  # type: ignore
             weights=weights,  # type: ignore
@@ -404,4 +406,5 @@ class MIPSRMPGroup(
             self.preference_relations,
             self.indifference_relations,
             self.lexicographic_order,
+            self.shared_params
         )

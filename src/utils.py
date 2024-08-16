@@ -1,9 +1,10 @@
+from enum import Enum
 from functools import partial, reduce
 from typing import Any, Callable, TypeVar
 
+import numpy as np
 from mcda.internal.core.scales import OrdinalScale
 from mcda.matrices import PerformanceTable
-import numpy as np
 
 S = TypeVar("S", bound=OrdinalScale, covariant=True)
 
@@ -37,7 +38,9 @@ def print_list(lst: list):
 def to_str(o):
     match o:
         case list():
-            return "".join([to_str(i) for i in o])
+            return "[" + ", ".join([to_str(i) for i in o]) + "]"
+        case Enum():
+            return to_str(o.name)
         case _:
             return str(o).title().replace("_", "")
 

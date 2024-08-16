@@ -1,6 +1,4 @@
 import numpy as np
-from mcda.internal.core.scales import NormalScale
-from mcda.matrices import PerformanceTable
 from numpy.random import Generator
 from pandas import DataFrame
 
@@ -11,7 +9,7 @@ def random_profiles(
     nb: int,
     nb_crit: int,
     rng: Generator,
-    profiles_values: PerformanceTable[NormalScale] | None = None,
+    profiles_values: NormalPerformanceTable | None = None,
 ):
     if profiles_values:
         idx = np.sort(rng.choice(len(profiles_values.data), (nb, nb_crit)))
@@ -30,7 +28,7 @@ def random_profiles(
 def balanced_profiles(
     nb_profiles: int,
     nb_crit: int,
-    profiles_values: PerformanceTable[NormalScale] | None = None,
+    profiles_values: NormalPerformanceTable | None = None,
 ):
     if profiles_values:
         return NormalPerformanceTable(

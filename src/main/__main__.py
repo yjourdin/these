@@ -4,8 +4,8 @@ from multiprocessing import JoinableQueue, Process, Queue
 from threading import Thread
 
 from .argument_parser import parse_args
-from .logging import create_logging_config_dict, logger_thread
 from .directory import FIELDNAMES, Directory
+from .logging import create_logging_config_dict, logger_thread
 from .precedence import task_precedence
 from .worker import csv_file_thread, task_manager, worker
 
@@ -115,7 +115,7 @@ for i in range(args.jobs):
 
 
 # Start logging thread
-logging.config.dictConfig(create_logging_config_dict(dir))
+logging.config.dictConfig(create_logging_config_dict(dir.log))
 logging_thread = Thread(target=logger_thread, args=(logging_queue,))
 logging_thread.start()
 

@@ -36,8 +36,7 @@ class Directory:
         model: GroupModelEnum,
         k: int,
         group_size: int,
-        group_id: int,
-        dm_id: int,
+        id: int,
     ):
         return self.Mo_dir / filename_json(locals())
 
@@ -49,10 +48,10 @@ class Directory:
         Mo: GroupModelEnum,
         ko: int,
         group_size: int,
-        group_id: int,
-        dm_id: int,
+        Mo_id: int,
         n: int,
         e: float,
+        dm_id: int,
         id: int,
     ):
         return self.D_dir / filename_csv(locals())
@@ -65,7 +64,7 @@ class Directory:
         Mo: GroupModelEnum,
         ko: int,
         group_size: int,
-        group_id: int,
+        Mo_id: int,
         n: int,
         e: float,
         D_id: int,

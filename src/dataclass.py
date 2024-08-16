@@ -1,8 +1,5 @@
 from dataclasses import asdict, dataclass, fields
 from json import dumps, loads
-from typing import cast
-
-from typing_extensions import Self
 
 from .field import Field, GeneratedField
 from .utils import compose
@@ -12,11 +9,10 @@ from .utils import compose
 class Dataclass(Field):
     @classmethod
     def from_dict(cls, dct: dict):
-        c = cast(type[Self], eval(dct.pop("dataclass", cls.__name__)))
-        return c(**dct)
+        return cls(**dct)
 
     def to_dict(self):
-        return asdict(self) | {"dataclass": self.__class__.__name__}
+        return asdict(self)
 
     @classmethod
     def from_json(cls, s):
@@ -37,7 +33,7 @@ class FrozenDataclass(Field):
         return cls(**dct)
 
     def to_dict(self):
-        return asdict(self) | {"dataclass": self.__class__.__name__}
+        return asdict(self)
 
     @classmethod
     def from_json(cls, s):
@@ -60,10 +56,12 @@ class FrozenDataclass(Field):
 class GeneratedDataclass(Dataclass, GeneratedField):
     @classmethod
     def random(cls, *args, **kwargs):
-        super().random(*args, **kwargs)
+        init_dict = kwargs
+        super().random(init_dict=init_dict, *args, **kwargs)
         return cls(**{k.name: kwargs[k.name] for k in fields(cls)})
 
     @classmethod
     def balanced(cls, *args, **kwargs):
-        super().random(*args, **kwargs)
+        init_dict = kwargs
+        super().random(init_dict=init_dict, *args, **kwargs)
         return cls(**{k.name: kwargs[k.name] for k in fields(cls)})
