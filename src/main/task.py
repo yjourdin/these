@@ -73,7 +73,7 @@ class Task(FrozenDataclass):
         pass
 
     def seed(self) -> int:
-        return abs(hash({k: v for k, v in self.to_dict().items() if not k.endswith("id")}))
+        return abs(hash((v for k, v in self.to_dict().items() if not k.endswith("id"))))
 
     def rng(
         self,
