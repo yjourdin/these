@@ -91,7 +91,7 @@ class Task(FrozenDataclass):
 @dataclass(frozen=True)
 class AbstractMTask(Task):
     m: int
-    
+
     def __post_init__(self, seeds: Seeds):
         return ...
 
