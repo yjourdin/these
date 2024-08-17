@@ -37,6 +37,7 @@ WIDTH = {
     "Atr_id": 2,
     "Mo": 4,
     "ko": 2,
+    "group_size": 3,
     "Mo_id": 2,
     "n": 4,
     "error": 4,
@@ -56,6 +57,9 @@ WIDTH = {
 class Task(FrozenDataclass):
     name: ClassVar[str]
     seeds: InitVar[Seeds]
+
+    @abstractmethod
+    def __post_init__(self, seeds: Seeds): ...
 
     def __str__(self) -> str:
         attributes = (
@@ -85,21 +89,29 @@ class Task(FrozenDataclass):
 
 
 @dataclass(frozen=True)
-class ATrainTask(Task):
-    name = "A_train"
+class AbstractMTask(Task):
     m: int
-    n: int
+    
+    def __post_init__(self, seeds: Seeds):
+        return ...
+
+
+@dataclass(frozen=True)
+class ATrainTask(AbstractMTask):
+    name = "A_train"
+    n_tr: int
     Atr_id: int
     Atr_seed: int = field(init=False)
 
     def __post_init__(self, seeds: Seeds):
+        super().__post_init__(seeds)
         object.__setattr__(self, "Atr_seed", seeds.A_tr[self.Atr_id])
 
     def __call__(self, dir, queues):
         self.print_seed(queues["seeds"])
         create_A_train(
             self.m,
-            self.n,
+            self.n_tr,
             self.Atr_id,
             dir,
             self.rng(),
@@ -107,21 +119,21 @@ class ATrainTask(Task):
 
 
 @dataclass(frozen=True)
-class ATestTask(Task):
+class ATestTask(AbstractMTask):
     name = "A_test"
-    m: int
-    n: int
+    n_te: int
     Ate_id: int
     Ate_seed: int = field(init=False)
 
     def __post_init__(self, seeds: Seeds):
+        super().__post_init__(seeds)
         object.__setattr__(self, "Ate_seed", seeds.A_te[self.Ate_id])
 
     def __call__(self, dir, queues):
         self.print_seed(queues["seeds"])
         create_A_test(
             self.m,
-            self.n,
+            self.n_te,
             self.Ate_id,
             dir,
             self.rng(),
@@ -129,9 +141,8 @@ class ATestTask(Task):
 
 
 @dataclass(frozen=True)
-class MoTask(Task):
+class MoTask(AbstractMTask):
     name = "Mo"
-    m: int
     Mo: GroupModelEnum
     ko: int
     group_size: int
@@ -139,6 +150,7 @@ class MoTask(Task):
     Mo_seed: int = field(init=False)
 
     def __post_init__(self, seeds: Seeds):
+        super().__post_init__(seeds)
         object.__setattr__(self, "Mo_seed", seeds.Mo[self.group_size][self.Mo_id])
 
     def __call__(self, dir, queues):
@@ -155,33 +167,27 @@ class MoTask(Task):
 
 
 @dataclass(frozen=True)
-class DTask(Task):
-    name = "D"
-    m: int
-    ntr: int
-    Atr_id: int
-    Atr_seed: int = field(init=False)
-    Mo: GroupModelEnum
-    ko: int
-    group_size: int
-    Mo_id: int
-    Mo_seed: int = field(init=False)
+class AbstractDTask(MoTask, ATrainTask):
     n: int
     error: float
-    dm_id: int
     D_id: int
     D_seed: int = field(init=False)
 
     def __post_init__(self, seeds: Seeds):
-        object.__setattr__(self, "Atr_seed", seeds.A_tr[self.Atr_id])
-        object.__setattr__(self, "Mo_seed", seeds.Mo[self.group_size][self.Mo_id])
+        super().__post_init__(seeds)
         object.__setattr__(self, "D_seed", seeds.D[self.D_id])
+
+
+@dataclass(frozen=True)
+class DTask(AbstractDTask):
+    name = "D"
+    dm_id: int
 
     def __call__(self, dir, queues):
         self.print_seed(queues["seeds"])
         create_D(
             self.m,
-            self.ntr,
+            self.n_tr,
             self.Atr_id,
             self.Mo,
             self.ko,
@@ -197,38 +203,27 @@ class DTask(Task):
 
 
 @dataclass(frozen=True)
-class MIPTask(Task):
-    name = "MIP"
-    m: int
-    ntr: int
-    Atr_id: int
-    Atr_seed: int = field(init=False)
-    Mo: GroupModelEnum
-    ko: int
-    group_size: int
-    Mo_id: int
-    Mo_seed: int = field(init=False)
-    n: int
-    error: float
-    D_id: int
-    D_seed: int = field(init=False)
+class AbstractElicitationTask(AbstractDTask):
     Me: GroupModelEnum
     ke: int
-    config: MIPConfig
     Me_id: int
     Me_seed: int = field(init=False)
 
     def __post_init__(self, seeds: Seeds):
-        object.__setattr__(self, "Atr_seed", seeds.A_tr[self.Atr_id])
-        object.__setattr__(self, "Mo_seed", seeds.Mo[self.group_size][self.Mo_id])
-        object.__setattr__(self, "D_seed", seeds.D[self.D_id])
+        super().__post_init__(seeds)
         object.__setattr__(self, "Me_seed", seeds.Me[self.Me_id])
+
+
+@dataclass(frozen=True)
+class MIPTask(AbstractElicitationTask):
+    name = "MIP"
+    config: MIPConfig
 
     def __call__(self, dir, queues):
         self.print_seed(queues["seeds"])
         time, best_fitness = run_MIP(
             self.m,
-            self.ntr,
+            self.n_tr,
             self.Atr_id,
             self.Mo,
             self.ko,
@@ -247,7 +242,7 @@ class MIPTask(Task):
         queues["train"].put(
             {
                 "M": self.m,
-                "N_tr": self.ntr,
+                "N_tr": self.n_tr,
                 "Atr_id": self.Atr_id,
                 "Mo": self.Mo,
                 "Ko": self.ko,
@@ -266,38 +261,15 @@ class MIPTask(Task):
 
 
 @dataclass(frozen=True)
-class SATask(Task):
+class SATask(AbstractElicitationTask):
     name = "SA"
-    m: int
-    ntr: int
-    Atr_id: int
-    Atr_seed: int = field(init=False)
-    Mo: GroupModelEnum
-    ko: int
-    group_size: int
-    Mo_id: int
-    Mo_seed: int = field(init=False)
-    n: int
-    error: float
-    D_id: int
-    D_seed: int = field(init=False)
-    Me: GroupModelEnum
-    ke: int
     config: SAConfig
-    Me_id: int
-    Me_seed: int = field(init=False)
-
-    def __post_init__(self, seeds: Seeds):
-        object.__setattr__(self, "Atr_seed", seeds.A_tr[self.Atr_id])
-        object.__setattr__(self, "Mo_seed", seeds.Mo[self.group_size][self.Mo_id])
-        object.__setattr__(self, "D_seed", seeds.D[self.D_id])
-        object.__setattr__(self, "Me_seed", seeds.Me[self.Me_id])
 
     def __call__(self, dir, queues):
         self.print_seed(queues["seeds"])
         time, it, best_fitness = run_SA(
             self.m,
-            self.ntr,
+            self.n_tr,
             self.Atr_id,
             self.Mo,
             self.ko,
@@ -316,7 +288,7 @@ class SATask(Task):
         queues["train"].put(
             {
                 "M": self.m,
-                "N_tr": self.ntr,
+                "N_tr": self.n_tr,
                 "Atr_id": self.Atr_id,
                 "Mo": self.Mo,
                 "Ko": self.ko,
@@ -336,42 +308,18 @@ class SATask(Task):
 
 
 @dataclass(frozen=True)
-class TestTask(Task):
+class TestTask(ATestTask, AbstractElicitationTask):
     name = "Test"
-    m: int
-    ntr: int
-    Atr_id: int
-    Atr_seed: int = field(init=False)
-    Mo: GroupModelEnum
-    ko: int
-    group_size: int
-    Mo_id: int
-    Mo_seed: int = field(init=False)
-    n: int
-    error: float
-    D_id: int
-    D_seed: int = field(init=False)
-    Me: GroupModelEnum
-    ke: int
-    method: MethodEnum
     config: int
-    Me_id: int
-    Me_seed: int = field(init=False)
-    nte: int
-    Ate_id: int
-    Ate_seed: int = field(init=False)
+    method: MethodEnum
 
     def __post_init__(self, seeds: Seeds):
-        object.__setattr__(self, "Atr_seed", seeds.A_tr[self.Atr_id])
-        object.__setattr__(self, "Mo_seed", seeds.Mo[self.group_size][self.Mo_id])
-        object.__setattr__(self, "D_seed", seeds.D[self.D_id])
-        object.__setattr__(self, "Me_seed", seeds.Me[self.Me_id])
-        object.__setattr__(self, "Ate_seed", seeds.A_te[self.Ate_id])
+        super().__post_init__(seeds)
 
     def __call__(self, dir, queues):
         test_fitness, kendall_tau = run_test(
             self.m,
-            self.ntr,
+            self.n_tr,
             self.Atr_id,
             self.Mo,
             self.ko,
@@ -385,14 +333,14 @@ class TestTask(Task):
             self.method,
             self.config,
             self.Me_id,
-            self.nte,
+            self.n_te,
             self.Ate_id,
             dir,
         )
         queues["test"].put(
             {
                 "M": self.m,
-                "N_tr": self.ntr,
+                "N_tr": self.n_tr,
                 "Atr_id": self.Atr_id,
                 "Mo": self.Mo,
                 "Ko": self.ko,
@@ -404,7 +352,7 @@ class TestTask(Task):
                 "Ke": self.ke,
                 "Method": self.method,
                 "Config": self.config,
-                "N_te": self.nte,
+                "N_te": self.n_te,
                 "Ate_id": self.Ate_id,
                 "Fitness": test_fitness,
                 "Kendall's tau": kendall_tau,

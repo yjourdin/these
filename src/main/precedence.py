@@ -18,7 +18,9 @@ def task_precedence(args: Arguments):
         for n_tr, Atr_id in product(args.N_tr, range(len(args.seeds.A_tr))):
             to_do.append(ATrainTask(args.seeds, m, n_tr, Atr_id))
 
-        for n_te, Ate_id in product(args.N_te, range(len(args.seeds.A_te))):
+        for n_te, Ate_id in product(
+            args.N_te if args.N_te else args.N_tr, range(len(args.seeds.A_te))
+        ):
             to_do.append(ATestTask(args.seeds, m, n_te, Ate_id))
 
         for Mo, ko, group_size in product(args.Mo, args.Ko, args.group_size):
@@ -26,7 +28,7 @@ def task_precedence(args: Arguments):
                 to_do.append(MoTask(args.seeds, m, Mo, ko, group_size, Mo_id))
 
         for n_tr, Atr_id in product(args.N_tr, range(args.nb_A_tr)):
-            t_A_train = ATrainTask(args.seeds, m, n_tr, Atr_id)
+            t_Atr = ATrainTask(args.seeds, m, n_tr, Atr_id)
 
             for Mo, ko, group_size, Mo_id in product(
                 args.Mo,
@@ -54,18 +56,18 @@ def task_precedence(args: Arguments):
                             Mo_id,
                             n_bc,
                             e,
-                            dm_id,
                             D_id,
+                            dm_id,
                         )
 
-                        succeed[t_A_train] += [t_D]
+                        succeed[t_Atr] += [t_D]
                         succeed[t_Mo] += [t_D]
-                        precede[t_D] += [t_A_train, t_Mo]
+                        precede[t_D] += [t_Atr, t_Mo]
                         t_Ds.append(t_D)
 
                     for Me, ke, method, Me_id in product(
-                        args.Me,
-                        args.Ke,
+                        args.Me if args.Me else [Mo],
+                        args.Ke if args.Ke else [ko],
                         args.method,
                         range(args.nb_Me) if args.nb_Me else [D_id],
                     ):
@@ -89,8 +91,8 @@ def task_precedence(args: Arguments):
                                         D_id,
                                         Me,
                                         ke,
-                                        cast(SAConfig, config),
                                         Me_id,
+                                        cast(SAConfig, config),
                                     )
                                 case MethodEnum.MIP if Me.value[0] == ModelEnum.SRMP:
                                     t_Me = MIPTask(
@@ -107,8 +109,8 @@ def task_precedence(args: Arguments):
                                         D_id,
                                         Me,
                                         ke,
-                                        cast(MIPConfig, config),
                                         Me_id,
+                                        cast(MIPConfig, config),
                                     )
                                 case _:
                                     break
@@ -118,10 +120,10 @@ def task_precedence(args: Arguments):
                                 precede[t_Me] += [t_D]
 
                             for n_te, Ate_id in product(
-                                args.N_te,
+                                args.N_te if args.N_te else [n_tr],
                                 range(args.nb_A_te) if args.nb_A_te else [Me_id],
                             ):
-                                t_A_test = ATestTask(args.seeds, m, n_te, Ate_id)
+                                t_Ate = ATestTask(args.seeds, m, n_te, Ate_id)
                                 t_test = TestTask(
                                     args.seeds,
                                     m,
@@ -136,15 +138,15 @@ def task_precedence(args: Arguments):
                                     D_id,
                                     Me,
                                     ke,
-                                    method,
-                                    config.id,
                                     Me_id,
                                     n_te,
                                     Ate_id,
+                                    config.id,
+                                    method,
                                 )
 
                                 succeed[t_Me] += [t_test]
-                                succeed[t_A_test] += [t_test]
-                                precede[t_test] += [t_A_test, t_Me]
+                                succeed[t_Ate] += [t_test]
+                                precede[t_test] += [t_Ate, t_Me]
 
     return to_do, succeed, precede

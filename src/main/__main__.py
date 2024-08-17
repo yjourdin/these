@@ -1,13 +1,13 @@
 import csv
 import logging.config
-from multiprocessing import JoinableQueue, Process, Queue
+from multiprocessing import Event, JoinableQueue, Process, Queue
 from threading import Thread
 
 from .argument_parser import parse_args
 from .directory import FIELDNAMES, Directory
 from .logging import create_logging_config_dict, logger_thread
 from .precedence import task_precedence
-from .worker import csv_file_thread, task_manager, worker
+from .worker import csv_file_thread, event_thread, task_manager, worker
 
 # Parse arguments
 args = parse_args()
@@ -87,10 +87,10 @@ test_results_thread.start()
 
 
 # Start task manager
-task_manager_process = Process(
+task_manager_thread = Thread(
     target=task_manager, args=(succeed, precede, task_queue, done_queue)
 )
-task_manager_process.start()
+task_manager_thread.start()
 
 
 # Start workers
@@ -120,34 +120,75 @@ logging_thread = Thread(target=logger_thread, args=(logging_queue,))
 logging_thread.start()
 
 
+# Start stop thread
+stop_event = Event()
+stop_thread = Thread(
+    target=event_thread,
+    args=(
+        stop_event,
+        dir.run,
+        task_queue,
+    ),
+)
+stop_thread.start()
+
+
 # Wait all tasks to be done
 task_queue.join()
+
+
+# Stop stopping thread
+stop_event.set()
+stop_thread.join()
 
 
 # Stop workers
 for _ in range(args.jobs):
     task_queue.put("STOP")
-task_queue.join()
 for worker_process in workers:
+    if stop_event.is_set():
+        worker_process.terminate()
+        task_queue.task_done()
     worker_process.join()
+task_queue.join()
+task_queue.close()
+task_queue.cancel_join_thread()
 
 
 # Stop task manager
 done_queue.put("STOP")
+task_manager_thread.join()
+if stop_event.is_set():
+    while not done_queue.empty():
+        done_queue.get()
+        done_queue.task_done()
+    try:
+        while True:
+            done_queue.task_done()
+    except ValueError:
+        ...
 done_queue.join()
-task_manager_process.join()
+done_queue.close()
+done_queue.cancel_join_thread()
 
 
-# Stop file threads
+# Stop threads
 seeds_queue.put("STOP")
 train_results_queue.put("STOP")
 test_results_queue.put("STOP")
+logging_queue.put("STOP")
 
 seeds_thread.join()
 train_results_thread.join()
 test_results_thread.join()
-
-
-# Stop logging thread
-logging_queue.put("STOP")
 logging_thread.join()
+
+seeds_queue.close()
+train_results_queue.close()
+test_results_queue.close()
+logging_queue.close()
+
+seeds_queue.cancel_join_thread()
+train_results_queue.cancel_join_thread()
+test_results_queue.cancel_join_thread()
+logging_queue.cancel_join_thread()

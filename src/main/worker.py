@@ -3,6 +3,7 @@ import logging
 import logging.handlers
 from collections import defaultdict
 from multiprocessing import JoinableQueue, Queue
+from multiprocessing.synchronize import Event
 from pathlib import Path
 
 from .directory import Directory
@@ -64,3 +65,17 @@ def csv_file_thread(file: Path, q: Queue):
         for result in iter(q.get, "STOP"):
             writer.writerow(result)
             f.flush()
+
+
+def event_thread(event: Event, file: Path, task_queue: "JoinableQueue[Task]"):
+    while not event.is_set():
+        if not file.exists():
+            break
+    while not task_queue.empty():
+        task_queue.get()
+        task_queue.task_done()
+    try:
+        while True:
+            task_queue.task_done()
+    except ValueError:
+        event.set()

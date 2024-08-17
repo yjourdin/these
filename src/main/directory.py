@@ -23,6 +23,7 @@ class Directory:
         self.args = self.root_dir / "args.json"
         self.seeds = self.root_dir / "seeds.csv"
         self.configs = self.root_dir / "configs.csv"
+        self.run = self.root_dir / "run.txt"
 
     def A_train(self, m: int, n: int, id: int):
         return self.A_train_dir / filename_csv(locals())
@@ -99,3 +100,6 @@ class Directory:
         with self.test_results.open("w", newline="") as f:
             writer = csv.DictWriter(f, FIELDNAMES["test_results"], dialect="unix")
             writer.writeheader()
+
+        with self.run.open("w") as f:
+            f.write("")

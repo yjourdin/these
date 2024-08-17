@@ -24,12 +24,12 @@ class Arguments(Dataclass, GroupMethodField, GroupMoField, GroupMeField):
     nb_Me: int | None = None
     seeds: Seeds = field(default_factory=Seeds)
     N_tr: list[int] = field(default_factory=list)
-    N_te: list[int] = field(default_factory=list)
+    N_te: list[int] | None = None
     group_size: list[int] = field(default_factory=list)
     M: list[int] = field(default_factory=list)
     Ko: list[int] = field(default_factory=list)
     N_bc: list[int] = field(default_factory=list)
-    Ke: list[int] = field(default_factory=list)
+    Ke: list[int] | None = None
     error: list[float] = field(default_factory=list)
     config: list[Config] = field(default_factory=list)
 
