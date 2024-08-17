@@ -24,11 +24,11 @@ best_model, best_fitness, time = learn_mip(
     args.k,
     A,
     D,
-    set(),
-    args.gamma,
-    not args.no_inconsistencies,
-    args.seed,
-    args.verbose,
+    shared_params=set(),
+    gamma=args.gamma,
+    inconsistencies=not args.no_inconsistencies,
+    seed=args.seed,
+    verbose=args.verbose,
 )
 
 

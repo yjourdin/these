@@ -3,9 +3,9 @@ from collections.abc import Sequence
 from mcda.relations import PreferenceStructure
 from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
 
-from ...models import ModelEnum, group_model  # type: ignore
+from ...models import ModelEnum, group_model
 from ...performance_table.normal_performance_table import NormalPerformanceTable
-from ...srmp.model import (  # type: ignore
+from ...srmp.model import (
     SRMPGroupModelLexicographic,
     SRMPGroupModelProfilesLexicographic,
     SRMPGroupModelWeightsLexicographic,

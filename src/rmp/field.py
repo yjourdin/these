@@ -1,86 +1,57 @@
 from dataclasses import dataclass
-from typing import Any
 
 import numpy as np
 from numpy.random import Generator
 
-from ..field import GeneratedField, group_generated_field
+from ..field import GeneratedField, generated_field, group_generated_field
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from .capacity import Capacity, balanced_capacity, random_capacity
 from .importance_relation import ImportanceRelation
 from .profile import balanced_profiles, random_profiles
 
 
+@generated_field("profiles")
 @dataclass
 class ProfilesField(GeneratedField):
     profiles: NormalPerformanceTable
 
-    @classmethod
-    def json_to_dict(cls, dct: dict):
-        super().json_to_dict(dct)
-        if "profiles" in dct:
-            dct["profiles"] = NormalPerformanceTable(dct["profiles"])
-            return dct["profiles"]
+    @staticmethod
+    def field_to_dict(o):
+        return NormalPerformanceTable(o)
 
-    @classmethod
-    def dict_to_json(cls, dct):
-        super().dict_to_json(dct)
-        if "profiles" in dct:
-            dct["profiles"] = dct["profiles"].data.values.tolist()
-            return dct["profiles"]
+    @staticmethod
+    def field_to_json(o):
+        return o.data.values.tolist()
 
-    @classmethod
-    def random(
-        cls,
+    @staticmethod
+    def field_random(
         nb_profiles: int,
         nb_crit: int,
         rng: Generator,
         profiles_values: NormalPerformanceTable | None = None,
-        init_dict: dict[str, Any] = {},
         *args,
         **kwargs,
     ):
-        super().random(
-            nb_profiles=nb_profiles,
-            nb_crit=nb_crit,
-            rng=rng,
-            profiles_values=profiles_values,
-            init_dict=init_dict,
-            *args,
-            **kwargs,
-        )
-        init_dict["profiles"] = random_profiles(
+        return random_profiles(
             nb_profiles,
             nb_crit,
             rng,
             profiles_values,
         )
-        return init_dict["profiles"]
 
-    @classmethod
-    def balanced(
-        cls,
+    @staticmethod
+    def field_balanced(
         nb_profiles: int,
         nb_crit: int,
         profiles_values: NormalPerformanceTable | None = None,
-        init_dict: dict[str, Any] = {},
         *args,
         **kwargs,
     ):
-        super().balanced(
-            nb_profiles=nb_profiles,
-            nb_crit=nb_crit,
-            profiles_values=profiles_values,
-            init_dict=init_dict,
-            *args,
-            **kwargs,
-        )
-        init_dict["profiles"] = balanced_profiles(
+        return balanced_profiles(
             nb_profiles,
             nb_crit,
             profiles_values,
         )
-        return init_dict["profiles"]
 
 
 @group_generated_field(fieldname="profiles", fieldclass=ProfilesField)
@@ -89,54 +60,32 @@ class GroupProfilesField(GeneratedField):
     profiles: list[NormalPerformanceTable]
 
 
+@generated_field("importance_relation")
 @dataclass
 class ImportanceRelationField(GeneratedField):
     importance_relation: ImportanceRelation
 
-    @classmethod
-    def json_to_dict(cls, dct: dict):
-        super().json_to_dict(dct)
-        if "importance_relation" in dct:
-            dct["importance_relation"] = ImportanceRelation(
-                np.array(dct["importance_relation"]["data"]),
-                [frozenset(label) for label in dct["importance_relation"]["labels"]],
-            )
-            return dct["importance_relation"]
-
-    @classmethod
-    def dict_to_json(cls, dct):
-        super().dict_to_json(dct)
-        if "importance_relation" in dct:
-            dct["importance_relation"] = (
-                {
-                    "labels": dct["importance_relation"].labels,
-                    "data": dct["importance_relation"].data.tolist(),
-                },
-            )
-            return dct["importance_relation"]
-
-    @classmethod
-    def random(
-        cls,
-        nb_crit: int,
-        rng: Generator,
-        init_dict: dict[str, Any] = {},
-        *args,
-        **kwargs,
-    ):
-        super().random(nb_crit=nb_crit, rng=rng, init_dict=init_dict, *args, **kwargs)
-        init_dict["importance_relation"] = ImportanceRelation.from_capacity(
-            random_capacity(nb_crit, rng)
+    @staticmethod
+    def field_to_dict(o):
+        return ImportanceRelation(
+            np.array(o["data"]),
+            [frozenset(label) for label in o["labels"]],
         )
-        return init_dict["importance_relation"]
 
-    @classmethod
-    def balanced(cls, nb_crit: int, init_dict: dict[str, Any] = {}, *args, **kwargs):
-        super().balanced(nb_crit=nb_crit, init_dict=init_dict, *args, **kwargs)
-        init_dict["importance_relation"] = ImportanceRelation.from_capacity(
-            balanced_capacity(nb_crit)
-        )
-        return init_dict["importance_relation"]
+    @staticmethod
+    def field_to_json(o):
+        return {
+            "labels": o.labels,
+            "data": o.data.tolist(),
+        }
+
+    @staticmethod
+    def field_random(nb_crit: int, rng: Generator, *args, **kwargs):
+        return ImportanceRelation.from_capacity(random_capacity(nb_crit, rng))
+
+    @staticmethod
+    def field_balanced(nb_crit: int, *args, **kwargs):
+        return ImportanceRelation.from_capacity(balanced_capacity(nb_crit))
 
 
 @group_generated_field(
@@ -147,42 +96,26 @@ class GroupImportanceRelationField(GeneratedField):
     importance_relation: list[ImportanceRelation]
 
 
+@generated_field("capacity")
 @dataclass
 class CapacityField(GeneratedField):
     capacity: Capacity
 
-    @classmethod
-    def json_to_dict(cls, dct: dict):
-        super().json_to_dict(dct)
-        if "capacity" in dct:
-            dct["capacity"] = {frozenset(k): v for k, v in dct["capacity"].items()}
-            return dct["capacity"]
+    @staticmethod
+    def field_to_dict(o):
+        return {frozenset(k): v for k, v in o.items()}
 
-    @classmethod
-    def dict_to_json(cls, dct):
-        super().dict_to_json(dct)
-        if "capacity" in dct:
-            dct["capacity"] = {list(k): v for k, v in dct["capacity"].items()}
-            return dct["capacity"]
+    @staticmethod
+    def field_to_json(o):
+        return {list(k): v for k, v in o.items()}
 
-    @classmethod
-    def random(
-        cls,
-        nb_crit: int,
-        rng: Generator,
-        init_dict: dict[str, Any] = {},
-        *args,
-        **kwargs,
-    ):
-        super().random(nb_crit=nb_crit, rng=rng, init_dict=init_dict, *args, **kwargs)
-        init_dict["capacity"] = random_capacity(nb_crit, rng)
-        return init_dict["capacity"]
+    @staticmethod
+    def field_random(nb_crit: int, rng: Generator, *args, **kwargs):
+        return random_capacity(nb_crit, rng)
 
-    @classmethod
-    def balanced(cls, nb_crit: int, init_dict: dict[str, Any] = {}, *args, **kwargs):
-        super().balanced(nb_crit=nb_crit, init_dict=init_dict, *args, **kwargs)
-        init_dict["capacity"] = balanced_capacity(nb_crit)
-        return init_dict["capacity"]
+    @staticmethod
+    def field_balanced(nb_crit: int, *args, **kwargs):
+        return balanced_capacity(nb_crit)
 
 
 @group_generated_field(fieldname="capacity", fieldclass=CapacityField)
@@ -191,39 +124,18 @@ class GroupCapacityField(GeneratedField):
     capacity: list[Capacity]
 
 
+@generated_field("lexicographic_order")
 @dataclass
 class LexicographicOrderField(GeneratedField):
     lexicographic_order: list[int]
 
-    @classmethod
-    def random(
-        cls,
-        nb_profiles: int,
-        rng: Generator,
-        init_dict: dict[str, Any] = {},
-        *args,
-        **kwargs,
-    ):
-        super().random(
-            nb_profiles=nb_profiles, rng=rng, init_dict=init_dict, *args, **kwargs
-        )
-        init_dict["lexicographic_order"] = rng.permutation(nb_profiles).tolist()
-        return init_dict["lexicographic_order"]
+    @staticmethod
+    def field_random(nb_profiles: int, rng: Generator, *args, **kwargs):
+        return rng.permutation(nb_profiles).tolist()
 
-    @classmethod
-    def balanced(
-        cls,
-        nb_profiles: int,
-        rng: Generator,
-        init_dict: dict[str, Any] = {},
-        *args,
-        **kwargs,
-    ):
-        super().balanced(
-            nb_profiles=nb_profiles, rng=rng, init_dict=init_dict, *args, **kwargs
-        )
-        init_dict["lexicographic_order"] = rng.permutation(nb_profiles).tolist()
-        return init_dict["lexicographic_order"]
+    @staticmethod
+    def field_balanced(nb_profiles: int, rng: Generator, *args, **kwargs):
+        return rng.permutation(nb_profiles).tolist()
 
 
 @group_generated_field(

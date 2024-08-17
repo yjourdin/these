@@ -2,7 +2,6 @@ from dataclasses import asdict, dataclass, fields
 from json import dumps, loads
 
 from .field import Field, GeneratedField
-from .utils import compose
 
 
 @dataclass(kw_only=True)
@@ -37,19 +36,14 @@ class FrozenDataclass(Field):
 
     @classmethod
     def from_json(cls, s):
-        return cls.from_dict(
-            loads(
-                s,
-                object_hook=compose(*cls.json_to_dict),  # type: ignore
-            )
-        )
+        dct = loads(s)
+        super().json_to_dict(dct)
+        return cls.from_dict(dct)
 
     def to_json(self):
-        return dumps(
-            self.to_dict(),
-            indent=4,
-            default=compose(*self.dict_to_json),  # type: ignore
-        )
+        dct = self.to_dict()
+        super().dict_to_json(dct)
+        return dumps(dct, indent=4)
 
 
 @dataclass

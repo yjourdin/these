@@ -24,7 +24,7 @@ class SRMPParamEnum(Enum):
 
 
 @dataclass
-class SRMPModel(
+class SRMPModel(  # type: ignore
     Model[NormalScale],
     GeneratedDataclass,
     ProfilesField,
@@ -50,7 +50,7 @@ class SRMPModel(
 
 
 @dataclass
-class SRMPGroupModelWeightsProfilesLexicographic(
+class SRMPGroupModelWeightsProfilesLexicographic(  # type: ignore
     GroupModel[NormalScale],
     GeneratedDataclass,
     ProfilesField,
@@ -66,7 +66,7 @@ class SRMPGroupModelWeightsProfilesLexicographic(
 
 
 @dataclass
-class SRMPGroupModelWeightsProfiles(
+class SRMPGroupModelWeightsProfiles(  # type: ignore
     GroupModel[NormalScale],
     GeneratedDataclass,
     ProfilesField,
@@ -82,7 +82,7 @@ class SRMPGroupModelWeightsProfiles(
 
 
 @dataclass
-class SRMPGroupModelWeightsLexicographic(
+class SRMPGroupModelWeightsLexicographic(  # type: ignore
     GroupModel[NormalScale],
     GeneratedDataclass,
     GroupProfilesField,
@@ -98,7 +98,7 @@ class SRMPGroupModelWeightsLexicographic(
 
 
 @dataclass
-class SRMPGroupModelProfilesLexicographic(
+class SRMPGroupModelProfilesLexicographic(  # type: ignore
     GroupModel[NormalScale],
     GeneratedDataclass,
     ProfilesField,

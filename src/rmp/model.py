@@ -26,7 +26,7 @@ class RMPParamEnum(Enum):
 
 
 @dataclass
-class RMPModel(
+class RMPModel(  # type: ignore
     Model[NormalScale],
     GeneratedDataclass,
     ProfilesField,
@@ -50,7 +50,7 @@ class RMPModel(
 
 
 @dataclass
-class RMPModelCapacity(
+class RMPModelCapacity(  # type: ignore
     Model[NormalScale],
     GeneratedDataclass,
     ProfilesField,
@@ -74,7 +74,7 @@ class RMPModelCapacity(
 
 
 @dataclass
-class RMPGroupModelImportanceProfilesLexicographic(
+class RMPGroupModelImportanceProfilesLexicographic(  # type: ignore
     GroupModel[NormalScale],
     GeneratedDataclass,
     ProfilesField,
@@ -91,7 +91,7 @@ class RMPGroupModelImportanceProfilesLexicographic(
 
 
 @dataclass
-class RMPGroupModelImportanceProfiles(
+class RMPGroupModelImportanceProfiles(  # type: ignore
     GroupModel[NormalScale],
     GeneratedDataclass,
     ProfilesField,
@@ -108,7 +108,7 @@ class RMPGroupModelImportanceProfiles(
 
 
 @dataclass
-class RMPGroupModelImportanceLexicographic(
+class RMPGroupModelImportanceLexicographic(  # type: ignore
     GroupModel[NormalScale],
     GeneratedDataclass,
     GroupProfilesField,
@@ -125,7 +125,7 @@ class RMPGroupModelImportanceLexicographic(
 
 
 @dataclass
-class RMPGroupModelProfilesLexicographic(
+class RMPGroupModelProfilesLexicographic(  # type: ignore
     GroupModel[NormalScale],
     GeneratedDataclass,
     ProfilesField,

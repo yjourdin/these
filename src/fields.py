@@ -1,27 +1,24 @@
 from dataclasses import dataclass, field
 
-from .field import Field, group_field
+from .field import Field
+from .field import field as custom_field
+from .field import group_field
 from .methods import MethodEnum
-from .models import GroupModelEnum  # type: ignore
+from .models import GroupModelEnum
 
 
+@custom_field("method")
 @dataclass
 class MethodField(Field):
     method: MethodEnum
 
     @classmethod
-    def json_to_dict(cls, dct: dict):
-        super().json_to_dict(dct)
-        if "method" in dct:
-            dct["method"] = MethodEnum(dct["method"])
-            return dct["method"]
+    def field_to_dict(cls, o):
+        return MethodEnum(o)
 
     @classmethod
-    def dict_to_json(cls, dct: dict):
-        super().dict_to_json(dct)
-        if "method" in dct:
-            dct["method"] = dct["method"].value
-            return dct["method"]
+    def field_to_json(cls, o):
+        return o.value
 
 
 @group_field(fieldname="method", fieldclass=MethodField)
@@ -31,38 +28,25 @@ class GroupMethodField(Field):
 
 
 @dataclass
-class GroupModelField(Field):
+class ModelField(Field):
     Mo: GroupModelEnum
-    Me: GroupModelEnum
 
     @classmethod
-    def json_to_dict(cls, dct: dict):
-        super().json_to_dict(dct)
-        if "Mo" in dct:
-            dct["Mo"] = GroupModelEnum[dct["Mo"]]
-            return dct["Mo"]
-        if "Me" in dct:
-            dct["Me"] = GroupModelEnum[dct["Me"]]
-            return dct["Me"]
+    def field_to_dict(cls, o):
+        return GroupModelEnum[o]
 
     @classmethod
-    def dict_to_json(cls, dct: dict):
-        super().dict_to_json(dct)
-        if "Mo" in dct:
-            dct["Mo"] = dct["Mo"].name
-            return dct["Mo"]
-        if "Me" in dct:
-            dct["Me"] = dct["Me"].name
-            return dct["Me"]
+    def field_to_json(cls, o):
+        return o.name
 
 
-@group_field(fieldname="Mo", fieldclass=GroupModelField)
+@group_field(fieldname="Mo", fieldclass=ModelField)
 @dataclass
 class GroupMoField(Field):
     Mo: list[GroupModelEnum] = field(default_factory=list)
 
 
-@group_field(fieldname="Me", fieldclass=GroupModelField)
+@group_field(fieldname="Me", fieldclass=ModelField)
 @dataclass
 class GroupMeField(Field):
-    Me: list[GroupModelEnum] = field(default_factory=list)
+    Me: list[GroupModelEnum] | None = None
