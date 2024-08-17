@@ -178,7 +178,7 @@ class MIPSRMPGroup(
                 ]
             ) + lpSum(
                 [
-                    [s_star[dm][index] for index in indifference_relations_indices]
+                    [s_star[dm][index] for index in indifference_relations_indices[dm]]
                     for dm in DM
                 ]
             )
@@ -406,5 +406,5 @@ class MIPSRMPGroup(
             self.preference_relations,
             self.indifference_relations,
             self.lexicographic_order,
-            self.shared_params
+            self.shared_params,
         )
