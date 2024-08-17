@@ -64,7 +64,7 @@ class MIPSRMPGroup(
         # List of criteria
         M = alternatives.criteria
         # Number of profiles
-        k = len(lexicographic_order)
+        k = len(lexicographic_order[0])
         # List of DMs
         DM = range(len(preference_relations))
         DM_profiles = DM if not profiles_shared else range(1)
