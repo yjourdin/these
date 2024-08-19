@@ -37,7 +37,7 @@ def learn_mip(
 
     best_model = None
     best_fitness: float = 0
-    time = None
+    time = 0
 
     preference_relations_list: list[PreferenceStructure] = []
     indifference_relations_list: list[PreferenceStructure] = []
@@ -107,13 +107,16 @@ def learn_mip(
             if model is not None:
                 objective = mip.prob.objective
                 fitness = (
-                    cast(int, value(objective)) / len(comparisons) if objective else 1
+                    cast(int, value(objective))
+                    / sum(len(comparisons[dm]) for dm in DMS)
+                    if objective
+                    else 1
                 )
 
                 if fitness > best_fitness:
                     best_model = model
                     best_fitness = fitness
-                    time = mip.prob.solutionCpuTime
+                    time += mip.prob.solutionCpuTime
 
                     if best_fitness == 1:
                         break

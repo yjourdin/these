@@ -147,8 +147,9 @@ for _ in range(args.jobs):
     task_queue.put("STOP")
 for worker_process in workers:
     if stop_event.is_set():
-        worker_process.terminate()
-        task_queue.task_done()
+        if worker_process.is_alive():
+            worker_process.terminate()
+            task_queue.task_done()
     worker_process.join()
 task_queue.join()
 task_queue.close()

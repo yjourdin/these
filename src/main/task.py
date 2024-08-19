@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from dataclasses import InitVar, dataclass, field
+from enum import Enum
 from multiprocessing import Queue
 from typing import Any, ClassVar
 
@@ -24,6 +25,8 @@ from .seeds import Seeds
 
 def print_attribute(name: str, value: Any | None, width: int) -> str:
     if value is not None:
+        if isinstance(value, Enum):
+            value = value.name
         if isinstance(value, Config):
             value = value.id
         return f"{name.capitalize()}: {value:{width}}"
@@ -35,7 +38,7 @@ WIDTH = {
     "m": 2,
     "n_tr": 4,
     "Atr_id": 2,
-    "Mo": 4,
+    "Mo": 8,
     "ko": 2,
     "group_size": 3,
     "Mo_id": 2,
@@ -43,7 +46,7 @@ WIDTH = {
     "error": 4,
     "dm_id": 3,
     "D_id": 2,
-    "Me": 4,
+    "Me": 8,
     "ke": 2,
     "method": 3,
     "config": 4,
@@ -244,16 +247,18 @@ class MIPTask(AbstractElicitationTask):
                 "M": self.m,
                 "N_tr": self.n_tr,
                 "Atr_id": self.Atr_id,
-                "Mo": self.Mo,
+                "Mo": self.Mo.name,
                 "Ko": self.ko,
                 "Group_size": self.group_size,
                 "Mo_id": self.Mo_id,
                 "N_bc": self.n,
                 "Error": self.error,
-                "Me": self.Me,
+                "D_id": self.D_id,
+                "Me": self.Me.name,
                 "Ke": self.ke,
-                "Method": MethodEnum.MIP,
+                "Method": MethodEnum.MIP.name,
                 "Config": self.config.id,
+                "Me_id": self.Me_id,
                 "Time": time,
                 "Fitness": best_fitness,
             }
@@ -290,16 +295,18 @@ class SATask(AbstractElicitationTask):
                 "M": self.m,
                 "N_tr": self.n_tr,
                 "Atr_id": self.Atr_id,
-                "Mo": self.Mo,
+                "Mo": self.Mo.name,
                 "Ko": self.ko,
                 "Group_size": self.group_size,
                 "Mo_id": self.Mo_id,
                 "N_bc": self.n,
                 "Error": self.error,
-                "Me": self.Me,
+                "D_id": self.D_id,
+                "Me": self.Me.name,
                 "Ke": self.ke,
-                "Method": MethodEnum.SA,
+                "Method": MethodEnum.SA.name,
                 "Config": self.config.id,
+                "Me_id": self.Me_id,
                 "Time": time,
                 "Fitness": best_fitness,
                 "It.": it,
@@ -342,16 +349,18 @@ class TestTask(ATestTask, AbstractElicitationTask):
                 "M": self.m,
                 "N_tr": self.n_tr,
                 "Atr_id": self.Atr_id,
-                "Mo": self.Mo,
+                "Mo": self.Mo.name,
                 "Ko": self.ko,
                 "Group_size": self.group_size,
                 "Mo_id": self.Mo_id,
                 "N_bc": self.n,
                 "Error": self.error,
-                "Me": self.Me,
+                "D_id": self.D_id,
+                "Me": self.Me.name,
                 "Ke": self.ke,
-                "Method": self.method,
+                "Method": self.method.name,
                 "Config": self.config,
+                "Me_id": self.Me_id,
                 "N_te": self.n_te,
                 "Ate_id": self.Ate_id,
                 "Fitness": test_fitness,
