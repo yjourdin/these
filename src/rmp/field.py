@@ -16,11 +16,11 @@ class ProfilesField(GeneratedField):
     profiles: NormalPerformanceTable
 
     @staticmethod
-    def field_to_dict(o):
+    def field_decode(o):
         return NormalPerformanceTable(o)
 
     @staticmethod
-    def field_to_json(o):
+    def field_encode(o):
         return o.data.values.tolist()
 
     @staticmethod
@@ -66,14 +66,14 @@ class ImportanceRelationField(GeneratedField):
     importance_relation: ImportanceRelation
 
     @staticmethod
-    def field_to_dict(o):
+    def field_decode(o):
         return ImportanceRelation(
             np.array(o["data"]),
             [frozenset(label) for label in o["labels"]],
         )
 
     @staticmethod
-    def field_to_json(o):
+    def field_encode(o):
         return {
             "labels": o.labels,
             "data": o.data.tolist(),
@@ -102,11 +102,11 @@ class CapacityField(GeneratedField):
     capacity: Capacity
 
     @staticmethod
-    def field_to_dict(o):
+    def field_decode(o):
         return {frozenset(k): v for k, v in o.items()}
 
     @staticmethod
-    def field_to_json(o):
+    def field_encode(o):
         return {list(k): v for k, v in o.items()}
 
     @staticmethod

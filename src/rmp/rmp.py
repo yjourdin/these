@@ -115,7 +115,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
 
         :return:
         """
-        comp_df = self.performance_table.data.ge(self.profile.data)
+        comp_df = (self.performance_table.data >= self.profile.data)
 
         criteria_subset = [frozenset(a.nonzero()[0]) for a in comp_df.values]
 

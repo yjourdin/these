@@ -1,9 +1,9 @@
 {
-    "name": "test_MIP",
+    "name": "MIP",
     "seed": 0,
     "nb_A_tr": 10,
     "N_tr": [
-        10
+        20
     ],
     "M": [
         3,
@@ -12,31 +12,41 @@
     ],
     "Mo": [
         "SRMP_WPL",
-        "SRMP_WP",
         "SRMP_WL",
         "SRMP_PL",
-        "SRMP_W",
-        "SRMP_P",
-        "SRMP_L",
-        "SRMP"
+        "SRMP_L"
     ],
     "Ko": [
         1,
         2,
         3
     ],
-    "N_bc": [
-        10, 30, 50
+    "group_size": [
+        2
     ],
-    "error": [
-        0
+    "N_bc": [
+        10,
+        20,
+        30,
+        40,
+        50,
+        60,
+        70,
+        80,
+        90
+    ],
+    "Me": [
+        "SRMP_WPL",
+        "SRMP_WL",
+        "SRMP_PL",
+        "SRMP_L"
+    ],
+    "Ke": [
+        1,
+        2,
+        3
     ],
     "method": [
         "MIP"
-    ],
-    "group_size": [
-        2,
-        3,
-        4
     ]
 }

@@ -4,6 +4,7 @@ from pathlib import Path
 from ..methods import MethodEnum
 from ..models import GroupModelEnum
 from ..utils import filename_csv, filename_json
+from .config import Config
 from .fieldnames import FIELDNAMES
 
 RESULTS_DIR = "results"
@@ -17,13 +18,15 @@ class Directory:
         self.Mo_dir = self.root_dir / "Mo"
         self.D_dir = self.root_dir / "D"
         self.Me_dir = self.root_dir / "Me"
+        self.args = self.root_dir / "args.json"
+        self.log = self.root_dir / "log.log"
+        self.error = self.root_dir / "error.log"
+        self.run = self.root_dir / "run.txt"
         self.train_results = self.root_dir / "train_results.csv"
         self.test_results = self.root_dir / "test_results.csv"
-        self.log = self.root_dir / "log.log"
-        self.args = self.root_dir / "args.json"
         self.seeds = self.root_dir / "seeds.csv"
         self.configs = self.root_dir / "configs.csv"
-        self.run = self.root_dir / "run.txt"
+        self.D_size = self.root_dir / "D_size.csv"
 
     def A_train(self, m: int, n: int, id: int):
         return self.A_train_dir / filename_csv(locals())
@@ -31,14 +34,7 @@ class Directory:
     def A_test(self, m: int, n: int, id: int):
         return self.A_test_dir / filename_csv(locals())
 
-    def Mo(
-        self,
-        m: int,
-        model: GroupModelEnum,
-        k: int,
-        group_size: int,
-        id: int,
-    ):
+    def Mo(self, m: int, model: GroupModelEnum, k: int, group_size: int, id: int):
         return self.Mo_dir / filename_json(locals())
 
     def D(
@@ -51,6 +47,7 @@ class Directory:
         group_size: int,
         Mo_id: int,
         n: int,
+        same_alt: bool,
         e: float,
         dm_id: int,
         id: int,
@@ -67,12 +64,13 @@ class Directory:
         group_size: int,
         Mo_id: int,
         n: int,
+        same_alt: bool,
         e: float,
         D_id: int,
         Me: GroupModelEnum,
         ke: int,
         method: MethodEnum,
-        config_id: int,
+        config: Config,
         id: int,
     ):
         return self.Me_dir / filename_json(locals())
@@ -84,6 +82,8 @@ class Directory:
         self.Mo_dir.mkdir()
         self.D_dir.mkdir()
         self.Me_dir.mkdir()
+
+        self.run.touch()
 
         with self.seeds.open("w", newline="") as f:
             writer = csv.DictWriter(f, FIELDNAMES["seeds"], dialect="unix")
@@ -100,6 +100,3 @@ class Directory:
         with self.test_results.open("w", newline="") as f:
             writer = csv.DictWriter(f, FIELDNAMES["test_results"], dialect="unix")
             writer.writeheader()
-
-        with self.run.open("w") as f:
-            f.write("")

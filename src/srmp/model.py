@@ -1,9 +1,10 @@
+from collections.abc import Container
 from dataclasses import dataclass
-from enum import Enum
 
 from mcda.internal.core.scales import NormalScale
 
 from ..dataclass import GeneratedDataclass
+from ..enum import StrEnum
 from ..model import GroupModel, Model
 from ..rmp.field import (
     GroupLexicographicOrderField,
@@ -17,7 +18,7 @@ from .field import GroupWeightsField, WeightsField
 from .normal_srmp import NormalSRMP
 
 
-class SRMPParamEnum(Enum):
+class SRMPParamEnum(StrEnum):
     PROFILES = RMPParamEnum.PROFILES.value
     WEIGHTS = "weights"
     LEXICOGRAPHIC_ORDER = RMPParamEnum.LEXICOGRAPHIC_ORDER.value
@@ -175,3 +176,43 @@ class SRMPGroupModel(
             weights=self.weights[i],
             lexicographic_order=self.lexicographic_order[i],
         )
+
+
+def srmp_group_model(
+    shared_params: Container[SRMPParamEnum],
+) -> type[GroupModel[NormalScale]]:
+    if SRMPParamEnum.PROFILES in shared_params:
+        if SRMPParamEnum.WEIGHTS in shared_params:
+            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+                return SRMPGroupModelWeightsProfilesLexicographic
+            else:
+                return SRMPGroupModelWeightsProfiles
+        else:
+            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+                return SRMPGroupModelProfilesLexicographic
+            else:
+                return SRMPGroupModelProfiles
+    else:
+        if SRMPParamEnum.WEIGHTS in shared_params:
+            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+                return SRMPGroupModelWeightsLexicographic
+            else:
+                return SRMPGroupModelWeights
+        else:
+            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+                return SRMPGroupModelLexicographic
+            else:
+                return SRMPGroupModel
+
+
+def srmp_model(
+    size: int, shared_params: Container[SRMPParamEnum] = set()
+) -> type[Model[NormalScale]]:
+    if size == 1:
+        return SRMPModel
+    else:
+        return srmp_group_model(shared_params)
+
+
+def srmp_model_from_name(name: str) -> type[Model[NormalScale]]:
+    return eval(name)

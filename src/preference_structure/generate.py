@@ -17,20 +17,25 @@ def random_comparisons(
     ranking_dict = ranking.data.to_dict()
     labels = ranking.labels
     all_pairs = np.array(np.triu_indices(len(alternatives.data), 1)).transpose()
-    pairs = rng.choice(all_pairs, min(nb, len(all_pairs)), replace=False)
+    rng.shuffle(all_pairs)
     result = PreferenceStructure()
-    for ia, ib in pairs:
+    for ia, ib in all_pairs:
         a, b = labels[ia], labels[ib]
-        if ranking_dict[a] < ranking_dict[b]:
-            result._relations.append(P(a, b))
-        elif ranking_dict[a] == ranking_dict[b]:
-            result._relations.append(I(a, b))
-        else:
-            result._relations.append(P(b, a))
+        if (not (alternatives.data.loc[a] >= alternatives.data.loc[b]).all()) and (
+            not (alternatives.data.loc[b] >= alternatives.data.loc[a]).all()
+        ):
+            if ranking_dict[a] < ranking_dict[b]:
+                result._relations.append(P(a, b))
+            elif ranking_dict[a] == ranking_dict[b]:
+                result._relations.append(I(a, b))
+            else:
+                result._relations.append(P(b, a))
+        if len(result) == nb:
+            break
     return result
 
 
-def from_ranking(ranking: Ranking):
+def from_ranking(ranking: Ranking, alternatives: PerformanceTable):
     ranking_dict = ranking.data.to_dict()
     labels = ranking.labels
     all_pairs = np.array(np.triu_indices(len(ranking.data), 1)).transpose()
@@ -38,18 +43,20 @@ def from_ranking(ranking: Ranking):
     for ia, ib in all_pairs:
         a, b = labels[ia], labels[ib]
         if ranking_dict[a] < ranking_dict[b]:
-            result._relations.append(P(a, b))
+            if not (alternatives.data.loc[a] >= alternatives.data.loc[a]).all():
+                result._relations.append(P(a, b))
         elif ranking_dict[a] == ranking_dict[b]:
             result._relations.append(I(a, b))
         else:
-            result._relations.append(P(b, a))
+            if not (alternatives.data.loc[b] >= alternatives.data.loc[a]).all():
+                result._relations.append(P(b, a))
     return result
 
 
 def all_comparisons(
     alternatives: PerformanceTable, model: Model
 ) -> PreferenceStructure:
-    return from_ranking(model.rank(alternatives))
+    return from_ranking(model.rank(alternatives), alternatives)
 
 
 def noisy_comparisons(

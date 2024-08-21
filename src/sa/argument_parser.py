@@ -2,7 +2,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 
-subparsers = parser.add_subparsers(dest="model", help="Model")
+subparsers = parser.add_subparsers(dest="model", required=True, help="Model")
 
 parser_RMP = subparsers.add_parser("RMP", help="RMP model")
 

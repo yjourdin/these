@@ -6,7 +6,18 @@ from ..methods import MethodEnum
 from ..models import ModelEnum
 from .arguments import Arguments
 from .config import MIPConfig, SAConfig
-from .task import ATestTask, ATrainTask, DTask, MIPTask, MoTask, SATask, Task, TestTask
+from .task import (
+    AbstractDTask,
+    ATestTask,
+    ATrainTask,
+    DSameTask,
+    DTask,
+    MIPTask,
+    MoTask,
+    SATask,
+    Task,
+    TestTask,
+)
 
 
 def task_precedence(args: Arguments):
@@ -38,27 +49,45 @@ def task_precedence(args: Arguments):
             ):
                 t_Mo = MoTask(args.seeds, m, Mo, ko, group_size, Mo_id)
 
-                for n_bc, e, D_id in product(
+                for n_bc, same_alt, e, D_id in product(
                     args.N_bc,
+                    args.same_alt,
                     args.error,
                     range(args.nb_D) if args.nb_D else [Mo_id],
                 ):
                     t_Ds = []
                     for dm_id in range(group_size):
-                        t_D = DTask(
-                            args.seeds,
-                            m,
-                            n_tr,
-                            Atr_id,
-                            Mo,
-                            ko,
-                            group_size,
-                            Mo_id,
-                            n_bc,
-                            e,
-                            D_id,
-                            dm_id,
-                        )
+                        t_D: AbstractDTask
+                        if same_alt:
+                            t_D = DSameTask(
+                                args.seeds,
+                                m,
+                                n_tr,
+                                Atr_id,
+                                Mo,
+                                ko,
+                                group_size,
+                                Mo_id,
+                                n_bc,
+                                e,
+                                D_id,
+                                dm_id,
+                            )
+                        else:
+                            t_D = DTask(
+                                args.seeds,
+                                m,
+                                n_tr,
+                                Atr_id,
+                                Mo,
+                                ko,
+                                group_size,
+                                Mo_id,
+                                n_bc,
+                                e,
+                                D_id,
+                                dm_id,
+                            )
 
                         succeed[t_Atr] += [t_D]
                         succeed[t_Mo] += [t_D]
@@ -87,12 +116,13 @@ def task_precedence(args: Arguments):
                                         group_size,
                                         Mo_id,
                                         n_bc,
+                                        same_alt,
                                         e,
                                         D_id,
                                         Me,
                                         ke,
-                                        Me_id,
                                         cast(SAConfig, config),
+                                        Me_id,
                                     )
                                 case MethodEnum.MIP if Me.value[0] == ModelEnum.SRMP:
                                     t_Me = MIPTask(
@@ -105,12 +135,13 @@ def task_precedence(args: Arguments):
                                         group_size,
                                         Mo_id,
                                         n_bc,
+                                        same_alt,
                                         e,
                                         D_id,
                                         Me,
                                         ke,
-                                        Me_id,
                                         cast(MIPConfig, config),
+                                        Me_id,
                                     )
                                 case _:
                                     break
@@ -134,15 +165,16 @@ def task_precedence(args: Arguments):
                                     group_size,
                                     Mo_id,
                                     n_bc,
+                                    same_alt,
                                     e,
                                     D_id,
                                     Me,
                                     ke,
+                                    method,
+                                    config,
                                     Me_id,
                                     n_te,
                                     Ate_id,
-                                    config.id,
-                                    method,
                                 )
 
                                 succeed[t_Me] += [t_test]

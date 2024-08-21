@@ -17,7 +17,7 @@ from .mip import MIP
 class MIPResult(NamedTuple):
     best_model: Model | None = None
     best_fitness: float = 0
-    time: float | None = None
+    time: float = 0
 
 
 def learn_mip(

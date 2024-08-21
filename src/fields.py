@@ -12,13 +12,13 @@ from .models import GroupModelEnum
 class MethodField(Field):
     method: MethodEnum
 
-    @classmethod
-    def field_to_dict(cls, o):
+    @staticmethod
+    def field_decode(o):
         return MethodEnum(o)
 
-    @classmethod
-    def field_to_json(cls, o):
-        return o.value
+    @staticmethod
+    def field_encode(o):
+        return str(o)
 
 
 @group_field(fieldname="method", fieldclass=MethodField)
@@ -31,13 +31,13 @@ class GroupMethodField(Field):
 class ModelField(Field):
     Mo: GroupModelEnum
 
-    @classmethod
-    def field_to_dict(cls, o):
+    @staticmethod
+    def field_decode(o):
         return GroupModelEnum[o]
 
-    @classmethod
-    def field_to_json(cls, o):
-        return o.name
+    @staticmethod
+    def field_encode(o):
+        return str(o)
 
 
 @group_field(fieldname="Mo", fieldclass=ModelField)

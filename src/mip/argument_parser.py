@@ -1,10 +1,11 @@
 import argparse
 
+from ..epsilon import EPSILON
 from ..models import ModelEnum
 from ..srmp.model import SRMPParamEnum
 
 parser = argparse.ArgumentParser()
-parser.add_argument("model", choices=ModelEnum, help="Model")
+parser.add_argument("model", type=ModelEnum, choices=ModelEnum, help="Model")
 parser.add_argument("k", type=int, help="Number of profiles")
 parser.add_argument("A", type=argparse.FileType("r"), help="Alternatives")
 parser.add_argument("D", nargs="+", type=argparse.FileType("r"), help="Comparisons")
@@ -12,13 +13,14 @@ parser.add_argument(
     "--shared",
     nargs="*",
     default=[],
+    type=SRMPParamEnum,
     choices=SRMPParamEnum,
     help="Parameters shared between decision makers",
 )
 parser.add_argument(
     "-g",
     "--gamma",
-    default=0.001,
+    default=EPSILON,
     type=float,
     help="Value used for modeling strict inequalities",
 )

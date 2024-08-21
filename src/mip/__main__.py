@@ -1,6 +1,7 @@
 from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
+from ..models import GroupModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..preference_structure.io import from_csv
 from .argument_parser import parse_args
@@ -20,11 +21,10 @@ for d in args.D:
 
 # Learn MIP
 best_model, best_fitness, time = learn_mip(
-    args.model,
+    GroupModelEnum((args.model, set(args.shared))),  # type: ignore
     args.k,
     A,
     D,
-    shared_params=set(),
     gamma=args.gamma,
     inconsistencies=not args.no_inconsistencies,
     seed=args.seed,

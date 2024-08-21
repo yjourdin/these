@@ -1,15 +1,7 @@
-import logging
-import logging.handlers
-from pathlib import Path
+from .directory import Directory
 
 
-def logger_thread(q):
-    for record in iter(q.get, "STOP"):
-        logger = logging.getLogger(record.name)
-        logger.handle(record)
-
-
-def create_logging_config_dict(logfile: Path):
+def create_logging_config_dict(dir: Directory):
     return {
         "version": 1,
         "formatters": {
@@ -23,13 +15,20 @@ def create_logging_config_dict(logfile: Path):
                 "class": "logging.StreamHandler",
                 "level": "ERROR",
             },
-            "file": {
+            "logfile": {
                 "class": "logging.FileHandler",
-                "filename": logfile,
+                "filename": dir.log,
+                "mode": "w",
+                "formatter": "detailed",
+            },
+            "errorfile": {
+                "class": "logging.FileHandler",
+                "level": "ERROR",
+                "filename": dir.error,
                 "mode": "w",
                 "formatter": "detailed",
             },
         },
-        "loggers": {"log": {"handlers": ["file"]}},
+        "loggers": {"log": {"handlers": ["logfile", "errorfile"]}},
         "root": {"level": "ERROR", "handlers": ["console"]},
     }

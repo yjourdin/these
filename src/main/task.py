@@ -11,6 +11,7 @@ from ..methods import MethodEnum
 from ..models import GroupModelEnum
 from .config import Config, MIPConfig, SAConfig
 from .directory import Directory
+from .fieldnames import DSizeFieldnames, SeedFieldnames, TestFieldnames, TrainFieldnames
 from .job import (
     create_A_test,
     create_A_train,
@@ -76,11 +77,10 @@ class Task(FrozenDataclass):
         self,
         dir: Directory,
         queues: dict[str, Queue],
-    ) -> None:
-        pass
+    ) -> None: ...
 
     def seed(self) -> int:
-        return abs(hash((v for k, v in self.to_dict().items() if not k.endswith("id"))))
+        return abs(hash(self))
 
     def rng(
         self,
@@ -88,23 +88,22 @@ class Task(FrozenDataclass):
         return default_rng(self.seed())
 
     def print_seed(self, seed_queue: Queue):
-        seed_queue.put({"Task": str(self), "Seed": self.seed()})
+        seed_queue.put({SeedFieldnames.Task: self, SeedFieldnames.Seed: self.seed()})
 
 
 @dataclass(frozen=True)
 class AbstractMTask(Task):
     m: int
 
-    def __post_init__(self, seeds: Seeds):
-        return ...
+    def __post_init__(self, seeds: Seeds): ...
 
 
 @dataclass(frozen=True)
 class ATrainTask(AbstractMTask):
     name = "A_train"
     n_tr: int
-    Atr_id: int
-    Atr_seed: int = field(init=False)
+    Atr_id: int = field(hash=False)
+    Atr_seed: int = field(init=False, hash=True, compare=False)
 
     def __post_init__(self, seeds: Seeds):
         super().__post_init__(seeds)
@@ -125,8 +124,8 @@ class ATrainTask(AbstractMTask):
 class ATestTask(AbstractMTask):
     name = "A_test"
     n_te: int
-    Ate_id: int
-    Ate_seed: int = field(init=False)
+    Ate_id: int = field(hash=False)
+    Ate_seed: int = field(init=False, hash=True, compare=False)
 
     def __post_init__(self, seeds: Seeds):
         super().__post_init__(seeds)
@@ -149,8 +148,8 @@ class MoTask(AbstractMTask):
     Mo: GroupModelEnum
     ko: int
     group_size: int
-    Mo_id: int
-    Mo_seed: int = field(init=False)
+    Mo_id: int = field(hash=False)
+    Mo_seed: int = field(init=False, hash=True, compare=False)
 
     def __post_init__(self, seeds: Seeds):
         super().__post_init__(seeds)
@@ -172,9 +171,10 @@ class MoTask(AbstractMTask):
 @dataclass(frozen=True)
 class AbstractDTask(MoTask, ATrainTask):
     n: int
+    same_alt: bool
     error: float
-    D_id: int
-    D_seed: int = field(init=False)
+    D_id: int = field(hash=False)
+    D_seed: int = field(init=False, hash=True, compare=False)
 
     def __post_init__(self, seeds: Seeds):
         super().__post_init__(seeds)
@@ -184,11 +184,12 @@ class AbstractDTask(MoTask, ATrainTask):
 @dataclass(frozen=True)
 class DTask(AbstractDTask):
     name = "D"
+    same_alt: bool = field(default=False, init=False)
     dm_id: int
 
     def __call__(self, dir, queues):
         self.print_seed(queues["seeds"])
-        create_D(
+        D_size = create_D(
             self.m,
             self.n_tr,
             self.Atr_id,
@@ -197,11 +198,70 @@ class DTask(AbstractDTask):
             self.group_size,
             self.Mo_id,
             self.n,
+            False,
             self.error,
             self.dm_id,
             self.D_id,
             dir,
             self.rng(),
+        )
+        queues["D_size"].put(
+            {
+                DSizeFieldnames.M: self.m,
+                DSizeFieldnames.N_tr: self.n_tr,
+                DSizeFieldnames.Atr_id: self.Atr_id,
+                DSizeFieldnames.Mo: self.Mo,
+                DSizeFieldnames.Ko: self.ko,
+                DSizeFieldnames.Group_size: self.group_size,
+                DSizeFieldnames.Mo_id: self.Mo_id,
+                DSizeFieldnames.N_bc: self.n,
+                DSizeFieldnames.Same_alt: self.same_alt,
+                DSizeFieldnames.Error: self.error,
+                DSizeFieldnames.D_id: self.D_id,
+                DSizeFieldnames.Size: D_size,
+            }
+        )
+
+
+@dataclass(frozen=True)
+class DSameTask(AbstractDTask):
+    name = "D"
+    same_alt: bool = field(default=True, init=False)
+    dm_id: int = field(hash=False)
+
+    def __call__(self, dir, queues):
+        self.print_seed(queues["seeds"])
+        D_size = create_D(
+            self.m,
+            self.n_tr,
+            self.Atr_id,
+            self.Mo,
+            self.ko,
+            self.group_size,
+            self.Mo_id,
+            self.n,
+            True,
+            self.error,
+            self.dm_id,
+            self.D_id,
+            dir,
+            self.rng(),
+        )
+        queues["D_size"].put(
+            {
+                DSizeFieldnames.M: self.m,
+                DSizeFieldnames.N_tr: self.n_tr,
+                DSizeFieldnames.Atr_id: self.Atr_id,
+                DSizeFieldnames.Mo: self.Mo,
+                DSizeFieldnames.Ko: self.ko,
+                DSizeFieldnames.Group_size: self.group_size,
+                DSizeFieldnames.Mo_id: self.Mo_id,
+                DSizeFieldnames.N_bc: self.n,
+                DSizeFieldnames.Same_alt: self.same_alt,
+                DSizeFieldnames.Error: self.error,
+                DSizeFieldnames.D_id: self.D_id,
+                DSizeFieldnames.Size: D_size,
+            }
         )
 
 
@@ -209,8 +269,10 @@ class DTask(AbstractDTask):
 class AbstractElicitationTask(AbstractDTask):
     Me: GroupModelEnum
     ke: int
-    Me_id: int
-    Me_seed: int = field(init=False)
+    method: MethodEnum
+    config: Config
+    Me_id: int = field(hash=False)
+    Me_seed: int = field(init=False, hash=True, compare=False)
 
     def __post_init__(self, seeds: Seeds):
         super().__post_init__(seeds)
@@ -220,6 +282,7 @@ class AbstractElicitationTask(AbstractDTask):
 @dataclass(frozen=True)
 class MIPTask(AbstractElicitationTask):
     name = "MIP"
+    method: MethodEnum = field(default=MethodEnum.MIP, init=False)
     config: MIPConfig
 
     def __call__(self, dir, queues):
@@ -233,6 +296,7 @@ class MIPTask(AbstractElicitationTask):
             self.group_size,
             self.Mo_id,
             self.n,
+            self.same_alt,
             self.error,
             self.D_id,
             self.Me,
@@ -244,23 +308,24 @@ class MIPTask(AbstractElicitationTask):
         )
         queues["train"].put(
             {
-                "M": self.m,
-                "N_tr": self.n_tr,
-                "Atr_id": self.Atr_id,
-                "Mo": self.Mo.name,
-                "Ko": self.ko,
-                "Group_size": self.group_size,
-                "Mo_id": self.Mo_id,
-                "N_bc": self.n,
-                "Error": self.error,
-                "D_id": self.D_id,
-                "Me": self.Me.name,
-                "Ke": self.ke,
-                "Method": MethodEnum.MIP.name,
-                "Config": self.config.id,
-                "Me_id": self.Me_id,
-                "Time": time,
-                "Fitness": best_fitness,
+                TrainFieldnames.M: self.m,
+                TrainFieldnames.N_tr: self.n_tr,
+                TrainFieldnames.Atr_id: self.Atr_id,
+                TrainFieldnames.Mo: self.Mo,
+                TrainFieldnames.Ko: self.ko,
+                TrainFieldnames.Group_size: self.group_size,
+                TrainFieldnames.Mo_id: self.Mo_id,
+                TrainFieldnames.N_bc: self.n,
+                TrainFieldnames.Same_alt: self.same_alt,
+                TrainFieldnames.Error: self.error,
+                TrainFieldnames.D_id: self.D_id,
+                TrainFieldnames.Me: self.Me,
+                TrainFieldnames.Ke: self.ke,
+                TrainFieldnames.Method: MethodEnum.MIP,
+                TrainFieldnames.Config: self.config,
+                TrainFieldnames.Me_id: self.Me_id,
+                TrainFieldnames.Time: time,
+                TrainFieldnames.Fitness: best_fitness,
             }
         )
 
@@ -268,6 +333,7 @@ class MIPTask(AbstractElicitationTask):
 @dataclass(frozen=True)
 class SATask(AbstractElicitationTask):
     name = "SA"
+    method: MethodEnum = field(default=MethodEnum.SA, init=False)
     config: SAConfig
 
     def __call__(self, dir, queues):
@@ -281,6 +347,7 @@ class SATask(AbstractElicitationTask):
             self.group_size,
             self.Mo_id,
             self.n,
+            self.same_alt,
             self.error,
             self.D_id,
             self.Me,
@@ -292,24 +359,25 @@ class SATask(AbstractElicitationTask):
         )
         queues["train"].put(
             {
-                "M": self.m,
-                "N_tr": self.n_tr,
-                "Atr_id": self.Atr_id,
-                "Mo": self.Mo.name,
-                "Ko": self.ko,
-                "Group_size": self.group_size,
-                "Mo_id": self.Mo_id,
-                "N_bc": self.n,
-                "Error": self.error,
-                "D_id": self.D_id,
-                "Me": self.Me.name,
-                "Ke": self.ke,
-                "Method": MethodEnum.SA.name,
-                "Config": self.config.id,
-                "Me_id": self.Me_id,
-                "Time": time,
-                "Fitness": best_fitness,
-                "It.": it,
+                TrainFieldnames.M: self.m,
+                TrainFieldnames.N_tr: self.n_tr,
+                TrainFieldnames.Atr_id: self.Atr_id,
+                TrainFieldnames.Mo: self.Mo,
+                TrainFieldnames.Ko: self.ko,
+                TrainFieldnames.Group_size: self.group_size,
+                TrainFieldnames.Mo_id: self.Mo_id,
+                TrainFieldnames.N_bc: self.n,
+                TrainFieldnames.Same_alt: self.same_alt,
+                TrainFieldnames.Error: self.error,
+                TrainFieldnames.D_id: self.D_id,
+                TrainFieldnames.Me: self.Me,
+                TrainFieldnames.Ke: self.ke,
+                TrainFieldnames.Method: MethodEnum.SA,
+                TrainFieldnames.Config: self.config,
+                TrainFieldnames.Me_id: self.Me_id,
+                TrainFieldnames.Time: time,
+                TrainFieldnames.Fitness: best_fitness,
+                TrainFieldnames.It: it,
             }
         )
 
@@ -317,8 +385,6 @@ class SATask(AbstractElicitationTask):
 @dataclass(frozen=True)
 class TestTask(ATestTask, AbstractElicitationTask):
     name = "Test"
-    config: int
-    method: MethodEnum
 
     def __post_init__(self, seeds: Seeds):
         super().__post_init__(seeds)
@@ -333,6 +399,7 @@ class TestTask(ATestTask, AbstractElicitationTask):
             self.group_size,
             self.Mo_id,
             self.n,
+            self.same_alt,
             self.error,
             self.D_id,
             self.Me,
@@ -346,24 +413,25 @@ class TestTask(ATestTask, AbstractElicitationTask):
         )
         queues["test"].put(
             {
-                "M": self.m,
-                "N_tr": self.n_tr,
-                "Atr_id": self.Atr_id,
-                "Mo": self.Mo.name,
-                "Ko": self.ko,
-                "Group_size": self.group_size,
-                "Mo_id": self.Mo_id,
-                "N_bc": self.n,
-                "Error": self.error,
-                "D_id": self.D_id,
-                "Me": self.Me.name,
-                "Ke": self.ke,
-                "Method": self.method.name,
-                "Config": self.config,
-                "Me_id": self.Me_id,
-                "N_te": self.n_te,
-                "Ate_id": self.Ate_id,
-                "Fitness": test_fitness,
-                "Kendall's tau": kendall_tau,
+                TestFieldnames.M: self.m,
+                TestFieldnames.N_tr: self.n_tr,
+                TestFieldnames.Atr_id: self.Atr_id,
+                TestFieldnames.Mo: self.Mo,
+                TestFieldnames.Ko: self.ko,
+                TestFieldnames.Group_size: self.group_size,
+                TestFieldnames.Mo_id: self.Mo_id,
+                TestFieldnames.N_bc: self.n,
+                TestFieldnames.Same_alt: self.same_alt,
+                TestFieldnames.Error: self.error,
+                TestFieldnames.D_id: self.D_id,
+                TestFieldnames.Me: self.Me,
+                TestFieldnames.Ke: self.ke,
+                TestFieldnames.Method: self.method,
+                TestFieldnames.Config: self.config,
+                TestFieldnames.Me_id: self.Me_id,
+                TestFieldnames.N_te: self.n_te,
+                TestFieldnames.Ate_id: self.Ate_id,
+                TestFieldnames.Fitness: test_fitness,
+                TestFieldnames.Kendall: kendall_tau,
             }
         )

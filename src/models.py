@@ -1,31 +1,20 @@
 from collections.abc import Container
 from enum import Enum
+from typing import cast
 
-from .rmp.model import (
-    RMPGroupModel,
-    RMPGroupModelImportance,
-    RMPGroupModelImportanceLexicographic,
-    RMPGroupModelImportanceProfiles,
-    RMPGroupModelImportanceProfilesLexicographic,
-    RMPGroupModelLexicographic,
-    RMPGroupModelProfiles,
-    RMPGroupModelProfilesLexicographic,
-    RMPParamEnum,
-)
+from .dataclass import Dataclass
+from .enum import StrEnum
+from .model import Model
+from .rmp.model import RMPParamEnum, rmp_group_model, rmp_model, rmp_model_from_name
 from .srmp.model import (
-    SRMPGroupModel,
-    SRMPGroupModelLexicographic,
-    SRMPGroupModelProfiles,
-    SRMPGroupModelProfilesLexicographic,
-    SRMPGroupModelWeights,
-    SRMPGroupModelWeightsLexicographic,
-    SRMPGroupModelWeightsProfiles,
-    SRMPGroupModelWeightsProfilesLexicographic,
     SRMPParamEnum,
+    srmp_group_model,
+    srmp_model,
+    srmp_model_from_name,
 )
 
 
-class ModelEnum(str, Enum):
+class ModelEnum(StrEnum):
     RMP = "RMP"
     SRMP = "SRMP"
 
@@ -138,53 +127,41 @@ class GroupModelEnum(Enum):
         set(),
     )  # type: ignore
 
+    def __str__(self) -> str:
+        return self.name
+
 
 def group_model(
     model: ModelEnum, shared_params: Container[RMPParamEnum | SRMPParamEnum]
 ):
     if model == ModelEnum.RMP:
-        if RMPParamEnum.PROFILES in shared_params:
-            if RMPParamEnum.IMPORTANCE_RELATION in shared_params:
-                if RMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
-                    return RMPGroupModelImportanceProfilesLexicographic
-                else:
-                    return RMPGroupModelImportanceProfiles
-            else:
-                if RMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
-                    return RMPGroupModelProfilesLexicographic
-                else:
-                    return RMPGroupModelProfiles
-        else:
-            if RMPParamEnum.IMPORTANCE_RELATION in shared_params:
-                if RMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
-                    return RMPGroupModelImportanceLexicographic
-                else:
-                    return RMPGroupModelImportance
-            else:
-                if RMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
-                    return RMPGroupModelLexicographic
-                else:
-                    return RMPGroupModel
+        shared_params = cast(Container[RMPParamEnum], shared_params)
+        return rmp_group_model(shared_params)
     elif model == ModelEnum.SRMP:
-        if SRMPParamEnum.PROFILES in shared_params:
-            if SRMPParamEnum.WEIGHTS in shared_params:
-                if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
-                    return SRMPGroupModelWeightsProfilesLexicographic
-                else:
-                    return SRMPGroupModelWeightsProfiles
-            else:
-                if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
-                    return SRMPGroupModelProfilesLexicographic
-                else:
-                    return SRMPGroupModelProfiles
-        else:
-            if SRMPParamEnum.WEIGHTS in shared_params:
-                if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
-                    return SRMPGroupModelWeightsLexicographic
-                else:
-                    return SRMPGroupModelWeights
-            else:
-                if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
-                    return SRMPGroupModelLexicographic
-                else:
-                    return SRMPGroupModel
+        shared_params = cast(Container[SRMPParamEnum], shared_params)
+        return srmp_group_model(shared_params)
+
+
+def model(
+    model: ModelEnum, size: int, shared_params: Container[RMPParamEnum | SRMPParamEnum]
+):
+    if model == ModelEnum.RMP:
+        shared_params = cast(Container[RMPParamEnum], shared_params)
+        return rmp_model(size, shared_params)
+    elif model == ModelEnum.SRMP:
+        shared_params = cast(Container[SRMPParamEnum], shared_params)
+        return srmp_model(size, shared_params)
+
+
+def model_from_json(s) -> Model:
+    dct = Dataclass.json_to_dict(s)
+    classname = Dataclass.pop_class_name(dct)
+    upper_classname = classname.upper()
+    if ModelEnum.SRMP.value in upper_classname:
+        cls = srmp_model_from_name(classname)
+    elif ModelEnum.RMP.value in upper_classname:
+        cls = rmp_model_from_name(classname)
+    else:
+        raise ValueError(f"Unknown model : {classname}")
+    dct = cls.decode(dct)
+    return cls.from_dict(dct)

@@ -4,8 +4,18 @@ from json import dumps, loads
 from .field import Field, GeneratedField
 
 
-@dataclass(kw_only=True)
+@dataclass()
 class Dataclass(Field):
+    @classmethod
+    def decode(cls, dct: dict):
+        dct = super().decode(dct)
+        return dct
+
+    @classmethod
+    def encode(cls, dct: dict):
+        dct = super().encode(dct)
+        return dct
+
     @classmethod
     def from_dict(cls, dct: dict):
         return cls(**dct)
@@ -14,15 +24,34 @@ class Dataclass(Field):
         return asdict(self)
 
     @classmethod
-    def from_json(cls, s):
-        dct = loads(s)
-        super().json_to_dict(dct)
+    def from_json(cls, s: str):
+        dct = cls.json_to_dict(s)
+        classname = dct.pop("__class", cls.__name__)
+        if classname != cls.__name__:
+            raise ValueError(f"Wrong class name : {classname}")
+        cls.decode(dct)
         return cls.from_dict(dct)
 
     def to_json(self):
         dct = self.to_dict()
-        super().dict_to_json(dct)
-        return dumps(dct, indent=4)
+        type(self).encode(dct)
+        return self.dict_to_json(dct)
+
+    @staticmethod
+    def json_to_dict(s: str):
+        return loads(s)
+
+    @classmethod
+    def dict_to_json(cls, dct: dict):
+        return dumps(dct | {"__class": cls.__name__}, indent=4)
+
+    @staticmethod
+    def get_class_name(dct: dict):
+        return dct["__class"]
+
+    @staticmethod
+    def pop_class_name(dct: dict):
+        return dct.pop("__class")
 
 
 @dataclass(frozen=True)
@@ -35,15 +64,30 @@ class FrozenDataclass(Field):
         return asdict(self)
 
     @classmethod
-    def from_json(cls, s):
-        dct = loads(s)
-        super().json_to_dict(dct)
+    def from_json(cls, s: str):
+        dct = cls.json_to_dict(s)
+        classname = dct.pop("__class", cls.__name__)
+        if classname != cls.__name__:
+            raise ValueError(f"Wrong class name : {classname}")
+        super().decode(dct)
         return cls.from_dict(dct)
 
     def to_json(self):
         dct = self.to_dict()
-        super().dict_to_json(dct)
-        return dumps(dct, indent=4)
+        super().encode(dct)
+        return self.dict_to_json(dct)
+
+    @staticmethod
+    def json_to_dict(s: str):
+        return loads(s)
+
+    @classmethod
+    def dict_to_json(cls, dct: dict):
+        return dumps(dct | {"__class": cls.__name__}, indent=4)
+
+    @staticmethod
+    def get_class_name(dct: dict):
+        return dct["__class"]
 
 
 @dataclass

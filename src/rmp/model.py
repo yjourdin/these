@@ -1,9 +1,10 @@
+from collections.abc import Container
 from dataclasses import dataclass
-from enum import Enum
 
 from mcda.internal.core.scales import NormalScale
 
 from ..dataclass import GeneratedDataclass
+from ..enum import StrEnum
 from ..model import GroupModel, Model
 from ..utils import print_list
 from .field import (
@@ -19,7 +20,7 @@ from .importance_relation import ImportanceRelation
 from .rmp import NormalRMP
 
 
-class RMPParamEnum(Enum):
+class RMPParamEnum(StrEnum):
     PROFILES = "profiles"
     IMPORTANCE_RELATION = "importance_relation"
     LEXICOGRAPHIC_ORDER = "lexicographic_order"
@@ -207,3 +208,43 @@ class RMPGroupModel(
             importance_relation=self.importance_relation[i],
             lexicographic_order=self.lexicographic_order[i],
         )
+
+
+def rmp_group_model(
+    shared_params: Container[RMPParamEnum],
+) -> type[GroupModel[NormalScale]]:
+    if RMPParamEnum.PROFILES in shared_params:
+        if RMPParamEnum.IMPORTANCE_RELATION in shared_params:
+            if RMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+                return RMPGroupModelImportanceProfilesLexicographic
+            else:
+                return RMPGroupModelImportanceProfiles
+        else:
+            if RMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+                return RMPGroupModelProfilesLexicographic
+            else:
+                return RMPGroupModelProfiles
+    else:
+        if RMPParamEnum.IMPORTANCE_RELATION in shared_params:
+            if RMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+                return RMPGroupModelImportanceLexicographic
+            else:
+                return RMPGroupModelImportance
+        else:
+            if RMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+                return RMPGroupModelLexicographic
+            else:
+                return RMPGroupModel
+
+
+def rmp_model(
+    size: int, shared_params: Container[RMPParamEnum] = set()
+) -> type[Model[NormalScale]]:
+    if size == 1:
+        return RMPModel
+    else:
+        return rmp_group_model(shared_params)
+
+
+def rmp_model_from_name(name: str) -> type[Model[NormalScale]]:
+    return eval(name)

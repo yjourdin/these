@@ -16,7 +16,7 @@ from .type import Solution
 class Neighbor(Generic[Solution], ABC):
     @abstractmethod
     def __call__(self, sol: Solution, rng: Generator) -> Solution:
-        pass
+        ...
 
 
 class RandomNeighbor(Neighbor[Solution]):

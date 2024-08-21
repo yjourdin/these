@@ -9,7 +9,7 @@ from .weight import balanced_weights, random_weights
 @generated_field("weights")
 @dataclass
 class WeightsField(GeneratedField):
-    weights: list[int]
+    weights: list[float]
 
     @staticmethod
     def field_random(nb_crit: int, rng: Generator, *args, **kwargs):
@@ -23,4 +23,4 @@ class WeightsField(GeneratedField):
 @group_generated_field(fieldname="weights", fieldclass=WeightsField)
 @dataclass
 class GroupWeightsField(GeneratedField):
-    weights: list[list[int]]
+    weights: list[list[float]]

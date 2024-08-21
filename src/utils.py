@@ -31,7 +31,11 @@ def midpoints(performance_table: PerformanceTable[S]) -> PerformanceTable[S]:
 def print_list(lst: list):
     result = ""
     for x in lst:
-        result += f"{x:1.3f} "
+        if isinstance(x, str):
+            s = x
+        else:
+            s = f"{x:1.3f} "
+        result += s
     return result
 
 
@@ -40,9 +44,13 @@ def to_str(o):
         case list():
             return "[" + ", ".join([to_str(i) for i in o]) + "]"
         case Enum():
-            return to_str(o.name)
+            return str(o)
         case _:
             return str(o).title().replace("_", "")
+
+
+def dict_values_to_str(dct: dict):
+    return {str(k): str(v) for k, v in dct.items()}
 
 
 def filename(dct: dict[str, Any], ext: str):

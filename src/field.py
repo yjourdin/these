@@ -4,19 +4,19 @@ from typing import Any
 
 class Field(ABC):
     @classmethod
-    def json_to_dict(cls, dct: dict):
+    def decode(cls, dct: dict):
         return dct
 
     @classmethod
-    def dict_to_json(cls, dct: dict):
+    def encode(cls, dct: dict):
         return dct
 
     @staticmethod
-    def field_to_dict(o):
+    def field_decode(o):
         return o
 
     @staticmethod
-    def field_to_json(o):
+    def field_encode(o):
         return o
 
 
@@ -25,21 +25,21 @@ def field(fieldname: str):
         __class__ = original_class  # noqa: F841
 
         @classmethod
-        def json_to_dict(cls, dct: dict):
-            super().json_to_dict(dct)  # type: ignore
+        def decode(cls, dct: dict):
+            super().decode(dct)  # type: ignore
             if fieldname in dct:
-                dct[fieldname] = original_class.field_to_dict(dct[fieldname])
-                return dct[fieldname]
+                dct[fieldname] = original_class.field_decode(dct[fieldname])
+            return dct
 
         @classmethod
-        def dict_to_json(cls, dct: dict):
-            super().dict_to_json(dct)  # type: ignore
+        def encode(cls, dct: dict):
+            super().encode(dct)  # type: ignore
             if fieldname in dct:
-                dct[fieldname] = original_class.field_to_json(dct[fieldname])
-                return dct[fieldname]
+                dct[fieldname] = original_class.field_encode(dct[fieldname])
+            return dct
 
-        original_class.json_to_dict = json_to_dict
-        original_class.dict_to_json = dict_to_json
+        original_class.decode = decode
+        original_class.encode = encode
 
         return original_class
 
@@ -65,18 +65,18 @@ def generated_field(fieldname: str):
         __class__ = original_class  # noqa: F841
 
         @classmethod
-        def json_to_dict(cls, dct: dict):
-            super().json_to_dict(dct)  # type: ignore
+        def decode(cls, dct: dict):
+            super().decode(dct)  # type: ignore
             if fieldname in dct:
-                dct[fieldname] = original_class.field_to_dict(dct[fieldname])
-                return dct[fieldname]
+                dct[fieldname] = original_class.field_decode(dct[fieldname])
+            return dct
 
         @classmethod
-        def dict_to_json(cls, dct: dict):
-            super().dict_to_json(dct)  # type: ignore
+        def encode(cls, dct: dict):
+            super().encode(dct)  # type: ignore
             if fieldname in dct:
-                dct[fieldname] = original_class.field_to_json(dct[fieldname])
-                return dct[fieldname]
+                dct[fieldname] = original_class.field_encode(dct[fieldname])
+            return dct
 
         @classmethod
         def random(cls, init_dict: dict[str, Any] = {}, *args, **kwargs):
@@ -88,8 +88,8 @@ def generated_field(fieldname: str):
             super().balanced(init_dict=init_dict, *args, **kwargs)  # type: ignore
             init_dict[fieldname] = original_class.field_balanced(*args, **kwargs)
 
-        original_class.json_to_dict = json_to_dict
-        original_class.dict_to_json = dict_to_json
+        original_class.decode = decode
+        original_class.encode = encode
         original_class.random = random
         original_class.balanced = balanced
 
@@ -103,27 +103,29 @@ def group_field(fieldname: str, fieldclass: type[Field]):
         __class__ = original_class  # noqa: F841
 
         @classmethod
-        def json_to_dict(cls, dct: dict):
-            super().json_to_dict(dct)  # type: ignore
+        def decode(cls, dct: dict):
+            super().decode(dct)  # type: ignore
             if fieldname in dct:
                 dct[fieldname] = (
-                    [fieldclass.field_to_dict(o) for o in dct[fieldname]]
+                    [fieldclass.field_decode(o) for o in dct[fieldname]]
                     if dct[fieldname]
                     else None
                 )
+            return dct
 
         @classmethod
-        def dict_to_json(cls, dct: dict):
-            super().dict_to_json(dct)  # type: ignore
+        def encode(cls, dct: dict):
+            super().encode(dct)  # type: ignore
             if fieldname in dct:
                 dct[fieldname] = (
-                    [fieldclass.field_to_json(o) for o in dct[fieldname]]
+                    [fieldclass.field_encode(o) for o in dct[fieldname]]
                     if dct[fieldname]
                     else None
                 )
+            return dct
 
-        original_class.json_to_dict = json_to_dict
-        original_class.dict_to_json = dict_to_json
+        original_class.decode = decode
+        original_class.encode = encode
 
         return original_class
 
@@ -135,24 +137,26 @@ def group_generated_field(fieldname: str, fieldclass: type[GeneratedField]):
         __class__ = original_class  # noqa: F841
 
         @classmethod
-        def json_to_dict(cls, dct: dict):
-            super().json_to_dict(dct)  # type: ignore
+        def decode(cls, dct: dict):
+            super().decode(dct)  # type: ignore
             if fieldname in dct:
                 dct[fieldname] = (
-                    [fieldclass.field_to_dict(o) for o in dct[fieldname]]
+                    [fieldclass.field_decode(o) for o in dct[fieldname]]
                     if dct[fieldname]
                     else None
                 )
+            return dct
 
         @classmethod
-        def dict_to_json(cls, dct: dict):
-            super().dict_to_json(dct)  # type: ignore
+        def encode(cls, dct: dict):
+            super().encode(dct)  # type: ignore
             if fieldname in dct:
                 dct[fieldname] = (
-                    [fieldclass.field_to_json(o) for o in dct[fieldname]]
+                    [fieldclass.field_encode(o) for o in dct[fieldname]]
                     if dct[fieldname]
                     else None
                 )
+            return dct
 
         @classmethod
         def random(cls, init_dict: dict[str, Any] = {}, *args, **kwargs):
@@ -169,8 +173,8 @@ def group_generated_field(fieldname: str, fieldclass: type[GeneratedField]):
                 for _ in range(kwargs["size"])
             ]
 
-        original_class.json_to_dict = json_to_dict
-        original_class.dict_to_json = dict_to_json
+        original_class.decode = decode
+        original_class.encode = encode
         original_class.random = random
         original_class.balanced = balanced
 

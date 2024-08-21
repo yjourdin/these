@@ -1,17 +1,14 @@
 from numpy.random import Generator
 from pandas import read_csv
-from scipy.stats import kendalltau
-
-from ..aggregator import agg_float
 from ..methods import MethodEnum
 from ..mip.main import learn_mip
 from ..models import GroupModelEnum, group_model
 from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..preference_structure.fitness import fitness_outranking
 from ..preference_structure.generate import noisy_comparisons, random_comparisons
 from ..preference_structure.io import from_csv, to_csv
 from ..sa.main import learn_sa
-from .config import MIPConfig, SAConfig, SRMPSAConfig
+from ..test.main import test
+from .config import Config, MIPConfig, SAConfig, SRMPSAConfig
 from .directory import Directory
 
 
@@ -52,6 +49,7 @@ def create_D(
     group_size: int,
     Mo_id: int,
     n: int,
+    same_alt: bool,
     error: float,
     dm_id: int,
     id: int,
@@ -64,15 +62,19 @@ def create_D(
     with dir.A_train(m, ntr, Atr_id).open("r") as f:
         A = NormalPerformanceTable(read_csv(f, header=None))
 
-    D = random_comparisons(n, A, model[dm_id], rng)
+    rng_shuffle, rng_error = rng.spawn(2)
+
+    D = random_comparisons(n, A, model[dm_id], rng_shuffle)
 
     if error:
-        D = noisy_comparisons(D, error, rng)
+        D = noisy_comparisons(D, error, rng_error)
 
-    with dir.D(m, ntr, Atr_id, Mo, ko, group_size, Mo_id, n, error, dm_id, id).open(
-        "w"
-    ) as f:
+    with dir.D(
+        m, ntr, Atr_id, Mo, ko, group_size, Mo_id, n, same_alt, error, dm_id, id
+    ).open("w") as f:
         to_csv(D, f)
+
+    return len(D)
 
 
 def run_MIP(
@@ -84,6 +86,7 @@ def run_MIP(
     group_size: int,
     Mo_id: int,
     n: int,
+    same_alt: bool,
     e: float,
     D_id: int,
     Me: GroupModelEnum,
@@ -98,9 +101,9 @@ def run_MIP(
 
     D = []
     for dm_id in range(group_size):
-        with dir.D(m, ntr, Atr_id, Mo, ko, group_size, Mo_id, n, e, dm_id, id).open(
-            "r"
-        ) as f:
+        with dir.D(
+            m, ntr, Atr_id, Mo, ko, group_size, Mo_id, n, same_alt, e, dm_id, id
+        ).open("r") as f:
             D.append(from_csv(f))
 
     best_model, best_fitness, time = learn_mip(
@@ -116,12 +119,13 @@ def run_MIP(
             group_size,
             Mo_id,
             n,
+            same_alt,
             e,
             D_id,
             Me,
             ke,
             MethodEnum.MIP,
-            config.id,
+            config,
             id,
         ).open("w") as f:
             f.write(best_model.to_json())
@@ -138,6 +142,7 @@ def run_SA(
     group_size: int,
     Mo_id: int,
     n: int,
+    same_alt: bool,
     e: float,
     D_id: int,
     Me: GroupModelEnum,
@@ -152,12 +157,13 @@ def run_SA(
 
     D = []
     for dm_id in range(group_size):
-        with dir.D(m, ntr, Atr_id, Mo, ko, group_size, Mo_id, n, e, dm_id, id).open(
-            "r"
-        ) as f:
+        with dir.D(
+            m, ntr, Atr_id, Mo, ko, group_size, Mo_id, n, same_alt, e, dm_id, id
+        ).open("r") as f:
             D.append(from_csv(f))
 
     rng_init, rng_sa = rng.spawn(2)
+
     best_model, best_fitness, time, it = learn_sa(
         Me.value[0],
         ke,
@@ -184,12 +190,13 @@ def run_SA(
         1,
         Mo_id,
         n,
+        same_alt,
         e,
         D_id,
         Me,
         ke,
         MethodEnum.SA,
-        config.id,
+        config,
         id,
     ).open("w") as f:
         f.write(best_model.to_json())
@@ -206,12 +213,13 @@ def run_test(
     group_size: int,
     Mo_id: int,
     n: int,
+    same_alt: bool,
     e: float,
     D_id: int,
     Me_type: GroupModelEnum,
     ke: int,
     method: MethodEnum,
-    config_id: int,
+    config: Config,
     Me_id: int,
     nte: int,
     Ate_id: int,
@@ -223,34 +231,24 @@ def run_test(
     with dir.Mo(m, Mo_type, ko, group_size, Mo_id).open("r") as f:
         Mo = group_model(*Mo_type.value).from_json(f.read())
 
-        with dir.Me(
-            m,
-            ntr,
-            Atr_id,
-            Mo_type,
-            ko,
-            group_size,
-            Mo_id,
-            n,
-            e,
-            D_id,
-            Me_type,
-            ke,
-            method,
-            config_id,
-            Me_id,
-        ).open("r") as f:
-            Me = group_model(*Me_type.value).from_json(f.read())
+    with dir.Me(
+        m,
+        ntr,
+        Atr_id,
+        Mo_type,
+        ko,
+        group_size,
+        Mo_id,
+        n,
+        same_alt,
+        e,
+        D_id,
+        Me_type,
+        ke,
+        method,
+        config,
+        Me_id,
+    ).open("r") as f:
+        Me = group_model(*Me_type.value).from_json(f.read())
 
-    Ro = [Mo[dm_id].rank(A_test) for dm_id in range(group_size)]
-    Re = [Me[dm_id].rank(A_test) for dm_id in range(group_size)]
-
-    test_fitness = agg_float(
-        fitness_outranking(Ro[dm_id], Re[dm_id]) for dm_id in range(group_size)
-    )
-    kendall_tau = agg_float(
-        kendalltau(Ro[dm_id].data, Re[dm_id].data).statistic
-        for dm_id in range(group_size)
-    )
-
-    return (test_fitness, kendall_tau)
+    return test(A_test, Mo, Me)

@@ -10,14 +10,14 @@ from mcda.matrices import PerformanceTable
 from mcda.relations import PreferenceStructure
 
 from .aggregator import agg_float
-from .dataclass import Dataclass
+from .dataclass import GeneratedDataclass
 from .preference_structure.fitness import fitness_comparisons_ranking
 
 S = TypeVar("S", bound=Scale, covariant=True)
 
 
 @dataclass
-class Model(Dataclass, Generic[S]):
+class Model(GeneratedDataclass, Generic[S]):
     @abstractmethod
     def rank(self, performance_table: PerformanceTable[S]) -> Ranking: ...
 

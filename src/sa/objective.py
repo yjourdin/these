@@ -11,12 +11,12 @@ from .type import Solution
 class Objective(Generic[Solution], ABC):
     @abstractmethod
     def __call__(self, sol: Solution) -> float:
-        pass
+        ...
 
     @property
     @abstractmethod
     def optimum(self) -> float:
-        pass
+        ...
 
 
 class FitnessObjective(Objective[Model]):

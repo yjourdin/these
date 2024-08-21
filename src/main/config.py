@@ -3,6 +3,7 @@ from itertools import count
 from typing import ClassVar
 
 from ..dataclass import FrozenDataclass
+from ..epsilon import EPSILON
 from ..methods import MethodEnum
 
 
@@ -11,11 +12,14 @@ class Config(FrozenDataclass):
     id: int = field(default_factory=count().__next__, init=False)
     method: ClassVar[MethodEnum]
 
+    def __str__(self) -> str:
+        return str(self.id)
+
 
 @dataclass(frozen=True)
 class MIPConfig(Config):
     method = MethodEnum.MIP
-    gamma: float = 0.001
+    gamma: float = EPSILON
 
 
 @dataclass(frozen=True)

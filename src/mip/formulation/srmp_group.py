@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from mcda.relations import PreferenceStructure
 from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
 
+from ...epsilon import EPSILON
 from ...models import ModelEnum, group_model
 from ...performance_table.normal_performance_table import NormalPerformanceTable
 from ...srmp.model import (
@@ -30,7 +31,7 @@ class MIPSRMPGroup(
         indifference_relations: list[PreferenceStructure],
         lexicographic_order: Sequence[Sequence[int]],
         shared_params: set[SRMPParamEnum] = set(),
-        gamma: float = 0.001,
+        gamma: float = EPSILON,
         inconsistencies: bool = True,
         *args,
         **kwargs,
@@ -67,11 +68,6 @@ class MIPSRMPGroup(
         k = len(lexicographic_order[0])
         # List of DMs
         DM = range(len(preference_relations))
-        DM_profiles = DM if not profiles_shared else range(1)
-        DM_weights = DM if not weights_shared else range(1)
-        DM_profiles_weights = (
-            DM if (not profiles_shared) and (not weights_shared) else range(1)
-        )
         # Indices of profiles
         profile_indices = list(range(1, k + 1))
         # Lexicographic order
@@ -87,15 +83,6 @@ class MIPSRMPGroup(
             range(len(indifference_relations[dm])) for dm in DM
         ]
 
-        def dm_profiles(i):
-            return i if not profiles_shared else 0
-
-        def dm_weights(i):
-            return i if not weights_shared else 0
-
-        def dm_profiles_weights(i):
-            return i if (not profiles_shared) and (not weights_shared) else 0
-
         #############
         # Variables #
         #############
@@ -104,7 +91,7 @@ class MIPSRMPGroup(
         w = LpVariable.dicts(
             "Weight",
             (
-                DM_weights,
+                DM,
                 M,
             ),
             lowBound=0,
@@ -114,7 +101,7 @@ class MIPSRMPGroup(
         p = LpVariable.dicts(
             "Profile",
             (
-                DM_profiles,
+                DM,
                 profile_indices,
                 M,
             ),
@@ -123,7 +110,7 @@ class MIPSRMPGroup(
         delta = LpVariable.dicts(
             "LocalConcordance",
             (
-                DM_profiles,
+                DM,
                 A_star,
                 profile_indices,
                 M,
@@ -134,7 +121,7 @@ class MIPSRMPGroup(
         omega = LpVariable.dicts(
             "WeightedLocalConcordance",
             (
-                DM_profiles_weights,
+                DM,
                 A_star,
                 profile_indices,
                 M,
@@ -189,27 +176,27 @@ class MIPSRMPGroup(
 
         # Normalized weights
 
-        for dm in DM_weights:
+        for dm in DM:
             self.prob += lpSum([w[dm][j] for j in M]) == 1
 
         for j in M:
-            for dm in DM_weights:
+            for dm in DM:
                 # Non-zero weights
                 self.prob += w[dm][j] >= self.gamma
 
-            for dm in DM_profiles:
+            for dm in DM:
                 # Constraints on the reference profiles
                 self.prob += p[dm][1][j] >= 0
                 self.prob += p[dm][k][j] <= 1
 
             for h in profile_indices:
                 if h != k:
-                    for dm in DM_profiles:
+                    for dm in DM:
                         # Dominance between the reference profiles
                         self.prob += p[dm][h + 1][j] >= p[dm][h][j]
 
                 for a in A_star:
-                    for dm in DM_profiles:
+                    for dm in DM:
                         # Constraints on the local concordances
                         self.prob += (
                             alternatives.cell[a, j] - p[dm][h][j]
@@ -220,18 +207,13 @@ class MIPSRMPGroup(
                             >= alternatives.cell[a, j] - p[dm][h][j] + self.gamma
                         )
 
-                    for dm in DM_profiles_weights:
+                    for dm in DM:
                         # Constraints on the weighted local concordances
-                        self.prob += omega[dm][a][h][j] <= w[dm_weights(dm)][j]
+                        self.prob += omega[dm][a][h][j] <= w[dm][j]
                         self.prob += omega[dm][a][h][j] >= 0
+                        self.prob += omega[dm][a][h][j] <= delta[dm][a][h][j]
                         self.prob += (
-                            omega[dm][a][h][j] <= delta[dm_profiles(dm)][a][h][j]
-                        )
-                        self.prob += (
-                            omega[dm][a][h][j]
-                            >= delta[dm_profiles(dm)][a][h][j]
-                            + w[dm_weights(dm)][j]
-                            - 1
+                            omega[dm][a][h][j] >= delta[dm][a][h][j] + w[dm][j] - 1
                         )
 
         # Constraints on the preference ranking variables
@@ -248,62 +230,26 @@ class MIPSRMPGroup(
                     a, b = relation.a, relation.b
 
                     self.prob += lpSum(
-                        [
-                            omega[dm_profiles_weights(dm)][a][
-                                lexicographic_order[dm][h]
-                            ][j]
-                            for j in M
-                        ]
+                        [omega[dm][a][lexicographic_order[dm][h]][j] for j in M]
                     ) >= (
-                        lpSum(
-                            [
-                                omega[dm_profiles_weights(dm)][b][
-                                    lexicographic_order[dm][h]
-                                ][j]
-                                for j in M
-                            ]
-                        )
+                        lpSum([omega[dm][b][lexicographic_order[dm][h]][j] for j in M])
                         + self.gamma
                         - s[dm][index][lexicographic_order[dm][h]] * (1 + self.gamma)
                         - (1 - s[dm][index][lexicographic_order[dm][h - 1]])
                     )
 
                     self.prob += lpSum(
-                        [
-                            omega[dm_profiles_weights(dm)][a][
-                                lexicographic_order[dm][h]
-                            ][j]
-                            for j in M
-                        ]
+                        [omega[dm][a][lexicographic_order[dm][h]][j] for j in M]
                     ) >= (
-                        lpSum(
-                            [
-                                omega[dm_profiles_weights(dm)][b][
-                                    lexicographic_order[dm][h]
-                                ][j]
-                                for j in M
-                            ]
-                        )
+                        lpSum([omega[dm][b][lexicographic_order[dm][h]][j] for j in M])
                         - (1 - s[dm][index][lexicographic_order[dm][h]])
                         - (1 - s[dm][index][lexicographic_order[dm][h - 1]])
                     )
 
                     self.prob += lpSum(
-                        [
-                            omega[dm_profiles_weights(dm)][a][
-                                lexicographic_order[dm][h]
-                            ][j]
-                            for j in M
-                        ]
+                        [omega[dm][a][lexicographic_order[dm][h]][j] for j in M]
                     ) <= (
-                        lpSum(
-                            [
-                                omega[dm_profiles_weights(dm)][b][
-                                    lexicographic_order[dm][h]
-                                ][j]
-                                for j in M
-                            ]
-                        )
+                        lpSum([omega[dm][b][lexicographic_order[dm][h]][j] for j in M])
                         + (1 - s[dm][index][lexicographic_order[dm][h]])
                         + (1 - s[dm][index][lexicographic_order[dm][h - 1]])
                     )
@@ -313,58 +259,38 @@ class MIPSRMPGroup(
                     a, b = relation.a, relation.b
                     if not self.inconsistencies:
                         self.prob += lpSum(
-                            [
-                                omega[dm_profiles_weights(dm)][a][
-                                    lexicographic_order[dm][h]
-                                ][j]
-                                for j in M
-                            ]
+                            [omega[dm][a][lexicographic_order[dm][h]][j] for j in M]
                         ) == lpSum(
-                            [
-                                omega[dm_profiles_weights(dm)][b][
-                                    lexicographic_order[dm][h]
-                                ][j]
-                                for j in M
-                            ]
+                            [omega[dm][b][lexicographic_order[dm][h]][j] for j in M]
                         )
                     else:
                         self.prob += lpSum(
-                            [
-                                omega[dm_profiles_weights(dm)][a][
-                                    lexicographic_order[dm][h]
-                                ][j]
-                                for j in M
-                            ]
+                            [omega[dm][a][lexicographic_order[dm][h]][j] for j in M]
                         ) <= (
                             lpSum(
-                                [
-                                    omega[dm_profiles_weights(dm)][b][
-                                        lexicographic_order[dm][h]
-                                    ][j]
-                                    for j in M
-                                ]
+                                [omega[dm][b][lexicographic_order[dm][h]][j] for j in M]
                             )
                             - (1 - s_star[dm][index])
                         )
 
                         self.prob += lpSum(
-                            [
-                                omega[dm_profiles_weights(dm)][b][
-                                    lexicographic_order[dm][h]
-                                ][j]
-                                for j in M
-                            ]
+                            [omega[dm][b][lexicographic_order[dm][h]][j] for j in M]
                         ) <= (
                             lpSum(
-                                [
-                                    omega[dm_profiles_weights(dm)][a][
-                                        lexicographic_order[dm][h]
-                                    ][j]
-                                    for j in M
-                                ]
+                                [omega[dm][a][lexicographic_order[dm][h]][j] for j in M]
                             )
                             - (1 - s_star[dm][index])
                         )
+
+        # Constraint on shared parameters
+        if profiles_shared or weights_shared:
+            for j in M:
+                for dm in DM[:-1]:
+                    if weights_shared:
+                        self.prob += w[dm][j] == w[dm + 1][j]
+                    if profiles_shared:
+                        for h in profile_indices:
+                            self.prob += p[dm][h][j] == p[dm + 1][h][j]
 
         # Solve problem
         status = self.prob.solve(self.solver)
@@ -395,9 +321,9 @@ class MIPSRMPGroup(
             size=len(DM),
             profiles=profiles,  # type: ignore
             weights=weights,  # type: ignore
-            lexicographic_order=[
+            lexicographic_order=[  # type: ignore
                 [p - 1 for p in lexicographic_order[dm][1:]] for dm in DM
-            ],  # type: ignore
+            ],
         )
 
     def learn(self):

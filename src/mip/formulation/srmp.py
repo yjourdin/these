@@ -1,7 +1,9 @@
 from collections.abc import Sequence
+
 from mcda.relations import PreferenceStructure
 from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
 
+from ...epsilon import EPSILON
 from ...performance_table.normal_performance_table import NormalPerformanceTable
 from ...srmp.model import SRMPModel
 from ..mip import MIP
@@ -14,7 +16,7 @@ class MIPSRMP(MIP[SRMPModel]):
         preference_relations: PreferenceStructure,
         indifference_relations: PreferenceStructure,
         lexicographic_order: Sequence[int],
-        gamma: float = 0.001,
+        gamma: float = EPSILON,
         inconsistencies: bool = True,
         *args,
         **kwargs,

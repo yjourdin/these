@@ -1,6 +1,6 @@
-from enum import Enum
+from .enum import StrEnum
 
 
-class MethodEnum(Enum):
+class MethodEnum(StrEnum):
     MIP = "MIP"
     SA = "SA"

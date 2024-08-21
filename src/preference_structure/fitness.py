@@ -83,9 +83,9 @@ def fitness_outranking_comparisons(
 def fitness_outranking_numpy(Oo: np.ndarray, Oe: np.ndarray) -> float:
     ind = np.triu_indices(Oo.shape[0], 1)
 
-    Or = Oo & Oe
+    Or = np.logical_not(np.logical_xor(Oo, Oe))
 
-    s = np.count_nonzero((Or | Or.transpose())[ind])
+    s = np.count_nonzero((Or & Or.transpose())[ind])
     ss = np.count_nonzero((Oo | Oo.transpose())[ind])
 
     return s / ss

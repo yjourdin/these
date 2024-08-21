@@ -166,10 +166,11 @@ cython_debug/
 profiling/*
 results/*
 .old
-jobs.py
-test*
+default_max_jobs.py
+test_*
 Instances
 irace.Rdata
 report_files
 report.html
 logs
+*.lp
