@@ -3,7 +3,7 @@ from itertools import count
 from typing import ClassVar
 
 from ..dataclass import FrozenDataclass
-from ..epsilon import EPSILON
+from ..constants import DEFAULT_MAX_TIME, EPSILON
 from ..methods import MethodEnum
 
 
@@ -11,6 +11,7 @@ from ..methods import MethodEnum
 class Config(FrozenDataclass):
     id: int = field(default_factory=count().__next__, init=False)
     method: ClassVar[MethodEnum]
+    max_time: int = DEFAULT_MAX_TIME
 
     def __str__(self) -> str:
         return str(self.id)

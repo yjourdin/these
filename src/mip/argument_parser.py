@@ -1,6 +1,6 @@
 import argparse
 
-from ..epsilon import EPSILON
+from ..constants import DEFAULT_MAX_TIME, EPSILON
 from ..models import ModelEnum
 from ..srmp.model import SRMPParamEnum
 
@@ -16,6 +16,9 @@ parser.add_argument(
     type=SRMPParamEnum,
     choices=SRMPParamEnum,
     help="Parameters shared between decision makers",
+)
+parser.add_argument(
+    "--max-time", type=int, default=DEFAULT_MAX_TIME, help="Time limit (in seconds)"
 )
 parser.add_argument(
     "-g",

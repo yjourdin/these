@@ -1,5 +1,6 @@
 from numpy.random import Generator
 from pandas import read_csv
+
 from ..methods import MethodEnum
 from ..mip.main import learn_mip
 from ..models import GroupModelEnum, group_model
@@ -109,26 +110,26 @@ def run_MIP(
     best_model, best_fitness, time = learn_mip(
         Me, ke, A, D, seed=seed, gamma=config.gamma
     )
-    if best_model:
-        with dir.Me(
-            m,
-            ntr,
-            Atr_id,
-            Mo,
-            ko,
-            group_size,
-            Mo_id,
-            n,
-            same_alt,
-            e,
-            D_id,
-            Me,
-            ke,
-            MethodEnum.MIP,
-            config,
-            id,
-        ).open("w") as f:
-            f.write(best_model.to_json())
+
+    with dir.Me(
+        m,
+        ntr,
+        Atr_id,
+        Mo,
+        ko,
+        group_size,
+        Mo_id,
+        n,
+        same_alt,
+        e,
+        D_id,
+        Me,
+        ke,
+        MethodEnum.MIP,
+        config,
+        id,
+    ).open("w") as f:
+        f.write(best_model.to_json() if best_model else "None")
 
     return (time, best_fitness)
 
@@ -173,6 +174,7 @@ def run_SA(
         rng_init,
         rng_sa,
         accept=config.accept,
+        max_time=config.max_time,
         max_it=config.max_it,
         **(
             {"amp": config.amp}
@@ -249,6 +251,9 @@ def run_test(
         config,
         Me_id,
     ).open("r") as f:
-        Me = group_model(*Me_type.value).from_json(f.read())
+        s = f.read()
+        if s == "None":
+            return 0, -1
+        Me = group_model(*Me_type.value).from_json(s)
 
     return test(A_test, Mo, Me)

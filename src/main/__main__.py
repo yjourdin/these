@@ -1,15 +1,17 @@
-import csv
 import logging.config
 from multiprocessing import Event, JoinableQueue, Process, Queue
 from threading import Thread
 
+from ..constants import SENTINEL
 from .argument_parser import parse_args
-from .csv_file import CSVFile, CSVFiles
 from .directory import Directory
 from .fieldnames import ConfigFieldnames
 from .logging import create_logging_config_dict
 from .precedence import task_precedence
-from .worker import SENTINEL, logger_thread, stopping_thread, task_manager, worker
+from .thread.logger import logger_thread
+from .thread.stop import stopping_thread
+from .thread.task_manager import task_manager
+from .worker import worker
 
 # Create stop event
 stop_event = Event()
@@ -23,6 +25,11 @@ dir = Directory(args.dir, args.name)
 dir.mkdir()
 
 
+# Start file threads
+for thread in dir.csv_files.threads.values():
+    thread.start()
+
+
 # Populate args
 args.complete()
 
@@ -33,18 +40,16 @@ with dir.args.open("w") as f:
 
 
 # Write configs
-with dir.configs.open("a", newline="") as f:
-    writer = csv.DictWriter(f, ConfigFieldnames, dialect="unix")
-    for config in args.config:
-        writer.writerow(
-            {
-                ConfigFieldnames.Id: config.id,
-                ConfigFieldnames.Method: config.method,
-                ConfigFieldnames.Config: {
-                    k: v for k, v in config.to_dict().items() if k != "id"
-                },
-            }
-        )
+for config in args.config:
+    dir.csv_files["configs"].queue.put(
+        {
+            ConfigFieldnames.Id: config.id,
+            ConfigFieldnames.Method: config.method,
+            ConfigFieldnames.Config: {
+                k: v for k, v in config.to_dict().items() if k != "id"
+            },
+        }
+    )
 
 
 # Create queues
@@ -62,20 +67,6 @@ stop_thread = Thread(target=stopping_thread, args=(stop_event, dir.run, task_que
 stop_thread.start()
 
 
-# Start file threads
-
-files: CSVFiles = CSVFiles(
-    {
-        "seeds": CSVFile(dir.seeds),
-        "D_size": CSVFile(dir.D_size),
-        "train": CSVFile(dir.train_results),
-        "test": CSVFile(dir.test_results),
-    }
-)
-for thread in files.threads.values():
-    thread.start()
-
-
 # Start task manager thread
 task_manager_thread = Thread(
     target=task_manager, args=(succeed, precede, task_queue, done_queue)
@@ -88,7 +79,7 @@ workers: list[Process] = []
 for i in range(args.jobs):
     worker_process = Process(
         target=worker,
-        args=(task_queue, done_queue, logging_queue, stop_event, dir, files.queues),
+        args=(task_queue, done_queue, logging_queue, stop_event, dir),
     )
     worker_process.start()
     workers.append(worker_process)
@@ -133,9 +124,9 @@ done_queue.join()
 
 # Stop threads
 logging_queue.put(SENTINEL)
-for queue in files.queues.values():
+for queue in dir.csv_files.queues.values():
     queue.put(SENTINEL)
 
 logging_thread.join()
-for thread in files.threads.values():
+for thread in dir.csv_files.threads.values():
     thread.join()

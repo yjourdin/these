@@ -4,6 +4,7 @@ from typing import NamedTuple, cast
 from mcda.relations import I, P, PreferenceStructure
 from pulp import value
 
+from ..constants import DEFAULT_MAX_TIME
 from ..model import Model
 from ..models import GroupModelEnum, ModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
@@ -25,6 +26,7 @@ def learn_mip(
     k: int,
     alternatives: NormalPerformanceTable,
     comparisons: list[PreferenceStructure],
+    max_time: int = DEFAULT_MAX_TIME,
     *args,
     **kwargs,
 ):
@@ -78,6 +80,7 @@ def learn_mip(
                         preference_relations,
                         indifference_relations,
                         lexicographic_order,
+                        time_limit=max(max_time - time, 0),
                         *args,
                         **kwargs,
                     )
@@ -88,6 +91,7 @@ def learn_mip(
                         indifference_relations_list,
                         lexicographic_order,
                         shared_params,
+                        time_limit=max(max_time - time, 0),
                         *args,
                         **kwargs,
                     )
@@ -99,16 +103,25 @@ def learn_mip(
                     indifference_relations_list,
                     lexicographic_order,
                     shared_params,
+                    time_limit=max(max_time - time, 0),
                     *args,
                     **kwargs,
                 )
 
             model = mip.learn()
+
+            time += mip.prob.solutionCpuTime
+            status = mip.prob.status
+            objective = mip.prob.objective
+
             if model is not None:
-                objective = mip.prob.objective
                 fitness = (
-                    cast(int, value(objective))
-                    / sum(len(comparisons[dm]) for dm in DMS)
+                    (
+                        cast(int, value(objective))
+                        / sum(len(comparisons[dm]) for dm in DMS)
+                        if status == 1
+                        else 0
+                    )
                     if objective
                     else 1
                 )
@@ -116,7 +129,6 @@ def learn_mip(
                 if fitness > best_fitness:
                     best_model = model
                     best_fitness = fitness
-                    time += mip.prob.solutionCpuTime
 
                     if best_fitness == 1:
                         break

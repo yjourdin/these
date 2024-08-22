@@ -5,6 +5,7 @@ from time import time
 from mcda.internal.core.interfaces import Learner
 from numpy.random import Generator
 
+from ..constants import DEFAULT_MAX_TIME
 from .cooling_schedule import CoolingSchedule
 from .neighbor import Neighbor
 from .objective import Objective
@@ -22,7 +23,7 @@ class SimulatedAnnealing(Learner[Solution]):
         init_sol: Solution,
         rng: Generator,
         Tf: float | None = None,
-        max_time: int | None = None,
+        max_time: int = DEFAULT_MAX_TIME,
         max_it: int | None = None,
         max_it_non_improving: int | None = None,
         log_file=None,

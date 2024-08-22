@@ -1,5 +1,7 @@
 import argparse
 
+from ..constants import DEFAULT_MAX_TIME
+
 parser = argparse.ArgumentParser()
 
 subparsers = parser.add_subparsers(dest="model", required=True, help="Model")
@@ -26,7 +28,9 @@ parser.add_argument("--L", default=1, type=int, help="Length of Markov chains")
 
 stop_group = parser.add_mutually_exclusive_group(required=True)
 stop_group.add_argument("--Tf", type=float, help="Final temperature")
-stop_group.add_argument("--max-time", type=int, help="Time limit (in seconds)")
+stop_group.add_argument(
+    "--max-time", type=int, default=DEFAULT_MAX_TIME, help="Time limit (in seconds)"
+)
 stop_group.add_argument("--max-it", type=int, help="Max number of iterations")
 stop_group.add_argument(
     "--max-it-non-improving", type=int, help="Max number of non improving iterations"

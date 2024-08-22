@@ -5,7 +5,14 @@ from ..methods import MethodEnum
 from ..models import GroupModelEnum
 from ..utils import filename_csv, filename_json
 from .config import Config
-from .fieldnames import FIELDNAMES
+from .csv_file import CSVFile, CSVFiles
+from .fieldnames import (
+    ConfigFieldnames,
+    DSizeFieldnames,
+    SeedFieldnames,
+    TestFieldnames,
+    TrainFieldnames,
+)
 
 RESULTS_DIR = "results"
 
@@ -22,11 +29,15 @@ class Directory:
         self.log = self.root_dir / "log.log"
         self.error = self.root_dir / "error.log"
         self.run = self.root_dir / "run.txt"
-        self.train_results = self.root_dir / "train_results.csv"
-        self.test_results = self.root_dir / "test_results.csv"
-        self.seeds = self.root_dir / "seeds.csv"
-        self.configs = self.root_dir / "configs.csv"
-        self.D_size = self.root_dir / "D_size.csv"
+        self.csv_files = CSVFiles(
+            {
+                "train": CSVFile(self.root_dir / "train_results.csv", TrainFieldnames),
+                "test": CSVFile(self.root_dir / "test_results.csv", TestFieldnames),
+                "seeds": CSVFile(self.root_dir / "seeds.csv", SeedFieldnames),
+                "configs": CSVFile(self.root_dir / "configs.csv", ConfigFieldnames),
+                "D_size": CSVFile(self.root_dir / "D_size.csv", DSizeFieldnames),
+            }
+        )
 
     def A_train(self, m: int, n: int, id: int):
         return self.A_train_dir / filename_csv(locals())
@@ -85,18 +96,7 @@ class Directory:
 
         self.run.touch()
 
-        with self.seeds.open("w", newline="") as f:
-            writer = csv.DictWriter(f, FIELDNAMES["seeds"], dialect="unix")
-            writer.writeheader()
-
-        with self.configs.open("w", newline="") as f:
-            writer = csv.DictWriter(f, FIELDNAMES["configs"], dialect="unix")
-            writer.writeheader()
-
-        with self.train_results.open("w", newline="") as f:
-            writer = csv.DictWriter(f, FIELDNAMES["train_results"], dialect="unix")
-            writer.writeheader()
-
-        with self.test_results.open("w", newline="") as f:
-            writer = csv.DictWriter(f, FIELDNAMES["test_results"], dialect="unix")
-            writer.writeheader()
+        for file in self.csv_files.values():
+            with file.path.open("w", newline="") as f:
+                writer = csv.DictWriter(f, file.fieldnames, dialect="unix")
+                writer.writeheader()

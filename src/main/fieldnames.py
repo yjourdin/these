@@ -1,7 +1,11 @@
 from ..enum import StrEnum
 
 
-class TrainFieldnames(StrEnum):
+class Fieldnames(StrEnum):
+    pass
+
+
+class TrainFieldnames(Fieldnames):
     M = "M"
     N_tr = "N_tr"
     Atr_id = "Atr_id"
@@ -23,7 +27,7 @@ class TrainFieldnames(StrEnum):
     It = "It."
 
 
-class TestFieldnames(StrEnum):
+class TestFieldnames(Fieldnames):
     M = "M"
     N_tr = "N_tr"
     Atr_id = "Atr_id"
@@ -46,18 +50,18 @@ class TestFieldnames(StrEnum):
     Kendall = "Kendall's tau"
 
 
-class ConfigFieldnames(StrEnum):
+class ConfigFieldnames(Fieldnames):
     Id = "Id"
     Method = "Method"
     Config = "Config"
 
 
-class SeedFieldnames(StrEnum):
+class SeedFieldnames(Fieldnames):
     Task = "Task"
     Seed = "Seed"
 
 
-class DSizeFieldnames(StrEnum):
+class DSizeFieldnames(Fieldnames):
     M = "M"
     N_tr = "N_tr"
     Atr_id = "Atr_id"
@@ -70,53 +74,3 @@ class DSizeFieldnames(StrEnum):
     Error = "Error"
     D_id = "D_id"
     Size = "Size"
-
-
-FIELDNAMES = {
-    "train_results": [
-        "M",
-        "N_tr",
-        "Atr_id",
-        "Mo",
-        "Ko",
-        "Group_size",
-        "Mo_id",
-        "N_bc",
-        "Same_alt",
-        "Error",
-        "D_id",
-        "Me",
-        "Ke",
-        "Method",
-        "Config",
-        "Me_id",
-        "Time",
-        "Fitness",
-        "It.",
-    ],
-    "test_results": [
-        "M",
-        "N_tr",
-        "Atr_id",
-        "Mo",
-        "Ko",
-        "Group_size",
-        "Mo_id",
-        "N_bc",
-        "Same_alt",
-        "Error",
-        "D_id",
-        "Me",
-        "Ke",
-        "Method",
-        "Config",
-        "Me_id",
-        "N_te",
-        "Ate_id",
-        "Fitness",
-        "Kendall's tau",
-    ],
-    "configs": ["Id", "Method", "Config"],
-    "seeds": ["Task", "Seed"],
-    "D_size": ["Task", "Size"],
-}

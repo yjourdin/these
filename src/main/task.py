@@ -76,7 +76,6 @@ class Task(FrozenDataclass):
     def __call__(
         self,
         dir: Directory,
-        queues: dict[str, Queue],
     ) -> None: ...
 
     def seed(self) -> int:
@@ -109,8 +108,8 @@ class ATrainTask(AbstractMTask):
         super().__post_init__(seeds)
         object.__setattr__(self, "Atr_seed", seeds.A_tr[self.Atr_id])
 
-    def __call__(self, dir, queues):
-        self.print_seed(queues["seeds"])
+    def __call__(self, dir):
+        self.print_seed(dir.csv_files["seeds"].queue)
         create_A_train(
             self.m,
             self.n_tr,
@@ -131,8 +130,8 @@ class ATestTask(AbstractMTask):
         super().__post_init__(seeds)
         object.__setattr__(self, "Ate_seed", seeds.A_te[self.Ate_id])
 
-    def __call__(self, dir, queues):
-        self.print_seed(queues["seeds"])
+    def __call__(self, dir: Directory):
+        self.print_seed(dir.csv_files["seeds"].queue)
         create_A_test(
             self.m,
             self.n_te,
@@ -155,8 +154,8 @@ class MoTask(AbstractMTask):
         super().__post_init__(seeds)
         object.__setattr__(self, "Mo_seed", seeds.Mo[self.group_size][self.Mo_id])
 
-    def __call__(self, dir, queues):
-        self.print_seed(queues["seeds"])
+    def __call__(self, dir: Directory):
+        self.print_seed(dir.csv_files["seeds"].queue)
         create_Mo(
             self.m,
             self.Mo,
@@ -187,8 +186,8 @@ class DTask(AbstractDTask):
     same_alt: bool = field(default=False, init=False)
     dm_id: int
 
-    def __call__(self, dir, queues):
-        self.print_seed(queues["seeds"])
+    def __call__(self, dir: Directory):
+        self.print_seed(dir.csv_files["seeds"].queue)
         D_size = create_D(
             self.m,
             self.n_tr,
@@ -205,7 +204,7 @@ class DTask(AbstractDTask):
             dir,
             self.rng(),
         )
-        queues["D_size"].put(
+        dir.csv_files["D_size"].queue.put(
             {
                 DSizeFieldnames.M: self.m,
                 DSizeFieldnames.N_tr: self.n_tr,
@@ -229,8 +228,8 @@ class DSameTask(AbstractDTask):
     same_alt: bool = field(default=True, init=False)
     dm_id: int = field(hash=False)
 
-    def __call__(self, dir, queues):
-        self.print_seed(queues["seeds"])
+    def __call__(self, dir: Directory):
+        self.print_seed(dir.csv_files["seeds"].queue)
         D_size = create_D(
             self.m,
             self.n_tr,
@@ -247,7 +246,7 @@ class DSameTask(AbstractDTask):
             dir,
             self.rng(),
         )
-        queues["D_size"].put(
+        dir.csv_files["D_size"].queue.put(
             {
                 DSizeFieldnames.M: self.m,
                 DSizeFieldnames.N_tr: self.n_tr,
@@ -285,8 +284,8 @@ class MIPTask(AbstractElicitationTask):
     method: MethodEnum = field(default=MethodEnum.MIP, init=False)
     config: MIPConfig
 
-    def __call__(self, dir, queues):
-        self.print_seed(queues["seeds"])
+    def __call__(self, dir: Directory):
+        self.print_seed(dir.csv_files["seeds"].queue)
         time, best_fitness = run_MIP(
             self.m,
             self.n_tr,
@@ -306,7 +305,7 @@ class MIPTask(AbstractElicitationTask):
             dir,
             self.rng().integers(2_000_000_000),
         )
-        queues["train"].put(
+        dir.csv_files["train"].queue.put(
             {
                 TrainFieldnames.M: self.m,
                 TrainFieldnames.N_tr: self.n_tr,
@@ -336,8 +335,8 @@ class SATask(AbstractElicitationTask):
     method: MethodEnum = field(default=MethodEnum.SA, init=False)
     config: SAConfig
 
-    def __call__(self, dir, queues):
-        self.print_seed(queues["seeds"])
+    def __call__(self, dir: Directory):
+        self.print_seed(dir.csv_files["seeds"].queue)
         time, it, best_fitness = run_SA(
             self.m,
             self.n_tr,
@@ -357,7 +356,7 @@ class SATask(AbstractElicitationTask):
             dir,
             self.rng(),
         )
-        queues["train"].put(
+        dir.csv_files["train"].queue.put(
             {
                 TrainFieldnames.M: self.m,
                 TrainFieldnames.N_tr: self.n_tr,
@@ -389,7 +388,7 @@ class TestTask(ATestTask, AbstractElicitationTask):
     def __post_init__(self, seeds: Seeds):
         super().__post_init__(seeds)
 
-    def __call__(self, dir, queues):
+    def __call__(self, dir: Directory):
         test_fitness, kendall_tau = run_test(
             self.m,
             self.n_tr,
@@ -411,7 +410,7 @@ class TestTask(ATestTask, AbstractElicitationTask):
             self.Ate_id,
             dir,
         )
-        queues["test"].put(
+        dir.csv_files["test"].queue.put(
             {
                 TestFieldnames.M: self.m,
                 TestFieldnames.N_tr: self.n_tr,

@@ -3,6 +3,7 @@ from typing import NamedTuple
 from mcda.relations import PreferenceStructure
 from numpy.random import Generator
 
+from ..constants import DEFAULT_MAX_TIME
 from ..model import Model
 from ..models import ModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
@@ -41,7 +42,7 @@ def learn_sa(
     accept: float | None = None,
     L: int = 1,
     Tf: float | None = None,
-    max_time: int | None = None,
+    max_time: int = DEFAULT_MAX_TIME,
     max_it: int | None = None,
     max_it_non_improving: int | None = None,
     log_file=None,
