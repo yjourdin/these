@@ -58,7 +58,7 @@ class MIPSRMPGroup(
         # List of criteria
         self.param["M"] = self.alternatives.criteria
         # Number of profiles
-        self.param["k"] = len(self.lexicographic_order)
+        self.param["k"] = len(self.lexicographic_order[0])
         # List of DMs
         self.param["DM"] = range(len(self.preference_relations))
         # Indices of profiles
