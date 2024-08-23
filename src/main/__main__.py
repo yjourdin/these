@@ -59,7 +59,7 @@ logging_queue: Queue = Queue()
 
 
 # Set up task precedence
-to_do, succeed, precede = task_precedence(args)
+to_do, succeed, precede, follow_up = task_precedence(args)
 
 
 # Start stoppig thread
@@ -79,7 +79,7 @@ workers: list[Process] = []
 for i in range(args.jobs):
     worker_process = Process(
         target=worker,
-        args=(task_queue, done_queue, logging_queue, stop_event, dir),
+        args=(task_queue, done_queue, logging_queue, stop_event, dir, follow_up),
     )
     worker_process.start()
     workers.append(worker_process)

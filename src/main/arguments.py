@@ -3,8 +3,8 @@ from dataclasses import dataclass, field
 from numpy.random import default_rng
 
 from ..dataclass import Dataclass
-from ..fields import GroupMeField, GroupMethodField, GroupMoField
 from ..default_max_jobs import DEFAULT_MAX_JOBS
+from ..fields import GroupMeField, GroupMethodField, GroupMoField
 from ..seed import seeds
 from .config import Config, create_config
 from .directory import RESULTS_DIR

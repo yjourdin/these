@@ -3,9 +3,9 @@ import logging.handlers
 from multiprocessing import JoinableQueue, Queue
 from multiprocessing.synchronize import Event
 
+from ..constants import SENTINEL
 from .directory import Directory
 from .task import Task
-from ..constants import SENTINEL
 
 
 def worker(
@@ -14,6 +14,7 @@ def worker(
     logging_queue: Queue,
     stop_event: Event,
     dir: Directory,
+    follow_up: dict[Task, Task],
 ):
     logging_qh = logging.handlers.QueueHandler(logging_queue)
     logging_root = logging.getLogger()
@@ -27,6 +28,10 @@ def worker(
             logger.info("start " + str(task))
             task(dir)
             logger.info("end   " + str(task))
+            if t := follow_up.get(task, None):
+                logger.info("start " + str(t))
+                t(dir)
+                logger.info("end   " + str(t))
             done_queue.put(task)
             done_queue.join()
         except Exception as e:
