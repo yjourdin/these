@@ -231,12 +231,14 @@ class MIPSRMPGroup(
             for index in self.param["preference_relations_indices"][dm]:
                 if not self.inconsistencies:
                     self.prob += (
-                        self.var["s"][dm][index][self.param["lexicographic_order"][0]]
+                        self.var["s"][dm][index][
+                            self.param["lexicographic_order"][dm][0]
+                        ]
                         == 1
                     )
                 self.prob += (
                     self.var["s"][dm][index][
-                        self.param["lexicographic_order"][self.param["k"]]
+                        self.param["lexicographic_order"][dm][self.param["k"]]
                     ]
                     == 0
                 )
@@ -249,7 +251,7 @@ class MIPSRMPGroup(
                     self.prob += lpSum(
                         [
                             self.var["omega"][dm][a][
-                                self.param["lexicographic_order"][h]
+                                self.param["lexicographic_order"][dm][h]
                             ][j]
                             for j in self.param["M"]
                         ]
@@ -257,18 +259,20 @@ class MIPSRMPGroup(
                         lpSum(
                             [
                                 self.var["omega"][dm][b][
-                                    self.param["lexicographic_order"][h]
+                                    self.param["lexicographic_order"][dm][h]
                                 ][j]
                                 for j in self.param["M"]
                             ]
                         )
                         + self.gamma
-                        - self.var["s"][dm][index][self.param["lexicographic_order"][h]]
+                        - self.var["s"][dm][index][
+                            self.param["lexicographic_order"][dm][h]
+                        ]
                         * (1 + self.gamma)
                         - (
                             1
                             - self.var["s"][dm][index][
-                                self.param["lexicographic_order"][h - 1]
+                                self.param["lexicographic_order"][dm][h - 1]
                             ]
                         )
                     )
@@ -276,7 +280,7 @@ class MIPSRMPGroup(
                     self.prob += lpSum(
                         [
                             self.var["omega"][dm][a][
-                                self.param["lexicographic_order"][h]
+                                self.param["lexicographic_order"][dm][h]
                             ][j]
                             for j in self.param["M"]
                         ]
@@ -284,7 +288,7 @@ class MIPSRMPGroup(
                         lpSum(
                             [
                                 self.var["omega"][dm][b][
-                                    self.param["lexicographic_order"][h]
+                                    self.param["lexicographic_order"][dm][h]
                                 ][j]
                                 for j in self.param["M"]
                             ]
@@ -292,13 +296,13 @@ class MIPSRMPGroup(
                         - (
                             1
                             - self.var["s"][dm][index][
-                                self.param["lexicographic_order"][h]
+                                self.param["lexicographic_order"][dm][h]
                             ]
                         )
                         - (
                             1
                             - self.var["s"][dm][index][
-                                self.param["lexicographic_order"][h - 1]
+                                self.param["lexicographic_order"][dm][h - 1]
                             ]
                         )
                     )
@@ -306,7 +310,7 @@ class MIPSRMPGroup(
                     self.prob += lpSum(
                         [
                             self.var["omega"][dm][a][
-                                self.param["lexicographic_order"][h]
+                                self.param["lexicographic_order"][dm][h]
                             ][j]
                             for j in self.param["M"]
                         ]
@@ -314,7 +318,7 @@ class MIPSRMPGroup(
                         lpSum(
                             [
                                 self.var["omega"][dm][b][
-                                    self.param["lexicographic_order"][h]
+                                    self.param["lexicographic_order"][dm][h]
                                 ][j]
                                 for j in self.param["M"]
                             ]
@@ -322,13 +326,13 @@ class MIPSRMPGroup(
                         + (
                             1
                             - self.var["s"][dm][index][
-                                self.param["lexicographic_order"][h]
+                                self.param["lexicographic_order"][dm][h]
                             ]
                         )
                         + (
                             1
                             - self.var["s"][dm][index][
-                                self.param["lexicographic_order"][h - 1]
+                                self.param["lexicographic_order"][dm][h - 1]
                             ]
                         )
                     )
@@ -340,14 +344,14 @@ class MIPSRMPGroup(
                         self.prob += lpSum(
                             [
                                 self.var["omega"][dm][a][
-                                    self.param["lexicographic_order"][h]
+                                    self.param["lexicographic_order"][dm][h]
                                 ][j]
                                 for j in self.param["M"]
                             ]
                         ) == lpSum(
                             [
                                 self.var["omega"][dm][b][
-                                    self.param["lexicographic_order"][h]
+                                    self.param["lexicographic_order"][dm][h]
                                 ][j]
                                 for j in self.param["M"]
                             ]
@@ -356,7 +360,7 @@ class MIPSRMPGroup(
                         self.prob += lpSum(
                             [
                                 self.var["omega"][dm][a][
-                                    self.param["lexicographic_order"][h]
+                                    self.param["lexicographic_order"][dm][h]
                                 ][j]
                                 for j in self.param["M"]
                             ]
@@ -364,7 +368,7 @@ class MIPSRMPGroup(
                             lpSum(
                                 [
                                     self.var["omega"][dm][b][
-                                        self.param["lexicographic_order"][h]
+                                        self.param["lexicographic_order"][dm][h]
                                     ][j]
                                     for j in self.param["M"]
                                 ]
@@ -375,7 +379,7 @@ class MIPSRMPGroup(
                         self.prob += lpSum(
                             [
                                 self.var["omega"][dm][b][
-                                    self.param["lexicographic_order"][h]
+                                    self.param["lexicographic_order"][dm][h]
                                 ][j]
                                 for j in self.param["M"]
                             ]
@@ -383,7 +387,7 @@ class MIPSRMPGroup(
                             lpSum(
                                 [
                                     self.var["omega"][dm][a][
-                                        self.param["lexicographic_order"][h]
+                                        self.param["lexicographic_order"][dm][h]
                                     ][j]
                                     for j in self.param["M"]
                                 ]
