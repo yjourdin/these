@@ -40,6 +40,7 @@ def learn_mip(
     best_model = None
     best_fitness: float = 0
     time = 0
+    time_left = max_time
 
     preference_relations_list: list[PreferenceStructure] = []
     indifference_relations_list: list[PreferenceStructure] = []
@@ -71,67 +72,71 @@ def learn_mip(
             if lex_order_shared
             else product(permutations(range(k)), repeat=NB_DM)
         ):
-            mip: MIP
-            if lex_order_shared:
-                lexicographic_order = cast(tuple[int, ...], lexicographic_order)
-                if NB_DM == 1:
-                    mip = MIPSRMP(
-                        alternatives,
-                        preference_relations,
-                        indifference_relations,
-                        lexicographic_order,
-                        time_limit=max(max_time - time, 0),
-                        *args,
-                        **kwargs,
-                    )
+            if time_left > 1:
+                mip: MIP
+                if lex_order_shared:
+                    lexicographic_order = cast(tuple[int, ...], lexicographic_order)
+                    if NB_DM == 1:
+                        mip = MIPSRMP(
+                            alternatives,
+                            preference_relations,
+                            indifference_relations,
+                            lexicographic_order,
+                            time_limit=time_left,
+                            *args,
+                            **kwargs,
+                        )
+                    else:
+                        mip = MIPSRMPGroupLexicographicOrder(
+                            alternatives,
+                            preference_relations_list,
+                            indifference_relations_list,
+                            lexicographic_order,
+                            shared_params,
+                            time_limit=time_left,
+                            *args,
+                            **kwargs,
+                        )
                 else:
-                    mip = MIPSRMPGroupLexicographicOrder(
+                    lexicographic_order = cast(
+                        tuple[tuple[int, ...]], lexicographic_order
+                    )
+                    mip = MIPSRMPGroup(
                         alternatives,
                         preference_relations_list,
                         indifference_relations_list,
                         lexicographic_order,
                         shared_params,
-                        time_limit=max(max_time - time, 0),
+                        time_limit=time_left,
                         *args,
                         **kwargs,
                     )
-            else:
-                lexicographic_order = cast(tuple[tuple[int, ...]], lexicographic_order)
-                mip = MIPSRMPGroup(
-                    alternatives,
-                    preference_relations_list,
-                    indifference_relations_list,
-                    lexicographic_order,
-                    shared_params,
-                    time_limit=max(max_time - time, 0),
-                    *args,
-                    **kwargs,
-                )
 
-            model = mip.learn()
+                model = mip.learn()
 
-            time += mip.prob.solutionCpuTime
-            status = mip.prob.status
-            objective = mip.prob.objective
+                time += mip.prob.solutionCpuTime
+                time_left = max_time - time
+                status = mip.prob.status
+                objective = mip.prob.objective
 
-            if model is not None:
-                fitness = (
-                    (
-                        cast(int, value(objective))
-                        / sum(len(comparisons[dm]) for dm in DMS)
-                        if status == 1
-                        else 0
+                if model is not None:
+                    fitness = (
+                        (
+                            cast(int, value(objective))
+                            / sum(len(comparisons[dm]) for dm in DMS)
+                            if status == 1
+                            else 0
+                        )
+                        if objective
+                        else 1
                     )
-                    if objective
-                    else 1
-                )
 
-                if fitness > best_fitness:
-                    best_model = model
-                    best_fitness = fitness
+                    if fitness > best_fitness:
+                        best_model = model
+                        best_fitness = fitness
 
-                    if best_fitness == 1:
-                        break
+                        if best_fitness == 1:
+                            break
 
         return MIPResult(best_model, best_fitness, time)
     return MIPResult()
