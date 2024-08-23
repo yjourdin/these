@@ -72,7 +72,7 @@ def learn_mip(
             if lex_order_shared
             else product(permutations(range(k)), repeat=NB_DM)
         ):
-            if time_left > 1:
+            if time_left >= 1:
                 mip: MIP
                 if lex_order_shared:
                     lexicographic_order = cast(tuple[int, ...], lexicographic_order)
