@@ -8,7 +8,7 @@ parser.add_argument("args", type=argparse.FileType("r"), help="Arguments file")
 parser.add_argument("-d", "--dir", type=str, help="Results directory")
 parser.add_argument("-n", "--name", type=str, help="Experiment name")
 parser.add_argument("-j", "--jobs", type=int, help="Number of jobs")
-parser.add_argument("-s", "--stop-error", type=bool, help="Stop on error")
+parser.add_argument("-s", "--stop-error", action="store_true", help="Stop on error")
 
 
 def parse_args():
