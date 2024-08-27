@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
 
-from .field import Field
-from .field import field as custom_field
-from .field import group_field
-from .methods import MethodEnum
-from .models import GroupModelEnum
+from ..field import Field
+from ..field import field as custom_field
+from ..field import group_field
+from ..methods import MethodEnum
+from ..models import GroupModelEnum
+from .config import Config, create_config
 
 
 @custom_field("method")
@@ -50,3 +51,23 @@ class GroupMoField(Field):
 @dataclass
 class GroupMeField(Field):
     Me: list[GroupModelEnum] | None = None
+
+
+@custom_field("config")
+@dataclass
+class ConfigField(Field):
+    config: Config
+
+    @staticmethod
+    def field_decode(o):
+        return create_config(**o)
+
+    @staticmethod
+    def field_encode(o):
+        return o
+
+
+@group_field(fieldname="config", fieldclass=ConfigField)
+@dataclass
+class GroupConfigField(Field):
+    config: list[Config] = field(default_factory=list)

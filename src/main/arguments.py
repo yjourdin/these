@@ -4,15 +4,17 @@ from numpy.random import default_rng
 
 from ..dataclass import Dataclass
 from ..default_max_jobs import DEFAULT_MAX_JOBS
-from ..fields import GroupMeField, GroupMethodField, GroupMoField
 from ..seed import seeds
-from .config import Config, create_config
+from .config import create_config
 from .directory import RESULTS_DIR
+from .fields import GroupConfigField, GroupMeField, GroupMethodField, GroupMoField
 from .seeds import Seeds
 
 
 @dataclass
-class Arguments(Dataclass, GroupMethodField, GroupMoField, GroupMeField):
+class Arguments(
+    Dataclass, GroupMethodField, GroupMoField, GroupMeField, GroupConfigField
+):
     dir: str = RESULTS_DIR
     name: str = ""
     jobs: int = DEFAULT_MAX_JOBS
@@ -33,7 +35,6 @@ class Arguments(Dataclass, GroupMethodField, GroupMoField, GroupMeField):
     same_alt: list[bool] = field(default_factory=lambda: [True])
     Ke: list[int] | None = None
     error: list[float] = field(default_factory=lambda: [0])
-    config: list[Config] = field(default_factory=list)
 
     def complete(self):
         # Create random seeds
