@@ -1,3 +1,5 @@
+from itertools import combinations
+
 from scipy.stats import kendalltau
 
 from ..aggregator import agg_float
@@ -25,5 +27,21 @@ def test(A: NormalPerformanceTable, Mo: Model, Me: Model):
     kendall_tau = agg_float(
         kendalltau(Ro[dm_id].data, Re[dm_id].data).statistic for dm_id in range(NB_DM)
     )
+    Mo_intra_kendall_tau = (
+        agg_float(
+            kendalltau(Ro[dm_a].data, Ro[dm_b].data).statistic
+            for dm_a, dm_b in combinations(range(NB_DM), 2)
+        )
+        if NB_DM > 1
+        else None
+    )
+    Me_intra_kendall_tau = (
+        agg_float(
+            kendalltau(Re[dm_a].data, Re[dm_b].data).statistic
+            for dm_a, dm_b in combinations(range(NB_DM), 2)
+        )
+        if NB_DM > 1
+        else None
+    )
 
-    return (test_fitness, kendall_tau)
+    return (test_fitness, kendall_tau, Mo_intra_kendall_tau, Me_intra_kendall_tau)

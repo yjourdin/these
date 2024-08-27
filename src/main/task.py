@@ -389,26 +389,28 @@ class TestTask(ATestTask, AbstractElicitationTask):
         super().__post_init__(seeds)
 
     def __call__(self, dir: Directory):
-        test_fitness, kendall_tau = run_test(
-            self.m,
-            self.n_tr,
-            self.Atr_id,
-            self.Mo,
-            self.ko,
-            self.group_size,
-            self.Mo_id,
-            self.n,
-            self.same_alt,
-            self.error,
-            self.D_id,
-            self.Me,
-            self.ke,
-            self.method,
-            self.config,
-            self.Me_id,
-            self.n_te,
-            self.Ate_id,
-            dir,
+        test_fitness, kendall_tau, Mo_intra_kendall_tau, Me_intra_kendall_tau = (
+            run_test(
+                self.m,
+                self.n_tr,
+                self.Atr_id,
+                self.Mo,
+                self.ko,
+                self.group_size,
+                self.Mo_id,
+                self.n,
+                self.same_alt,
+                self.error,
+                self.D_id,
+                self.Me,
+                self.ke,
+                self.method,
+                self.config,
+                self.Me_id,
+                self.n_te,
+                self.Ate_id,
+                dir,
+            )
         )
         dir.csv_files["test"].queue.put(
             {
@@ -432,5 +434,7 @@ class TestTask(ATestTask, AbstractElicitationTask):
                 TestFieldnames.Ate_id: self.Ate_id,
                 TestFieldnames.Fitness: test_fitness,
                 TestFieldnames.Kendall: kendall_tau,
+                TestFieldnames.Mo_Intra_Kendall: Mo_intra_kendall_tau,
+                TestFieldnames.Me_Intra_Kendall: Me_intra_kendall_tau,
             }
         )

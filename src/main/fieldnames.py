@@ -48,6 +48,8 @@ class TestFieldnames(Fieldnames):
     Ate_id = "Ate_id"
     Fitness = "Fitness"
     Kendall = "Kendall's tau"
+    Mo_Intra_Kendall = "Mo Intra Kendall's tau"
+    Me_Intra_Kendall = "Me Intra Kendall's tau"
 
 
 class ConfigFieldnames(Fieldnames):

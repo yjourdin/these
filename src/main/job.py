@@ -108,7 +108,7 @@ def run_MIP(
             D.append(from_csv(f))
 
     best_model, best_fitness, time = learn_mip(
-        Me, ke, A, D, seed=seed, gamma=config.gamma
+        Me, ke, A, D, config.max_time, seed=seed, gamma=config.gamma
     )
 
     with dir.Me(
@@ -253,7 +253,7 @@ def run_test(
     ).open("r") as f:
         s = f.read()
         if s == "None":
-            return 0, -1
+            return None, None, None, None
         Me = group_model(*Me_type.value).from_json(s)
 
     return test(A_test, Mo, Me)
