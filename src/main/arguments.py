@@ -16,6 +16,7 @@ class Arguments(Dataclass, GroupMethodField, GroupMoField, GroupMeField):
     dir: str = RESULTS_DIR
     name: str = ""
     jobs: int = DEFAULT_MAX_JOBS
+    stop_error: bool = True
     seed: int | None = None
     nb_A_tr: int = 1
     nb_Mo: int | None = None

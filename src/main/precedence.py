@@ -155,7 +155,7 @@ def task_precedence(args: Arguments):
                                 args.N_te if args.N_te else [n_tr],
                                 range(args.nb_A_te) if args.nb_A_te else [Me_id],
                             ):
-                                # t_Ate = ATestTask(args.seeds, m, n_te, Ate_id)
+                                t_Ate = ATestTask(args.seeds, m, n_te, Ate_id)
                                 t_test = TestTask(
                                     args.seeds,
                                     m,
@@ -178,9 +178,9 @@ def task_precedence(args: Arguments):
                                     Ate_id,
                                 )
 
-                                # succeed[t_Me] += [t_test]
-                                # succeed[t_Ate] += [t_test]
-                                # precede[t_test] += [t_Ate, t_Me]
+                                succeed[t_Me] += [t_test]
+                                succeed[t_Ate] += [t_test]
+                                precede[t_test] += [t_Ate, t_Me]
                                 follow_up[t_Me] = t_test
 
     return to_do, succeed, precede, follow_up

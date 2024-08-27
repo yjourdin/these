@@ -20,9 +20,9 @@ NB_DM = Mo.size if isinstance(Mo, GroupModel) else 1
 
 
 # Test
-fitness, kendall_tau = test(A, Mo, Me)
+test_list = test(A, Mo, Me)
 
 
 # Write results
 if args.result is not None:
-    args.result.write(f"{fitness} {kendall_tau}\n")
+    args.result.write(" ".join([str(x) for x in test_list]) + "\n")

@@ -1,6 +1,4 @@
 import argparse
-from functools import partial
-from operator import getitem
 from sys import stdout
 
 from .model import RMPParamEnum
@@ -12,7 +10,7 @@ parser.add_argument(
     "--shared",
     nargs="*",
     default=[],
-    type=partial(getitem, RMPParamEnum),  # type: ignore
+    type=RMPParamEnum,  # type: ignore
     choices=RMPParamEnum,
     help="Parameters shared between decision makers",
 )
