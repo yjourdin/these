@@ -18,5 +18,5 @@ def parse_args():
     arguments.dir = args.dir or arguments.dir
     arguments.name = args.name or arguments.name
     arguments.jobs = args.jobs or arguments.jobs
-    arguments.stop_error = args.stop_error or arguments.stop_error
+    arguments.stop_error = arguments.stop_error
     return arguments
