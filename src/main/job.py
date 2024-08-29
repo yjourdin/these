@@ -65,7 +65,7 @@ def create_D(
 
     rng_shuffle, rng_error = rng.spawn(2)
 
-    D = random_comparisons(n, A, model[dm_id], rng_shuffle)
+    D = random_comparisons(A, model[dm_id], n, rng_shuffle)
 
     if error:
         D = noisy_comparisons(D, error, rng_error)

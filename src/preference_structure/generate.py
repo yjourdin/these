@@ -1,67 +1,83 @@
+from itertools import combinations
+from typing import Any, Iterator, cast
+
 import numpy as np
+from mcda import PerformanceTable
 from mcda.internal.core.values import Ranking
-from mcda.matrices import PerformanceTable
 from mcda.relations import I, P, PreferenceStructure
 from numpy.random import Generator
 
 from ..model import Model
+from ..performance_table.dominance_relation import DominanceRelation, dominance_relation
 
 
-def random_comparisons(
-    nb: int,
-    alternatives: PerformanceTable,
-    model: Model,
-    rng: Generator,
-) -> PreferenceStructure:
-    ranking = model.rank(alternatives)
-    ranking_dict = ranking.data.to_dict()
-    labels = ranking.labels
-    all_pairs = np.array(np.triu_indices(len(alternatives.data), 1)).transpose()
-    rng.shuffle(all_pairs)
+def from_ranking(
+    ranking: Ranking,
+    nb: int | None = None,
+    rng: Generator | None = None,
+    dominance_relation: DominanceRelation | None = None,
+    check_dominance=False,
+    remove_dominance=False,
+):
     result = PreferenceStructure()
-    for ia, ib in all_pairs:
-        a, b = labels[ia], labels[ib]
-        if (not (alternatives.data.loc[a] >= alternatives.data.loc[b]).all()) and (
-            not (alternatives.data.loc[b] >= alternatives.data.loc[a]).all()
-        ):
-            if ranking_dict[a] < ranking_dict[b]:
-                result._relations.append(P(a, b))
-            elif ranking_dict[a] == ranking_dict[b]:
-                result._relations.append(I(a, b))
-            else:
-                result._relations.append(P(b, a))
-        if len(result) == nb:
+    n = 0
+    pairs: Iterator[tuple[Any, Any]] = combinations(ranking, 2)
+    ranks = ranking.data.to_dict()
+    if nb:
+        if rng:
+            pairs = cast(
+                Iterator[tuple[Any, Any]],
+                rng.permutation(np.array(pairs)),
+            )
+    for a, b in pairs:
+        if remove_dominance:
+            assert dominance_relation
+            if (a, b) in dominance_relation:
+                continue
+        if ranks[a] < ranks[b]:
+            if check_dominance:
+                assert dominance_relation
+                if (b, a) in dominance_relation:
+                    raise ValueError("ranking does not respect dominance")
+            result._relations.append(P(a, b))
+            n += 1
+        elif ranks[a] == ranks[b]:
+            if check_dominance:
+                assert dominance_relation
+                if ((a, b) in dominance_relation) or ((b, a) in dominance_relation):
+                    raise ValueError("ranking does not respect dominance")
+            result._relations.append(I(a, b))
+            n += 1
+        else:
+            if check_dominance:
+                assert dominance_relation
+                if (a, b) in dominance_relation:
+                    raise ValueError("ranking does not respect dominance")
+            result._relations.append(P(b, a))
+            n += 1
+        if n == nb:
             break
     return result
 
 
-def from_ranking(ranking: Ranking, alternatives: PerformanceTable):
-    ranking_dict = ranking.data.to_dict()
-    labels = ranking.labels
-    all_pairs = np.array(np.triu_indices(len(ranking.data), 1)).transpose()
-    result = PreferenceStructure()
-    for ia, ib in all_pairs:
-        a, b = labels[ia], labels[ib]
-        if ranking_dict[a] < ranking_dict[b]:
-            if not (alternatives.data.loc[a] >= alternatives.data.loc[a]).all():
-                result._relations.append(P(a, b))
-        elif ranking_dict[a] == ranking_dict[b]:
-            result._relations.append(I(a, b))
-        else:
-            if not (alternatives.data.loc[b] >= alternatives.data.loc[a]).all():
-                result._relations.append(P(b, a))
-    return result
-
-
-def all_comparisons(
-    alternatives: PerformanceTable, model: Model
-) -> PreferenceStructure:
-    return from_ranking(model.rank(alternatives), alternatives)
+def random_comparisons(
+    alternatives: PerformanceTable,
+    model: Model,
+    nb: int | None = None,
+    rng: Generator | None = None,
+):
+    return from_ranking(
+        model.rank(alternatives),
+        nb=nb,
+        rng=rng,
+        dominance_relation=dominance_relation(alternatives),
+        remove_dominance=True,
+    )
 
 
 def noisy_comparisons(
     comparisons: PreferenceStructure, error_rate: float, rng: Generator
-) -> PreferenceStructure:
+):
     result = PreferenceStructure()
     relations = comparisons.relations
     selected_relations = rng.choice(
