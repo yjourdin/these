@@ -6,7 +6,7 @@ from threading import Thread
 
 from ..dataclass import FrozenDataclass
 from .fieldnames import Fieldnames
-from .thread.csv_file import csv_file_thread
+from .threads.csv_file import csv_file_thread
 
 
 @dataclass(frozen=True)

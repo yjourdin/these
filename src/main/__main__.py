@@ -9,9 +9,9 @@ from .directory import Directory
 from .fieldnames import ConfigFieldnames
 from .logging import create_logging_config_dict
 from .precedence import task_precedence
-from .thread.logger import logger_thread
-from .thread.stop import stopping_thread
-from .thread.task_manager import task_manager
+from .threads.logger import logger_thread
+from .threads.stop import stopping_thread
+from .threads.task_manager import task_manager
 from .worker import worker
 
 # Create stop event
