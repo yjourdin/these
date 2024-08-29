@@ -1,5 +1,5 @@
 from mcda.internal.core.scales import NormalScale, QuantitativeScale
-from mcda.matrices import PerformanceTable
+from mcda import PerformanceTable
 from mcda.outranking.srmp import SRMP
 from numpy.random import Generator
 

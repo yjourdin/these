@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Generic
 
-from mcda.matrices import PerformanceTable
+from mcda import PerformanceTable
 from mcda.relations import PreferenceStructure
 
 from ..model import Model
@@ -10,13 +10,11 @@ from .type import Solution
 
 class Objective(Generic[Solution], ABC):
     @abstractmethod
-    def __call__(self, sol: Solution) -> float:
-        ...
+    def __call__(self, sol: Solution) -> float: ...
 
     @property
     @abstractmethod
-    def optimum(self) -> float:
-        ...
+    def optimum(self) -> float: ...
 
 
 class FitnessObjective(Objective[Model]):

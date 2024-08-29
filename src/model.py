@@ -6,7 +6,7 @@ from typing import Generic, TypeVar, overload
 
 from mcda.internal.core.scales import Scale
 from mcda.internal.core.values import Ranking
-from mcda.matrices import PerformanceTable
+from mcda import PerformanceTable
 from mcda.relations import PreferenceStructure
 
 from .aggregator import agg_float

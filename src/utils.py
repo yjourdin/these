@@ -4,7 +4,7 @@ from typing import Any, Callable, TypeVar
 
 import numpy as np
 from mcda.internal.core.scales import OrdinalScale
-from mcda.matrices import PerformanceTable
+from mcda import PerformanceTable
 
 S = TypeVar("S", bound=OrdinalScale, covariant=True)
 

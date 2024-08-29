@@ -1,8 +1,8 @@
 from typing import Any
 
 import numpy as np
+from mcda import PerformanceTable
 from mcda.internal.core.scales import NormalScale
-from mcda.matrices import PerformanceTable
 from mcda.outranking.srmp import SRMP, ProfileWiseOutranking
 from mcda.scales import DiscreteQuantitativeScale, PreferenceDirection
 from mcda.values import CommensurableValues, Values

@@ -10,11 +10,12 @@ from __future__ import annotations
 from typing import cast
 
 import numpy as np
+from mcda import PerformanceTable
 from mcda.internal.core.interfaces import Ranker
 from mcda.internal.core.matrices import OutrankingMatrix
 from mcda.internal.core.scales import NormalScale
 from mcda.internal.core.values import Ranking
-from mcda.matrices import PerformanceTable, create_outranking_matrix
+from mcda.matrices import create_outranking_matrix
 from mcda.plot import (
     Annotation,
     AreaPlot,
@@ -115,7 +116,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
 
         :return:
         """
-        comp_df = (self.performance_table.data >= self.profile.data)
+        comp_df = self.performance_table.data >= self.profile.data
 
         criteria_subset = [frozenset(a.nonzero()[0]) for a in comp_df.values]
 

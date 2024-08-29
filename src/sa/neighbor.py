@@ -5,18 +5,17 @@ from itertools import chain, combinations
 from typing import Any, Collection, Generic, cast
 
 import numpy as np
-from mcda.matrices import PerformanceTable
+from mcda import PerformanceTable
 from numpy.random import Generator
 
-from ..srmp.model import SRMPModel
 from ..rmp.model import RMPModelCapacity
+from ..srmp.model import SRMPModel
 from .type import Solution
 
 
 class Neighbor(Generic[Solution], ABC):
     @abstractmethod
-    def __call__(self, sol: Solution, rng: Generator) -> Solution:
-        ...
+    def __call__(self, sol: Solution, rng: Generator) -> Solution: ...
 
 
 class RandomNeighbor(Neighbor[Solution]):
