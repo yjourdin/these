@@ -14,7 +14,7 @@ def random_capacity(nb_crit: int, rng: Generator) -> dict[frozenset[Any], float]
         run(
             [
                 "julia",
-                "src/rmp/random_capacity.jl",
+                "src/rmp/generate_linext.jl",
                 f"{nb_crit}",
                 f"{rng.integers(2**16)}",
             ],
