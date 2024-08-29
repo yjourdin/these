@@ -11,11 +11,17 @@ args = parse_args()
 if args.size == 1:
     if args.balanced:
         model = RMPModel.balanced(
-            args.k, args.m, default_rng(args.seed), args.profiles_values
+            nb_profiles=args.k,
+            nb_crit=args.m,
+            rng=default_rng(args.seed),
+            profiles_values=args.profiles_values,
         )
     else:
         model = RMPModel.random(
-            args.k, args.m, default_rng(args.seed), args.profiles_values
+            nb_profiles=args.k,
+            nb_crit=args.m,
+            rng=default_rng(args.seed),
+            profiles_values=args.profiles_values,
         )
 else:
     model_class = rmp_group_model(args.shared)

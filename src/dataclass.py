@@ -96,10 +96,10 @@ class GeneratedDataclass(Dataclass, GeneratedField):
     def random(cls, *args, **kwargs):
         init_dict = kwargs
         super().random(init_dict=init_dict, *args, **kwargs)
-        return cls(**{k.name: kwargs[k.name] for k in fields(cls)})
+        return cls(**{k.name: init_dict[k.name] for k in fields(cls)})
 
     @classmethod
     def balanced(cls, *args, **kwargs):
         init_dict = kwargs
         super().random(init_dict=init_dict, *args, **kwargs)
-        return cls(**{k.name: kwargs[k.name] for k in fields(cls)})
+        return cls(**{k.name: init_dict[k.name] for k in fields(cls)})
