@@ -17,10 +17,6 @@ class MethodField(Field):
     def field_decode(o):
         return MethodEnum(o)
 
-    @staticmethod
-    def field_encode(o):
-        return str(o)
-
 
 @group_field(fieldname="method", fieldclass=MethodField)
 @dataclass
@@ -35,10 +31,6 @@ class ModelField(Field):
     @staticmethod
     def field_decode(o):
         return GroupModelEnum[o]
-
-    @staticmethod
-    def field_encode(o):
-        return str(o)
 
 
 @group_field(fieldname="Mo", fieldclass=ModelField)
@@ -61,10 +53,6 @@ class ConfigField(Field):
     @staticmethod
     def field_decode(o):
         return create_config(**o)
-
-    @staticmethod
-    def field_encode(o):
-        return o
 
 
 @group_field(fieldname="config", fieldclass=ConfigField)
