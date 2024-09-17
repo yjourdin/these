@@ -1,4 +1,2 @@
 mcda
-seaborn
-snakeviz
 more-itertools
