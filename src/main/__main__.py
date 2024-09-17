@@ -1,5 +1,5 @@
 import logging.config
-from multiprocessing import Event, JoinableQueue, Pipe, Process, Queue
+from multiprocessing import Pipe, Process, Queue
 from multiprocessing.connection import Connection
 from threading import Thread
 
@@ -14,16 +14,41 @@ from .threads.stop import stopping_thread
 from .threads.task_manager import task_manager
 from .worker import worker
 
-# Create stop event
-stop_event = Event()
-
 # Parse arguments
 args = parse_args()
 
 
-# Create directory
+# Populate args
+args.complete()
+
+
+# Initialise directory
 dir = Directory(args.dir, args.name)
-dir.mkdir()
+
+
+if not args.extend:
+    # Create Directory
+    dir.mkdir()
+
+    # Write arguments
+    with dir.args.open("w") as f:
+        f.write(args.to_json())
+
+    # Write configs
+    for config in args.config:
+        dir.csv_files["configs"].queue.put(
+            {
+                ConfigFieldnames.Id: config.id,
+                ConfigFieldnames.Method: config.method,
+                ConfigFieldnames.Config: {
+                    k: v for k, v in config.to_dict().items() if k != "id"
+                },
+            }
+        )
+
+
+# Create run file
+dir.run.touch()
 
 
 # Start file threads
@@ -31,39 +56,17 @@ for thread in dir.csv_files.threads.values():
     thread.start()
 
 
-# Populate args
-args.complete()
-
-
-# Write arguments
-with dir.args.open("w") as f:
-    f.write(args.to_json())
-
-
-# Write configs
-for config in args.config:
-    dir.csv_files["configs"].queue.put(
-        {
-            ConfigFieldnames.Id: config.id,
-            ConfigFieldnames.Method: config.method,
-            ConfigFieldnames.Config: {
-                k: v for k, v in config.to_dict().items() if k != "id"
-            },
-        }
-    )
-
-
-# Create queues
-task_queue: JoinableQueue = JoinableQueue()
+# Create logging queue
 logging_queue: Queue = Queue()
 
 
 # Set up task precedence
-to_do, succeed, precede, follow_up = task_precedence(args)
+start, succeed, precede, priority_succeed = task_precedence(args)
 
 
 # Start stoppig thread
-stop_thread = Thread(target=stopping_thread, args=(stop_event, dir.run, task_queue))
+stop_connection, task_manager_connection = Pipe()
+stop_thread = Thread(target=stopping_thread, args=(dir.run, stop_connection))
 stop_thread.start()
 
 
@@ -76,10 +79,8 @@ for i in range(args.jobs):
         target=worker,
         args=(
             dir,
-            task_queue,
             worker_connection,
             logging_queue,
-            stop_event,
             args.stop_error,
         ),
     )
@@ -88,50 +89,43 @@ for i in range(args.jobs):
     workers.append(worker_process)
 
 
-# Start task manager thread
-task_manager_thread = Thread(
-    target=task_manager,
-    args=(succeed, precede, follow_up, task_queue, connections, stop_event),
-)
-task_manager_thread.start()
-
-
 # Start logging thread
 logging.config.dictConfig(create_logging_config_dict(dir))
 logging_thread = Thread(target=logger_thread, args=(logging_queue,))
 logging_thread.start()
 
 
-# Populate task_queue
-for task in to_do:
-    task_queue.put(task)
+# Start task manager thread
+task_manager_thread = Thread(
+    target=task_manager,
+    args=(
+        succeed,
+        precede,
+        priority_succeed,
+        start,
+        connections,
+        task_manager_connection,
+    ),
+)
+task_manager_thread.start()
 
 
-# Wait all tasks to be done
-task_queue.join()
-
-
-# Stop stopping thread
-NORMAL_EXIT = not stop_event.is_set()
-stop_event.set()
-stop_thread.join()
-
-
-# Stop workers
-if NORMAL_EXIT:
-    for _ in range(args.jobs):
-        task_queue.put(SENTINEL)
-    task_queue.join()
-else:
-    for worker_process in workers:
-        worker_process.terminate()
-
-
-# Stop task manager
+# Join task manager thread
 task_manager_thread.join()
 
 
-# Stop threads
+# Join stopping thread
+stop_thread.join()
+
+
+# Join workers
+for worker_process in workers:
+    if worker_process.is_alive():
+        worker_process.terminate()
+    worker_process.join()
+
+
+# Join threads
 logging_queue.put(SENTINEL)
 for queue in dir.csv_files.queues.values():
     queue.put(SENTINEL)

@@ -1,22 +1,15 @@
-from multiprocessing import JoinableQueue
-from multiprocessing.synchronize import Event
+from multiprocessing.connection import Connection
 from pathlib import Path
 
-from ..task import Task
+from ...constants import SENTINEL
 
 
-def stopping_thread(event: Event, file: Path, task_queue: "JoinableQueue[Task]"):
-    while not event.is_set() and file.exists():
+def stopping_thread(file: Path, connection: Connection):
+    while file.exists() and not connection.poll():
         pass
-    if not event.is_set():
-        event.set()
     if file.exists():
         file.unlink()
-    while not task_queue.empty():
-        task_queue.get()
-        task_queue.task_done()
-    try:
-        while True:
-            task_queue.task_done()
-    except ValueError:
-        pass
+    if connection.poll():
+        connection.recv()
+    else:
+        connection.send(SENTINEL)
