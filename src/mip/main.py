@@ -60,7 +60,7 @@ def learn_mip(
         NB_DM == 1
     )
 
-    if model_type.value[0] == ModelEnum.SRMP:
+    if model_type.value[0] is ModelEnum.SRMP:
         shared_params = cast(set[SRMPParamEnum], model_type.value[1])
 
         if NB_DM == 1:
@@ -124,7 +124,7 @@ def learn_mip(
                         (
                             cast(int, value(objective))
                             / sum(len(comparisons[dm]) for dm in DMS)
-                            if status == 1
+                            if status > 0
                             else 0
                         )
                         if objective
