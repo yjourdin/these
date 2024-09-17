@@ -196,7 +196,6 @@ end
 # Main 
 
 Random.seed!(parse(Int, ARGS[2]))
-
 println(generate_linext(BooleanLattice(parse(Int, ARGS[1])), Random.default_rng()))
 
 # @time generate_linext(BooleanLattice(parse(Int, "11")), Random.default_rng())
