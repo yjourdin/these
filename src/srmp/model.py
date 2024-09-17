@@ -1,8 +1,6 @@
 from collections.abc import Container
 from dataclasses import dataclass
 
-from mcda.internal.core.scales import NormalScale
-
 from ..dataclass import GeneratedDataclass
 from ..enum import StrEnum
 from ..model import GroupModel, Model
@@ -26,7 +24,7 @@ class SRMPParamEnum(StrEnum):
 
 @dataclass
 class SRMPModel(  # type: ignore
-    Model[NormalScale],
+    Model,
     GeneratedDataclass,
     ProfilesField,
     WeightsField,
@@ -52,7 +50,7 @@ class SRMPModel(  # type: ignore
 
 @dataclass
 class SRMPGroupModelWeightsProfilesLexicographic(  # type: ignore
-    GroupModel[NormalScale],
+    GroupModel[SRMPModel],
     GeneratedDataclass,
     ProfilesField,
     WeightsField,
@@ -65,10 +63,18 @@ class SRMPGroupModelWeightsProfilesLexicographic(  # type: ignore
             lexicographic_order=self.lexicographic_order,
         )
 
+    @property
+    def collective_model(self) -> Model:
+        return SRMPModel(
+            profiles=self.profiles,
+            weights=self.weights,
+            lexicographic_order=self.lexicographic_order,
+        )
+
 
 @dataclass
 class SRMPGroupModelWeightsProfiles(  # type: ignore
-    GroupModel[NormalScale],
+    GroupModel[SRMPModel],
     GeneratedDataclass,
     ProfilesField,
     WeightsField,
@@ -84,7 +90,7 @@ class SRMPGroupModelWeightsProfiles(  # type: ignore
 
 @dataclass
 class SRMPGroupModelWeightsLexicographic(  # type: ignore
-    GroupModel[NormalScale],
+    GroupModel[SRMPModel],
     GeneratedDataclass,
     GroupProfilesField,
     WeightsField,
@@ -100,7 +106,7 @@ class SRMPGroupModelWeightsLexicographic(  # type: ignore
 
 @dataclass
 class SRMPGroupModelProfilesLexicographic(  # type: ignore
-    GroupModel[NormalScale],
+    GroupModel[SRMPModel],
     GeneratedDataclass,
     ProfilesField,
     GroupWeightsField,
@@ -116,7 +122,7 @@ class SRMPGroupModelProfilesLexicographic(  # type: ignore
 
 @dataclass
 class SRMPGroupModelWeights(
-    GroupModel[NormalScale],
+    GroupModel[SRMPModel],
     GeneratedDataclass,
     GroupProfilesField,
     WeightsField,
@@ -132,7 +138,7 @@ class SRMPGroupModelWeights(
 
 @dataclass
 class SRMPGroupModelProfiles(
-    GroupModel[NormalScale],
+    GroupModel[SRMPModel],
     GeneratedDataclass,
     ProfilesField,
     GroupWeightsField,
@@ -148,7 +154,7 @@ class SRMPGroupModelProfiles(
 
 @dataclass
 class SRMPGroupModelLexicographic(
-    GroupModel[NormalScale],
+    GroupModel[SRMPModel],
     GeneratedDataclass,
     GroupProfilesField,
     GroupWeightsField,
@@ -164,7 +170,7 @@ class SRMPGroupModelLexicographic(
 
 @dataclass
 class SRMPGroupModel(
-    GroupModel[NormalScale],
+    GroupModel[SRMPModel],
     GeneratedDataclass,
     GroupProfilesField,
     GroupWeightsField,
@@ -180,7 +186,7 @@ class SRMPGroupModel(
 
 def srmp_group_model(
     shared_params: Container[SRMPParamEnum],
-) -> type[GroupModel[NormalScale]]:
+) -> type[GroupModel[SRMPModel]]:
     if SRMPParamEnum.PROFILES in shared_params:
         if SRMPParamEnum.WEIGHTS in shared_params:
             if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
@@ -206,13 +212,13 @@ def srmp_group_model(
 
 
 def srmp_model(
-    size: int, shared_params: Container[SRMPParamEnum] = set()
-) -> type[Model[NormalScale]]:
-    if size == 1:
+    group_size: int, shared_params: Container[SRMPParamEnum] = set()
+) -> type[Model]:
+    if group_size == 1:
         return SRMPModel
     else:
         return srmp_group_model(shared_params)
 
 
-def srmp_model_from_name(name: str) -> type[Model[NormalScale]]:
+def srmp_model_from_name(name: str) -> type[Model]:
     return eval(name)

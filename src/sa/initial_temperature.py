@@ -1,21 +1,22 @@
 import io
 from math import log
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from numpy.random import Generator
 
 from .neighbor import Neighbor
 from .objective import Objective
 from .random_walk import RandomWalk
-from .type import Solution
 
 
-def initial_temperature(
+def initial_temperature[
+    S
+](
     acceptance_rate: float,
-    neighbor: Neighbor[Solution],
+    neighbor: Neighbor[S],
     objective: Objective,
-    init_sol: Solution,
+    init_sol: S,
     rng: Generator,
     max_time: int | None = None,
     max_it: int | None = None,

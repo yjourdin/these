@@ -1,36 +1,29 @@
 import csv
+import io
+from dataclasses import dataclass
 from time import time
 
 from mcda.internal.core.interfaces import Learner
 from numpy.random import Generator
 
+from ..dataclass import Dataclass
 from .neighbor import Neighbor
 from .objective import Objective
-from .type import Solution
 
 
-class RandomWalk(Learner[Solution]):
-    def __init__(
-        self,
-        neighbor: Neighbor[Solution],
-        objective: Objective[Solution],
-        init_sol: Solution,
-        rng: Generator,
-        max_time: int | None = None,
-        max_it: int | None = None,
-        log_file=None,
-    ):
-        self.neighbor = neighbor
-        self.objective = objective
-        self.max_time = max_time
-        self.max_it = max_it
-        self.initial_sol = init_sol
-        self.rng = rng
-        self.log_file = log_file
+@dataclass
+class RandomWalk[S](Learner[S], Dataclass):
+    neighbor: Neighbor[S]
+    objective: Objective[S]
+    init_sol: S
+    rng: Generator
+    max_time: int | None = None
+    max_it: int | None = None
+    log_file: io.StringIO | None = None
 
     def _learn(
         self,
-        initial_sol: Solution,
+        initial_sol: S,
         rng: Generator,
     ):
         # Initialise
@@ -68,7 +61,7 @@ class RandomWalk(Learner[Solution]):
             sol = self.neighbor(sol, rng)
             obj = self.objective(sol)
 
-            if log_writer:
+            if self.log_file:
                 log_writer.writerow(
                     {
                         "It": self.it,
@@ -81,4 +74,4 @@ class RandomWalk(Learner[Solution]):
         return sol
 
     def learn(self):
-        return self._learn(self.initial_sol, self.rng)
+        return self._learn(self.init_sol, self.rng)

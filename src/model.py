@@ -1,56 +1,70 @@
 from abc import abstractmethod
-from collections import UserList
 from collections.abc import Sequence
-from dataclasses import dataclass
-from typing import Generic, TypeVar, overload
+from dataclasses import dataclass, field
+from typing import overload
 
-from mcda.internal.core.scales import Scale
-from mcda.internal.core.values import Ranking
 from mcda import PerformanceTable
+from mcda.internal.core.values import Ranking
 from mcda.relations import PreferenceStructure
 
-from .aggregator import agg_float
+from .aggregator import agg_float, agg_rank
 from .dataclass import GeneratedDataclass
 from .preference_structure.fitness import fitness_comparisons_ranking
 
-S = TypeVar("S", bound=Scale, covariant=True)
 
-
-@dataclass
-class Model(GeneratedDataclass, Generic[S]):
+class Model(GeneratedDataclass):
     @abstractmethod
-    def rank(self, performance_table: PerformanceTable[S]) -> Ranking: ...
+    def rank(self, performance_table: PerformanceTable) -> Ranking: ...
 
     def fitness(
-        self, performance_table: PerformanceTable[S], comparisons: PreferenceStructure
+        self, performance_table: PerformanceTable, comparisons: PreferenceStructure
     ):
         return fitness_comparisons_ranking(comparisons, self.rank(performance_table))
 
 
 @dataclass
-class GroupModel(Generic[S], Model[S], Sequence[Model[S]]):
-    size: int
+class AggModel(Model):
+    models: list[Model]
+
+    def rank(self, performance_table: PerformanceTable) -> Ranking:
+        return agg_rank(model.rank(performance_table) for model in self.models)
+
+
+@dataclass
+class GroupModel[M: Model](Model, Sequence[M]):
+    group_size: int
+    dm_weights: list[float] = field(default_factory=list)
+
+    def __post_init__(self):
+        lst = self.dm_weights[: self.group_size]
+        self.dm_weights = lst + [1] * (self.group_size - len(lst))
+
+    @property
+    def collective_model(self) -> Model:
+        return AggModel(list(self))
 
     @overload
-    def __getitem__(self, i: int) -> Model[S]: ...
+    @abstractmethod
+    def __getitem__(self, i: int) -> M: ...
 
     @overload
-    def __getitem__(self, i: slice) -> Sequence[Model[S]]: ...
+    @abstractmethod
+    def __getitem__(self, i: slice) -> Sequence[M]: ...
 
     @abstractmethod
-    def __getitem__(self, i): ...  # type: ignore
+    def __getitem__(self, i) -> M | Sequence[M]: ...
 
     def __len__(self):
-        return self.size
+        return self.group_size
 
     def rank(self, performance_table):
-        return self[0].rank(performance_table)
+        return self.collective_model.rank(performance_table)
 
     def fitness(
         self,
-        performance_table: PerformanceTable[S],
+        performance_table: PerformanceTable,
         comparisons: PreferenceStructure | list[PreferenceStructure],
-    ) -> float:
+    ):
         match comparisons:
             case PreferenceStructure():
                 return super().fitness(performance_table, comparisons)
@@ -63,10 +77,20 @@ class GroupModel(Generic[S], Model[S], Sequence[Model[S]]):
                 )
 
 
-class Group(Generic[S], UserList, GroupModel[S]):
+class Group[M: Model](list[M], GroupModel[M]):
+    model: type[M]
+
     @property
-    def size(self):
+    def group_size(self):
         return len(self)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return "[" + ", ".join([str(model) for model in self]) + "]"
+
+    @classmethod
+    def random(cls, *args, **kwargs):
+        return cls([cls.model.random(*args, **kwargs)])
+
+    @classmethod
+    def balanced(cls, *args, **kwargs):
+        return cls([cls.model.balanced(*args, **kwargs)])

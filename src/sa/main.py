@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import NamedTuple, TextIO
 
 from mcda.relations import PreferenceStructure
 from numpy.random import Generator
@@ -45,7 +45,7 @@ def learn_sa(
     max_time: int = DEFAULT_MAX_TIME,
     max_it: int | None = None,
     max_it_non_improving: int | None = None,
-    log_file=None,
+    log_file: TextIO | None = None,
     **kwargs,
 ):
     alternatives = alternatives.subtable(comparisons.elements)

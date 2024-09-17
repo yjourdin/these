@@ -1,8 +1,6 @@
 from collections.abc import Container
 from dataclasses import dataclass
 
-from mcda.internal.core.scales import NormalScale
-
 from ..dataclass import GeneratedDataclass
 from ..enum import StrEnum
 from ..model import GroupModel, Model
@@ -28,7 +26,7 @@ class RMPParamEnum(StrEnum):
 
 @dataclass
 class RMPModel(  # type: ignore
-    Model[NormalScale],
+    Model,
     GeneratedDataclass,
     ProfilesField,
     ImportanceRelationField,
@@ -52,13 +50,12 @@ class RMPModel(  # type: ignore
 
 @dataclass
 class RMPModelCapacity(  # type: ignore
-    Model[NormalScale],
+    Model,
     GeneratedDataclass,
     ProfilesField,
     CapacityField,
     LexicographicOrderField,
 ):
-
     def __str__(self) -> str:
         return (
             f"{print_list(self.profiles.data.to_numpy()[0])}\t"
@@ -76,14 +73,21 @@ class RMPModelCapacity(  # type: ignore
 
 @dataclass
 class RMPGroupModelImportanceProfilesLexicographic(  # type: ignore
-    GroupModel[NormalScale],
+    GroupModel[RMPModel],
     GeneratedDataclass,
     ProfilesField,
     ImportanceRelationField,
     LexicographicOrderField,
 ):
-
     def __getitem__(self, i):
+        return RMPModel(
+            profiles=self.profiles,
+            importance_relation=self.importance_relation,
+            lexicographic_order=self.lexicographic_order,
+        )
+
+    @property
+    def collective_model(self) -> Model:
         return RMPModel(
             profiles=self.profiles,
             importance_relation=self.importance_relation,
@@ -93,13 +97,12 @@ class RMPGroupModelImportanceProfilesLexicographic(  # type: ignore
 
 @dataclass
 class RMPGroupModelImportanceProfiles(  # type: ignore
-    GroupModel[NormalScale],
+    GroupModel[RMPModel],
     GeneratedDataclass,
     ProfilesField,
     ImportanceRelationField,
     GroupLexicographicOrderField,
 ):
-
     def __getitem__(self, i):
         return RMPModel(
             profiles=self.profiles,
@@ -110,13 +113,12 @@ class RMPGroupModelImportanceProfiles(  # type: ignore
 
 @dataclass
 class RMPGroupModelImportanceLexicographic(  # type: ignore
-    GroupModel[NormalScale],
+    GroupModel[RMPModel],
     GeneratedDataclass,
     GroupProfilesField,
     ImportanceRelationField,
     LexicographicOrderField,
 ):
-
     def __getitem__(self, i):
         return RMPModel(
             profiles=self.profiles[i],
@@ -127,13 +129,12 @@ class RMPGroupModelImportanceLexicographic(  # type: ignore
 
 @dataclass
 class RMPGroupModelProfilesLexicographic(  # type: ignore
-    GroupModel[NormalScale],
+    GroupModel[RMPModel],
     GeneratedDataclass,
     ProfilesField,
     GroupImportanceRelationField,
     LexicographicOrderField,
 ):
-
     def __getitem__(self, i):
         return RMPModel(
             profiles=self.profiles,
@@ -144,13 +145,12 @@ class RMPGroupModelProfilesLexicographic(  # type: ignore
 
 @dataclass
 class RMPGroupModelImportance(
-    GroupModel[NormalScale],
+    GroupModel[RMPModel],
     GeneratedDataclass,
     GroupProfilesField,
     ImportanceRelationField,
     GroupLexicographicOrderField,
 ):
-
     def __getitem__(self, i):
         return RMPModel(
             profiles=self.profiles[i],
@@ -161,13 +161,12 @@ class RMPGroupModelImportance(
 
 @dataclass
 class RMPGroupModelProfiles(
-    GroupModel[NormalScale],
+    GroupModel[RMPModel],
     GeneratedDataclass,
     ProfilesField,
     GroupImportanceRelationField,
     GroupLexicographicOrderField,
 ):
-
     def __getitem__(self, i):
         return RMPModel(
             profiles=self.profiles,
@@ -178,13 +177,12 @@ class RMPGroupModelProfiles(
 
 @dataclass
 class RMPGroupModelLexicographic(
-    GroupModel[NormalScale],
+    GroupModel[RMPModel],
     GeneratedDataclass,
     GroupProfilesField,
     GroupImportanceRelationField,
     LexicographicOrderField,
 ):
-
     def __getitem__(self, i):
         return RMPModel(
             profiles=self.profiles[i],
@@ -195,13 +193,12 @@ class RMPGroupModelLexicographic(
 
 @dataclass
 class RMPGroupModel(
-    GroupModel[NormalScale],
+    GroupModel[RMPModel],
     GeneratedDataclass,
     GroupProfilesField,
     GroupImportanceRelationField,
     GroupLexicographicOrderField,
 ):
-
     def __getitem__(self, i):
         return RMPModel(
             profiles=self.profiles[i],
@@ -212,7 +209,7 @@ class RMPGroupModel(
 
 def rmp_group_model(
     shared_params: Container[RMPParamEnum],
-) -> type[GroupModel[NormalScale]]:
+) -> type[GroupModel[RMPModel]]:
     if RMPParamEnum.PROFILES in shared_params:
         if RMPParamEnum.IMPORTANCE_RELATION in shared_params:
             if RMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
@@ -238,13 +235,13 @@ def rmp_group_model(
 
 
 def rmp_model(
-    size: int, shared_params: Container[RMPParamEnum] = set()
-) -> type[Model[NormalScale]]:
-    if size == 1:
+    group_size: int, shared_params: Container[RMPParamEnum] = set()
+) -> type[Model]:
+    if group_size == 1:
         return RMPModel
     else:
         return rmp_group_model(shared_params)
 
 
-def rmp_model_from_name(name: str) -> type[Model[NormalScale]]:
+def rmp_model_from_name(name: str) -> type[Model]:
     return eval(name)

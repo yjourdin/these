@@ -1,49 +1,38 @@
 import csv
+from dataclasses import dataclass
 from math import exp
 from time import time
+from typing import TextIO
 
 from mcda.internal.core.interfaces import Learner
 from numpy.random import Generator
+
+from src.dataclass import Dataclass
 
 from ..constants import DEFAULT_MAX_TIME
 from .cooling_schedule import CoolingSchedule
 from .neighbor import Neighbor
 from .objective import Objective
-from .type import Solution
 
 
-class SimulatedAnnealing(Learner[Solution]):
-    def __init__(
-        self,
-        T0: float,
-        L: int,
-        neighbor: Neighbor[Solution],
-        objective: Objective[Solution],
-        cooling_schedule: CoolingSchedule,
-        init_sol: Solution,
-        rng: Generator,
-        Tf: float | None = None,
-        max_time: int = DEFAULT_MAX_TIME,
-        max_it: int | None = None,
-        max_it_non_improving: int | None = None,
-        log_file=None,
-    ):
-        self.T0 = T0
-        self.L = L
-        self.neighbor = neighbor
-        self.objective = objective
-        self.cooling_schedule = cooling_schedule
-        self.Tf = Tf
-        self.max_time = max_time
-        self.max_it = max_it
-        self.max_it_non_improving = max_it_non_improving
-        self.init_sol = init_sol
-        self.rng = rng
-        self.log_file = log_file
+@dataclass
+class SimulatedAnnealing[S](Learner[S], Dataclass):
+    T0: float
+    L: int
+    neighbor: Neighbor[S]
+    objective: Objective[S]
+    cooling_schedule: CoolingSchedule
+    init_sol: S
+    rng: Generator
+    Tf: float | None = None
+    max_time: int = DEFAULT_MAX_TIME
+    max_it: int | None = None
+    max_it_non_improving: int | None = None
+    log_file: TextIO | None = None
 
     def _learn(
         self,
-        initial_sol: Solution,
+        initial_sol: S,
         rng: Generator,
     ):
         # Initialise
@@ -122,7 +111,7 @@ class SimulatedAnnealing(Learner[Solution]):
                         if self.best_obj <= self.objective.optimum:
                             return self.best_sol
 
-                if log_writer:
+                if self.log_file:
                     log_writer.writerow(
                         {
                             "It": self.it,

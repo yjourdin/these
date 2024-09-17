@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from copy import deepcopy
 from itertools import chain, combinations
-from typing import Any, Collection, Generic, cast
+from typing import Any, Collection, cast
 
 import numpy as np
 from mcda import PerformanceTable
@@ -10,18 +10,17 @@ from numpy.random import Generator
 
 from ..rmp.model import RMPModelCapacity
 from ..srmp.model import SRMPModel
-from .type import Solution
 
 
-class Neighbor(Generic[Solution], ABC):
+class Neighbor[S](ABC):
     @abstractmethod
-    def __call__(self, sol: Solution, rng: Generator) -> Solution: ...
+    def __call__(self, sol: S, rng: Generator) -> S: ...
 
 
-class RandomNeighbor(Neighbor[Solution]):
+class RandomNeighbor[S](Neighbor[S]):
     def __init__(
         self,
-        neighbors: Sequence[Neighbor[Solution]],
+        neighbors: Sequence[Neighbor[S]],
         prob: Sequence[float] | None = None,
     ):
         self.neighbors = neighbors

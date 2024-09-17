@@ -1,28 +1,26 @@
 from abc import ABC, abstractmethod
-from typing import Generic
+from dataclasses import dataclass
 
 from mcda import PerformanceTable
 from mcda.relations import PreferenceStructure
 
+from ..dataclass import Dataclass
 from ..model import Model
-from .type import Solution
 
 
-class Objective(Generic[Solution], ABC):
+class Objective[S](ABC):
     @abstractmethod
-    def __call__(self, sol: Solution) -> float: ...
+    def __call__(self, sol: S) -> float: ...
 
     @property
     @abstractmethod
     def optimum(self) -> float: ...
 
 
-class FitnessObjective(Objective[Model]):
-    def __init__(
-        self, train_data: PerformanceTable, target: PreferenceStructure
-    ) -> None:
-        self.train_data = train_data
-        self.target = target
+@dataclass
+class FitnessObjective(Objective[Model], Dataclass):
+    train_data: PerformanceTable
+    target: PreferenceStructure
 
     def __call__(self, sol):
         return 1 - sol.fitness(self.train_data, self.target)

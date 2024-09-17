@@ -1,15 +1,14 @@
+from collections.abc import Iterator
 from enum import Enum
 from functools import partial, reduce
-from typing import Any, Callable, TypeVar
+from itertools import chain, count
+from typing import Any, Callable, NamedTuple
 
 import numpy as np
-from mcda.internal.core.scales import OrdinalScale
 from mcda import PerformanceTable
 
-S = TypeVar("S", bound=OrdinalScale, covariant=True)
 
-
-def midpoints(performance_table: PerformanceTable[S]) -> PerformanceTable[S]:
+def midpoints(performance_table: PerformanceTable) -> PerformanceTable:
     # sort performance table
     df = performance_table.data.transform(np.sort)
 
@@ -51,6 +50,28 @@ def to_str(o):
 
 def dict_values_to_str(dct: dict):
     return {str(k): str(v) for k, v in dct.items()}
+
+
+class Cell(NamedTuple):
+    name: str
+    value: Any
+
+
+def add_str_to_list(o, index: Iterator[int] | None = None, prefix: list[str] = []):
+    index = index or count()
+    if np.ndim(o) > 0 and len(o) == 1:
+        o = o[0]
+    if np.ndim(o) == 0:
+        return [Cell("_".join(prefix), o)]
+    else:
+        return list(
+            chain.from_iterable(
+                add_str_to_list(
+                    val, (i for i in range(len(o)) if i != ind), prefix + [str(ind)]
+                )
+                for ind, val in zip(index, o)
+            )
+        )
 
 
 def filename(dct: dict[str, Any], ext: str):
