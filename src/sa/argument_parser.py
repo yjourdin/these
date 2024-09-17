@@ -1,4 +1,5 @@
 import argparse
+from sys import stdout
 
 from ..constants import DEFAULT_MAX_TIME
 
@@ -39,8 +40,12 @@ stop_group.add_argument(
 parser.add_argument("-s", "--seed", type=int, help="Random seed")
 parser.add_argument("--seed-init", type=int, help="Initial model random seed")
 parser.add_argument("--seed-sa", type=int, help="Simulated annealing random seed")
-parser.add_argument("-o", "--output", type=argparse.FileType("w"), help="Output file")
-parser.add_argument("-r", "--result", type=argparse.FileType("a"), help="Result file")
+parser.add_argument(
+    "-o", "--output", default=stdout, type=argparse.FileType("w"), help="Output file"
+)
+parser.add_argument(
+    "-r", "--result", default=stdout, type=argparse.FileType("a"), help="Result file"
+)
 parser.add_argument("-l", "--log", type=argparse.FileType("w"), help="Log file")
 
 

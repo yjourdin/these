@@ -1,4 +1,5 @@
 import argparse
+from sys import stdout
 
 from ..constants import DEFAULT_MAX_TIME, EPSILON
 from ..models import ModelEnum
@@ -33,8 +34,12 @@ parser.add_argument(
     action="store_true",
     help="Inconsistent comparisons will not be taken into account",
 )
-parser.add_argument("-o", "--output", type=argparse.FileType("w"), help="Output file")
-parser.add_argument("-r", "--result", type=argparse.FileType("a"), help="Result file")
+parser.add_argument(
+    "-o", "--output", default=stdout, type=argparse.FileType("w"), help="Output file"
+)
+parser.add_argument(
+    "-r", "--result", default=stdout, type=argparse.FileType("a"), help="Result file"
+)
 parser.add_argument("-s", "--seed", default=0, type=int, help="Random seed")
 parser.add_argument("-v", "--verbose", action="store_true", help="Verbose")
 

@@ -1,3 +1,4 @@
+import csv
 from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
@@ -33,7 +34,6 @@ best_model, best_fitness, time = learn_mip(
 
 
 # Write results
-if args.output is not None:
-    args.output.write(best_model.to_json() if best_model is not None else "None")
-if args.result is not None:
-    args.result.write(f"{best_fitness} {time}\n")
+args.output.write(best_model.to_json() if best_model else best_model)
+writer = csv.writer(args.result, "unix")
+writer.writerow([best_fitness, time])
