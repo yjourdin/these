@@ -1,10 +1,11 @@
 from dataclasses import asdict, dataclass, fields
 from json import dumps, loads
+from operator import attrgetter
 
 from .field import Field, GeneratedField
 
 
-@dataclass()
+@dataclass
 class Dataclass(Field):
     @classmethod
     def decode(cls, dct: dict):
@@ -26,6 +27,8 @@ class Dataclass(Field):
     @classmethod
     def from_json(cls, s: str):
         dct = cls.json_to_dict(s)
+        if not dct:
+            raise ValueError("Empty json")
         classname = dct.pop("__class", cls.__name__)
         if classname != cls.__name__:
             raise ValueError(f"Wrong class name : {classname}")
@@ -43,7 +46,7 @@ class Dataclass(Field):
 
     @classmethod
     def dict_to_json(cls, dct: dict):
-        return dumps(dct | {"__class": cls.__name__}, indent=4)
+        return dumps(dct | {"__class": cls.__name__}, indent=4, default=str)
 
     @staticmethod
     def get_class_name(dct: dict):
@@ -96,10 +99,22 @@ class GeneratedDataclass(Dataclass, GeneratedField):
     def random(cls, *args, **kwargs):
         init_dict = kwargs
         super().random(init_dict=init_dict, *args, **kwargs)
-        return cls(**{k.name: init_dict[k.name] for k in fields(cls)})
+        return cls(
+            **{
+                k: v
+                for k, v in init_dict.items()
+                if k in map(attrgetter("name"), fields(cls))
+            }
+        )
 
     @classmethod
     def balanced(cls, *args, **kwargs):
         init_dict = kwargs
-        super().random(init_dict=init_dict, *args, **kwargs)
-        return cls(**{k.name: init_dict[k.name] for k in fields(cls)})
+        super().balanced(init_dict=init_dict, *args, **kwargs)
+        return cls(
+            **{
+                k: v
+                for k, v in init_dict.items()
+                if k in map(attrgetter("name"), fields(cls))
+            }
+        )
