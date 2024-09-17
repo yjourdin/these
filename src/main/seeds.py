@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 
-from ..dataclass import Dataclass
+from ..random import Seed
 
-Seed = int
+from ..dataclass import Dataclass
 
 
 @dataclass

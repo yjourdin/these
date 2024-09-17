@@ -1,8 +1,9 @@
-from numpy.random import default_rng
+import csv
 from pandas import read_csv
 
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..preference_structure.io import from_csv
+from ..random import rng
 from .argument_parser import parse_args
 from .main import learn_sa
 
@@ -18,9 +19,9 @@ D = from_csv(args.D)
 
 # Create random seeds
 rng_init, rng_sa = (
-    (default_rng(args.seed_init), default_rng(args.seed_sa))
+    (rng(args.seed_init), rng(args.seed_sa))
     if (args.seed_init is not None) and (args.seed_sa is not None)
-    else default_rng(args.seed).spawn(2)
+    else rng(args.seed).spawn(2)
 )
 
 
@@ -46,7 +47,6 @@ best_model, best_fitness, time, it = learn_sa(
 
 
 # Write results
-if args.output is not None:
-    args.output.write(best_model.to_json())
-if args.result is not None:
-    args.result.write(f"{best_fitness} {time} {it}\n")
+args.output.write(best_model.to_json())
+writer = csv.writer(args.result, "unix")
+writer.writerow([best_fitness, time, it])

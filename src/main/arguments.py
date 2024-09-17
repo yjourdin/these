@@ -1,10 +1,10 @@
 from dataclasses import dataclass, field
 
-from numpy.random import default_rng
-
 from ..dataclass import Dataclass
 from ..default_max_jobs import DEFAULT_MAX_JOBS
-from ..seed import seeds
+from ..random import Seed
+from ..random import rng as random_generator
+from ..random import seeds
 from .config import create_config
 from .directory import RESULTS_DIR
 from .fields import GroupConfigField, GroupMeField, GroupMethodField, GroupMoField
@@ -20,6 +20,7 @@ class Arguments(
     jobs: int = DEFAULT_MAX_JOBS
     stop_error: bool = False
     extend: bool = False
+    seed: Seed | None = None
     nb_A_tr: int = 1
     nb_Mo: int | None = None
     nb_A_te: int | None = None
@@ -38,7 +39,7 @@ class Arguments(
 
     def complete(self):
         # Create random seeds
-        rng = default_rng(self.seed)
+        rng = random_generator(self.seed)
 
         nb_A_tr = self.nb_A_tr
         nb_Mo = self.nb_Mo or nb_A_tr
