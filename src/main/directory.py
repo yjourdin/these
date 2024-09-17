@@ -94,8 +94,6 @@ class Directory:
         self.D_dir.mkdir()
         self.Me_dir.mkdir()
 
-        self.run.touch()
-
         for file in self.csv_files.values():
             with file.path.open("w", newline="") as f:
                 writer = csv.DictWriter(f, file.fieldnames, dialect="unix")

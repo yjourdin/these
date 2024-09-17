@@ -18,8 +18,8 @@ class Arguments(
     dir: str = RESULTS_DIR
     name: str = ""
     jobs: int = DEFAULT_MAX_JOBS
-    stop_error: bool = True
-    seed: int | None = None
+    stop_error: bool = False
+    extend: bool = False
     nb_A_tr: int = 1
     nb_Mo: int | None = None
     nb_A_te: int | None = None

@@ -18,14 +18,12 @@ def create_logging_config_dict(dir: Directory):
             "logfile": {
                 "class": "logging.FileHandler",
                 "filename": dir.log,
-                "mode": "w",
                 "formatter": "detailed",
             },
             "errorfile": {
                 "class": "logging.FileHandler",
                 "level": "ERROR",
                 "filename": dir.error,
-                "mode": "w",
                 "formatter": "detailed",
             },
         },

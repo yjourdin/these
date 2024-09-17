@@ -9,6 +9,9 @@ parser.add_argument("-d", "--dir", type=str, help="Results directory")
 parser.add_argument("-n", "--name", type=str, help="Experiment name")
 parser.add_argument("-j", "--jobs", type=int, help="Number of jobs")
 parser.add_argument("-s", "--stop-error", action="store_true", help="Stop on error")
+parser.add_argument(
+    "-e", "--extend", action="store_true", help="Extend previous experiment"
+)
 
 
 def parse_args():
@@ -19,4 +22,5 @@ def parse_args():
     arguments.name = args.name or arguments.name
     arguments.jobs = args.jobs or arguments.jobs
     arguments.stop_error = args.stop_error
+    arguments.extend = args.extend
     return arguments
