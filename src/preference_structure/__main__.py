@@ -21,7 +21,7 @@ model = model_from_json(args.model.read())
 
 A = NormalPerformanceTable(read_csv(args.A, header=None))
 
-NB_DM = model.size if isinstance(model, GroupModel) else 1
+NB_DM = model.group_size if isinstance(model, GroupModel) else 1
 DMS = range(NB_DM)
 
 

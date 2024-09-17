@@ -162,7 +162,8 @@ def group_generated_field(fieldname: str, fieldclass: type[GeneratedField]):
         def random(cls, init_dict: dict[str, Any] = {}, *args, **kwargs):
             super().random(init_dict=init_dict, *args, **kwargs)  # type: ignore
             init_dict[fieldname] = [
-                fieldclass.field_random(*args, **kwargs) for _ in range(kwargs["size"])
+                fieldclass.field_random(*args, **kwargs)
+                for _ in range(kwargs["group_size"])
             ]
 
         @classmethod
@@ -170,7 +171,7 @@ def group_generated_field(fieldname: str, fieldclass: type[GeneratedField]):
             super().balanced(init_dict=init_dict, *args, **kwargs)  # type: ignore
             init_dict[fieldname] = [
                 fieldclass.field_balanced(*args, **kwargs)
-                for _ in range(kwargs["size"])
+                for _ in range(kwargs["group_size"])
             ]
 
         original_class.decode = decode

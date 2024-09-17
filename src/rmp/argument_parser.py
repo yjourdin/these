@@ -4,6 +4,7 @@ from sys import stdout
 from .model import RMPParamEnum
 
 parser = argparse.ArgumentParser()
+parser.add_argument("group_size", type=int, default=1, help="Group size")
 parser.add_argument("k", type=int, help="Number of profiles")
 parser.add_argument("m", type=int, help="Number of criteria")
 parser.add_argument(

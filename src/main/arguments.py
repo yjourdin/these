@@ -49,14 +49,14 @@ class Arguments(
 
         self.seeds.A_tr += seeds(rng, nb_A_tr - len(self.seeds.A_tr))
         self.seeds.A_te = self.seeds.A_te + seeds(rng, nb_A_te - len(self.seeds.A_te))
-        for size in self.group_size:
-            self.seeds.Mo[size] = self.seeds.Mo.get(size, []) + seeds(
-                rng, nb_Mo - len(self.seeds.Mo.get(size, []))
+        for group_size in self.group_size:
+            self.seeds.Mo[group_size] = self.seeds.Mo.get(group_size, []) + seeds(
+                rng, nb_Mo - len(self.seeds.Mo.get(group_size, []))
             )
         self.seeds.D = self.seeds.D + seeds(rng, nb_D - len(self.seeds.D))
         self.seeds.Me = self.seeds.Me + seeds(rng, nb_Me - len(self.seeds.Me))
 
         # Create missing configs
         for method in self.method:
-            if not any(config.method == method for config in self.config):
+            if not any(config.method is method for config in self.config):
                 self.config.append(create_config(method=method))

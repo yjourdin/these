@@ -431,7 +431,7 @@ class MIPSRMPGroupLexicographicOrder(
         )
 
         return group_model(ModelEnum.SRMP, self.shared_params)(
-            size=len(self.param["DM"]),
+            group_size=len(self.param["DM"]),
             profiles=profiles,  # type: ignore
             weights=weights,  # type: ignore
             lexicographic_order=[  # type: ignore
