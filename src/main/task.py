@@ -6,23 +6,18 @@ from typing import Any, ClassVar
 
 from pandas import read_csv
 
-from src.model import GroupModel
-from src.test.test import (
-    DistanceRankingEnum,
-    consensus_group_model,
-    distance_group_model,
-)
-from src.utils import add_str_to_list
-
 from ..dataclass import FrozenDataclass
 from ..methods import MethodEnum
 from ..mip.main import learn_mip
-from ..models import GroupModelEnum, group_model
+from ..model import GroupModel
+from ..models import GroupModelEnum, model
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..preference_structure.generate import noisy_comparisons, random_comparisons
 from ..preference_structure.io import from_csv, to_csv
 from ..random import Seed, SeedMixin, seed
 from ..sa.main import learn_sa
+from ..test.main import test_consensus, test_distance
+from ..test.test import DistanceRankingEnum
 from .config import Config, MIPConfig, SAConfig, SRMPSAConfig
 from .directory import Directory
 from .fieldnames import DSizeFieldnames, SeedFieldnames, TestFieldnames, TrainFieldnames
@@ -169,11 +164,11 @@ class MoTask(AbstractMTask):
     def __call__(self, dir: Directory):
         self.print_seed(dir.csv_files["seeds"].queue)
 
-        Mo = group_model(*self.Mo.value).random(
-            group_size=self.group_size,
+        Mo = model(*self.Mo.value, self.group_size).random(
             nb_profiles=self.ko,
             nb_crit=self.m,
             rng=self.rng,
+            **({"group_size": self.group_size} if self.group_size > 1 else {}),
         )
 
         with self.Mo_file(dir).open("w") as f:
@@ -224,14 +219,19 @@ class DTask(AbstractDTask):
         self.print_seed(dir.csv_files["seeds"].queue)
 
         with self.Mo_file(dir).open("r") as f:
-            model = group_model(*self.Mo.value).from_json(f.read())
+            Mo = model(*self.Mo.value, self.group_size).from_json(f.read())
 
         with self.A_train_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
         rng_shuffle, rng_error = self.rng.spawn(2)
 
-        D = random_comparisons(A, model[self.dm_id], self.nbc, rng_shuffle)
+        D = random_comparisons(
+            A,
+            Mo[self.dm_id] if isinstance(Mo, GroupModel) else Mo,
+            self.nbc,
+            rng_shuffle,
+        )
 
         if self.error:
             D = noisy_comparisons(D, self.error, rng_error)
@@ -449,37 +449,32 @@ class TestTask(ATestTask, AbstractElicitationTask):
             A_test = NormalPerformanceTable(read_csv(f, header=None))
 
         with self.Mo_file(dir).open("r") as f:
-            Mo = group_model(*self.Mo.value).from_json(f.read())
+            Mo = model(*self.Mo.value, self.group_size).from_json(f.read())
 
         with self.Me_file(dir).open("r") as f:
             s = f.read()
             try:
-                Me = group_model(*self.Me.value).from_json(s)
+                Me = model(*self.Me.value, self.group_size).from_json(s)
             except ValueError:
                 Me = None
 
+        def put_in_queue(name, value):
+            dir.csv_files["test"].queue.put(
+                csv_fields | {TestFieldnames.Name: name, TestFieldnames.Value: value}
+            )
+
         def write_consensus(model: GroupModel, prefix: str = ""):
-            result = consensus_group_model(model, A_test, distance)
-            for attr, value in result._asdict().items():
-                for a in add_str_to_list(value, prefix=[prefix, str(distance), attr]):
-                    name, val = a
-                    dir.csv_files["test"].queue.put(
-                        csv_fields
-                        | {TestFieldnames.Name: name, TestFieldnames.Value: val}
-                    )
+            for name, value in test_consensus(model, A_test, distance):
+                put_in_queue("_".join([prefix, str(distance), name]), value)
 
         for distance in DistanceRankingEnum:
-            write_consensus(Mo, "Mo")
+            if isinstance(Mo, GroupModel):
+                write_consensus(Mo, "Mo")
             if Me:
-                write_consensus(Me, "Me")
-                for name, value in add_str_to_list(
-                    distance_group_model(Mo, Me, A_test, distance),
-                    prefix=[str(distance)],
-                ):
-                    dir.csv_files["test"].queue.put(
-                        csv_fields
-                        | {TestFieldnames.Name: name, TestFieldnames.Value: value}
-                    )
+                if isinstance(Me, GroupModel):
+                    write_consensus(Me, "Me")
+                for name, value in test_distance(Mo, Me, A_test, distance):
+                    put_in_queue(name, value)
 
     def already_done(self, dir: Directory):
         return False

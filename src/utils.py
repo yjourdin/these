@@ -57,7 +57,9 @@ class Cell(NamedTuple):
     value: Any
 
 
-def add_str_to_list(o, index: Iterator[int] | None = None, prefix: list[str] = []):
+def add_str_to_list(
+    o, index: Iterator[int] | None = None, prefix: list[str] = []
+) -> list[Cell]:
     index = index or count()
     if np.ndim(o) > 0 and len(o) == 1:
         o = o[0]
@@ -95,4 +97,4 @@ def compose(*fs: Callable):
     def compose2(f: Callable, g: Callable):
         return lambda *a, **kw: g(f(*a, **kw))
 
-    return reduce(compose2, fs) if fs else None
+    return reduce(compose2, fs)

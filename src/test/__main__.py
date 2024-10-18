@@ -2,13 +2,12 @@ import csv
 
 from pandas import read_csv
 
-from src.utils import add_str_to_list
+from src.test.main import test_consensus, test_distance
 
-from ..model import Group, GroupModel, Model
+from ..model import GroupModel
 from ..models import model_from_json
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from .argument_parser import TestEnum, parse_args
-from .test import consensus_group_model, distance_group_model, distance_model
 
 # Parse arguments
 args = parse_args()
@@ -24,38 +23,8 @@ match args.test:
         Ma = model_from_json(args.model_A.read())
         Mb = model_from_json(args.model_B.read())
 
-        match Ma, Mb:
-            case GroupModel(), GroupModel():
-                writer.writerows(
-                    add_str_to_list(
-                        distance_group_model(Ma, Mb, A, distance),
-                        prefix=[str(distance)],
-                    )
-                )
-            case GroupModel(), Model():
-                writer.writerows(
-                    add_str_to_list(
-                        distance_group_model(
-                            Ma, Group([Mb] * Ma.group_size), A, distance
-                        ),
-                        prefix=[str(distance)],
-                    )
-                )
-            case Model(), GroupModel():
-                writer.writerows(
-                    add_str_to_list(
-                        distance_group_model(
-                            Group([Ma] * Mb.group_size), Mb, A, distance
-                        ),
-                        prefix=[str(distance)],
-                    )
-                )
-            case Model(), Model():
-                writer.writerow([distance, distance_model(Ma, Mb, A, distance)])
+        writer.writerows(test_distance(Ma, Mb, A, distance))
     case TestEnum.CONSENSUS:
         model = model_from_json(args.model.read())
         assert isinstance(model, GroupModel)
-        result = consensus_group_model(model, A, distance)
-        for attr, value in result._asdict().items():
-            for name, val in add_str_to_list(value, prefix=[attr]):
-                writer.writerow([name, val])
+        writer.writerows(test_consensus(model, A, distance))

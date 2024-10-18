@@ -1,45 +1,40 @@
-from itertools import combinations
+from src.utils import add_str_to_list
 
-from scipy.stats import kendalltau
-
-# from ..aggregator import agg_float
-from ..model import GroupModel, Model
+from ..model import Group, GroupModel, Model
 from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..preference_structure.fitness import fitness_outranking
+from .test import (
+    DistanceRankingEnum,
+    consensus_group_model,
+    distance_group_model,
+    distance_model,
+)
 
 
-def test(A: NormalPerformanceTable, Mo: Model, Me: Model):
-    NB_DM = Mo.group_size if isinstance(Mo, GroupModel) else 1
-    Ro = (
-        [Mo[dm_id].rank(A) for dm_id in range(Mo.group_size)]
-        if isinstance(Mo, GroupModel)
-        else [Mo.rank(A)]
-    )
-    Re = (
-        [Me[dm_id].rank(A) for dm_id in range(Me.group_size)]
-        if isinstance(Me, GroupModel)
-        else [Me.rank(A)]
-    )
+def test_consensus(
+    model: GroupModel, A: NormalPerformanceTable, distance: DistanceRankingEnum
+):
+    result = consensus_group_model(model, A, distance)
+    for attr, value in result._asdict().items():
+        yield from add_str_to_list(value, prefix=[attr])
 
-    test_fitness = [fitness_outranking(Ro[dm_id], Re[dm_id]) for dm_id in range(NB_DM)]
-    kendall_tau = [
-        kendalltau(Ro[dm_id].data, Re[dm_id].data).statistic for dm_id in range(NB_DM)
-    ]
-    Mo_intra_kendall_tau = (
-        [
-            kendalltau(Ro[dm_a].data, Ro[dm_b].data).statistic
-            for dm_a, dm_b in combinations(range(NB_DM), 2)
-        ]
-        if NB_DM > 1
-        else None
-    )
-    Me_intra_kendall_tau = (
-        [
-            kendalltau(Re[dm_a].data, Re[dm_b].data).statistic
-            for dm_a, dm_b in combinations(range(NB_DM), 2)
-        ]
-        if NB_DM > 1
-        else None
-    )
 
-    return (test_fitness, kendall_tau, Mo_intra_kendall_tau, Me_intra_kendall_tau)
+def test_distance(
+    Ma: Model, Mb: Model, A: NormalPerformanceTable, distance: DistanceRankingEnum
+):
+    match Ma, Mb:
+        case GroupModel(), GroupModel():
+            yield from add_str_to_list(
+                distance_group_model(Ma, Mb, A, distance), prefix=[str(distance)]
+            )
+        case GroupModel(), _:
+            yield from add_str_to_list(
+                distance_group_model(Ma, Group([Mb] * Ma.group_size), A, distance),
+                prefix=[str(distance)],
+            )
+        case _, GroupModel():
+            yield from add_str_to_list(
+                distance_group_model(Group([Ma] * Mb.group_size), Mb, A, distance),
+                prefix=[str(distance)],
+            )
+        case _, _:
+            yield str(distance), distance_model(Ma, Mb, A, distance)
