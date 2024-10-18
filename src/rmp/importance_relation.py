@@ -30,7 +30,7 @@ class ImportanceRelation(MonotonicRelation, WeakOrder):
 
     @classmethod
     def from_capacity(cls, capacity: Capacity):
-        self = cls(int(log(len(capacity), 2)), validate=False)
+        self = cls(len(capacity), validate=False)
         for a, b in product(capacity, repeat=2):
             self[a, b] = capacity[a] >= capacity[b]
         return self

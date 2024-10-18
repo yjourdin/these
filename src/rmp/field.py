@@ -1,3 +1,4 @@
+import ast
 from dataclasses import dataclass
 
 import numpy as np
@@ -75,7 +76,7 @@ class ImportanceRelationField(GeneratedField):
     @staticmethod
     def field_encode(o):
         return {
-            "labels": o.labels,
+            "labels": [list(label) for label in o.labels],
             "data": o.data.tolist(),
         }
 
@@ -103,11 +104,11 @@ class CapacityField(GeneratedField):
 
     @staticmethod
     def field_decode(o):
-        return {frozenset(k): v for k, v in o.items()}
+        return {frozenset(ast.literal_eval(k)): v for k, v in o.items()}
 
     @staticmethod
     def field_encode(o):
-        return {list(k): v for k, v in o.items()}
+        return {str(list(k)): v for k, v in o.items()}
 
     @staticmethod
     def field_random(nb_crit: int, rng: Generator, *args, **kwargs):
@@ -150,7 +151,7 @@ class CapacityIntField(GeneratedField):
 @dataclass
 class GroupCapacityIntField(GeneratedField):
     capacity: list[Capacity[int]]
-    
+
 
 @generated_field("lexicographic_order")
 @dataclass

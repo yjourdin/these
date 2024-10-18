@@ -118,7 +118,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
         """
         comp_df = self.performance_table.data >= self.profile.data
 
-        criteria_subset = [frozenset(a.nonzero()[0]) for a in comp_df.values]
+        criteria_subset = [frozenset(a.nonzero()[0].tolist()) for a in comp_df.values]
 
         return self.importance_relation.sub("strict", criteria_subset, criteria_subset)
 
