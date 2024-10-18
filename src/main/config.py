@@ -27,7 +27,7 @@ class MIPConfig(Config):
 class SAConfig(Config):
     method = MethodEnum.SA
     accept: float = 0.5
-    alpha: float = 0.99
+    alpha: float = 0.999
     max_it: int = 20_000
 
 
