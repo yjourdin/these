@@ -8,7 +8,7 @@ from ..fieldnames import Fieldnames
 
 
 def csv_file_thread(
-    file: Path, fieldnames: Fieldnames, q: Queue[dict[Fieldnames, str]]
+    file: Path, fieldnames: Fieldnames, q: "Queue[dict[Fieldnames, str]]"
 ):
     with file.open("a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames, dialect="unix")
