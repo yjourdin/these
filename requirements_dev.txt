@@ -2,3 +2,4 @@ mcda[all]
 seaborn
 snakeviz
 more-itertools
+ipykernel
