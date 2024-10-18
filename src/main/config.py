@@ -42,6 +42,6 @@ def create_config(**kwargs) -> Config:
         case MethodEnum.MIP:
             return MIPConfig.from_dict(kwargs)
         case MethodEnum.SA:
-            return SAConfig.from_dict(kwargs)
+            return SRMPSAConfig.from_dict(kwargs)
         case _:
             raise TypeError(f"Unknown method : {method}")
