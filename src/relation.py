@@ -82,11 +82,11 @@ class ReflexiveRelation(Relation):
         return bool(relation.data.diagonal().all())
 
     def check(self):
-        return self.check_reflexive(self) and super().check()
+        return super().check() and self.check_reflexive(self)
 
     def correct(self):
-        np.fill_diagonal(self.data, True)
         super().correct()
+        np.fill_diagonal(self.data, True)
 
 
 class TransitiveRelation(Relation):
@@ -95,11 +95,11 @@ class TransitiveRelation(Relation):
         return relation.data == relation.data @ relation.data
 
     def check(self):
-        return self.check_transitive(self) and super().check()
+        return super().check() and self.check_transitive(self)
 
     def correct(self):
-        self.data |= np.linalg.multi_dot([self.data] * len(self.data))
         super().correct()
+        self.data |= np.linalg.multi_dot([self.data] * len(self.data))
 
 
 class CompleteRelation(Relation):
@@ -108,20 +108,20 @@ class CompleteRelation(Relation):
         return bool(np.all(relation.data | relation.data.transpose()))
 
     def check(self):
-        return self.check_complete(self) and super().check()
+        return super().check() and self.check_complete(self)
 
     def correct(self):
+        super().correct()
         for a, b in combinations(self.labels, 2):
             if (not self[a, b]) and (not self[b, a]):
                 self[a, b] = True
                 self[b, a] = True
-        super().correct()
 
 
-class Preorder(ReflexiveRelation, TransitiveRelation): ...
+class Preorder(TransitiveRelation, ReflexiveRelation): ...
 
 
-class WeakOrder[Element](Preorder, CompleteRelation):
+class WeakOrder[Element](CompleteRelation, Preorder):
     @classmethod
     def random(cls, labels: list[Element], rng: Generator, **kwargs):
         ranking = random_ranking_with_tie(labels, rng, **kwargs)
@@ -143,12 +143,12 @@ class MonotonicRelation(Relation[frozenset[Any]]):
         return result
 
     def check(self):
-        return self.check_monotonic(self) and super().check()
+        return super().check() and self.check_monotonic(self)
 
     def correct(self):
+        super().correct()
         for a, b in combinations(self.labels, 2):
             if a > b:
                 self[a, b] = True
             if b > a:
                 self[b, a] = True
-        super().correct()

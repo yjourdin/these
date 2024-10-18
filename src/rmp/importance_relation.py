@@ -9,7 +9,7 @@ from ..relation import MonotonicRelation, WeakOrder
 from .capacity import Capacity
 
 
-class ImportanceRelation(WeakOrder, MonotonicRelation):
+class ImportanceRelation(MonotonicRelation, WeakOrder):
     @staticmethod
     def default_labels_from_int(i):
         return [frozenset(s) for s in powerset(range(i))]
