@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import overload
+from typing import ClassVar, overload
 
 from mcda import PerformanceTable
 from mcda.internal.core.values import Ranking
@@ -78,11 +78,15 @@ class GroupModel[M: Model](Model, Sequence[M]):
 
 
 class Group[M: Model](list[M], GroupModel[M]):
-    model: type[M]
+    model: ClassVar[type[M]]  # type: ignore
+    dm_models: list[M]
+
+    def __getitem__(self, i):
+        return self.dm_models[i]
 
     @property
     def group_size(self):
-        return len(self)
+        return len(self.dm_models)
 
     def __str__(self):
         return "[" + ", ".join([str(model) for model in self]) + "]"
