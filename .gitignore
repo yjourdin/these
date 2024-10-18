@@ -174,3 +174,4 @@ report_files
 report.html
 logs
 *.lp
+*.bkp
