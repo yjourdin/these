@@ -7,10 +7,40 @@ from mcda.internal.core.values import Ranking
 from mcda.relations import I, P, PreferenceStructure
 from numpy.random import Generator
 
-from src.performance_table.dominance_relation import dominance_relation
-
+from ..generate_weak_order import (
+    generate_partial_sum,
+    random_ranking_with_tie_from_partial_sum,
+)
 from ..model import Model
-from .random_weak_order import random_preference_relation
+from ..performance_table.dominance_relation import (
+    dominance_relation,
+    dominance_structure,
+)
+from ..relation import WeakOrder
+
+
+def random_preference_relation(
+    performance_table: PerformanceTable, rng: Generator, delta: float = 0.01
+):
+    m = len(performance_table.alternatives)
+    S = generate_partial_sum(m, delta)
+
+    dom_rel = dominance_relation(performance_table)
+
+    cond = True
+    while cond:
+        cond = False
+
+        ranking = random_ranking_with_tie_from_partial_sum(
+            performance_table.alternatives, S, rng
+        )
+        preference_relation = WeakOrder.random_from_ranking(
+            ranking, performance_table.alternatives
+        )
+
+        cond = not (dom_rel < preference_relation)
+
+    return preference_relation.structure
 
 
 def from_ranking(ranking: Ranking, nb: int | None = None, rng: Generator | None = None):
@@ -51,11 +81,12 @@ def random_comparisons(
 ):
     if model:
         ranking = model.rank(alternatives)
+        preference_structure = from_ranking(ranking, nb, rng)
     else:
         assert rng
-        ranking = random_preference_relation(alternatives, rng)
+        preference_structure = random_preference_relation(alternatives, rng)
 
-    return from_ranking(ranking, nb, rng) - dominance_relation(alternatives)
+    return preference_structure - dominance_structure(alternatives)
 
 
 def noisy_comparisons(

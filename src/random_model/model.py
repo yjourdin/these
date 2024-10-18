@@ -4,7 +4,7 @@ from mcda import PerformanceTable
 
 from ..dataclass import GeneratedDataclass
 from ..model import Group, Model
-from ..preference_structure.random_weak_order import random_preference_relation
+from ..preference_structure.generate import random_preference_relation
 from ..random import SeedMixin
 from .field import SeedField
 
