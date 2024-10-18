@@ -15,7 +15,7 @@ def midpoints(performance_table: PerformanceTable) -> PerformanceTable:
     # compute midpoints
     df = df.rolling(2).mean().drop(df.index[0])
 
-    # Add 0's and 1's at the beginning and the end
+    # add 0's and 1's at the beginning and the end
     df.loc[0, :] = [
         performance_table.scales[c].interval.dmin for c in performance_table.criteria
     ]
@@ -88,7 +88,7 @@ filename_json = partial(filename, ext="json")
 
 def max_weight(n):
     # return 1 if n == 1 else (n - 1) * max_weight(n - 1) + 1
-    return 2**n
+    return 2**n - 1
 
 
 def compose(*fs: Callable):
