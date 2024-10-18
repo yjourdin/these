@@ -97,7 +97,7 @@ class FrozenDataclass(Field):
 class GeneratedDataclass(Dataclass, GeneratedField):
     @classmethod
     def random(cls, *args, **kwargs):
-        init_dict = kwargs
+        init_dict = {}
         super().random(init_dict=init_dict, *args, **kwargs)
         return cls(
             **{
@@ -109,7 +109,7 @@ class GeneratedDataclass(Dataclass, GeneratedField):
 
     @classmethod
     def balanced(cls, *args, **kwargs):
-        init_dict = kwargs
+        init_dict = {}
         super().balanced(init_dict=init_dict, *args, **kwargs)
         return cls(
             **{

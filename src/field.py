@@ -1,6 +1,8 @@
 from abc import ABC
 from typing import Any
 
+from .utils import compose
+
 
 class Field(ABC):
     @classmethod
@@ -65,20 +67,6 @@ def generated_field(fieldname: str):
         __class__ = original_class  # noqa: F841
 
         @classmethod
-        def decode(cls, dct: dict):
-            super().decode(dct)  # type: ignore
-            if fieldname in dct:
-                dct[fieldname] = original_class.field_decode(dct[fieldname])
-            return dct
-
-        @classmethod
-        def encode(cls, dct: dict):
-            super().encode(dct)  # type: ignore
-            if fieldname in dct:
-                dct[fieldname] = original_class.field_encode(dct[fieldname])
-            return dct
-
-        @classmethod
         def random(cls, init_dict: dict[str, Any] = {}, *args, **kwargs):
             super().random(init_dict=init_dict, *args, **kwargs)  # type: ignore
             init_dict[fieldname] = original_class.field_random(*args, **kwargs)
@@ -88,14 +76,12 @@ def generated_field(fieldname: str):
             super().balanced(init_dict=init_dict, *args, **kwargs)  # type: ignore
             init_dict[fieldname] = original_class.field_balanced(*args, **kwargs)
 
-        original_class.decode = decode
-        original_class.encode = encode
         original_class.random = random
         original_class.balanced = balanced
 
         return original_class
 
-    return decorator
+    return compose(field(fieldname), decorator)
 
 
 def group_field(fieldname: str, fieldclass: type[Field]):
@@ -137,28 +123,6 @@ def group_generated_field(fieldname: str, fieldclass: type[GeneratedField]):
         __class__ = original_class  # noqa: F841
 
         @classmethod
-        def decode(cls, dct: dict):
-            super().decode(dct)  # type: ignore
-            if fieldname in dct:
-                dct[fieldname] = (
-                    [fieldclass.field_decode(o) for o in dct[fieldname]]
-                    if dct[fieldname]
-                    else None
-                )
-            return dct
-
-        @classmethod
-        def encode(cls, dct: dict):
-            super().encode(dct)  # type: ignore
-            if fieldname in dct:
-                dct[fieldname] = (
-                    [fieldclass.field_encode(o) for o in dct[fieldname]]
-                    if dct[fieldname]
-                    else None
-                )
-            return dct
-
-        @classmethod
         def random(cls, init_dict: dict[str, Any] = {}, *args, **kwargs):
             super().random(init_dict=init_dict, *args, **kwargs)  # type: ignore
             init_dict[fieldname] = [
@@ -174,11 +138,9 @@ def group_generated_field(fieldname: str, fieldclass: type[GeneratedField]):
                 for _ in range(kwargs["group_size"])
             ]
 
-        original_class.decode = decode
-        original_class.encode = encode
         original_class.random = random
         original_class.balanced = balanced
 
         return original_class
 
-    return decorator
+    return compose(group_field(fieldname, fieldclass), decorator)

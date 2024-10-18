@@ -148,8 +148,8 @@ def group_model(
 
 def model(
     model: ModelEnum,
-    group_size: int,
     shared_params: Container[RMPParamEnum | SRMPParamEnum],
+    group_size: int,
 ):
     if model is ModelEnum.RMP:
         shared_params = cast(Container[RMPParamEnum], shared_params)

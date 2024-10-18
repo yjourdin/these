@@ -260,7 +260,7 @@ def rmp_group_model(
 
 def rmp_model(
     group_size: int, shared_params: Container[RMPParamEnum] = set()
-) -> type[Model]:
+):
     if group_size == 1:
         return RMPModel
     else:

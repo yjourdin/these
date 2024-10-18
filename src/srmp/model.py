@@ -213,7 +213,7 @@ def srmp_group_model(
 
 def srmp_model(
     group_size: int, shared_params: Container[SRMPParamEnum] = set()
-) -> type[Model]:
+):
     if group_size == 1:
         return SRMPModel
     else:

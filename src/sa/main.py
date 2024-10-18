@@ -55,18 +55,18 @@ def learn_sa(
     init_sol = None
     match model:
         case ModelEnum.RMP:
-            init_sol = RMPModelCapacity.balanced(
-                k,
-                M,
-                rng_init,
-                midpoints(alternatives),
+            init_sol = RMPModelCapacity.random(
+                nb_profiles=k,
+                nb_crit=M,
+                rng=rng_init,
+                profiles_values=midpoints(alternatives),
             )
         case ModelEnum.SRMP:
-            init_sol = SRMPModel.balanced(
-                k,
-                M,
-                rng_init,
-                midpoints(alternatives),
+            init_sol = SRMPModel.random(
+                nb_profiles=k,
+                nb_crit=M,
+                rng=rng_init,
+                profiles_values=midpoints(alternatives),
             )
     assert init_sol
 
