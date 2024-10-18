@@ -15,8 +15,8 @@ from .initial_temperature import initial_temperature
 from .neighbor import (
     NeighborCapacity,
     NeighborLexOrder,
-    NeighborProfiles,
-    NeighborWeights,
+    NeighborProfileDiscretized,
+    NeighborWeight,
     RandomNeighbor,
 )
 from .objective import FitnessObjective
@@ -73,7 +73,7 @@ def learn_sa(
     neighbors: list[Neighbor] = []
     prob: list[int] = []
 
-    neighbors.append(NeighborProfiles(midpoints(alternatives)))
+    neighbors.append(NeighborProfileDiscretized(midpoints(alternatives)))
     prob.append(k * M)
 
     match model:
@@ -82,7 +82,7 @@ def learn_sa(
             prob.append(2**M)
         case ModelEnum.SRMP:
             if "amp" in kwargs:
-                neighbors.append(NeighborWeights(kwargs["amp"]))
+                neighbors.append(NeighborWeight(kwargs["amp"]))
             else:
                 raise ValueError("amp must be specified")
             prob.append(M)

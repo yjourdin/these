@@ -7,6 +7,7 @@ from ..model import GroupModel, Model
 from ..utils import print_list
 from .field import (
     CapacityField,
+    CapacityIntField,
     GroupImportanceRelationField,
     GroupLexicographicOrderField,
     GroupProfilesField,
@@ -54,6 +55,29 @@ class RMPModelCapacity(  # type: ignore
     GeneratedDataclass,
     ProfilesField,
     CapacityField,
+    LexicographicOrderField,
+):
+    def __str__(self) -> str:
+        return (
+            f"{print_list(self.profiles.data.to_numpy()[0])}\t"
+            f"{self.lexicographic_order.__str__()}"
+        )
+
+    def rank(self, performance_table):
+        return NormalRMP(
+            performance_table,
+            ImportanceRelation.from_capacity(self.capacity),
+            self.profiles,
+            self.lexicographic_order,
+        ).rank()
+
+
+@dataclass
+class RMPModelCapacityInt(  # type: ignore
+    Model,
+    GeneratedDataclass,
+    ProfilesField,
+    CapacityIntField,
     LexicographicOrderField,
 ):
     def __str__(self) -> str:

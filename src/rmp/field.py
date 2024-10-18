@@ -99,7 +99,7 @@ class GroupImportanceRelationField(GeneratedField):
 @generated_field("capacity")
 @dataclass
 class CapacityField(GeneratedField):
-    capacity: Capacity
+    capacity: Capacity[float]
 
     @staticmethod
     def field_decode(o):
@@ -121,8 +121,36 @@ class CapacityField(GeneratedField):
 @group_generated_field(fieldname="capacity", fieldclass=CapacityField)
 @dataclass
 class GroupCapacityField(GeneratedField):
-    capacity: list[Capacity]
+    capacity: list[Capacity[float]]
 
+
+@generated_field("capacity")
+@dataclass
+class CapacityIntField(GeneratedField):
+    capacity: Capacity[int]
+
+    @staticmethod
+    def field_decode(o):
+        return {frozenset(k): v for k, v in o.items()}
+
+    @staticmethod
+    def field_encode(o):
+        return {list(k): v for k, v in o.items()}
+
+    @staticmethod
+    def field_random(nb_crit: int, rng: Generator, *args, **kwargs):
+        return random_capacity(nb_crit, rng)
+
+    @staticmethod
+    def field_balanced(nb_crit: int, *args, **kwargs):
+        return balanced_capacity(nb_crit)
+
+
+@group_generated_field(fieldname="capacity", fieldclass=CapacityIntField)
+@dataclass
+class GroupCapacityIntField(GeneratedField):
+    capacity: list[Capacity[int]]
+    
 
 @generated_field("lexicographic_order")
 @dataclass
