@@ -164,7 +164,7 @@ cython_debug/
 
 # Auxiliary directories
 profiling
-**/results
+results
 .old
 default_max_jobs.py
 test*
