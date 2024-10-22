@@ -163,11 +163,11 @@ cython_debug/
 .vscode/*
 
 # Auxiliary directories
-profiling/*
-results/*
+profiling
+**/results
 .old
 default_max_jobs.py
-test_*
+test
 Instances
 irace.Rdata
 report_files

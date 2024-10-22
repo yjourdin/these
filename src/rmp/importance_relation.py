@@ -20,12 +20,15 @@ class ImportanceRelation(MonotonicRelation, WeakOrder):
 
     @classmethod
     def random(cls, nb: int, rng: Generator, **kwargs):
+        k = 0
         while not MonotonicRelation.check_monotonic(
             weak_order := WeakOrder.random(
                 cls.default_labels_from_int(nb), rng, **kwargs
             )
         ):
-            ...
+            k+=1
+            print(k)
+        print(k)
         return cls(weak_order.data, weak_order.labels, validate=False)
 
     @classmethod

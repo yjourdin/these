@@ -138,8 +138,8 @@ class MonotonicRelation(Relation[frozenset[Any]]):
     def check_monotonic(relation: Relation[frozenset[Any]]):
         result = True
         for a, b in combinations(relation.labels, 2):
-            if a > b and not relation[a, b]:
-                result = False
+            if (a > b and not relation[a, b]) or (b > a and not relation[b, a]):
+                return False
         return result
 
     def check(self):
