@@ -167,7 +167,7 @@ profiling
 **/results
 .old
 default_max_jobs.py
-test
+test*
 Instances
 irace.Rdata
 report_files
