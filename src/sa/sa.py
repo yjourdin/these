@@ -93,7 +93,7 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
                 else:
                     try:
                         prob = exp((current_obj - neighbor_obj) / temp)
-                    except OverflowError:
+                    except (OverflowError, ZeroDivisionError):
                         prob = 0
 
                 if prob >= 1 or rng.random() < prob:
