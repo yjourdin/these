@@ -27,7 +27,7 @@ def initial_temperature[
 
     results.seek(0)
 
-    energy = -pd.read_csv(results, dialect="unix")["Obj"]
+    energy = pd.read_csv(results, dialect="unix")["Obj"]
     transitions = np.diff(energy)
     positive_transitions = transitions[transitions >= 0]
     positive_transitions_mean = np.mean(positive_transitions)
