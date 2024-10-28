@@ -55,7 +55,7 @@ def learn_sa(
     init_sol = None
     match model:
         case ModelEnum.RMP:
-            init_sol = RMPModelCapacity.random(
+            init_sol = RMPModelCapacity.balanced(
                 nb_profiles=k,
                 nb_crit=M,
                 rng=rng_init,
