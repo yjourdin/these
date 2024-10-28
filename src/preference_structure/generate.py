@@ -9,7 +9,7 @@ from numpy.random import Generator
 
 from ..generate_weak_order import (
     generate_partial_sum,
-    random_ranking_with_tie_from_partial_sum,
+    random_ranking_from_partial_sum,
 )
 from ..model import Model
 from ..performance_table.dominance_relation import (
@@ -31,9 +31,7 @@ def random_preference_relation(
     while cond:
         cond = False
 
-        ranking = random_ranking_with_tie_from_partial_sum(
-            performance_table.alternatives, S, rng
-        )
+        ranking = random_ranking_from_partial_sum(m, S, rng)
         preference_relation = WeakOrder.random_from_ranking(
             ranking, performance_table.alternatives
         )

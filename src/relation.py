@@ -7,7 +7,7 @@ import numpy.typing as npt
 from mcda.relations import I, P, PreferenceStructure
 from numpy.random import Generator
 
-from .generate_weak_order import random_ranking_with_tie
+from .generate_weak_order import random_ranking
 
 
 @total_ordering
@@ -124,7 +124,7 @@ class Preorder(TransitiveRelation, ReflexiveRelation): ...
 class WeakOrder[Element](CompleteRelation, Preorder):
     @classmethod
     def random(cls, labels: list[Element], rng: Generator, **kwargs):
-        ranking = random_ranking_with_tie(labels, rng, **kwargs)
+        ranking = random_ranking(len(labels), rng, **kwargs)
 
         return cls(np.less_equal.outer(ranking, ranking), labels)
 
@@ -136,11 +136,10 @@ class WeakOrder[Element](CompleteRelation, Preorder):
 class MonotonicRelation(Relation[frozenset[Any]]):
     @staticmethod
     def check_monotonic(relation: Relation[frozenset[Any]]):
-        result = True
         for a, b in combinations(relation.labels, 2):
             if (a > b and not relation[a, b]) or (b > a and not relation[b, a]):
                 return False
-        return result
+        return True
 
     def check(self):
         return super().check() and self.check_monotonic(self)

@@ -23,8 +23,6 @@ def W(m: int):
 
 
 def generate_partial_sum(m: int, delta: float = 0.01):
-    # delta_decimal = Decimal(delta)
-    # Wm = Decimal(W(m))
     Wm = W(m)
     k = 0
     S: list[float] = [0]
@@ -33,30 +31,10 @@ def generate_partial_sum(m: int, delta: float = 0.01):
         while Wm - S[-1] > 0 and (S[-1] - (S[-2] if len(S) > 1 else -1) > 0):
             k += 1
             S.append(S[-1] + (((k**m) // (2 ** (k + 1))) + 1))
-            # print("it", len(S))
-            # print("Wm", Wm)
-            # print("S1", S[-1])
-            # print("S2", S[-2])
-            # print("km", k**m)
-            # print("2k", 2 ** (k + 1))
-            # print("frac", (k**m) // (2 ** (k + 1)) + 1)
-            # print("diff", S[-1] - S[-2])
-            # print("Wm diff", Wm - S[-1])
-            # print("---")
     else:
         while Wm - S[-1] > delta and (S[-1] - (S[-2] if len(S) > 1 else -1) > 0):
             k += 1
             S.append(S[-1] + ((k**m) / (2 ** (k + 1))))
-            # print("it", len(S))
-            # print("Wm", Wm)
-            # print("S1", S[-1])
-            # print("S2", S[-2])
-            # print("km", k**m)
-            # print("2k", 2 ** (k + 1))
-            # print("frac", (k**m) / (2 ** (k + 1)))
-            # print("diff", S[-1] - S[-2])
-            # print("Wm diff", Wm - S[-1])
-            # print("---")
 
     S[-1] = Wm
 
@@ -78,23 +56,19 @@ def random_nb_blocks(S: list[float], rng: Generator):
     return K
 
 
-def random_ranking(alternatives: list, k: int | None, rng: Generator):
-    m = len(alternatives)
+def random_ranking_from_blocks(m: int, k: int | None, rng: Generator):
     k = k or m
 
     return rng.integers(1, k, m, int, True)
 
 
-def random_ranking_with_tie_from_partial_sum(
-    alternatives: list, S: list[float], rng: Generator
-):
+def random_ranking_from_partial_sum(m: int, S: list[float], rng: Generator):
     K = random_nb_blocks(S, rng)
 
-    return random_ranking(alternatives, K, rng)
+    return random_ranking_from_blocks(m, K, rng)
 
 
-def random_ranking_with_tie(alternatives: list, rng: Generator, delta: float = 0.01):
-    m = len(alternatives)
+def random_ranking(m: int, rng: Generator, delta: float = 0.01):
     S = generate_partial_sum(m, delta)
 
-    return random_ranking_with_tie_from_partial_sum(alternatives, S, rng)
+    return random_ranking_from_partial_sum(m, S, rng)

@@ -5,6 +5,10 @@ import numpy as np
 from more_itertools import powerset
 from numpy.random import Generator
 
+from ..generate_weak_order import (
+    generate_partial_sum,
+    random_ranking_from_partial_sum,
+)
 from ..relation import MonotonicRelation, WeakOrder
 from .capacity import Capacity
 
@@ -20,15 +24,16 @@ class ImportanceRelation(MonotonicRelation, WeakOrder):
 
     @classmethod
     def random(cls, nb: int, rng: Generator, **kwargs):
-        k = 0
+        labels = cls.default_labels_from_int(nb)
+        m = len(labels)
+        S = generate_partial_sum(m, **kwargs)
+
         while not MonotonicRelation.check_monotonic(
-            weak_order := WeakOrder.random(
-                cls.default_labels_from_int(nb), rng, **kwargs
+            weak_order := WeakOrder.random_from_ranking(
+                random_ranking_from_partial_sum(m, S, rng), labels
             )
         ):
-            k+=1
-            print(k)
-        print(k)
+            pass
         return cls(weak_order.data, weak_order.labels, validate=False)
 
     @classmethod
