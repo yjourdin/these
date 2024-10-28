@@ -1,4 +1,3 @@
-from itertools import product
 from math import log
 
 import numpy as np
@@ -38,10 +37,12 @@ class ImportanceRelation(MonotonicRelation, WeakOrder):
 
     @classmethod
     def from_capacity(cls, capacity: Capacity):
-        self = cls(len(capacity), validate=False)
-        for a, b in product(capacity, repeat=2):
-            self[a, b] = capacity[a] >= capacity[b]
-        return self
+        capacity_values = np.array(list(capacity.values()))
+        return cls(
+            np.greater_equal.outer(capacity_values, capacity_values),
+            list(capacity.keys()),
+            validate=False,
+        )
 
     def to_capacity(self) -> Capacity:
         capacity: Capacity = {}
