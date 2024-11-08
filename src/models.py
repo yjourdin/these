@@ -2,7 +2,7 @@ from collections.abc import Container
 from typing import cast
 
 from .dataclass import Dataclass
-from .enum import Enum, StrEnum
+from .enum_base import Enum, StrEnum
 from .model import Model
 from .random_model.model import RandomGroup, RandomModel
 from .rmp.model import RMPParamEnum, rmp_group_model, rmp_model, rmp_model_from_name

@@ -1,6 +1,6 @@
 import argparse
 
-from ..enum import StrEnum
+from ..enum_base import StrEnum
 
 
 class TypeEnum(StrEnum):

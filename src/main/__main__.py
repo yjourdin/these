@@ -64,7 +64,7 @@ logging_queue: Queue = Queue()
 start, succeed, precede, priority_succeed = task_precedence(args)
 
 
-# Start stoppig thread
+# Start stopping thread
 stop_connection, task_manager_connection = Pipe()
 stop_thread = Thread(target=stopping_thread, args=(dir.run, stop_connection))
 stop_thread.start()

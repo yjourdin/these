@@ -2,7 +2,7 @@ from collections.abc import Container
 from dataclasses import dataclass
 
 from ..dataclass import GeneratedDataclass
-from ..enum import StrEnum
+from ..enum_base import StrEnum
 from ..model import GroupModel, Model
 from ..rmp.field import (
     GroupLexicographicOrderField,

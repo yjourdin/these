@@ -1,4 +1,4 @@
-from ..enum import StrEnum
+from ..enum_base import StrEnum
 
 
 class Fieldnames(StrEnum):
