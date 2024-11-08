@@ -8,11 +8,11 @@ function parse_commandline()
     s = ArgParseSettings()
 
     @add_arg_table! s begin
-        "m"
+        "M"
             arg_type = UInt
             required = true
             help = "Number of criteria"
-        "S"
+        "Sfile"
             required = true
             help = "Partial sum file"
         "--seed", "-s"
@@ -20,21 +20,27 @@ function parse_commandline()
             help = "Random seed"
     end
 
-    return parse_args(s)
+    parsed_args = parse_args(s)
+
+    return (
+        parsed_args["M"]::UInt,
+        parsed_args["Sfile"]::String,
+        parsed_args["seed"]::Union{UInt, Nothing}
+    )
 end
 
 function main()
-    parsed_args = parse_commandline()
+    (M, Sfile, seed) = parse_commandline()
 
-    Random.seed!(parsed_args["seed"])
+    Random.seed!(seed)
 
-    S = load_object(parsed_args["S"])
+    S = load_object(Sfile)
 
-    println(random_ranking(parsed_args["m"], S))
+    println(random_ranking(M, S))
 end
 
 main()
 
-# ARGS=["10", "src/julia/S/10.txt"]
+# Base.ARGS = ["10", "src/julia/S/10.txt"]
 # @time main()
 # @profview main()

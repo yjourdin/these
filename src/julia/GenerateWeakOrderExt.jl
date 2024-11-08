@@ -17,7 +17,7 @@ end
 # Conversion
 
 function set2digits(A, B)
-    return parse(Int128, join(Int.(x ∈ A for x in B)), base=2)
+    return parse(UInt128, join(UInt8.(x ∈ A for x in B)), base=2)
 end
 
 
@@ -67,7 +67,7 @@ function AllWeak3!(WE, vertex_labels, edge_labels_dict, subsets, P, Y, A)
     end
 
     A_digit = set2digits(A, subsets)
-    A_index = get_index(vertex_labels, A_digit)::Int
+    A_index = get_index(vertex_labels, A_digit)::UInt128
     for B in powerset(Y, 1)
         @debug length(vertex_labels)
         AA = maximals(induce(P, Set(ideal(P, A) ∪ B)))
@@ -94,16 +94,11 @@ end
 
 # generate_WE
 
-function generate_WE(nb_paths_io, edge_labels_io, P::SimplePoset{T}, logging_io=nothing) where {T}
-    if !isnothing(logging_io)
-        logger = SimpleLogger(logging_io, Debug)
-        global_logger(logger)
-    end
-
+function generate_WE(nb_paths_io, edge_labels_io, P::SimplePoset{T}) where {T}
     WE = SimpleDiGraph(1)
     subsets = elements(P)
     vertex_labels = [set2digits(T[], subsets)]
-    edge_labels_dict = Dict{Tuple{Int,Int},Int128}()
+    edge_labels_dict = Dict{Tuple{UInt128,UInt128},UInt128}()
 
     @debug "start WE"
     AllWeak3!(WE, vertex_labels, edge_labels_dict, subsets, P, minimals(P), T[])
@@ -119,8 +114,8 @@ function generate_WE(nb_paths_io, edge_labels_io, P::SimplePoset{T}, logging_io=
 
     @debug "start copy"
     N = nv(WE)
-    nb_paths = mmap(nb_paths_io, Vector{Int128}, N)
-    edge_labels = mmap(edge_labels_io, Vector{Int128}, N * (N - 1) ÷ 2)
+    nb_paths = mmap(nb_paths_io, Vector{UInt128}, N)
+    edge_labels = mmap(edge_labels_io, Vector{UInt128}, N * (N - 1) ÷ 2)
     for ((u, v), d) ∈ pairs(edge_labels_dict)
         edge_labels[index(ts_index[u], ts_index[v], N)] = d
     end
@@ -159,11 +154,9 @@ end
 
 # generate_weak_order_ext
 
-function generate_weak_order_ext(nb_paths_io, edge_labels_io, subsets, rng=Random.default_rng())
+function generate_weak_order_ext(nb_paths, edge_labels, subsets, rng=Random.default_rng())
     result = Vector{String}[]
 
-    nb_paths = mmap(nb_paths_io, Vector{Int128})
-    edge_labels = mmap(edge_labels_io, Vector{Int128})
     N = length(nb_paths)
 
     u = 1

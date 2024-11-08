@@ -8,7 +8,7 @@ function parse_commandline()
     s = ArgParseSettings()
 
     @add_arg_table! s begin
-        "m"
+        "M"
             arg_type = UInt
             required = true
             help = "Number of criteria"
@@ -16,23 +16,28 @@ function parse_commandline()
             help = "Output file"
     end
 
-    return parse_args(s)
+    parsed_args = parse_args(s)
+
+    return (
+        parsed_args["M"]::UInt,
+        parsed_args["output"]::Union{Nothing, String}
+    )
 end
 
 function main()
-    parsed_args = parse_commandline()
+    (M, output) = parse_commandline()
 
-    S = generate_partial_sum(parsed_args["m"])
+    S = generate_partial_sum(M)
 
-    if isnothing(parsed_args["output"])
+    if isnothing(output)
         println(S)
     else
-        save_object(parsed_args["output"], S)
+        save_object(output, S)
     end
 end
 
 main()
 
-# ARGS=["10"]
+# Base.ARGS = ["10"]
 # @time main()
 # @profview main()

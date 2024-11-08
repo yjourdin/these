@@ -7,7 +7,7 @@ function parse_commandline()
     s = ArgParseSettings()
 
     @add_arg_table! s begin
-        "m"
+        "M"
             arg_type = UInt
             required = true
             help = "Number of criteria"
@@ -19,23 +19,32 @@ function parse_commandline()
             help = "Random seed"
     end
 
-    return parse_args(s)
+    parsed_args = parse_args(s)
+
+    return (
+        parsed_args["M"]::UInt,
+        parsed_args["dir"]::String,
+        parsed_args["seed"]::Union{UInt, Nothing}
+    )
 end
 
 function main()
-    parsed_args = parse_commandline()
+    (M, dir, seed) = parse_commandline()
 
-    Random.seed!(parsed_args["seed"])
+    Random.seed!(seed)
 
-    open(normpath(parsed_args["dir"], "nb_paths.bin"), "w+") do nb_paths_io
-        open(normpath(parsed_args["dir"], "edge_labels.bin"), "w+") do edge_labels_io
-            println(generate_weak_order_ext(nb_paths_io, edge_labels_io, elements(BooleanLattice(Int(parsed_args["m"])))))
+    open(normpath(dir, "nb_paths.bin"), "r") do nb_paths_io
+        open(normpath(dir, "edge_labels.bin"), "r") do edge_labels_io
+            nb_paths = mmap(nb_paths_io, Vector{Int128})
+            edge_labels = mmap(edge_labels_io, Vector{Int128})
+            
+            println(generate_weak_order_ext(nb_paths, edge_labels, elements(BooleanLattice(Int(M)))))
         end
     end
 end
 
 main()
 
-# ARGS=["5", "src/julia/WE/5"]
+# Base.ARGS = ["5", "src/julia/WE/5"]
 # @time main()
 # @profview main()

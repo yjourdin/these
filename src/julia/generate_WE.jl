@@ -7,7 +7,7 @@ function parse_commandline()
     s = ArgParseSettings()
 
     @add_arg_table! s begin
-        "m"
+        "M"
             arg_type = UInt
             required = true
             help = "Number of criteria"
@@ -20,34 +20,48 @@ function parse_commandline()
             help = "Logging file"
     end
 
-    return parse_args(s)
+    parsed_args = parse_args(s)
+
+    return (
+        parsed_args["M"]::UInt,
+        parsed_args["output"]::Union{Nothing, String},
+        parsed_args["logging"]::Union{Nothing, IO, String}
+    )
 end
 
 function main()
-    parsed_args = parse_commandline()
+    (M, output, logging) = parse_commandline()
 
-    if !isdir(parsed_args["output"])
-        mkpath(parsed_args["output"])
-        open(normpath(parsed_args["output"], "nb_paths.bin"), "w+") do nb_paths_io
-            open(normpath(parsed_args["output"], "edge_labels.bin"), "w+") do edge_labels_io
-                if parsed_args["logging"] isa String
-                    logging_io = open(parsed_args["logging"], "w+")
-                else
-                    logging_io = parsed_args["logging"]
-                end
+    if logging isa String
+        logging_io = open(logging, "w+")
+    else
+        logging_io = logging
+    end
 
-                generate_WE(nb_paths_io, edge_labels_io, BooleanLattice(Int(parsed_args["m"])), logging_io)
+    if !isnothing(logging_io)
+        logger = SimpleLogger(logging_io, Debug)
+        global_logger(logger)
+    end
 
-                if parsed_args["logging"] isa String
-                    close(logging_io)
-                end
+    if !isdir(output)
+        mkpath(output)
+        open(normpath(output, "nb_paths.bin"), "w+") do nb_paths_io
+            open(normpath(output, "edge_labels.bin"), "w+") do edge_labels_io
+                generate_WE(nb_paths_io, edge_labels_io, BooleanLattice(Int(M)))
+
             end
         end
+    else
+        @warn "directory already exist"
+    end
+
+    if logging isa String
+        close(logging_io)
     end
 end
 
 main()
 
-# ARGS=["5"]
+# Base.ARGS = ["5"]
 # @time main()
 # @profview main()

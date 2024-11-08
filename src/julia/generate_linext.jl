@@ -7,7 +7,7 @@ function parse_commandline()
     s = ArgParseSettings()
 
     @add_arg_table! s begin
-        "m"
+        "M"
             arg_type = UInt
             required = true
             help = "Number of criteria"
@@ -16,19 +16,24 @@ function parse_commandline()
             help = "Random seed"
     end
 
-    return parse_args(s)
+    parsed_args = parse_args(s)
+
+    return (
+        parsed_args["M"]::UInt,
+        parsed_args["seed"]::Union{UInt, Nothing}
+    )
 end
 
 function main()
-    parsed_args = parse_commandline()
+    (M, seed) = parse_commandline()
 
-    Random.seed!(parsed_args["seed"])
+    Random.seed!(seed)
     
-    println(generate_linext(BooleanLattice(Int(parsed_args["m"]))))
+    println(generate_linext(BooleanLattice(Int(M))))
 end
 
 main()
 
-# ARGS=["11"]
+# Base.ARGS = ["11"]
 # @time main()
 # @profview main()
