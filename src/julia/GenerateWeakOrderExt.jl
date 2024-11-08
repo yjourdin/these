@@ -67,7 +67,7 @@ function AllWeak3!(WE, vertex_labels, edge_labels_dict, subsets, P, Y, A)
     end
 
     A_digit = set2digits(A, subsets)
-    A_index = get_index(vertex_labels, A_digit)::UInt128
+    A_index = get_index(vertex_labels, A_digit)
     for B in powerset(Y, 1)
         @debug length(vertex_labels)
         AA = maximals(induce(P, Set(ideal(P, A) ∪ B)))
@@ -98,7 +98,7 @@ function generate_WE(nb_paths_io, edge_labels_io, P::SimplePoset{T}) where {T}
     WE = SimpleDiGraph(1)
     subsets = elements(P)
     vertex_labels = [set2digits(T[], subsets)]
-    edge_labels_dict = Dict{Tuple{UInt128,UInt128},UInt128}()
+    edge_labels_dict = Dict{Tuple{Int,Int},UInt128}()
 
     @debug "start WE"
     AllWeak3!(WE, vertex_labels, edge_labels_dict, subsets, P, minimals(P), T[])
