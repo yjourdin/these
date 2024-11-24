@@ -165,7 +165,7 @@ cython_debug/
 # Auxiliary directories
 profiling
 results
-.old
+*.old
 default_max_jobs.py
 test*
 Instances
@@ -175,4 +175,3 @@ report.html
 logs
 *.lp
 *.bkp
-*.bin
