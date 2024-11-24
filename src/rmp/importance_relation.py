@@ -1,65 +1,23 @@
-from math import log
-
 import numpy as np
-from more_itertools import powerset
-from numpy.random import Generator
 
-from ..generate_weak_order import (
-    generate_partial_sum,
-    random_ranking_from_partial_sum,
-)
-from ..relation import MonotonicRelation, WeakOrder
-from .capacity import Capacity
+from src.julia.function import generate_weak_order_ext
+
+from ..random import seed
+from ..weak_order import WeakOrder
 
 
-class ImportanceRelation(MonotonicRelation, WeakOrder):
-    @staticmethod
-    def default_labels_from_int(i):
-        return [frozenset(s) for s in powerset(range(i))]
-
-    @staticmethod
-    def default_labels(data):
-        return ImportanceRelation.default_labels_from_int(int(log(len(data), 2)))
-
+class ImportanceRelation(WeakOrder[frozenset[int]]):
     @classmethod
-    def random(cls, nb: int, rng: Generator, **kwargs):
-        labels = cls.default_labels_from_int(nb)
-        m = len(labels)
-        S = generate_partial_sum(m, **kwargs)
+    def random(cls, nb_crit, rng):
+        weak_order_ext = generate_weak_order_ext(nb_crit, seed(rng))
 
-        while not MonotonicRelation.check_monotonic(
-            weak_order := WeakOrder.random_from_ranking(
-                random_ranking_from_partial_sum(m, S, rng), labels
-            )
-        ):
-            pass
-        return cls(weak_order.data, weak_order.labels, validate=False)
+        labels = np.arange(nb_crit)
+        dct: dict[frozenset[int], int] = {}
 
-    @classmethod
-    def from_capacity(cls, capacity: Capacity):
-        capacity_values = np.array(list(capacity.values()))
-        return cls(
-            np.greater_equal.outer(capacity_values, capacity_values),
-            list(capacity.keys()),
-            validate=False,
-        )
+        for i, block in enumerate(weak_order_ext):
+            for node in block:
+                dct[frozenset(labels[node].tolist())] = i
 
-    def to_capacity(self) -> Capacity:
-        capacity: Capacity = {}
-        data = self.large.copy()
-        labels = np.array(self.labels)
-        index = list(range(len(data)))
-        while len(index) > 0:
-            data = data[np.ix_(index, index)]
-            labels = labels[index]
-            better = data.sum(1)
-            minimals = np.where(better == better.min())[0]
-            for i in minimals:
-                capacity[labels[i]] = (  # type: ignore
-                    1
-                    if len(minimals) == len(index)
-                    else (len(self.labels) - len(index)) / len(self.labels)
-                )
-            index = [i for i in range(len(data)) if i not in minimals]
-        capacity[frozenset()] = 0
-        return capacity
+        we = cls()
+        we.dict = dct
+        return we

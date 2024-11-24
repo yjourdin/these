@@ -1,13 +1,11 @@
 from collections.abc import Container
 from dataclasses import dataclass
 
-from ..dataclass import GeneratedDataclass
+from ..dataclass import RandomDataclass
 from ..enum_base import StrEnum
 from ..model import GroupModel, Model
 from ..utils import print_list
 from .field import (
-    CapacityField,
-    CapacityIntField,
     GroupImportanceRelationField,
     GroupLexicographicOrderField,
     GroupProfilesField,
@@ -15,7 +13,6 @@ from .field import (
     LexicographicOrderField,
     ProfilesField,
 )
-from .importance_relation import ImportanceRelation
 from .rmp import NormalRMP
 
 
@@ -28,7 +25,7 @@ class RMPParamEnum(StrEnum):
 @dataclass
 class RMPModel(  # type: ignore
     Model,
-    GeneratedDataclass,
+    RandomDataclass,
     ProfilesField,
     ImportanceRelationField,
     LexicographicOrderField,
@@ -50,55 +47,9 @@ class RMPModel(  # type: ignore
 
 
 @dataclass
-class RMPModelCapacity(  # type: ignore
-    Model,
-    GeneratedDataclass,
-    ProfilesField,
-    CapacityField,
-    LexicographicOrderField,
-):
-    def __str__(self) -> str:
-        return (
-            f"{print_list(self.profiles.data.to_numpy()[0])}\t"
-            f"{self.lexicographic_order.__str__()}"
-        )
-
-    def rank(self, performance_table):
-        return NormalRMP(
-            performance_table,
-            ImportanceRelation.from_capacity(self.capacity),
-            self.profiles,
-            self.lexicographic_order,
-        ).rank()
-
-
-@dataclass
-class RMPModelCapacityInt(  # type: ignore
-    Model,
-    GeneratedDataclass,
-    ProfilesField,
-    CapacityIntField,
-    LexicographicOrderField,
-):
-    def __str__(self) -> str:
-        return (
-            f"{print_list(self.profiles.data.to_numpy()[0])}\t"
-            f"{self.lexicographic_order.__str__()}"
-        )
-
-    def rank(self, performance_table):
-        return NormalRMP(
-            performance_table,
-            ImportanceRelation.from_capacity(self.capacity),
-            self.profiles,
-            self.lexicographic_order,
-        ).rank()
-
-
-@dataclass
 class RMPGroupModelImportanceProfilesLexicographic(  # type: ignore
     GroupModel[RMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     ProfilesField,
     ImportanceRelationField,
     LexicographicOrderField,
@@ -122,7 +73,7 @@ class RMPGroupModelImportanceProfilesLexicographic(  # type: ignore
 @dataclass
 class RMPGroupModelImportanceProfiles(  # type: ignore
     GroupModel[RMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     ProfilesField,
     ImportanceRelationField,
     GroupLexicographicOrderField,
@@ -138,7 +89,7 @@ class RMPGroupModelImportanceProfiles(  # type: ignore
 @dataclass
 class RMPGroupModelImportanceLexicographic(  # type: ignore
     GroupModel[RMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     GroupProfilesField,
     ImportanceRelationField,
     LexicographicOrderField,
@@ -154,7 +105,7 @@ class RMPGroupModelImportanceLexicographic(  # type: ignore
 @dataclass
 class RMPGroupModelProfilesLexicographic(  # type: ignore
     GroupModel[RMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     ProfilesField,
     GroupImportanceRelationField,
     LexicographicOrderField,
@@ -170,7 +121,7 @@ class RMPGroupModelProfilesLexicographic(  # type: ignore
 @dataclass
 class RMPGroupModelImportance(
     GroupModel[RMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     GroupProfilesField,
     ImportanceRelationField,
     GroupLexicographicOrderField,
@@ -186,7 +137,7 @@ class RMPGroupModelImportance(
 @dataclass
 class RMPGroupModelProfiles(
     GroupModel[RMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     ProfilesField,
     GroupImportanceRelationField,
     GroupLexicographicOrderField,
@@ -202,7 +153,7 @@ class RMPGroupModelProfiles(
 @dataclass
 class RMPGroupModelLexicographic(
     GroupModel[RMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     GroupProfilesField,
     GroupImportanceRelationField,
     LexicographicOrderField,
@@ -218,7 +169,7 @@ class RMPGroupModelLexicographic(
 @dataclass
 class RMPGroupModel(
     GroupModel[RMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     GroupProfilesField,
     GroupImportanceRelationField,
     GroupLexicographicOrderField,
@@ -258,9 +209,7 @@ def rmp_group_model(
                 return RMPGroupModel
 
 
-def rmp_model(
-    group_size: int, shared_params: Container[RMPParamEnum] = set()
-):
+def rmp_model(group_size: int, shared_params: Container[RMPParamEnum] = set()):
     if group_size == 1:
         return RMPModel
     else:

@@ -1,19 +1,22 @@
-import ast
 from dataclasses import dataclass
 
-import numpy as np
 from numpy.random import Generator
 
-from ..field import GeneratedField, generated_field, group_generated_field
+from ..field import (
+    RandomField,
+    random_field,
+    random_group_field,
+)
 from ..performance_table.normal_performance_table import NormalPerformanceTable
-from .capacity import Capacity, balanced_capacity, random_capacity
 from .importance_relation import ImportanceRelation
-from .profile import balanced_profiles, random_profiles
+from .profile import random_profiles
+import ast
 
 
-@generated_field("profiles")
+
+@random_field("profiles")
 @dataclass
-class ProfilesField(GeneratedField):
+class ProfilesField(RandomField):
     profiles: NormalPerformanceTable
 
     @staticmethod
@@ -40,136 +43,51 @@ class ProfilesField(GeneratedField):
             profiles_values,
         )
 
-    @staticmethod
-    def field_balanced(
-        nb_profiles: int,
-        nb_crit: int,
-        profiles_values: NormalPerformanceTable | None = None,
-        *args,
-        **kwargs,
-    ):
-        return balanced_profiles(
-            nb_profiles,
-            nb_crit,
-            profiles_values,
-        )
 
-
-@group_generated_field(fieldname="profiles", fieldclass=ProfilesField)
+@random_group_field(fieldname="profiles", fieldclass=ProfilesField)
 @dataclass
-class GroupProfilesField(GeneratedField):
+class GroupProfilesField(RandomField):
     profiles: list[NormalPerformanceTable]
 
 
-@generated_field("importance_relation")
+@random_field("importance_relation")
 @dataclass
-class ImportanceRelationField(GeneratedField):
+class ImportanceRelationField(RandomField):
     importance_relation: ImportanceRelation
 
     @staticmethod
     def field_decode(o):
         return ImportanceRelation(
-            np.array(o["data"]),
-            [frozenset(label) for label in o["labels"]],
+            o.values(),
+            [frozenset(ast.literal_eval(label)) for label in o.keys()],
         )
 
     @staticmethod
     def field_encode(o):
-        return {
-            "labels": [list(label) for label in o.labels],
-            "data": o.data.tolist(),
-        }
+        return {str(list(label)): score for label, score in o.items()}
 
     @staticmethod
     def field_random(nb_crit: int, rng: Generator, *args, **kwargs):
-        return ImportanceRelation.from_capacity(random_capacity(nb_crit, rng))
-
-    @staticmethod
-    def field_balanced(nb_crit: int, *args, **kwargs):
-        return ImportanceRelation.from_capacity(balanced_capacity(nb_crit))
+        return ImportanceRelation.random(nb_crit, rng)
 
 
-@group_generated_field(
-    fieldname="importance_relation", fieldclass=ImportanceRelationField
-)
+@random_group_field(fieldname="importance_relation", fieldclass=ImportanceRelationField)
 @dataclass
-class GroupImportanceRelationField(GeneratedField):
+class GroupImportanceRelationField(RandomField):
     importance_relation: list[ImportanceRelation]
 
 
-@generated_field("capacity")
+@random_field("lexicographic_order")
 @dataclass
-class CapacityField(GeneratedField):
-    capacity: Capacity[float]
-
-    @staticmethod
-    def field_decode(o):
-        return {frozenset(ast.literal_eval(k)): v for k, v in o.items()}
-
-    @staticmethod
-    def field_encode(o):
-        return {str(list(k)): v for k, v in o.items()}
-
-    @staticmethod
-    def field_random(nb_crit: int, rng: Generator, *args, **kwargs):
-        return random_capacity(nb_crit, rng)
-
-    @staticmethod
-    def field_balanced(nb_crit: int, *args, **kwargs):
-        return balanced_capacity(nb_crit)
-
-
-@group_generated_field(fieldname="capacity", fieldclass=CapacityField)
-@dataclass
-class GroupCapacityField(GeneratedField):
-    capacity: list[Capacity[float]]
-
-
-@generated_field("capacity")
-@dataclass
-class CapacityIntField(GeneratedField):
-    capacity: Capacity[int]
-
-    @staticmethod
-    def field_decode(o):
-        return {frozenset(k): v for k, v in o.items()}
-
-    @staticmethod
-    def field_encode(o):
-        return {list(k): v for k, v in o.items()}
-
-    @staticmethod
-    def field_random(nb_crit: int, rng: Generator, *args, **kwargs):
-        return random_capacity(nb_crit, rng)
-
-    @staticmethod
-    def field_balanced(nb_crit: int, *args, **kwargs):
-        return balanced_capacity(nb_crit)
-
-
-@group_generated_field(fieldname="capacity", fieldclass=CapacityIntField)
-@dataclass
-class GroupCapacityIntField(GeneratedField):
-    capacity: list[Capacity[int]]
-
-
-@generated_field("lexicographic_order")
-@dataclass
-class LexicographicOrderField(GeneratedField):
+class LexicographicOrderField(RandomField):
     lexicographic_order: list[int]
 
     @staticmethod
     def field_random(nb_profiles: int, rng: Generator, *args, **kwargs):
         return rng.permutation(nb_profiles).tolist()
 
-    @staticmethod
-    def field_balanced(nb_profiles: int, rng: Generator, *args, **kwargs):
-        return rng.permutation(nb_profiles).tolist()
 
-
-@group_generated_field(
-    fieldname="lexicographic_order", fieldclass=LexicographicOrderField
-)
+@random_group_field(fieldname="lexicographic_order", fieldclass=LexicographicOrderField)
 @dataclass
-class GroupLexicographicOrderField(GeneratedField):
+class GroupLexicographicOrderField(RandomField):
     lexicographic_order: list[list[int]]

@@ -63,26 +63,32 @@ class ProfileWiseOutranking(Ranker):
 
         :return:
         """
-        criteria_subset = {
-            a: frozenset(
-                [
-                    c
-                    for c, s in av.scales.items()
-                    if s.is_better_or_equal(av[c], self.profile[c])
+        scores = Series(
+            {
+                a: self.importance_relation[
+                    frozenset(
+                        [
+                            c
+                            for c, s in av.scales.items()
+                            if s.is_better_or_equal(av[c], self.profile[c])
+                        ]
+                    )
                 ]
-            )
-            for a, av in self.performance_table.alternatives_values.items()
-        }
+                for a, av in self.performance_table.alternatives_values.items()
+            }
+        )
 
         return create_outranking_matrix(
             DataFrame(
-                self.importance_relation.sub(
-                    "strict",
-                    list(criteria_subset.values()),
-                    list(criteria_subset.values()),
-                ),
-                index=list(criteria_subset.keys()),
-                columns=list(criteria_subset.keys()),
+                [
+                    [
+                        scores[ai] >= scores[aj]
+                        for aj in self.performance_table.alternatives
+                    ]
+                    for ai in self.performance_table.alternatives
+                ],
+                index=self.performance_table.alternatives,
+                columns=self.performance_table.alternatives,
                 dtype="int64",
             )
         )
@@ -117,10 +123,15 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
         :return:
         """
         comp_df = self.performance_table.data >= self.profile.data
+        
+        scores = np.array(
+            [
+                self.importance_relation[frozenset(np.nonzero(a)[0])]
+                for a in comp_df.values
+            ]
+        )
 
-        criteria_subset = [frozenset(a.nonzero()[0].tolist()) for a in comp_df.values]
-
-        return self.importance_relation.sub("strict", criteria_subset, criteria_subset)
+        return np.greater_equal.outer(scores, scores)
 
 
 class RMP(Ranker):
