@@ -69,11 +69,11 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
 
         # Stopping criterion
         while (
-            (not self.Tf or (temp > self.Tf))
-            and (not self.max_time or (self.time < self.max_time))
-            and (not self.max_it or (self.it < self.max_it))
+            ((self.Tf is None) or (temp > self.Tf))
+            and ((self.max_time is None) or (self.time < self.max_time))
+            and ((self.max_it is None) or (self.it < self.max_it))
             and (
-                not self.max_it_non_improving
+                (self.max_it_non_improving is None)
                 or (self.non_improving_it < self.max_it_non_improving)
             )
         ):

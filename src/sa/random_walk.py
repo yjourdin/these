@@ -49,8 +49,8 @@ class RandomWalk[S](Learner[S], Dataclass):
             log_writer.writeheader()
 
         # Stopping criterion
-        while (not self.max_time or (self.time < self.max_time)) and (
-            not self.max_it or (self.it < self.max_it)
+        while ((self.max_time is None) or (self.time < self.max_time)) and (
+            (self.max_it is None) or (self.it < self.max_it)
         ):
             # New iteration
             self.time = time() - start_time
