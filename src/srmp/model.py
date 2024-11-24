@@ -1,7 +1,7 @@
 from collections.abc import Container
 from dataclasses import dataclass
 
-from ..dataclass import GeneratedDataclass
+from ..dataclass import RandomDataclass
 from ..enum_base import StrEnum
 from ..model import GroupModel, Model
 from ..rmp.field import (
@@ -25,7 +25,7 @@ class SRMPParamEnum(StrEnum):
 @dataclass
 class SRMPModel(  # type: ignore
     Model,
-    GeneratedDataclass,
+    RandomDataclass,
     ProfilesField,
     WeightsField,
     LexicographicOrderField,
@@ -51,7 +51,7 @@ class SRMPModel(  # type: ignore
 @dataclass
 class SRMPGroupModelWeightsProfilesLexicographic(  # type: ignore
     GroupModel[SRMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     ProfilesField,
     WeightsField,
     LexicographicOrderField,
@@ -75,7 +75,7 @@ class SRMPGroupModelWeightsProfilesLexicographic(  # type: ignore
 @dataclass
 class SRMPGroupModelWeightsProfiles(  # type: ignore
     GroupModel[SRMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     ProfilesField,
     WeightsField,
     GroupLexicographicOrderField,
@@ -91,7 +91,7 @@ class SRMPGroupModelWeightsProfiles(  # type: ignore
 @dataclass
 class SRMPGroupModelWeightsLexicographic(  # type: ignore
     GroupModel[SRMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     GroupProfilesField,
     WeightsField,
     LexicographicOrderField,
@@ -107,7 +107,7 @@ class SRMPGroupModelWeightsLexicographic(  # type: ignore
 @dataclass
 class SRMPGroupModelProfilesLexicographic(  # type: ignore
     GroupModel[SRMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     ProfilesField,
     GroupWeightsField,
     LexicographicOrderField,
@@ -123,7 +123,7 @@ class SRMPGroupModelProfilesLexicographic(  # type: ignore
 @dataclass
 class SRMPGroupModelWeights(
     GroupModel[SRMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     GroupProfilesField,
     WeightsField,
     GroupLexicographicOrderField,
@@ -139,7 +139,7 @@ class SRMPGroupModelWeights(
 @dataclass
 class SRMPGroupModelProfiles(
     GroupModel[SRMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     ProfilesField,
     GroupWeightsField,
     GroupLexicographicOrderField,
@@ -155,7 +155,7 @@ class SRMPGroupModelProfiles(
 @dataclass
 class SRMPGroupModelLexicographic(
     GroupModel[SRMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     GroupProfilesField,
     GroupWeightsField,
     LexicographicOrderField,
@@ -171,7 +171,7 @@ class SRMPGroupModelLexicographic(
 @dataclass
 class SRMPGroupModel(
     GroupModel[SRMPModel],
-    GeneratedDataclass,
+    RandomDataclass,
     GroupProfilesField,
     GroupWeightsField,
     GroupLexicographicOrderField,

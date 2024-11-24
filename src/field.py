@@ -1,6 +1,9 @@
 from abc import ABC
 from typing import Any
 
+from numpy.random import Generator
+
+from .random import Random
 from .utils import compose
 
 
@@ -48,21 +51,12 @@ def field(fieldname: str):
     return decorator
 
 
-class GeneratedField(Field):
-    @classmethod
-    def random(cls, *args, **kwargs): ...
-
-    @classmethod
-    def balanced(cls, *args, **kwargs): ...
-
+class RandomField(Random, Field):
     @staticmethod
-    def field_random(*args, **kwargs): ...
-
-    @staticmethod
-    def field_balanced(*args, **kwargs): ...
+    def field_random(rng: Generator, *args, **kwargs): ...
 
 
-def generated_field(fieldname: str):
+def random_field(fieldname: str):
     def decorator(original_class):
         __class__ = original_class  # noqa: F841
 
@@ -71,13 +65,7 @@ def generated_field(fieldname: str):
             super().random(init_dict=init_dict, *args, **kwargs)  # type: ignore
             init_dict[fieldname] = original_class.field_random(*args, **kwargs)
 
-        @classmethod
-        def balanced(cls, init_dict: dict[str, Any] = {}, *args, **kwargs):
-            super().balanced(init_dict=init_dict, *args, **kwargs)  # type: ignore
-            init_dict[fieldname] = original_class.field_balanced(*args, **kwargs)
-
         original_class.random = random
-        original_class.balanced = balanced
 
         return original_class
 
@@ -118,7 +106,7 @@ def group_field(fieldname: str, fieldclass: type[Field]):
     return decorator
 
 
-def group_generated_field(fieldname: str, fieldclass: type[GeneratedField]):
+def random_group_field(fieldname: str, fieldclass: type[RandomField]):
     def decorator(original_class):
         __class__ = original_class  # noqa: F841
 
@@ -130,16 +118,7 @@ def group_generated_field(fieldname: str, fieldclass: type[GeneratedField]):
                 for _ in range(kwargs["group_size"])
             ]
 
-        @classmethod
-        def balanced(cls, init_dict: dict[str, Any] = {}, *args, **kwargs):
-            super().balanced(init_dict=init_dict, *args, **kwargs)  # type: ignore
-            init_dict[fieldname] = [
-                fieldclass.field_balanced(*args, **kwargs)
-                for _ in range(kwargs["group_size"])
-            ]
-
         original_class.random = random
-        original_class.balanced = balanced
 
         return original_class
 

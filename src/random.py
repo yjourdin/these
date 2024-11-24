@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 from numpy.random import Generator, SeedSequence, default_rng
 
@@ -15,6 +15,11 @@ def seed(rng: Generator = rng(), max: int = 2**63) -> Seed:
 
 def seeds(rng: Generator, nb: int = 1, max: int = 2**63) -> list[Seed]:
     return rng.integers(max, size=nb).tolist()
+
+
+class Random(ABC):
+    @classmethod
+    def random(cls, rng: Generator, *args, **kwargs): ...
 
 
 class SeedMixin:

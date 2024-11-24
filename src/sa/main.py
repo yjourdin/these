@@ -7,13 +7,13 @@ from ..constants import DEFAULT_MAX_TIME
 from ..model import Model
 from ..models import ModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..rmp.model import RMPModelCapacity
+from ..rmp.model import RMPModel
 from ..srmp.model import SRMPModel
 from ..utils import midpoints
 from .cooling_schedule import GeometricSchedule
 from .initial_temperature import initial_temperature
 from .neighbor import (
-    NeighborCapacity,
+    NeighborImportanceRelation,
     NeighborLexOrder,
     NeighborProfileDiscretized,
     NeighborWeight,
@@ -55,7 +55,7 @@ def learn_sa(
     init_sol = None
     match model:
         case ModelEnum.RMP:
-            init_sol = RMPModelCapacity.balanced(
+            init_sol = RMPModel.random(
                 nb_profiles=k,
                 nb_crit=M,
                 rng=rng_init,
@@ -78,7 +78,7 @@ def learn_sa(
 
     match model:
         case ModelEnum.RMP:
-            neighbors.append(NeighborCapacity(alternatives.criteria))
+            neighbors.append(NeighborImportanceRelation(2**M - 1))
             prob.append(2**M)
         case ModelEnum.SRMP:
             if "amp" in kwargs:
@@ -105,8 +105,8 @@ def learn_sa(
             objective,
             init_sol,
             rng_sa,
-            max_time // 100 if max_time else None,
-            max_it // 100 if max_it else None,
+            max(max_time // 100, 1) if max_time else None,
+            max(max_it // 100, 1) if max_it else None,
         )
 
     sa = SimulatedAnnealing(

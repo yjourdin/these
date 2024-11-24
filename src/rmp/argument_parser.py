@@ -15,7 +15,6 @@ parser.add_argument(
     choices=RMPParamEnum,
     help="Parameters shared between decision makers",
 )
-parser.add_argument("-b", "--balanced", action="store_true", help="Balanced model")
 parser.add_argument(
     "-p",
     "--profiles-values",

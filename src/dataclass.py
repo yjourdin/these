@@ -2,7 +2,7 @@ from dataclasses import asdict, dataclass, fields
 from json import dumps, loads
 from operator import attrgetter
 
-from .field import Field, GeneratedField
+from .field import Field, RandomField
 
 
 @dataclass
@@ -94,23 +94,11 @@ class FrozenDataclass(Field):
 
 
 @dataclass
-class GeneratedDataclass(Dataclass, GeneratedField):
+class RandomDataclass(Dataclass, RandomField):
     @classmethod
     def random(cls, *args, **kwargs):
         init_dict = {}
         super().random(init_dict=init_dict, *args, **kwargs)
-        return cls(
-            **{
-                k: v
-                for k, v in init_dict.items()
-                if k in map(attrgetter("name"), fields(cls))
-            }
-        )
-
-    @classmethod
-    def balanced(cls, *args, **kwargs):
-        init_dict = {}
-        super().balanced(init_dict=init_dict, *args, **kwargs)
         return cls(
             **{
                 k: v

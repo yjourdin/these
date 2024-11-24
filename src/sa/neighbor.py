@@ -1,17 +1,15 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from copy import deepcopy
-from dataclasses import InitVar, dataclass
-from itertools import chain, combinations
-from typing import Any, Collection, cast
+from dataclasses import dataclass
+from typing import cast
 
 import numpy as np
 from mcda import PerformanceTable
-from more_itertools import powerset
 from numpy.random import Generator
 
 from ..dataclass import Dataclass
-from ..rmp.model import RMPModelCapacity, RMPModelCapacityInt
+from ..rmp.model import RMPModel
 from ..srmp.model import SRMPModel
 
 
@@ -39,7 +37,7 @@ class RandomNeighbor[S](Neighbor[S]):
 
 
 @dataclass
-class NeighborProfile(Neighbor[SRMPModel | RMPModelCapacity], Dataclass):
+class NeighborProfile(Neighbor[SRMPModel | RMPModel], Dataclass):
     amp: float = 1
 
     def __call__(self, sol, rng):
@@ -63,7 +61,7 @@ class NeighborProfile(Neighbor[SRMPModel | RMPModelCapacity], Dataclass):
 
 
 @dataclass
-class NeighborProfileDiscretized(Neighbor[SRMPModel | RMPModelCapacity], Dataclass):
+class NeighborProfileDiscretized(Neighbor[SRMPModel | RMPModel], Dataclass):
     values: PerformanceTable
     local: bool = False
 
@@ -142,82 +140,46 @@ class NeighborWeightDiscretized(Neighbor[SRMPModel]):
 
 
 @dataclass
-class NeighborCapacity(Neighbor[RMPModelCapacity], Dataclass):
-    s: InitVar[Collection[Any]]
-    amp: float = 1
-
-    def __post_init__(self, s: Collection[Any]):
-        s = set(s)
-
-        power_set_tmp = chain.from_iterable(
-            combinations(s, r) for r in range(len(s) + 1)
-        )
-        power_set = {frozenset(i for i in ss) for ss in power_set_tmp}
-
-        self.supremum = {ss: {ss | {i} for i in (s - ss)} for ss in power_set}
-        self.infimum = {ss: {ss - {i} for i in ss} for ss in power_set}
-
-    def __call__(self, sol, rng):
-        neighbor = deepcopy(sol)
-
-        capacities = neighbor.capacity
-        keys = list(capacities)
-        coalition = keys[rng.choice(len(keys))]
-        capacity = capacities[coalition]
-
-        infimum_capacities = [capacities[ss] for ss in self.infimum[coalition]]
-        min_capacity = max(infimum_capacities) if infimum_capacities else 0
-        supremum_capacities = [capacities[ss] for ss in self.supremum[coalition]]
-        max_capacity = min(supremum_capacities) if supremum_capacities else 1
-
-        capacity = rng.uniform(min_capacity, max_capacity)
-        neighbor.capacity[coalition] = capacity
-
-        return neighbor
-
-
-@dataclass
-class NeighborCapacityDiscretized(Neighbor[RMPModelCapacityInt]):
-    s: InitVar[Collection[Any]]
+class NeighborImportanceRelation(Neighbor[RMPModel]):
+    max: int
     local: bool = False
 
-    def __post_init__(self, s: Collection[Any]):
-        s = set(s)
-
-        power_set = {frozenset(x) for x in powerset(s)}
-
-        self.supremum = {ss: {ss | {i} for i in (s - ss)} for ss in power_set}
-        self.infimum = {ss: {ss - {i} for i in ss} for ss in power_set}
-
     def __call__(self, sol, rng):
         neighbor = deepcopy(sol)
 
-        capacities = neighbor.capacity
-        keys = list(capacities)
+        importance_relation = neighbor.importance_relation
+        keys = list(importance_relation)
         coalition = keys[rng.choice(len(keys))]
-        capacity = capacities[coalition]
+        score = importance_relation[coalition]
+        
+        
 
-        infimum_capacities = [capacities[ss] for ss in self.infimum[coalition]]
-        min_capacity = max(infimum_capacities) if infimum_capacities else 0
-        supremum_capacities = [capacities[ss] for ss in self.supremum[coalition]]
-        max_capacity = min(supremum_capacities) if supremum_capacities else 1
+        try:
+            min_score = max([importance_relation[s] for s in keys if s < coalition])
+        except ValueError:
+            min_score = 0
+        
+        try:
+            max_score = min([importance_relation[s] for s in keys if coalition < s])
+        except ValueError:
+            max_score = self.max
 
         if self.local:
-            available_capacity = []
-            if capacity > min_capacity:
-                available_capacity.append(capacity - 1)
-            if capacity > max_capacity:
-                available_capacity.append(capacity + 1)
+            available_score = []
+            if score > min_score:
+                available_score.append(score - 1)
+            if score > max_score:
+                available_score.append(score + 1)
         else:
-            available_capacity = range(min_capacity, max_capacity + 1)
-        capacity = rng.choice(available_capacity)
-        neighbor.capacity[coalition] = capacity
+            available_score = range(min_score, max_score + 1)
+        score = rng.choice(available_score)
+        neighbor.importance_relation[coalition] = score
 
         return neighbor
 
 
 @dataclass
-class NeighborLexOrder(Neighbor[SRMPModel | RMPModelCapacity], Dataclass):
+class NeighborLexOrder(Neighbor[SRMPModel | RMPModel], Dataclass):
     local: bool = False
 
     def __call__(self, sol, rng):

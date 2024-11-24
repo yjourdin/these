@@ -2,13 +2,13 @@ from dataclasses import dataclass, field
 
 from numpy.random import Generator
 
-from ..field import GeneratedField, generated_field
+from ..field import RandomField, random_field
 from ..random import Seed, seed
 
 
-@generated_field("seed")
+@random_field("seed")
 @dataclass
-class SeedField(GeneratedField):
+class SeedField(RandomField):
     seed: Seed = field(default=seed())
 
     @staticmethod
@@ -18,10 +18,3 @@ class SeedField(GeneratedField):
         **kwargs,
     ):
         return seed(rng)
-
-    @staticmethod
-    def field_balanced(
-        *args,
-        **kwargs,
-    ):
-        return 0

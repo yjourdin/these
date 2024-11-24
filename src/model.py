@@ -8,11 +8,11 @@ from mcda.internal.core.values import Ranking
 from mcda.relations import PreferenceStructure
 
 from .aggregator import agg_float, agg_rank
-from .dataclass import GeneratedDataclass
+from .dataclass import RandomDataclass
 from .preference_structure.fitness import fitness_comparisons_ranking
 
 
-class Model(GeneratedDataclass):
+class Model(RandomDataclass):
     @abstractmethod
     def rank(self, performance_table: PerformanceTable) -> Ranking: ...
 
@@ -94,7 +94,3 @@ class Group[M: Model](list[M], GroupModel[M]):
     @classmethod
     def random(cls, *args, **kwargs):
         return cls([cls.model.random(*args, **kwargs)])
-
-    @classmethod
-    def balanced(cls, *args, **kwargs):
-        return cls([cls.model.balanced(*args, **kwargs)])

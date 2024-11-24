@@ -23,24 +23,3 @@ def random_profiles(
         )
     else:
         return NormalPerformanceTable(np.sort(rng.random((nb, nb_crit)), 0))
-
-
-def balanced_profiles(
-    nb_profiles: int,
-    nb_crit: int,
-    profiles_values: NormalPerformanceTable | None = None,
-):
-    if profiles_values:
-        return NormalPerformanceTable(
-            profiles_values.data.iloc[
-                [
-                    int(i / (nb_profiles + 1) * len(profiles_values.alternatives))
-                    for i in range(1, nb_profiles + 1)
-                ],
-                :,
-            ],
-        )
-    else:
-        return NormalPerformanceTable(
-            [[x / (nb_profiles + 1)] * nb_crit for x in range(1, nb_profiles + 1)]
-        )
