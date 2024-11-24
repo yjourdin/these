@@ -1,6 +1,7 @@
 include("GenerateWeakOrderExt.jl")
 
 using ArgParse
+using JLD2
 
 
 function parse_commandline()
@@ -8,24 +9,24 @@ function parse_commandline()
 
     @add_arg_table! s begin
         "M"
-            arg_type = UInt
-            required = true
-            help = "Number of criteria"
+        arg_type = UInt
+        required = true
+        help = "Number of criteria"
         "--output", "-o"
-            default = pwd()
-            help = "Output directory"
+        default = pwd()
+        help = "Output directory"
         "--logging", "-l"
-            nargs = '?'
-            constant = stdout
-            help = "Logging file"
+        nargs = '?'
+        constant = stdout
+        help = "Logging file"
     end
 
     parsed_args = parse_args(s)
 
     return (
         parsed_args["M"]::UInt,
-        parsed_args["output"]::Union{Nothing, String},
-        parsed_args["logging"]::Union{Nothing, IO, String}
+        parsed_args["output"]::Union{Nothing,String},
+        parsed_args["logging"]::Union{Nothing,IO,String}
     )
 end
 
@@ -45,12 +46,10 @@ function main()
 
     if !isdir(output)
         mkpath(output)
-        open(normpath(output, "nb_paths.bin"), "w+") do nb_paths_io
-            open(normpath(output, "edge_labels.bin"), "w+") do edge_labels_io
-                generate_WE(nb_paths_io, edge_labels_io, BooleanLattice(Int(M)))
+        labels, nb_paths = generate_WE(BooleanLattice(Int(M)))
 
-            end
-        end
+        save_object(normpath(output, "labels.bin"), labels)
+        save_object(normpath(output, "nb_paths.bin"), nb_paths)
     else
         @warn "directory already exist"
     end

@@ -1,3 +1,4 @@
+import ast
 from itertools import chain
 from pathlib import Path
 from subprocess import run
@@ -16,13 +17,42 @@ def run_julia(scriptname: str, *args, **kwargs):
     ).stdout
 
 
-def generate_linext(m: int, seed: Seed | None = None):
-    return run_julia("generate_linext.jl", m, seed=seed)
+def generate_linext(m: int, seed: Seed | None = None) -> list[list[bool]]:
+    linext = ast.literal_eval(
+        run_julia(
+            "generate_linext.jl", m, **({"seed": seed} if seed is not None else {})
+        )
+    )
+    return [[bool(int(x)) for x in node] for node in linext]
 
 
-def generate_weak_order(m: int, seed: Seed | None = None):
-    return run_julia("generate_weak_order.jl", m, S_file(m), seed=seed)
+def generate_partial_sum(m: int) -> None:
+    run_julia("generate_partial_sum.jl", m, S_file(m))
 
 
-def generate_weak_order_ext(m: int, seed: Seed | None = None):
-    return run_julia("generate_weak_order_ext.jl", m, WE_dir(m), seed=seed)
+def generate_weak_order(m: int, seed: Seed | None = None) -> list[int]:
+    file = S_file(m)
+
+    if not file.is_file():
+        generate_partial_sum(m)
+
+    return ast.literal_eval(
+        run_julia(
+            "generate_weak_order.jl",
+            m,
+            file,
+            **({"seed": seed} if seed is not None else {}),
+        )
+    )
+
+
+def generate_weak_order_ext(m: int, seed: Seed | None = None) -> list[list[list[bool]]]:
+    weak_order = ast.literal_eval(
+        run_julia(
+            "generate_weak_order_ext.jl",
+            m,
+            WE_dir(m),
+            **({"seed": seed} if seed is not None else {}),
+        )
+    )
+    return [[[bool(int(x)) for x in node] for node in block] for block in weak_order]

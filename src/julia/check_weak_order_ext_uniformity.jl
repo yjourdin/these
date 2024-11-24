@@ -2,6 +2,7 @@ include("GenerateWeakOrderExt.jl")
 
 using ArgParse
 using Distributions
+using JLD2
 
 function parse_commandline()
     s = ArgParseSettings()
@@ -43,21 +44,17 @@ function main()
     subsets = elements(BooleanLattice(Int(M)))
 
     let K::UInt128
-        open(normpath(dir, "nb_paths.bin"), "r") do nb_paths_io
-            open(normpath(dir, "edge_labels.bin"), "r") do edge_labels_io
-                nb_paths = mmap(nb_paths_io, Vector{UInt128})
-                edge_labels = mmap(edge_labels_io, Vector{UInt128})
+        labels = load_object(normpath(dir, "labels.bin"))
+        nb_paths = load_object(normpath(dir, "nb_paths.bin"))
 
-                K = nb_paths[1]
-                @info K
+        K = nb_paths[1]
+        @info K
 
-                for i ∈ 1:N
-                    @debug i
-                    we = generate_weak_order_ext(nb_paths, edge_labels, subsets)
+        for i ∈ 1:N
+            @debug i
+            we = generate_weak_order_ext(labels, nb_paths, subsets)
 
-                    result[we] = get!(result, we, 0) + 1
-                end
-            end
+            result[we] = get!(result, we, 0) + 1
         end
         
         T = (K / N) * sum(values(result) .^ 2) - N

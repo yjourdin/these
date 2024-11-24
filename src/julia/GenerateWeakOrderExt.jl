@@ -1,7 +1,5 @@
 using Combinatorics
-using Graphs
 using Logging
-using Mmap
 using Random
 using SimplePosets
 using StatsBase
@@ -21,10 +19,14 @@ function set2digits(A, B)
 end
 
 
-# Digits bitwise operations
+# Bitwise operations
 
 function set_diff(a, b)
     return a & ~b
+end
+
+function is_subset(a, b)
+    return (a | b) == b
 end
 
 
@@ -61,114 +63,63 @@ end
 
 # AllWeak3
 
-function AllWeak3!(WE, vertex_labels, edge_labels_dict, subsets, P, Y, A)
+function AllWeak3!(labels, P, Y, A, base)
     if isempty(Y)
         return
     end
 
-    A_digit = set2digits(A, subsets)
-    A_index = get_index(vertex_labels, A_digit)
-    for B in powerset(Y, 1)
-        @debug length(vertex_labels)
-        AA = maximals(induce(P, Set(ideal(P, A) ∪ B)))
-        AA_digit = set2digits(AA, subsets)
-        AA_index = get_index(vertex_labels, AA_digit)
-        visited = true
-        if isnothing(AA_index)
-            visited = false
-            add_vertex!(WE)
-            push!(vertex_labels, AA_digit)
-            AA_index = length(vertex_labels)
-        end
-        add_edge!(WE, A_index, AA_index)
-        edge_labels_dict[(A_index, AA_index)] = set_diff(AA_digit, A_digit)
+    for B ∈ powerset(Y, 1)
+        AA_label = ideal(P, A) ∪ B
+        AA = maximals(induce(P, Set(AA_label)))
+        AA_digit = set2digits(AA_label, base)
+        if !insorted(AA_digit, labels)
+            insert!(labels, searchsortedfirst(labels, AA_digit), AA_digit)
 
-        if !visited
+            @debug "$(length(labels))"
+
             YY = minimals(induce(P, Set(setdiff(Y, B) ∪ succ(P, B))))
-            AllWeak3!(WE, vertex_labels, edge_labels_dict, subsets, P, YY, AA)
+            AllWeak3!(labels, P, YY, AA, base)
         end
     end
+
     return
 end
 
 
 # generate_WE
 
-function generate_WE(nb_paths_io, edge_labels_io, P::SimplePoset{T}) where {T}
-    WE = SimpleDiGraph(1)
-    subsets = elements(P)
-    vertex_labels = [set2digits(T[], subsets)]
-    edge_labels_dict = Dict{Tuple{Int,Int},UInt128}()
-
+function generate_WE(P::SimplePoset{T}) where {T}
+    labels = zeros(UInt128, 1)
     @debug "start WE"
-    AllWeak3!(WE, vertex_labels, edge_labels_dict, subsets, P, minimals(P), T[])
+    AllWeak3!(labels, P, minimals(P), T[], reverse(elements(P)))
     @debug "end WE"
 
-    @debug "start TS"
-    ts = topological_sort(WE)
-    ts_index = similar(ts)
-    for (i, u) ∈ pairs(ts)
-        ts_index[u] = i
-    end
-    @debug "end TS"
-
-    @debug "start copy"
-    N = nv(WE)
-    nb_paths = mmap(nb_paths_io, Vector{UInt128}, N)
-    edge_labels = mmap(edge_labels_io, Vector{UInt128}, N * (N - 1) ÷ 2)
-    for ((u, v), d) ∈ pairs(edge_labels_dict)
-        edge_labels[index(ts_index[u], ts_index[v], N)] = d
-    end
-    Mmap.sync!(edge_labels)
-    @debug "end copy"
-
     @debug "start traversal"
-    L = length(ts)
-    for (i, u) ∈ pairs(reverse(ts))
-        @debug "$i / $L"
-
-        Nu = outneighbors(WE, u)
-
-        if isempty(Nu)
-            nb_paths[ts_index[u]] = big(1)
-        else
-            for v ∈ Nu
-                for w ∈ outneighbors(WE, v)
-                    if !has_edge(WE, u, w)
-                        add_edge!(WE, u, w)
-                        edge_labels[index(ts_index[u], ts_index[w], N)] = edge_labels[index(ts_index[u], ts_index[v], N)] | edge_labels[index(ts_index[v], ts_index[w], N)]
-                    end
-                end
-            end
-
-            nb_paths[ts_index[u]] = sum(nb_paths[ts_index[outneighbors(WE, u)]])
-        end
-        Mmap.sync!(nb_paths)
-        Mmap.sync!(edge_labels)
+    nb_paths = ones(UInt128, 1)
+    NV = length(labels)
+    for (i, u) ∈ pairs(reverse(labels[begin:end-1]))
+        pushfirst!(nb_paths, sum(nb_paths[is_subset.(Ref(u), labels[NV - i + 1:end])]))
+        
+        @debug "$(length(nb_paths)) / $NV"
     end
     @debug "end traversal"
 
-    return WE
+    return labels, nb_paths
 end
 
 
 # generate_weak_order_ext
 
-function generate_weak_order_ext(nb_paths, edge_labels, subsets, rng=Random.default_rng())
+function generate_weak_order_ext(labels, nb_paths, subsets, rng=Random.default_rng())
     result = Vector{String}[]
-
-    N = length(nb_paths)
+    N = length(labels)
 
     u = 1
-    s = slice(u, N)
-
-    while !isempty(s)
-        Nu = findall(!=(0), edge_labels[s]) .+ u
+    while u != N
+        Nu = ((u+1):N)[is_subset.(Ref(labels[u]), labels[(u+1):N])]
         v = sample(rng, Nu, FrequencyWeights(nb_paths[Nu], nb_paths[u]))
-        push!(result, subsets[reverse(digits(Bool, edge_labels[index(u, v, N)], base=2, pad=length(subsets)))])
-
+        push!(result, subsets[digits(Bool, set_diff(labels[v], labels[u]), base=2, pad=length(subsets))])
         u = v
-        s = slice(u, N)
     end
 
     return result

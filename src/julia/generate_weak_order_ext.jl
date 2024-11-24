@@ -1,6 +1,7 @@
 include("GenerateWeakOrderExt.jl")
 
 using ArgParse
+using JLD2
 
 
 function parse_commandline()
@@ -33,14 +34,10 @@ function main()
 
     Random.seed!(seed)
 
-    open(normpath(dir, "nb_paths.bin"), "r") do nb_paths_io
-        open(normpath(dir, "edge_labels.bin"), "r") do edge_labels_io
-            nb_paths = mmap(nb_paths_io, Vector{Int128})
-            edge_labels = mmap(edge_labels_io, Vector{Int128})
+    labels = load_object(normpath(dir, "labels.bin"))
+    nb_paths = load_object(normpath(dir, "nb_paths.bin"))
             
-            println(generate_weak_order_ext(nb_paths, edge_labels, elements(BooleanLattice(Int(M)))))
-        end
-    end
+    println(generate_weak_order_ext(labels, nb_paths, elements(BooleanLattice(Int(M)))))
 end
 
 main()
