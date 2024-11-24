@@ -2,16 +2,16 @@ from dataclasses import dataclass, field
 from itertools import count
 from typing import ClassVar
 
-from ..dataclass import FrozenDataclass
 from ..constants import DEFAULT_MAX_TIME, EPSILON
+from ..dataclass import FrozenDataclass
 from ..methods import MethodEnum
 
 
 @dataclass(frozen=True)
 class Config(FrozenDataclass):
-    id: int = field(default_factory=count().__next__, init=False)
+    id: int = field(default_factory=count().__next__, init=False, hash=False)
     method: ClassVar[MethodEnum]
-    max_time: int = DEFAULT_MAX_TIME
+    max_time: int = field(default=DEFAULT_MAX_TIME, hash=False)
 
     def __str__(self) -> str:
         return str(self.id)
@@ -28,7 +28,7 @@ class SAConfig(Config):
     method = MethodEnum.SA
     accept: float = 0.5
     alpha: float = 0.99
-    max_it: int = 20_000
+    max_it: int | None = None
 
 
 @dataclass(frozen=True)
