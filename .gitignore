@@ -176,3 +176,5 @@ logs
 *.lp
 *.bkp
 *.bin
+*.stdout
+nohup.out
