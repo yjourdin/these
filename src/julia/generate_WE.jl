@@ -9,16 +9,16 @@ function parse_commandline()
 
     @add_arg_table! s begin
         "M"
-        arg_type = UInt
-        required = true
-        help = "Number of criteria"
+            arg_type = UInt
+            required = true
+            help = "Number of criteria"
         "--output", "-o"
-        default = pwd()
-        help = "Output directory"
+            default = pwd()
+            help = "Output directory"
         "--logging", "-l"
-        nargs = '?'
-        constant = stdout
-        help = "Logging file"
+            nargs = '?'
+            constant = stdout
+            help = "Logging file"
     end
 
     parsed_args = parse_args(s)
