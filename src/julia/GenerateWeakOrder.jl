@@ -1,5 +1,4 @@
 using Memoization
-using Mmap
 using Random
 
 @memoize function w(m, k)
