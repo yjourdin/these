@@ -14,8 +14,12 @@ end
 
 # Conversion
 
-function set2digits(A, B)
-    return parse(UInt128, join(UInt8.(x ∈ A for x in B)), base=2)
+function set2digit(set, base)
+    return parse(UInt128, join(UInt8.(x ∈ set for x in base)), base=2)
+end
+
+function digit2set(digit, base)
+    return base[digits(Bool, digit, base=2, pad=length(base))]
 end
 
 
@@ -71,11 +75,11 @@ function AllWeak3!(labels, P, Y, A, base)
     for B ∈ powerset(Y, 1)
         AA_label = ideal(P, A) ∪ B
         AA = maximals(induce(P, Set(AA_label)))
-        AA_digit = set2digits(AA_label, base)
+        AA_digit = set2digit(AA_label, base)
         if !insorted(AA_digit, labels)
             insert!(labels, searchsortedfirst(labels, AA_digit), AA_digit)
 
-            @debug "$(length(labels))"
+            @debug "Vertices created : $(length(labels))"
 
             YY = minimals(induce(P, Set(setdiff(Y, B) ∪ succ(P, B))))
             AllWeak3!(labels, P, YY, AA, base)
@@ -90,19 +94,16 @@ end
 
 function generate_WE(P::SimplePoset{T}) where {T}
     labels = zeros(UInt128, 1)
-    @debug "start WE"
-    AllWeak3!(labels, P, minimals(P), T[], reverse(elements(P)))
-    @debug "end WE"
 
-    @debug "start traversal"
+    AllWeak3!(labels, P, minimals(P), T[], reverse(elements(P)))
+
     nb_paths = ones(UInt128, 1)
     NV = length(labels)
     for (i, u) ∈ pairs(reverse(labels[begin:end-1]))
         pushfirst!(nb_paths, sum(nb_paths[is_subset.(Ref(u), labels[NV - i + 1:end])]))
         
-        @debug "$(length(nb_paths)) / $NV"
+        @debug "Vertices traversed : $(length(nb_paths)) / $NV"
     end
-    @debug "end traversal"
 
     return labels, nb_paths
 end
@@ -110,7 +111,7 @@ end
 
 # generate_weak_order_ext
 
-function generate_weak_order_ext(labels, nb_paths, subsets, rng=Random.default_rng())
+function generate_weak_order_ext(labels, nb_paths, base, rng=Random.default_rng())
     result = Vector{String}[]
     N = length(labels)
 
@@ -118,7 +119,7 @@ function generate_weak_order_ext(labels, nb_paths, subsets, rng=Random.default_r
     while u != N
         Nu = ((u+1):N)[is_subset.(Ref(labels[u]), labels[(u+1):N])]
         v = sample(rng, Nu, FrequencyWeights(nb_paths[Nu], nb_paths[u]))
-        push!(result, subsets[digits(Bool, set_diff(labels[v], labels[u]), base=2, pad=length(subsets))])
+        push!(result, digit2set(set_diff(labels[v], labels[u]), base))
         u = v
     end
 

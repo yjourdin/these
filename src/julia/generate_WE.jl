@@ -2,7 +2,16 @@ include("GenerateWeakOrderExt.jl")
 
 using ArgParse
 using JLD2
+using Logging
 
+
+function fmt(level, _module, group, id, file, line)
+    @nospecialize
+    color = Logging.default_logcolor(level)
+    prefix = string(level == Warn ? "Warning" : string(level), ':')
+    suffix::String = ""
+    return color, prefix, suffix
+end
 
 function parse_commandline()
     s = ArgParseSettings()
@@ -40,7 +49,7 @@ function main()
     end
 
     if !isnothing(logging_io)
-        logger = SimpleLogger(logging_io, Debug)
+        logger = ConsoleLogger(logging_io, Debug, meta_formatter=fmt)
         global_logger(logger)
     end
 

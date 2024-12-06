@@ -48,7 +48,7 @@ function main()
         nb_paths = load_object(normpath(dir, "nb_paths.bin"))
 
         K = nb_paths[1]
-        @info K
+        @info "Nb paths : $K"
 
         for i ∈ 1:N
             @debug i
