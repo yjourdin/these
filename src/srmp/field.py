@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+import numpy as np
 from numpy.random import Generator
 
 from ..field import (
@@ -13,7 +14,15 @@ from .weight import random_weights
 @random_field("weights")
 @dataclass
 class WeightsField(RandomField):
-    weights: list[float]
+    weights: np.ndarray
+    
+    @staticmethod
+    def field_decode(o):
+        return np.array(o)
+
+    @staticmethod
+    def field_encode(o):
+        return o.tolist()
 
     @staticmethod
     def field_random(nb_crit: int, rng: Generator, *args, **kwargs):
@@ -23,4 +32,4 @@ class WeightsField(RandomField):
 @random_group_field(fieldname="weights", fieldclass=WeightsField)
 @dataclass
 class GroupWeightsField(RandomField):
-    weights: list[list[float]]
+    weights: list[np.ndarray]

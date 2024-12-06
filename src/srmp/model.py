@@ -33,7 +33,7 @@ class SRMPModel(  # type: ignore
     def __str__(self) -> str:
         return "\t".join(
             [
-                print_list(self.weights),
+                print_list(self.weights.tolist()),
                 print_list(self.profiles.data.to_numpy()[0]),
                 self.lexicographic_order.__str__(),
             ]
@@ -42,7 +42,7 @@ class SRMPModel(  # type: ignore
     def rank(self, performance_table):
         return NormalSRMP(
             performance_table,
-            dict(zip(range(len(self.weights)), self.weights)),
+            self.weights,
             self.profiles,
             self.lexicographic_order,
         ).rank()
@@ -211,9 +211,7 @@ def srmp_group_model(
                 return SRMPGroupModel
 
 
-def srmp_model(
-    group_size: int, shared_params: Container[SRMPParamEnum] = set()
-):
+def srmp_model(group_size: int, shared_params: Container[SRMPParamEnum] = set()):
     if group_size == 1:
         return SRMPModel
     else:

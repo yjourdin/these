@@ -1,5 +1,3 @@
-from typing import Any
-
 import numpy as np
 from mcda import PerformanceTable
 from mcda.internal.core.scales import NormalScale
@@ -28,7 +26,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
     def __init__(
         self,
         performance_table: PerformanceTable[NormalScale],
-        criteria_weights: dict[Any, float],
+        criteria_weights: np.ndarray,
         profile: Values[NormalScale],
     ):
         self.performance_table = performance_table
@@ -42,7 +40,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
         """
         conditional_weighted_sum = np.dot(
             self.performance_table.data.values >= self.profile.data.values,
-            np.array(list(self.criteria_weights.values())),
+            self.criteria_weights,
         )
 
         return np.greater_equal.outer(
@@ -62,7 +60,7 @@ class NormalSRMP(SRMP):
     def __init__(
         self,
         performance_table: PerformanceTable[NormalScale],
-        criteria_weights: dict[Any, float],
+        criteria_weights: np.ndarray,
         profiles: PerformanceTable[NormalScale],
         lexicographic_order: list[int],
     ):

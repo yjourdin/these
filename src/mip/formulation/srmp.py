@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 
+import numpy as np
 from mcda.relations import PreferenceStructure
 from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
 
@@ -302,7 +303,7 @@ class MIPSRMP(MIP[SRMPModel]):
                     )
 
     def create_solution(self):
-        weights = [value(self.var["w"][j]) for j in self.param["M"]]
+        weights = np.array([value(self.var["w"][j]) for j in self.param["M"]])
         profiles = NormalPerformanceTable(
             [
                 [value(self.var["p"][h][j]) for j in self.param["M"]]

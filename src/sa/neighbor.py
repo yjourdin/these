@@ -107,8 +107,7 @@ class NeighborWeight(Neighbor[SRMPModel], Dataclass):
         weight = rng.uniform(max(weight - self.amp, 0), min(weight + self.amp, 1))
         neighbor.weights[crit_ind] = weight
 
-        s = sum(neighbor.weights)
-        neighbor.weights = [w / s for w in neighbor.weights]
+        neighbor.weights /= sum(neighbor.weights)
 
         return neighbor
 

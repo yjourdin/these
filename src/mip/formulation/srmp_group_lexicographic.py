@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 
+import numpy as np
 from mcda.relations import PreferenceStructure
 from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
 
@@ -46,7 +47,6 @@ class MIPSRMPGroupLexicographicOrder(
         self.gamma = gamma
 
     def create_problem(self):
-
         ##############
         # Parameters #
         ##############
@@ -404,10 +404,10 @@ class MIPSRMPGroupLexicographicOrder(
 
     def create_solution(self):
         weights = (
-            [value(self.var["w"][0][j]) for j in self.param["M"]]
+            np.array([value(self.var["w"][0][j]) for j in self.param["M"]])
             if self.param["weights_shared"]
             else [
-                [value(self.var["w"][dm][j]) for j in self.param["M"]]
+                np.array([value(self.var["w"][dm][j]) for j in self.param["M"]])
                 for dm in self.param["DM"]
             ]
         )
@@ -430,7 +430,9 @@ class MIPSRMPGroupLexicographicOrder(
             ]
         )
 
-        return group_model(ModelEnum.SRMP, self.shared_params)(
+        return group_model(
+            ModelEnum.SRMP, self.shared_params
+        )(
             group_size=len(self.param["DM"]),
             profiles=profiles,  # type: ignore
             weights=weights,  # type: ignore
