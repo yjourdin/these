@@ -1,4 +1,4 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/25.0.1 Chrome/128.0.6613.186 Electron/32.2.6 Safari/537.36" version="25.0.1">
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/25.0.1 Chrome/128.0.6613.186 Electron/32.2.6 Safari/537.36" version="25.0.1" pages="2">
   <diagram name="Page-1" id="FjsUFNsxTpDgcGU2gkwm">
     <mxGraphModel dx="1996" dy="826" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
       <root>
@@ -8,24 +8,24 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="qaabH04pQQgadvRFd-1W-6" value="Start" style="html=1;dashed=0;whiteSpace=wrap;shape=mxgraph.dfd.start" parent="1" vertex="1">
-          <mxGeometry x="200" y="320" width="80" height="40" as="geometry" />
+          <mxGeometry x="200" y="200" width="80" height="40" as="geometry" />
         </mxCell>
         <mxCell id="qaabH04pQQgadvRFd-1W-12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="qaabH04pQQgadvRFd-1W-8" target="qaabH04pQQgadvRFd-1W-11" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="qaabH04pQQgadvRFd-1W-8" value="Ask each DM their pairwise comparisons \(\mathcal{L}_i\)" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="180" y="400" width="120" height="80" as="geometry" />
+        <mxCell id="qaabH04pQQgadvRFd-1W-8" value="Ask each DM their preferences&amp;nbsp;&lt;span style=&quot;background-color: initial;&quot;&gt;\(\mathcal{L}_i\) on alternatives \(A\)&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="180" y="280" width="120" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="FKqDToA3oZGnm_qYhe_x-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="qaabH04pQQgadvRFd-1W-11" target="qaabH04pQQgadvRFd-1W-13">
+        <mxCell id="RybsW2xUJ8Wm3ZWdojGP-2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="qaabH04pQQgadvRFd-1W-11" target="RybsW2xUJ8Wm3ZWdojGP-1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="qaabH04pQQgadvRFd-1W-11" value="Elicit Group model \(\mathcal{M}_c\) and&lt;div&gt;its preferences \(\mathcal{L}_c\)&lt;/div&gt;" style="whiteSpace=wrap;html=1;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="180" y="520" width="120" height="80" as="geometry" />
+        <mxCell id="qaabH04pQQgadvRFd-1W-11" value="Elicit collective model \(\mathcal{M}_c\)" style="whiteSpace=wrap;html=1;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="180" y="400" width="120" height="80" as="geometry" />
         </mxCell>
         <mxCell id="qaabH04pQQgadvRFd-1W-39" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="qaabH04pQQgadvRFd-1W-13" target="qaabH04pQQgadvRFd-1W-29" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="qaabH04pQQgadvRFd-1W-13" value="Determine for each DM the path \(\mathcal{P}_i\)&lt;div&gt;from \(\mathcal{L}_i\) to \(\mathcal{L}_c\)&lt;/div&gt;" style="whiteSpace=wrap;html=1;rounded=0;" parent="1" vertex="1">
+        <mxCell id="qaabH04pQQgadvRFd-1W-13" value="Determine for each DM the path \((\mathcal{L}_i^t)_{t = 0}^T\)" style="whiteSpace=wrap;html=1;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="180" y="640" width="120" height="80" as="geometry" />
         </mxCell>
         <mxCell id="qaabH04pQQgadvRFd-1W-28" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="qaabH04pQQgadvRFd-1W-25" target="qaabH04pQQgadvRFd-1W-27" edge="1">
@@ -45,7 +45,7 @@
             <Array as="points">
               <mxPoint x="240" y="1320" />
               <mxPoint y="1320" />
-              <mxPoint y="560" />
+              <mxPoint y="440" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -76,23 +76,151 @@
         <mxCell id="qaabH04pQQgadvRFd-1W-49" value="End" style="html=1;dashed=0;whiteSpace=wrap;shape=mxgraph.dfd.start" parent="1" vertex="1">
           <mxGeometry x="340" y="800" width="80" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="FKqDToA3oZGnm_qYhe_x-1" value="Yes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="FKqDToA3oZGnm_qYhe_x-1" value="Yes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="240" y="880" width="40" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="FKqDToA3oZGnm_qYhe_x-2" value="No" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="FKqDToA3oZGnm_qYhe_x-2" value="No" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="300" y="780" width="40" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="FKqDToA3oZGnm_qYhe_x-3" value="Yes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="FKqDToA3oZGnm_qYhe_x-3" value="Yes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="140" y="1180" width="40" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="FKqDToA3oZGnm_qYhe_x-4" value="No" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="FKqDToA3oZGnm_qYhe_x-4" value="No" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="240" y="1280" width="40" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="FKqDToA3oZGnm_qYhe_x-13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="FKqDToA3oZGnm_qYhe_x-12" target="qaabH04pQQgadvRFd-1W-25">
+        <mxCell id="FKqDToA3oZGnm_qYhe_x-13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="FKqDToA3oZGnm_qYhe_x-12" target="qaabH04pQQgadvRFd-1W-25" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="FKqDToA3oZGnm_qYhe_x-12" value="Select DMs&lt;div&gt;where \(\mathcal{L}_i \ne \mathcal{L}_c\)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="FKqDToA3oZGnm_qYhe_x-12" value="Select DMs&lt;div&gt;where \(\mathcal{L}_i \ne \mathcal{L}_c\)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="180" y="920" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="RybsW2xUJ8Wm3ZWdojGP-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="RybsW2xUJ8Wm3ZWdojGP-1" target="qaabH04pQQgadvRFd-1W-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RybsW2xUJ8Wm3ZWdojGP-1" value="&lt;div&gt;Compute collective preferences&amp;nbsp;&lt;span style=&quot;background-color: initial;&quot;&gt;\(\mathcal{L}_c\) on alternatives \(A\)&lt;/span&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="180" y="520" width="120" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Copie de Page-1" id="4iImEkCJJELZKiftRp8D">
+    <mxGraphModel dx="1996" dy="1226" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
+      <root>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-0" />
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-1" parent="wrT4-ReSR-lD7pSwsr2c-0" />
+        <mxCell id="WPmVL4JJI1YCjwFq4VIU-1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="wrT4-ReSR-lD7pSwsr2c-3" target="WPmVL4JJI1YCjwFq4VIU-0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-3" value="Start" style="html=1;dashed=0;whiteSpace=wrap;shape=mxgraph.dfd.start" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="200" y="-40" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="wrT4-ReSR-lD7pSwsr2c-5" target="wrT4-ReSR-lD7pSwsr2c-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-5" value="Pairwise comparisons \(\mathcal{L}_i\) for every DM" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="180" y="400" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="wrT4-ReSR-lD7pSwsr2c-7" target="wrT4-ReSR-lD7pSwsr2c-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-7" value="Elicited Collective model \(\mathcal{M}_c\) and&lt;div&gt;its preferences \(\mathcal{L}_c\)&lt;/div&gt;" style="whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="180" y="520" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="wrT4-ReSR-lD7pSwsr2c-9" target="wrT4-ReSR-lD7pSwsr2c-17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-9" value="Path \(\mathcal{P}_i\)&amp;nbsp;&lt;span style=&quot;background-color: initial;&quot;&gt;from&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;\(\mathcal{L}_i\) to \(\mathcal{L}_c\)&lt;/span&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="180" y="640" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="-Dm6w1mbxY7R67I0wlVk-1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="wrT4-ReSR-lD7pSwsr2c-11" target="-Dm6w1mbxY7R67I0wlVk-0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-11" value="\(\mathcal{L}_i&#39; \gets\) next preferences changes&lt;div&gt;in \(\mathcal{P}_i\)&lt;/div&gt;" style="whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="180" y="1040" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="wrT4-ReSR-lD7pSwsr2c-14" target="wrT4-ReSR-lD7pSwsr2c-19">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="140" y="1100" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="wrT4-ReSR-lD7pSwsr2c-14" target="wrT4-ReSR-lD7pSwsr2c-7">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-120" y="680" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="240" y="1440" />
+              <mxPoint y="1440" />
+              <mxPoint y="560" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-14" value="If all&amp;nbsp;&lt;span style=&quot;background-color: initial;&quot;&gt;\(\mathcal{M}_i&#39;\)&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;are accepted ?&lt;/span&gt;&lt;/div&gt;" style="rhombus;whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="180" y="1280" width="120" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="wrT4-ReSR-lD7pSwsr2c-17" target="wrT4-ReSR-lD7pSwsr2c-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="wrT4-ReSR-lD7pSwsr2c-17">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="340" y="820" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-17" value="If any \(\mathcal{L}_i \ne \mathcal{L}_c\) ?" style="rhombus;whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="180" y="760" width="120" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="wrT4-ReSR-lD7pSwsr2c-19" target="wrT4-ReSR-lD7pSwsr2c-17">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="80" y="820" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-19" value="Update \(\mathcal{L}_i\) with \(\mathcal{L}_i&#39;\)" style="whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="20" y="1040" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-20" value="End" style="html=1;dashed=0;whiteSpace=wrap;shape=mxgraph.dfd.start" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="340" y="800" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-21" value="Yes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="240" y="880" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-22" value="No" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="300" y="780" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-23" value="Yes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="140" y="1300" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-24" value="No" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="240" y="1400" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-25" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="wrT4-ReSR-lD7pSwsr2c-26" target="wrT4-ReSR-lD7pSwsr2c-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wrT4-ReSR-lD7pSwsr2c-26" value="Select DMs&lt;div&gt;where \(\mathcal{L}_i \ne \mathcal{L}_c\)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="180" y="920" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="WPmVL4JJI1YCjwFq4VIU-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="WPmVL4JJI1YCjwFq4VIU-0" target="WPmVL4JJI1YCjwFq4VIU-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WPmVL4JJI1YCjwFq4VIU-0" value="Random original SRMP model \(\mathcal{M}_o\)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="180" y="40" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="WPmVL4JJI1YCjwFq4VIU-5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="WPmVL4JJI1YCjwFq4VIU-2" target="WPmVL4JJI1YCjwFq4VIU-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WPmVL4JJI1YCjwFq4VIU-2" value="Random SRMP models \(\mathcal{M}_i\) for every DM" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="180" y="160" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="WPmVL4JJI1YCjwFq4VIU-9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="WPmVL4JJI1YCjwFq4VIU-4" target="wrT4-ReSR-lD7pSwsr2c-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WPmVL4JJI1YCjwFq4VIU-4" value="Random training alternatives \(\mathcal{A}\)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="180" y="280" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="-Dm6w1mbxY7R67I0wlVk-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="wrT4-ReSR-lD7pSwsr2c-1" source="-Dm6w1mbxY7R67I0wlVk-0" target="wrT4-ReSR-lD7pSwsr2c-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="-Dm6w1mbxY7R67I0wlVk-0" value="Elicited model \(\mathcal{M}_i&#39;\) from \(\mathcal{L}_i\)&lt;span style=&quot;color: rgba(0, 0, 0, 0); font-family: monospace; font-size: 0px; text-align: start; text-wrap: nowrap;&quot;&gt;aphModel%3E%3Croot%3E%3CmxCell%20id%3D%220%22%2F%3E%3CmxCell%20id%3D%221%22%20parent%3D%220%22%2F%3E%3CmxCell%20id%3D%222%22%20value%3D%22%5C(%5Cmathcal%7BL%7D_i&#39;%20%5Cgets%5C)%20next%20preferences%20changes%26lt%3Bdiv%26gt%3Bin%20%5C(%5Cmathcal%7BP%7D_i%5C)%26lt%3B%2Fdiv%26gt%3B%22%20style%3D%22whiteSpace%3Dwrap%3Bhtml%3D1%3Brounded%3D0%3B%22%20vertex%3D%221%22%20parent%3D%221%22%3E%3CmxGeometry%20x%3D%22180%22%20y%3D%221040%22%20width%3D%22120%22%20height%3D%2280%22%20as%3D%22geometry%22%2F%3E%3C%2FmxCell%3E%3C%2Froot%3E%3C%2FmxGraphModel%3E&lt;/span&gt;&lt;span style=&quot;color: rgba(0, 0, 0, 0); font-family: monospace; font-size: 0px; text-align: start; text-wrap: nowrap;&quot;&gt;%&lt;/span&gt;&lt;span style=&quot;color: rgba(0, 0, 0, 0); font-family: monospace; font-size: 0px; text-align: start; text-wrap: nowrap;&quot;&gt;%3CmxGraphModel%3E%3Croot%3E%3CmxCell%20id%3D%220%22%2F%3E%3CmxCell%20id%3D%221%22%20parent%3D%220%22%2F%3E%3CmxCell%20id%3D%222%22%20value%3D%22%5C(%5Cmathcal%7BL%7D_i&#39;%20%5Cgets%5C)%20next%20preferences%20changes%26lt%3Bdiv%26gt%3Bin%20%5C(%5Cmathcal%7BP%7D_i%5C)%26lt%3B%2Fdiv%26gt%3B%22%20style%3D%22whiteSpace%3Dwrap%3Bhtml%3D1%3Brounded%3D0%3B%22%20vertex%3D%221%22%20parent%3D%221%22%3E%3CmxGeometry%20x%3D%22180%22%20y%3D%221040%22%20width%3D%22120%22%20height%3D%2280%22%20as%3D%22geometry%22%2F%3E%3C%2FmxCell%3E%3C%2Froot%3E%3C%2FmxGraphModel%3Ema&lt;/span&gt;&lt;span style=&quot;color: rgba(0, 0, 0, 0); font-family: monospace; font-size: 0px; text-align: start; text-wrap: nowrap;&quot;&gt;3CmxGraphModel%3E%3Croot%3E%3CmxCell%20id%3D%220%22%2F%3E%3CmxCell%20id%3D%221%22%20parent%3D%220%22%2F%3E%3CmxCell%20id%3D%222%22%20value%3D%22%5C(%5Cmathcal%7BL%7D_i&#39;%20%5Cgets%5C)%20next%20preferences%20changes%26lt%3Bdiv%26gt%3Bin%20%5C(%5Cmathcal%7BP%7D_i%5C)%26lt%3B%2Fdiv%26gt%3B%22%20style%3D%22whiteSpace%3Dwrap%3Bhtml%3D1%3Brounded%3D0%3B%22%20vertex%3D%221%22%20parent%3D%221%22%3E%3CmxGeometry%20x%3D%22180%22%20y%3D%221040%22%20width%3D%22120%22%20height%3D%2280%22%20as%3D%22geometry%22%2F%3E%3C%2FmxCell%3E%3C%2Froot%3E%3C%2FmxGraphModel%3E{M}_&lt;/span&gt;" style="whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="wrT4-ReSR-lD7pSwsr2c-1">
+          <mxGeometry x="180" y="1160" width="120" height="80" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
