@@ -8,16 +8,6 @@ from .field import Field, RandomField
 @dataclass
 class Dataclass(Field):
     @classmethod
-    def decode(cls, dct: dict):
-        dct = super().decode(dct)
-        return dct
-
-    @classmethod
-    def encode(cls, dct: dict):
-        dct = super().encode(dct)
-        return dct
-
-    @classmethod
     def from_dict(cls, dct: dict):
         return cls(**dct)
 
@@ -37,7 +27,7 @@ class Dataclass(Field):
 
     def to_json(self):
         dct = self.to_dict()
-        type(self).encode(dct)
+        super().encode(dct)
         return self.dict_to_json(dct)
 
     @staticmethod
@@ -72,7 +62,7 @@ class FrozenDataclass(Field):
         classname = dct.pop("__class", cls.__name__)
         if classname != cls.__name__:
             raise ValueError(f"Wrong class name : {classname}")
-        super().decode(dct)
+        cls.decode(dct)
         return cls.from_dict(dct)
 
     def to_json(self):
@@ -86,7 +76,7 @@ class FrozenDataclass(Field):
 
     @classmethod
     def dict_to_json(cls, dct: dict):
-        return dumps(dct | {"__class": cls.__name__}, indent=4)
+        return dumps(dct | {"__class": cls.__name__}, indent=4, default=str)
 
     @staticmethod
     def get_class_name(dct: dict):
