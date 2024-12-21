@@ -1,8 +1,8 @@
 {
-    "name": "noisy_cross",
-    "jobs": 75,
+    "name": "test_new",
+    "jobs": 10,
     "seed": 0,
-    "nb_A_tr": 1,
+    "nb_Atr": 10,
     "N_tr": [
         50
     ],
@@ -10,24 +10,18 @@
         50
     ],
     "M": [
-        7,
-        11,
-        15
+        7
     ],
     "Mo": [
-        "RMP",
         "SRMP"
     ],
     "Ko": [
         3
     ],
     "Me": [
-        "RMP",
         "SRMP"
     ],
     "Ke": [
-        1,
-        2,
         3
     ],
     "N_bc": [
@@ -48,8 +42,8 @@
     "config": [
         {
             "id": 0,
-            "max_time": 3600,
-	        "max_it": 100000,
+            "max_time": 60,
+	    "max_it": 100000,
             "accept": 0.8,
             "alpha": 0.999,
             "amp": 0.1,

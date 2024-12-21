@@ -37,8 +37,7 @@ match args.type:
 
         # Create preference structure
         D: list[PreferenceStructure] = []
-        if not args.same:
-            rng_shuffle = rng(seed_shuffle)
+        rng_shuffle = rng(seed_shuffle)
         for dm in DMS:
             model_dm = model[dm] if isinstance(model, GroupModel) else model
             if args.same:

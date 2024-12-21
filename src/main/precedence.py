@@ -5,7 +5,7 @@ from typing import cast
 from ..methods import MethodEnum
 from ..models import ModelEnum
 from .arguments import Arguments
-from .config import MIPConfig, SAConfig
+from .experiments.elicitation.config import MIPConfig, SAConfig
 from .task import ATestTask, ATrainTask, DTask, MIPTask, MoTask, SATask, Task, TestTask
 
 

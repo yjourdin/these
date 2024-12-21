@@ -2,9 +2,9 @@ from dataclasses import dataclass, field
 from itertools import count
 from typing import ClassVar
 
-from ..constants import DEFAULT_MAX_TIME, EPSILON
-from ..dataclass import FrozenDataclass
-from ..methods import MethodEnum
+from ....constants import DEFAULT_MAX_TIME, EPSILON
+from ....dataclass import FrozenDataclass
+from ....methods import MethodEnum
 
 
 @dataclass(frozen=True)

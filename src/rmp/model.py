@@ -1,5 +1,6 @@
 from collections.abc import Container
 from dataclasses import dataclass
+from typing import Self
 
 from ..dataclass import RandomDataclass
 from ..enum_base import StrEnum
@@ -13,7 +14,9 @@ from .field import (
     LexicographicOrderField,
     ProfilesField,
 )
+from .perturbations import PerturbImportanceRelation, PerturbLexOrder, PerturbProfile
 from .rmp import NormalRMP
+from numpy.random import Generator
 
 
 class RMPParamEnum(StrEnum):
@@ -22,7 +25,7 @@ class RMPParamEnum(StrEnum):
     LEXICOGRAPHIC_ORDER = "lexicographic_order"
 
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class RMPModel(  # type: ignore
     Model,
     RandomDataclass,
@@ -44,6 +47,25 @@ class RMPModel(  # type: ignore
             self.profiles,
             self.lexicographic_order,
         ).rank()
+
+    @classmethod
+    def from_reference(
+        cls,
+        other: Self,
+        amp_profiles: float,
+        nb_importance_relation: int,
+        nb_lex_order: int,
+        rng: Generator,
+    ):
+        return cls(
+            profiles=PerturbProfile(amp_profiles)(other.profiles, rng),
+            importance_relation=PerturbImportanceRelation(nb_importance_relation)(
+                other.importance_relation, rng
+            ),
+            lexicographic_order=PerturbLexOrder(nb_lex_order)(
+                other.lexicographic_order, rng
+            ),
+        )
 
 
 @dataclass

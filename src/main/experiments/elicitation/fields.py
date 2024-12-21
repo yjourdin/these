@@ -1,10 +1,10 @@
 from dataclasses import dataclass, field
 
-from ..field import Field
-from ..field import field as custom_field
-from ..field import group_field
-from ..methods import MethodEnum
-from ..models import GroupModelEnum
+from ....field import Field
+from ....field import field as custom_field
+from ....field import group_field
+from ....methods import MethodEnum
+from ....models import GroupModelEnum
 from .config import Config, create_config
 
 

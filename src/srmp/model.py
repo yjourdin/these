@@ -1,5 +1,8 @@
 from collections.abc import Container
 from dataclasses import dataclass
+from typing import Self
+
+from numpy.random import Generator
 
 from ..dataclass import RandomDataclass
 from ..enum_base import StrEnum
@@ -11,6 +14,8 @@ from ..rmp.field import (
     ProfilesField,
 )
 from ..rmp.model import RMPParamEnum
+from ..rmp.perturbations import PerturbLexOrder, PerturbProfile
+from ..srmp.perturbations import PerturbWeight
 from ..utils import print_list
 from .field import GroupWeightsField, WeightsField
 from .normal_srmp import NormalSRMP
@@ -22,7 +27,7 @@ class SRMPParamEnum(StrEnum):
     LEXICOGRAPHIC_ORDER = RMPParamEnum.LEXICOGRAPHIC_ORDER.value
 
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class SRMPModel(  # type: ignore
     Model,
     RandomDataclass,
@@ -46,6 +51,23 @@ class SRMPModel(  # type: ignore
             self.profiles,
             self.lexicographic_order,
         ).rank()
+
+    @classmethod
+    def from_reference(
+        cls,
+        other: Self,
+        amp_profiles: float,
+        amp_weights: float,
+        nb_lex_order: int,
+        rng: Generator,
+    ):
+        return cls(
+            profiles=PerturbProfile(amp_profiles)(other.profiles, rng),
+            weights=PerturbWeight(amp_weights)(other.weights, rng),
+            lexicographic_order=PerturbLexOrder(nb_lex_order)(
+                other.lexicographic_order, rng
+            ),
+        )
 
 
 @dataclass

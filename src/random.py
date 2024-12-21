@@ -23,10 +23,8 @@ class Random(ABC):
 
 
 class SeedMixin:
-    @property
     @abstractmethod
-    def seed(self) -> Seed: ...
+    def seed(self, *args, **kwargs) -> Seed: ...
 
-    @property
-    def rng(self):
-        return rng(self.seed)
+    def rng(self, *args, **kwargs):
+        return rng(self.seed(*args, **kwargs))

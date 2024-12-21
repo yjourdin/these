@@ -2,7 +2,7 @@ import logging
 import logging.handlers
 from multiprocessing import Queue
 from multiprocessing.connection import Connection
-from typing import cast
+from typing import Any, cast
 
 from ..constants import SENTINEL
 from .directory import Directory
@@ -10,10 +10,7 @@ from .task import Task
 
 
 def worker(
-    dir: Directory,
-    connection: Connection,
-    logging_queue: Queue,
-    stop_error: bool,
+    connection: Connection, logging_queue: Queue, dir: Directory
 ):
     logging_qh = logging.handlers.QueueHandler(logging_queue)
     logging_root = logging.getLogger()
@@ -23,20 +20,15 @@ def worker(
 
     logger.info("Start")
 
-    for task in iter(connection.recv, SENTINEL):
+    for task, args in iter(connection.recv, SENTINEL):
         try:
             task = cast(Task, task)
-            if not task.already_done(dir):
-                logger.info("start " + str(task))
-                task(dir)
-                logger.info("end   " + str(task))
-            else:
-                logger.info("done  " + str(task))
-
-            connection.send(task)
+            args = cast(dict[str, Any], args)
+            logger.info("start " + str(task))
+            connection.send(task(dir, **args))
+            logger.info("end   " + str(task))
         except Exception as e:
             logger.error(e, exc_info=True)
-            if stop_error:
-                connection.send(SENTINEL)
+            connection.send(SENTINEL)
 
     logger.info("Kill")

@@ -54,7 +54,7 @@ class MIPSRMPGroupLexicographicOrder(
         self.param["profiles_shared"] = SRMPParamEnum.PROFILES in self.shared_params
         self.param["weights_shared"] = SRMPParamEnum.WEIGHTS in self.shared_params
         # List of alternatives
-        self.param["A_star"] = self.alternatives.alternatives
+        self.param["A"] = self.alternatives.alternatives
         # List of criteria
         self.param["M"] = self.alternatives.criteria
         # Number of profiles
@@ -98,13 +98,15 @@ class MIPSRMPGroupLexicographicOrder(
                 self.param["profile_indices"],
                 self.param["M"],
             ),
+            lowBound=0,
+            upBound=1,
         )
         # Local concordance to a reference point
         self.var["delta"] = LpVariable.dicts(
             "LocalConcordance",
             (
                 self.param["DM"],
-                self.param["A_star"],
+                self.param["A"],
                 self.param["profile_indices"],
                 self.param["M"],
             ),
@@ -115,7 +117,7 @@ class MIPSRMPGroupLexicographicOrder(
             "WeightedLocalConcordance",
             (
                 self.param["DM"],
-                self.param["A_star"],
+                self.param["A"],
                 self.param["profile_indices"],
                 self.param["M"],
             ),
@@ -174,19 +176,18 @@ class MIPSRMPGroupLexicographicOrder(
         ###############
 
         # Normalized weights
-
-        for dm in self.param["DM"]:
+        # for dm in self.param["DM"]:
             self.prob += lpSum([self.var["w"][dm][j] for j in self.param["M"]]) == 1
 
         for j in self.param["M"]:
-            for dm in self.param["DM"]:
+            # for dm in self.param["DM"]:
                 # Non-zero weights
-                self.prob += self.var["w"][dm][j] >= self.gamma
+                # self.prob += self.var["w"][dm][j] >= self.gamma
 
-            for dm in self.param["DM"]:
+            # for dm in self.param["DM"]:
                 # Constraints on the reference profiles
-                self.prob += self.var["p"][dm][1][j] >= 0
-                self.prob += self.var["p"][dm][self.param["k"]][j] <= 1
+                # self.prob += self.var["p"][dm][1][j] >= 0
+                # self.prob += self.var["p"][dm][self.param["k"]][j] <= 1
 
             for h in self.param["profile_indices"]:
                 if h != self.param["k"]:
@@ -196,7 +197,7 @@ class MIPSRMPGroupLexicographicOrder(
                             self.var["p"][dm][h + 1][j] >= self.var["p"][dm][h][j]
                         )
 
-                for a in self.param["A_star"]:
+                for a in self.param["A"]:
                     for dm in self.param["DM"]:
                         # Constraints on the local concordances
                         self.prob += (

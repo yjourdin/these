@@ -45,7 +45,7 @@ class NeighborProfile(Neighbor[SRMPModel | RMPModel], Dataclass):
 
         crit_ind = rng.choice(len(neighbor.profiles.criteria))
         profile_ind = rng.choice(len(neighbor.profiles.alternatives))
-        profile_perf = cast(float, neighbor.profiles.data.iloc[profile_ind, crit_ind])
+        profile_perf = cast(float, neighbor.profiles.cell[profile_ind, crit_ind])
 
         profile_perf = rng.uniform(
             max(profile_perf - self.amp, 0), min(profile_perf + self.amp, 1)
@@ -71,7 +71,7 @@ class NeighborProfileDiscretized(Neighbor[SRMPModel | RMPModel], Dataclass):
         crit_ind = rng.choice(len(neighbor.profiles.criteria))
         crit_values = self.values.data.iloc[:, crit_ind]
         profile_ind = rng.choice(len(neighbor.profiles.alternatives))
-        profile_perf = cast(float, neighbor.profiles.data.iloc[profile_ind, crit_ind])
+        profile_perf = cast(float, neighbor.profiles.cell[profile_ind, crit_ind])
         profile_perf_ind = cast(int, crit_values[crit_values == profile_perf].index[0])
 
         if self.local:
@@ -140,7 +140,6 @@ class NeighborWeightDiscretized(Neighbor[SRMPModel]):
 
 @dataclass
 class NeighborImportanceRelation(Neighbor[RMPModel]):
-    max: int
     local: bool = False
 
     def __call__(self, sol, rng):
@@ -148,29 +147,23 @@ class NeighborImportanceRelation(Neighbor[RMPModel]):
 
         importance_relation = neighbor.importance_relation
         keys = list(importance_relation)
-        coalition = keys[rng.choice(len(keys))]
-        score = importance_relation[coalition]
+        min_score = max_score = 0
         
+        while min_score >= max_score:
+            coalition = keys[rng.choice(len(importance_relation))]
+            min_score = importance_relation.min(coalition)
+            max_score = importance_relation.max(coalition)
         
-
-        try:
-            min_score = max([importance_relation[s] for s in keys if s < coalition])
-        except ValueError:
-            min_score = 0
-        
-        try:
-            max_score = min([importance_relation[s] for s in keys if coalition < s])
-        except ValueError:
-            max_score = self.max
-
         if self.local:
+            score = importance_relation[coalition]
             available_score = []
             if score > min_score:
                 available_score.append(score - 1)
-            if score > max_score:
+            if score < max_score:
                 available_score.append(score + 1)
         else:
             available_score = range(min_score, max_score + 1)
+        
         score = rng.choice(available_score)
         neighbor.importance_relation[coalition] = score
 

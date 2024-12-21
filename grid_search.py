@@ -1,6 +1,7 @@
 from json import dump, load
 
-from src.main.config import SAConfig, SRMPSAConfig
+from src.constants import DEFAULT_MAX_TIME
+from src.main.experiments.elicitation.config import SAConfig, SRMPSAConfig
 
 configs = []
 
@@ -14,9 +15,15 @@ with open("args.json", "r+") as f:
         for alpha in [0.9, 0.95, 0.99, 0.995, 0.999]:
             if "SRMP" in args["Me"]:
                 for amp in [0.1, 0.2, 0.3, 0.4, 0.5]:
-                    configs.append(SRMPSAConfig(accept, alpha, MAX_ITER, amp).to_dict())
+                    configs.append(
+                        SRMPSAConfig(
+                            DEFAULT_MAX_TIME, accept, alpha, MAX_ITER, amp
+                        ).to_dict()
+                    )
             else:
-                configs.append(SAConfig(accept, alpha, MAX_ITER).to_dict())
+                configs.append(
+                    SAConfig(DEFAULT_MAX_TIME, accept, alpha, MAX_ITER).to_dict()
+                )
 
     args["config"] = configs
 

@@ -1,17 +1,21 @@
 from abc import abstractmethod
 from collections.abc import Sequence
+from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import ClassVar, overload
+from typing import ClassVar, Self, overload
 
 from mcda import PerformanceTable
 from mcda.internal.core.values import Ranking
 from mcda.relations import PreferenceStructure
+from numpy.random import Generator
 
 from .aggregator import agg_float, agg_rank
 from .dataclass import RandomDataclass
 from .preference_structure.fitness import fitness_comparisons_ranking
+from .random import Random
 
 
+@dataclass(unsafe_hash=True)
 class Model(RandomDataclass):
     @abstractmethod
     def rank(self, performance_table: PerformanceTable) -> Ranking: ...
@@ -20,6 +24,10 @@ class Model(RandomDataclass):
         self, performance_table: PerformanceTable, comparisons: PreferenceStructure
     ):
         return fitness_comparisons_ranking(comparisons, self.rank(performance_table))
+
+    @classmethod
+    def from_reference(cls, other: Self, rng: Generator, *args, **kwargs):
+        return deepcopy(other)
 
 
 @dataclass
@@ -77,7 +85,7 @@ class GroupModel[M: Model](Model, Sequence[M]):
                 )
 
 
-class Group[M: Model](list[M], GroupModel[M]):
+class Group[M: Model](list[M], GroupModel[M], Random):
     model: ClassVar[type[M]]  # type: ignore
     dm_models: list[M]
 
@@ -94,3 +102,7 @@ class Group[M: Model](list[M], GroupModel[M]):
     @classmethod
     def random(cls, *args, **kwargs):
         return cls([cls.model.random(*args, **kwargs)])
+
+    @classmethod
+    def from_reference(cls, other: M, rng: Generator, *args, **kwargs):
+        return cls([cls.model.from_reference(other, rng, *args, **kwargs)])

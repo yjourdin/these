@@ -21,3 +21,21 @@ class ImportanceRelation(WeakOrder[frozenset[int]]):
         we = cls()
         we.dict = dct
         return we
+
+    def max(self, key: frozenset[int]):
+        try:
+            return min(v for k, v in self.items() if key < k)
+        except ValueError:
+            return min(
+                max({k: v for k, v in self.items() if k != key}.values()) + 1,
+                len(self) - 1,
+            )
+
+    def min(self, key: frozenset[int]):
+        try:
+            return max(v for k, v in self.items() if k < key)
+        except ValueError:
+            return max(
+                min({k: v for k, v in self.items() if k != key}.values()) - 1,
+                0,
+            )

@@ -19,6 +19,12 @@ parser.add_argument(
     help="Parameters shared between decision makers",
 )
 parser.add_argument(
+    "-c", "--collective", action="store_true", help="Elicit collective model"
+)
+parser.add_argument(
+    "--preferences-changes", nargs="+", type=int, help="Preferences previously changed"
+)
+parser.add_argument(
     "--max-time", type=int, default=DEFAULT_MAX_TIME, help="Time limit (in seconds)"
 )
 parser.add_argument(

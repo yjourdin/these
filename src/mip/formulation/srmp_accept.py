@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 import numpy as np
 from mcda.relations import PreferenceStructure
-from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
+from pulp import LpBinary, LpProblem, LpVariable, lpSum, value
 
 from ...constants import EPSILON
 from ...performance_table.normal_performance_table import NormalPerformanceTable
@@ -10,15 +10,17 @@ from ...srmp.model import SRMPModel
 from ..mip import MIP
 
 
-class MIPSRMP(MIP[SRMPModel]):
+class MIPSRMPAccept(MIP[SRMPModel]):
     def __init__(
         self,
         alternatives: NormalPerformanceTable,
         preference_relations: PreferenceStructure,
         indifference_relations: PreferenceStructure,
         lexicographic_order: Sequence[int],
+        model: SRMPModel,
+        profiles_amp: float,
+        weights_amp: float,
         gamma: float = EPSILON,
-        inconsistencies: bool = True,
         *args,
         **kwargs,
     ):
@@ -27,7 +29,9 @@ class MIPSRMP(MIP[SRMPModel]):
         self.preference_relations = preference_relations
         self.indifference_relations = indifference_relations
         self.lexicographic_order = lexicographic_order
-        self.inconsistencies = inconsistencies
+        self.model = model
+        self.profiles_amp = profiles_amp
+        self.weights_amp = weights_amp
         self.gamma = gamma
 
     def create_problem(self):
@@ -49,8 +53,6 @@ class MIPSRMP(MIP[SRMPModel]):
         ]
         # Binary comparisons with preference
         preference_relations_indices = range(len(self.preference_relations))
-        # Binary comparisons with indifference
-        indifference_relations_indices = range(len(self.indifference_relations))
 
         #############
         # Variables #
@@ -90,27 +92,11 @@ class MIPSRMP(MIP[SRMPModel]):
             cat=LpBinary,
         )
 
-        if self.inconsistencies:
-            # Variables used to model the ranking rule with indifference
-            # relations
-            self.var["s_star"] = LpVariable.dicts(
-                "IndifferenceRankingVariable",
-                indifference_relations_indices,
-                cat=LpBinary,
-            )
-
         ##############
         # LP problem #
         ##############
 
-        self.prob = LpProblem("SRMP_Elicitation", LpMaximize)
-
-        if self.inconsistencies:
-            self.prob += lpSum(
-                [self.var["s"][index][0] for index in preference_relations_indices]
-            ) + lpSum(
-                [self.var["s_star"][index] for index in indifference_relations_indices]
-            )
+        self.prob = LpProblem("SRMP_Elicitation")
 
         ###############
         # Constraints #
@@ -158,10 +144,7 @@ class MIPSRMP(MIP[SRMPModel]):
 
         # Constraints on the preference ranking variables
         for index in preference_relations_indices:
-            if not self.inconsistencies:
-                self.prob += (
-                    self.var["s"][index][self.param["lexicographic_order"][0]] == 1
-                )
+            self.prob += self.var["s"][index][self.param["lexicographic_order"][0]] == 1
             self.prob += (
                 self.var["s"][index][self.param["lexicographic_order"][self.param["k"]]]
                 == 0
@@ -240,59 +223,35 @@ class MIPSRMP(MIP[SRMPModel]):
             # Constraints on the indifferences
             for index, relation in enumerate(self.indifference_relations):
                 a, b = relation.a, relation.b
-                if not self.inconsistencies:
-                    self.prob += lpSum(
-                        [
-                            self.var["omega"][a][self.param["lexicographic_order"][h]][
-                                j
-                            ]
-                            for j in self.param["M"]
-                        ]
-                    ) == lpSum(
-                        [
-                            self.var["omega"][b][self.param["lexicographic_order"][h]][
-                                j
-                            ]
-                            for j in self.param["M"]
-                        ]
-                    )
-                else:
-                    self.prob += lpSum(
-                        [
-                            self.var["omega"][a][self.param["lexicographic_order"][h]][
-                                j
-                            ]
-                            for j in self.param["M"]
-                        ]
-                    ) <= (
-                        lpSum(
-                            [
-                                self.var["omega"][b][
-                                    self.param["lexicographic_order"][h]
-                                ][j]
-                                for j in self.param["M"]
-                            ]
-                        )
-                        - (1 - self.var["s_star"][index])
-                    )
+                self.prob += lpSum(
+                    [
+                        self.var["omega"][a][self.param["lexicographic_order"][h]][j]
+                        for j in self.param["M"]
+                    ]
+                ) == lpSum(
+                    [
+                        self.var["omega"][b][self.param["lexicographic_order"][h]][j]
+                        for j in self.param["M"]
+                    ]
+                )
 
-                    self.prob += lpSum(
-                        [
-                            self.var["omega"][b][self.param["lexicographic_order"][h]][
-                                j
-                            ]
-                            for j in self.param["M"]
-                        ]
-                    ) <= (
-                        lpSum(
-                            [
-                                self.var["omega"][a][
-                                    self.param["lexicographic_order"][h]
-                                ][j]
-                                for j in self.param["M"]
-                            ]
-                        )
-                        - (1 - self.var["s_star"][index])
+            # Constraints to accept
+            for j in self.param["M"]:
+                self.prob += (
+                    self.var["w"][j] >= self.model.weights[j] - self.weights_amp
+                )
+                self.prob += (
+                    self.var["w"][j] <= self.model.weights[j] + self.weights_amp
+                )
+
+                for h in self.param["profile_indices"]:
+                    self.prob += (
+                        self.var["p"][h][j]
+                        >= self.model.profiles.cell[h, j] - self.profiles_amp
+                    )
+                    self.prob += (
+                        self.var["p"][h][j]
+                        <= self.model.profiles.cell[h, j] + self.profiles_amp
                     )
 
     def create_solution(self):

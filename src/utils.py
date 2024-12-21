@@ -98,3 +98,7 @@ def compose(*fs: Callable):
         return lambda *a, **kw: g(f(*a, **kw))
 
     return reduce(compose2, fs)
+
+def list_replace(a: list[Any], b: list[Any]):
+    a[:len(b)] = b[:len(a)]
+

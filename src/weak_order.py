@@ -8,7 +8,7 @@ from .julia.function import generate_weak_order
 from .random import Random, seed
 
 
-class WeakOrder[Element](MutableMapping, Random):
+class WeakOrder[Element](MutableMapping[Element, int], Random):
     def __init__(self, scores: Sequence[int] = [], labels: list[Element] = []) -> None:
         self.dict = dict(zip(labels, scores))
 

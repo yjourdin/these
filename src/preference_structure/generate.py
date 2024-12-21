@@ -1,5 +1,6 @@
+from collections.abc import Iterable
 from itertools import combinations
-from typing import Any, Iterator, cast
+from typing import Any
 
 import numpy as np
 from mcda import PerformanceTable
@@ -27,15 +28,16 @@ def random_preference_relation(
     return pref_struct
 
 
-def preference_relation_generator(ranking: Ranking, rng: Generator | None = None):
-    pairs: Iterator[tuple[Any, Any]] = combinations(ranking.labels, 2)
+def preference_relation_generator(
+    ranking: Ranking,
+    pairs: Iterable[tuple[Any, Any]] | None = None,
+    rng: Generator | None = None,
+):
+    pairs = pairs if pairs is not None else combinations(ranking.labels, 2)
     ranks = ranking.data.to_dict()
 
     if rng:
-        pairs = cast(
-            Iterator[tuple[Any, Any]],
-            rng.permutation(np.array(list(pairs))),
-        )
+        pairs = rng.permutation(np.array(list(pairs)))
 
     for a, b in pairs:
         if ranks[a] < ranks[b]:
@@ -56,7 +58,7 @@ def random_comparisons(
     if model:
         pref_struct = PreferenceStructure()
         ranking = model.rank(alternatives)
-        for r in preference_relation_generator(ranking, rng):
+        for r in preference_relation_generator(ranking, rng=rng):
             if r not in dom_struct:
                 pref_struct._relations.append(r)
             if len(pref_struct) == nb:

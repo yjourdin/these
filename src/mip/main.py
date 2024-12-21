@@ -8,8 +8,10 @@ from ..constants import DEFAULT_MAX_TIME
 from ..model import Model
 from ..models import GroupModelEnum, ModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..srmp.model import SRMPParamEnum
+from ..srmp.model import SRMPModel, SRMPParamEnum
 from .formulation.srmp import MIPSRMP
+from .formulation.srmp_accept import MIPSRMPAccept
+from .formulation.srmp_collective import MIPSRMPCollective
 from .formulation.srmp_group import MIPSRMPGroup
 from .formulation.srmp_group_lexicographic import MIPSRMPGroupLexicographicOrder
 from .mip import MIP
@@ -27,6 +29,11 @@ def learn_mip(
     alternatives: NormalPerformanceTable,
     comparisons: list[PreferenceStructure],
     max_time: int = DEFAULT_MAX_TIME,
+    collective: bool = False,
+    preferences_changes: list | None = None,
+    reference_model: SRMPModel | None = None,
+    profiles_amp: float = 1,
+    weights_amp: float = 1,
     *args,
     **kwargs,
 ):
@@ -56,9 +63,13 @@ def learn_mip(
         preference_relations_list.append(preference_relations_dm)
         indifference_relations_list.append(indifference_relations_dm)
 
-    lex_order_shared = (SRMPParamEnum.LEXICOGRAPHIC_ORDER in model_type.value[1]) or (
-        NB_DM == 1
+    lex_order_shared = (
+        (SRMPParamEnum.LEXICOGRAPHIC_ORDER in model_type.value[1])
+        or (NB_DM == 1)
+        or collective
     )
+
+    preferences_changes = preferences_changes or ([0] * NB_DM)
 
     if model_type.value[0] is ModelEnum.SRMP:
         shared_params = cast(set[SRMPParamEnum], model_type.value[1])
@@ -77,12 +88,36 @@ def learn_mip(
                 if lex_order_shared:
                     lexicographic_order = cast(tuple[int, ...], lexicographic_order)
                     if NB_DM == 1:
-                        mip = MIPSRMP(
+                        if reference_model:
+                            mip = MIPSRMPAccept(
+                                alternatives,
+                                preference_relations,
+                                indifference_relations,
+                                lexicographic_order,
+                                reference_model,
+                                profiles_amp,
+                                weights_amp,
+                                time_limit=time_left,
+                                *args,
+                                **kwargs,
+                            )
+                        else:
+                            mip = MIPSRMP(
+                                alternatives,
+                                preference_relations,
+                                indifference_relations,
+                                lexicographic_order,
+                                time_limit=time_left,
+                                *args,
+                                **kwargs,
+                            )
+                    elif collective:
+                        mip = MIPSRMPCollective(
                             alternatives,
-                            preference_relations,
-                            indifference_relations,
+                            preference_relations_list,
+                            indifference_relations_list,
                             lexicographic_order,
-                            time_limit=time_left,
+                            preferences_changes,
                             *args,
                             **kwargs,
                         )
@@ -120,23 +155,32 @@ def learn_mip(
                 objective = mip.prob.objective
 
                 if model is not None:
-                    fitness = (
-                        (
-                            cast(int, value(objective))
-                            / sum(len(comparisons[dm]) for dm in DMS)
-                            if status > 0
-                            else 0
+                    if collective:
+                        fitness = cast(int, value(objective))
+                        if fitness < best_fitness:
+                            best_model = model
+                            best_fitness = fitness
+
+                            if best_fitness - sum(preferences_changes) == 0:
+                                break
+                    else:
+                        fitness = (
+                            (
+                                cast(int, value(objective))
+                                / sum(len(comparisons[dm]) for dm in DMS)
+                                if status > 0
+                                else 0
+                            )
+                            if objective
+                            else 1
                         )
-                        if objective
-                        else 1
-                    )
 
-                    if fitness > best_fitness:
-                        best_model = model
-                        best_fitness = fitness
+                        if fitness > best_fitness:
+                            best_model = model
+                            best_fitness = fitness
 
-                        if best_fitness == 1:
-                            break
+                            if best_fitness == 1:
+                                break
 
         return MIPResult(best_model, best_fitness, time)
     return MIPResult()
