@@ -12,7 +12,7 @@ from .field import SeedField
 @dataclass
 class RandomModel(Model, RandomDataclass, SeedField, SeedMixin):
     def rank(self, performance_table: PerformanceTable):
-        return random_preference_relation(performance_table, self.rng)
+        return random_preference_relation(performance_table, self.rng())
 
 
 class RandomGroup(Group[RandomModel]):
