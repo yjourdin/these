@@ -123,3 +123,37 @@ def random_group_field(fieldname: str, fieldclass: type[RandomField]):
         return original_class
 
     return compose(group_field(fieldname, fieldclass), decorator)
+
+
+def group_group_field(fieldname: str, fieldclass: type[Field]):
+    def decorator(original_class):
+        __class__ = original_class  # noqa: F841
+
+        @classmethod
+        def decode(cls, dct: dict):
+            super().decode(dct)  # type: ignore
+            if fieldname in dct:
+                dct[fieldname] = (
+                    [[fieldclass.field_decode(o) for o in l] for l in dct[fieldname]]
+                    if dct[fieldname]
+                    else None
+                )
+            return dct
+
+        @classmethod
+        def encode(cls, dct: dict):
+            super().encode(dct)  # type: ignore
+            if fieldname in dct:
+                dct[fieldname] = (
+                    [[fieldclass.field_encode(o) for o in l] for l in dct[fieldname]]
+                    if dct[fieldname]
+                    else None
+                )
+            return dct
+
+        original_class.decode = decode
+        original_class.encode = encode
+
+        return original_class
+
+    return decorator

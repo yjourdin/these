@@ -15,7 +15,7 @@ from .weight import random_weights
 @dataclass
 class WeightsField(RandomField):
     weights: np.ndarray
-    
+
     @staticmethod
     def field_decode(o):
         return np.array(o)

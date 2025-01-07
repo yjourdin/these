@@ -9,7 +9,13 @@ from .field import Field, RandomField
 class Dataclass(Field):
     @classmethod
     def from_dict(cls, dct: dict):
-        return cls(**dct)
+        return cls(
+            **{
+                k: v
+                for k, v in dct.items()
+                if k in [field.name for field in fields(cls)]
+            }
+        )
 
     def to_dict(self):
         return asdict(self)
@@ -51,7 +57,13 @@ class Dataclass(Field):
 class FrozenDataclass(Field):
     @classmethod
     def from_dict(cls, dct: dict):
-        return cls(**dct)
+        return cls(
+            **{
+                k: v
+                for k, v in dct.items()
+                if k in [field.name for field in fields(cls)]
+            }
+        )
 
     def to_dict(self):
         return asdict(self)
@@ -85,6 +97,21 @@ class FrozenDataclass(Field):
 
 @dataclass
 class RandomDataclass(Dataclass, RandomField):
+    @classmethod
+    def random(cls, *args, **kwargs):
+        init_dict = {}
+        super().random(init_dict=init_dict, *args, **kwargs)
+        return cls(
+            **{
+                k: v
+                for k, v in init_dict.items()
+                if k in map(attrgetter("name"), fields(cls))
+            }
+        )
+
+
+@dataclass(frozen=True)
+class RandomFrozenDataclass(FrozenDataclass, RandomField):
     @classmethod
     def random(cls, *args, **kwargs):
         init_dict = {}

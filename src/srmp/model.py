@@ -1,12 +1,14 @@
 from collections.abc import Container
-from dataclasses import dataclass
-from typing import Self
+from dataclasses import dataclass, field
+from typing import Self, cast
 
+import numpy as np
 from numpy.random import Generator
 
 from ..dataclass import RandomDataclass
 from ..enum_base import StrEnum
-from ..model import GroupModel, Model
+from ..model import FrozenModel, GroupModel, Model
+from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..rmp.field import (
     GroupLexicographicOrderField,
     GroupProfilesField,
@@ -19,6 +21,7 @@ from ..srmp.perturbations import PerturbWeight
 from ..utils import print_list
 from .field import GroupWeightsField, WeightsField
 from .normal_srmp import NormalSRMP
+from .weight import frozen_importance_relation_from_weights
 
 
 class SRMPParamEnum(StrEnum):
@@ -27,7 +30,7 @@ class SRMPParamEnum(StrEnum):
     LEXICOGRAPHIC_ORDER = RMPParamEnum.LEXICOGRAPHIC_ORDER.value
 
 
-@dataclass(unsafe_hash=True)
+@dataclass
 class SRMPModel(  # type: ignore
     Model,
     RandomDataclass,
@@ -64,9 +67,46 @@ class SRMPModel(  # type: ignore
         return cls(
             profiles=PerturbProfile(amp_profiles)(other.profiles, rng),
             weights=PerturbWeight(amp_weights)(other.weights, rng),
-            lexicographic_order=PerturbLexOrder(nb_lex_order)(
-                other.lexicographic_order, rng
+            lexicographic_order=PerturbLexOrder(
+                len(other.profiles.alternatives), nb_lex_order
+            )(other.lexicographic_order, rng),
+        )
+
+    @property
+    def frozen(self):
+        return FrozenSRMPModel(
+            tuple(
+                tuple(cast(list[float], x))
+                for x in self.profiles.data.to_numpy().tolist()
             ),
+            self.weights,
+            tuple(self.lexicographic_order),
+        )
+
+
+@dataclass(frozen=True)
+class FrozenSRMPModel(FrozenModel[SRMPModel]):
+    profiles: tuple[tuple[float, ...], ...]
+    weights: np.ndarray = field(compare=False)
+    lexicographic_order: tuple[int, ...]
+    # weights_rounded: tuple[float, ...] = field(init=False)
+    importance_relation: tuple[float, ...] = field(init=False)
+
+    def __post_init__(self):
+        # weights_numpy = np.array(self.weights)
+        # object.__setattr__(self, "weights_rounded", tuple((np.round(weights_numpy / EPSILON) * EPSILON).tolist()))
+        object.__setattr__(
+            self,
+            "importance_relation",
+            frozen_importance_relation_from_weights(self.weights),
+        )
+
+    @property
+    def model(self):
+        return SRMPModel(
+            profiles=NormalPerformanceTable(self.profiles),
+            weights=np.array(self.weights),
+            lexicographic_order=list(self.lexicographic_order),
         )
 
 

@@ -1,15 +1,19 @@
 import math
 from collections import defaultdict, deque
+from dataclasses import dataclass
 from typing import NamedTuple
+import numpy as np
 
 from mcda import PerformanceTable
 from mcda.internal.core.values import Ranking
 from mcda.relations import PreferenceStructure
 
-from src.preference_structure.fitness import fitness_comparisons_ranking
+from src.srmp.model import FrozenSRMPModel
+
+from ..model import FrozenModel
 
 from ..dataclass import Dataclass
-from ..model import Model
+from ..preference_structure.fitness import fitness_comparisons_ranking
 from .neighborhood import Neighborhood
 
 
@@ -19,7 +23,8 @@ class ModelGraphResult[S](NamedTuple):
     dm_models: list[list[S]]
 
 
-class ModelGraph[S: Model](Dataclass):
+@dataclass
+class ModelGraph[S: FrozenModel](Dataclass):
     neighborhood: Neighborhood[S]
 
     def explore(
@@ -30,23 +35,25 @@ class ModelGraph[S: Model](Dataclass):
     ):
         Q = deque([source])
         parents: defaultdict[S, list[S]] = defaultdict(list)
-        rankings: dict[S, Ranking] = {source: source.rank(alternatives)}
+        parents[source]
+        rankings: dict[S, Ranking] = {source: source.model.rank(alternatives)}
         distances: dict[S, int] = {source: 0}
         dm_models: defaultdict[int, list[S]] = defaultdict(list)
         distances_max: list[float] = [math.inf] * len(targets)
 
         while Q:
             v = Q.popleft()
-            rankings[v] = v.rank(alternatives)
             for dm, target in enumerate(targets):
                 if distances[v] <= distances_max[dm]:
-                    if fitness_comparisons_ranking(target, rankings[v]):
+                    a = fitness_comparisons_ranking(target, rankings[v])
+                    if a == 1:
                         dm_models[dm].append(v)
                         distances_max[dm] = distances[v]
+            
             if distances[v] < max(distances_max):
                 for w in self.neighborhood(v):
                     if w not in rankings:
-                        rankings[w] = w.rank(alternatives)
+                        rankings[w] = w.model.rank(alternatives)
                         distances[w] = distances[v] + 1
                         Q.append(w)
                     if distances[w] == distances[v] + 1:

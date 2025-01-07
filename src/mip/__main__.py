@@ -1,10 +1,12 @@
 import csv
+
 from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
 from ..models import GroupModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..preference_structure.io import from_csv
+from ..random import rng, seed
 from .argument_parser import parse_args
 from .main import learn_mip
 
@@ -20,12 +22,18 @@ for d in args.D:
     D.append(from_csv(d))
 
 
+# Create random seeds
+rng_lex, rng_mip = rng(args.seed).spawn(2)
+
+
 # Learn MIP
 best_model, best_fitness, time = learn_mip(
     GroupModelEnum((args.model, set(args.shared))),  # type: ignore
     args.k,
     A,
     D,
+    rng_lex,
+    seed(rng_mip),
     gamma=args.gamma,
     inconsistencies=not args.no_inconsistencies,
     seed=args.seed,

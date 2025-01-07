@@ -27,10 +27,7 @@ def worker_manager(
         # Get a task from the task queue and assign it to a waiting worker
         empty = False
         while (not stop) and waiting_connections and (not empty):
-            if working_connections:
-                timeout = 1
-            else:
-                timeout = None
+            timeout = 1 if working_connections else None
 
             try:
                 obj = task_queue.get(timeout=timeout)
@@ -47,12 +44,11 @@ def worker_manager(
 
         # Wait a worker to finish a task
         if (not stop) and working_connections:
-            if waiting_connections:
-                timeout = 1
-            else:
-                timeout = None
+            timeout = 1 if waiting_connections else None
 
-            for connection in cast(list[Connection], wait(connections)):
+            for connection in cast(
+                list[Connection], wait(connections, timeout=timeout)
+            ):
                 try:
                     obj = connection.recv()
                 except EOFError:

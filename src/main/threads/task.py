@@ -1,8 +1,9 @@
-from concurrent.futures import FIRST_EXCEPTION, Future, wait
+from concurrent.futures import Future
 from multiprocessing import Pipe
 from typing import Any
 
 from ...constants import SENTINEL
+from ...utils import raise_exceptions
 from ..directory import Directory
 from ..task import Task
 from .worker_manager import TaskQueue
@@ -16,11 +17,7 @@ def task_thread(
     dir: Directory,
 ):
     if not task.done(dir, **args):
-        done, not_done = wait(precede_futures, return_when=FIRST_EXCEPTION)
-        for future in done:
-            err = future.exception()
-            if err is not None:
-                raise err
+        raise_exceptions(precede_futures)
 
         thread_connection, worker_connection = Pipe()
         task_queue.put((task, args, worker_connection))

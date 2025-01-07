@@ -10,7 +10,7 @@ def rng(seed: Seed | SeedSequence | None = None):
 
 
 def seed(rng: Generator = rng(), max: int = 2**63) -> Seed:
-    return rng.integers(max)
+    return Seed(rng.integers(max))
 
 
 def seeds(rng: Generator, nb: int = 1, max: int = 2**63) -> list[Seed]:

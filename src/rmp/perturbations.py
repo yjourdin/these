@@ -1,12 +1,13 @@
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass
 
 import numpy as np
 from numpy.random import Generator
 
 from ..dataclass import Dataclass
 from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..rmp.importance_relation import ImportanceRelation
+from .importance_relation import ImportanceRelation
+from .permutation import all_max_adjacent_distance
 
 
 @dataclass
@@ -17,10 +18,13 @@ class PerturbProfile(Dataclass):
         profiles_numpy = profiles.data.to_numpy()
 
         return NormalPerformanceTable(
-            np.sort(rng.uniform(
-                np.maximum(profiles_numpy - self.amp, 0),
-                np.minimum(profiles_numpy + self.amp, 1),
-            ), 0)
+            np.sort(
+                rng.uniform(
+                    np.maximum(profiles_numpy - self.amp, 0),
+                    np.minimum(profiles_numpy + self.amp, 1),
+                ),
+                0,
+            )
         )
 
 
@@ -55,14 +59,17 @@ class PerturbImportanceRelation(Dataclass):
 
 @dataclass
 class PerturbLexOrder(Dataclass):
-    nb: int
+    k: InitVar[int]
+    nb: InitVar[int]
 
-    def __call__(self, lex_order: list[int], rng: Generator):
-        lex_order = deepcopy(lex_order)
+    def __post_init__(self, k: int, nb: int):
+        self.all_permutations = all_max_adjacent_distance(list(range(k)), nb)
 
-        for _ in range(self.nb):
-            ind = rng.choice(len(lex_order) - 1)
+    def __call__(self, lex_order: list[int], rng: Generator) -> list[int]:
+        lex_order_numpy = np.array(lex_order)
 
-            lex_order[ind], lex_order[ind + 1] = lex_order[ind + 1], lex_order[ind]
+        permutation = list(
+            tuple(self.all_permutations)[rng.choice(len(self.all_permutations))]
+        )
 
-        return lex_order
+        return lex_order_numpy[permutation].tolist()

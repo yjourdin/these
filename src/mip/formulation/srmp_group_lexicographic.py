@@ -34,6 +34,7 @@ class MIPSRMPGroupLexicographicOrder(
         shared_params: set[SRMPParamEnum] = set(),
         gamma: float = EPSILON,
         inconsistencies: bool = True,
+        best_fitness: float | None = None,
         *args,
         **kwargs,
     ):
@@ -45,6 +46,7 @@ class MIPSRMPGroupLexicographicOrder(
         self.shared_params = shared_params
         self.inconsistencies = inconsistencies
         self.gamma = gamma
+        self.best_fitness = best_fitness
 
     def create_problem(self):
         ##############
@@ -64,7 +66,7 @@ class MIPSRMPGroupLexicographicOrder(
         # Indices of profiles
         self.param["profile_indices"] = list(range(1, self.param["k"] + 1))
         # Lexicographic order
-        self.param["lexicographic_order"] = [0] + [
+        self.param["sigma"] = [0] + [
             profile + 1 for profile in self.lexicographic_order
         ]
         # Binary comparisons with preference
@@ -171,23 +173,23 @@ class MIPSRMPGroupLexicographicOrder(
                 ]
             )
 
-        ###############
-        # Constraints #
-        ###############
+            ###############
+            # Constraints #
+            ###############
 
-        # Normalized weights
-        # for dm in self.param["DM"]:
+            # Normalized weights
+            # for dm in self.param["DM"]:
             self.prob += lpSum([self.var["w"][dm][j] for j in self.param["M"]]) == 1
 
         for j in self.param["M"]:
             # for dm in self.param["DM"]:
-                # Non-zero weights
-                # self.prob += self.var["w"][dm][j] >= self.gamma
+            # Non-zero weights
+            # self.prob += self.var["w"][dm][j] >= self.gamma
 
             # for dm in self.param["DM"]:
-                # Constraints on the reference profiles
-                # self.prob += self.var["p"][dm][1][j] >= 0
-                # self.prob += self.var["p"][dm][self.param["k"]][j] <= 1
+            # Constraints on the reference profiles
+            # self.prob += self.var["p"][dm][1][j] >= 0
+            # self.prob += self.var["p"][dm][self.param["k"]][j] <= 1
 
             for h in self.param["profile_indices"]:
                 if h != self.param["k"]:
@@ -230,15 +232,9 @@ class MIPSRMPGroupLexicographicOrder(
         for dm in self.param["DM"]:
             for index in self.param["preference_relations_indices"][dm]:
                 if not self.inconsistencies:
-                    self.prob += (
-                        self.var["s"][dm][index][self.param["lexicographic_order"][0]]
-                        == 1
-                    )
+                    self.prob += self.var["s"][dm][index][self.param["sigma"][0]] == 1
                 self.prob += (
-                    self.var["s"][dm][index][
-                        self.param["lexicographic_order"][self.param["k"]]
-                    ]
-                    == 0
+                    self.var["s"][dm][index][self.param["sigma"][self.param["k"]]] == 0
                 )
 
         for h in self.param["profile_indices"]:
@@ -248,89 +244,52 @@ class MIPSRMPGroupLexicographicOrder(
                     a, b = relation.a, relation.b
                     self.prob += lpSum(
                         [
-                            self.var["omega"][dm][a][
-                                self.param["lexicographic_order"][h]
-                            ][j]
+                            self.var["omega"][dm][a][self.param["sigma"][h]][j]
                             for j in self.param["M"]
                         ]
                     ) >= (
                         lpSum(
                             [
-                                self.var["omega"][dm][b][
-                                    self.param["lexicographic_order"][h]
-                                ][j]
+                                self.var["omega"][dm][b][self.param["sigma"][h]][j]
                                 for j in self.param["M"]
                             ]
                         )
                         + self.gamma
-                        - self.var["s"][dm][index][self.param["lexicographic_order"][h]]
+                        - self.var["s"][dm][index][self.param["sigma"][h]]
                         * (1 + self.gamma)
-                        - (
-                            1
-                            - self.var["s"][dm][index][
-                                self.param["lexicographic_order"][h - 1]
-                            ]
-                        )
+                        - (1 - self.var["s"][dm][index][self.param["sigma"][h - 1]])
                     )
 
                     self.prob += lpSum(
                         [
-                            self.var["omega"][dm][a][
-                                self.param["lexicographic_order"][h]
-                            ][j]
+                            self.var["omega"][dm][a][self.param["sigma"][h]][j]
                             for j in self.param["M"]
                         ]
                     ) >= (
                         lpSum(
                             [
-                                self.var["omega"][dm][b][
-                                    self.param["lexicographic_order"][h]
-                                ][j]
+                                self.var["omega"][dm][b][self.param["sigma"][h]][j]
                                 for j in self.param["M"]
                             ]
                         )
-                        - (
-                            1
-                            - self.var["s"][dm][index][
-                                self.param["lexicographic_order"][h]
-                            ]
-                        )
-                        - (
-                            1
-                            - self.var["s"][dm][index][
-                                self.param["lexicographic_order"][h - 1]
-                            ]
-                        )
+                        - (1 - self.var["s"][dm][index][self.param["sigma"][h]])
+                        - (1 - self.var["s"][dm][index][self.param["sigma"][h - 1]])
                     )
 
                     self.prob += lpSum(
                         [
-                            self.var["omega"][dm][a][
-                                self.param["lexicographic_order"][h]
-                            ][j]
+                            self.var["omega"][dm][a][self.param["sigma"][h]][j]
                             for j in self.param["M"]
                         ]
                     ) <= (
                         lpSum(
                             [
-                                self.var["omega"][dm][b][
-                                    self.param["lexicographic_order"][h]
-                                ][j]
+                                self.var["omega"][dm][b][self.param["sigma"][h]][j]
                                 for j in self.param["M"]
                             ]
                         )
-                        + (
-                            1
-                            - self.var["s"][dm][index][
-                                self.param["lexicographic_order"][h]
-                            ]
-                        )
-                        + (
-                            1
-                            - self.var["s"][dm][index][
-                                self.param["lexicographic_order"][h - 1]
-                            ]
-                        )
+                        + (1 - self.var["s"][dm][index][self.param["sigma"][h]])
+                        + (1 - self.var["s"][dm][index][self.param["sigma"][h - 1]])
                     )
 
                 # Constraints on the indifferences
@@ -339,33 +298,25 @@ class MIPSRMPGroupLexicographicOrder(
                     if not self.inconsistencies:
                         self.prob += lpSum(
                             [
-                                self.var["omega"][dm][a][
-                                    self.param["lexicographic_order"][h]
-                                ][j]
+                                self.var["omega"][dm][a][self.param["sigma"][h]][j]
                                 for j in self.param["M"]
                             ]
                         ) == lpSum(
                             [
-                                self.var["omega"][dm][b][
-                                    self.param["lexicographic_order"][h]
-                                ][j]
+                                self.var["omega"][dm][b][self.param["sigma"][h]][j]
                                 for j in self.param["M"]
                             ]
                         )
                     else:
                         self.prob += lpSum(
                             [
-                                self.var["omega"][dm][a][
-                                    self.param["lexicographic_order"][h]
-                                ][j]
+                                self.var["omega"][dm][a][self.param["sigma"][h]][j]
                                 for j in self.param["M"]
                             ]
                         ) <= (
                             lpSum(
                                 [
-                                    self.var["omega"][dm][b][
-                                        self.param["lexicographic_order"][h]
-                                    ][j]
+                                    self.var["omega"][dm][b][self.param["sigma"][h]][j]
                                     for j in self.param["M"]
                                 ]
                             )
@@ -374,17 +325,13 @@ class MIPSRMPGroupLexicographicOrder(
 
                         self.prob += lpSum(
                             [
-                                self.var["omega"][dm][b][
-                                    self.param["lexicographic_order"][h]
-                                ][j]
+                                self.var["omega"][dm][b][self.param["sigma"][h]][j]
                                 for j in self.param["M"]
                             ]
                         ) <= (
                             lpSum(
                                 [
-                                    self.var["omega"][dm][a][
-                                        self.param["lexicographic_order"][h]
-                                    ][j]
+                                    self.var["omega"][dm][a][self.param["sigma"][h]][j]
                                     for j in self.param["M"]
                                 ]
                             )
@@ -402,6 +349,25 @@ class MIPSRMPGroupLexicographicOrder(
                             self.prob += (
                                 self.var["p"][dm][h][j] == self.var["p"][dm + 1][h][j]
                             )
+
+        if self.inconsistencies and (self.best_fitness is not None):
+            self.prob += lpSum(
+                [
+                    [
+                        self.var["s"][dm][index][0]
+                        for index in self.param["preference_relations_indices"][dm]
+                    ]
+                    for dm in self.param["DM"]
+                ]
+            ) + lpSum(
+                [
+                    [
+                        self.var["s_star"][dm][index]
+                        for index in self.param["indifference_relations_indices"][dm]
+                    ]
+                    for dm in self.param["DM"]
+                ]
+            ) >= self.best_fitness + self.gamma
 
     def create_solution(self):
         weights = (
@@ -438,6 +404,6 @@ class MIPSRMPGroupLexicographicOrder(
             profiles=profiles,  # type: ignore
             weights=weights,  # type: ignore
             lexicographic_order=[  # type: ignore
-                p - 1 for p in self.param["lexicographic_order"][1:]
+                p - 1 for p in self.param["sigma"][1:]
             ],
         )

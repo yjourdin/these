@@ -38,14 +38,10 @@ def remove_reverted_changes(preference_path: list[PreferenceStructure]):
     i = 2
     while i < len(preference_path):
         changes = preference_path_set[i] - preference_path_set[i - 1]
-        if not changes:
-            del preference_path[i]
-            del preference_path_set[i]
-        else:
-            for j in reversed(range(i - 1)):
-                if changes & preference_path_set[j]:
-                    del preference_path[j + 1 : i]
-                    del preference_path_set[j + 1 : i]
-                    i = j + 1
-                    break
-            i += 1
+        for j in reversed(range(i - 2)):
+            if changes & preference_path_set[j]:
+                del preference_path[j + 1 : i]
+                del preference_path_set[j + 1 : i]
+                i = j + 1
+                break
+        i += 1

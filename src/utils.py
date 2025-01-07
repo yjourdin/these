@@ -1,11 +1,15 @@
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
+from concurrent.futures import FIRST_EXCEPTION, Future, wait
 from enum import Enum
 from functools import partial, reduce
 from itertools import chain, count
+from pathlib import Path
 from typing import Any, Callable, NamedTuple
 
 import numpy as np
 from mcda import PerformanceTable
+
+from .constants import EPSILON
 
 
 def midpoints(performance_table: PerformanceTable) -> PerformanceTable:
@@ -13,7 +17,7 @@ def midpoints(performance_table: PerformanceTable) -> PerformanceTable:
     df = performance_table.data.transform(np.sort)
 
     # compute midpoints
-    df = df.rolling(2).mean().drop(df.index[0])
+    df = df.rolling(2).mean().reset_index(drop=True).drop(df.index[0])
 
     # add 0's and 1's at the beginning and the end
     df.loc[0, :] = [
@@ -76,16 +80,14 @@ def add_str_to_list(
         )
 
 
-def filename(dct: dict[str, Any], ext: str):
-    return (
-        "_".join(to_str(k) + "_" + to_str(v) for k, v in dct.items() if k != "self")
-        + "."
-        + ext
-    )
+def pathname(dct: dict[str, Any], ext: str):
+    return "_".join(
+        to_str(k) + "_" + to_str(v) for k, v in dct.items() if k != "self"
+    ) + ext
 
-
-filename_csv = partial(filename, ext="csv")
-filename_json = partial(filename, ext="json")
+dirname = partial(pathname, ext="")
+filename_csv = partial(pathname, ext=".csv")
+filename_json = partial(pathname, ext=".json")
 
 
 def max_weight(n):
@@ -99,6 +101,26 @@ def compose(*fs: Callable):
 
     return reduce(compose2, fs)
 
-def list_replace(a: list[Any], b: list[Any]):
-    a[:len(b)] = b[:len(a)]
 
+def list_replace(a: list[Any], b: list[Any]):
+    a[: len(b)] = b[: len(a)]
+
+
+def add_filename_suffix(filename: Path, suffix: str):
+    return filename.parent / (filename.stem + suffix + filename.suffix)
+
+
+def round_epsilon(x, epsilon: float = EPSILON):
+    return np.round(x / EPSILON) * EPSILON
+
+
+def raise_exception(future: Future):
+    err = future.exception()
+    if err is not None:
+        raise err
+
+
+def raise_exceptions(futures: Iterable[Future]):
+    done, not_done = wait(futures, return_when=FIRST_EXCEPTION)
+    for future in done:
+        raise_exception(future)

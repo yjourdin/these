@@ -1,3 +1,4 @@
+import ast
 from dataclasses import dataclass
 
 from numpy.random import Generator
@@ -10,8 +11,6 @@ from ..field import (
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from .importance_relation import ImportanceRelation
 from .profile import random_profiles
-import ast
-
 
 
 @random_field("profiles")

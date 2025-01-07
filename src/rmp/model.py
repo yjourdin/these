@@ -2,6 +2,8 @@ from collections.abc import Container
 from dataclasses import dataclass
 from typing import Self
 
+from numpy.random import Generator
+
 from ..dataclass import RandomDataclass
 from ..enum_base import StrEnum
 from ..model import GroupModel, Model
@@ -16,7 +18,6 @@ from .field import (
 )
 from .perturbations import PerturbImportanceRelation, PerturbLexOrder, PerturbProfile
 from .rmp import NormalRMP
-from numpy.random import Generator
 
 
 class RMPParamEnum(StrEnum):
@@ -62,9 +63,9 @@ class RMPModel(  # type: ignore
             importance_relation=PerturbImportanceRelation(nb_importance_relation)(
                 other.importance_relation, rng
             ),
-            lexicographic_order=PerturbLexOrder(nb_lex_order)(
-                other.lexicographic_order, rng
-            ),
+            lexicographic_order=PerturbLexOrder(
+                len(other.profiles.alternatives), nb_lex_order
+            )(other.lexicographic_order, rng),
         )
 
 

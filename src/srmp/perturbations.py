@@ -16,7 +16,7 @@ class PerturbWeight(Dataclass):
     amp: float
 
     def __call__(self, weights: np.ndarray, rng: Generator):
-        random.seed = seed(rng)
+        random.seed(seed(rng))
 
         return np.array(
             drs(

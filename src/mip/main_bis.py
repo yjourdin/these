@@ -94,9 +94,12 @@ def learn_mip(
         else:
             lexicographic_orders = np.array(
                 list(
-                    all_max_adjacent_distance(
-                        reference_model.lexicographic_order,
-                        lexicographic_order_distance,
+                    product(
+                        all_max_adjacent_distance(
+                            reference_model.lexicographic_order,
+                            lexicographic_order_distance,
+                        ),
+                        repeat=NB_DM,
                     )
                 )
             )

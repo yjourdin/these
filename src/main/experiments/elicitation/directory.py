@@ -6,7 +6,6 @@ from ...directory import Directory
 from ...experiments.elicitation.config import Config
 from .fieldnames import (
     ConfigFieldnames,
-    SeedFieldnames,
     TestFieldnames,
     TrainFieldnames,
 )
@@ -25,7 +24,6 @@ class DirectoryElicitation(Directory):
         self.csv_files.update(
             train=CSVFile(self.dirs["root"] / "train_results.csv", TrainFieldnames),
             test=CSVFile(self.dirs["root"] / "test_results.csv", TestFieldnames),
-            seeds=CSVFile(self.dirs["root"] / "seeds.csv", SeedFieldnames),
             configs=CSVFile(self.dirs["root"] / "configs.csv", ConfigFieldnames),
         )
 
@@ -44,7 +42,7 @@ class DirectoryElicitation(Directory):
         ntr: int,
         Atr_id: int,
         Mo: GroupModelEnum,
-        ko: int,
+        k: int,
         group_size: int,
         Mo_id: int,
         n: int,

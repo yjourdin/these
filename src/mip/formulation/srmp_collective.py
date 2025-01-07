@@ -18,8 +18,12 @@ class MIPSRMPCollective(MIP[SRMPModel]):
         preference_relations: list[PreferenceStructure],
         indifference_relations: list[PreferenceStructure],
         lexicographic_order: Sequence[int],
-        preferences_changes: list[int],
+        preferences_changed: list[int],
+        preference_refused: list[PreferenceStructure],
+        indifference_refused: list[PreferenceStructure],
+        count_refused: list[int],
         gamma: float = EPSILON,
+        best_objective: float | None = None,
         *args,
         **kwargs,
     ):
@@ -28,8 +32,12 @@ class MIPSRMPCollective(MIP[SRMPModel]):
         self.preference_relations = preference_relations
         self.indifference_relations = indifference_relations
         self.lexicographic_order = lexicographic_order
-        self.preferences_changes = preferences_changes
+        self.preferences_changed = preferences_changed
+        self.preference_refused = preference_refused
+        self.indifference_refused = indifference_refused
+        self.count_refused = count_refused
         self.gamma = gamma
+        self.best_objective = best_objective
 
     def create_problem(self):
         ##############
@@ -47,7 +55,7 @@ class MIPSRMPCollective(MIP[SRMPModel]):
         # Indices of profiles
         self.param["profile_indices"] = list(range(1, self.param["k"] + 1))
         # Lexicographic order
-        self.param["lexicographic_order"] = [0] + [
+        self.param["sigma"] = [0] + [
             profile + 1 for profile in self.lexicographic_order
         ]
         # Binary comparisons with preference
@@ -55,6 +63,11 @@ class MIPSRMPCollective(MIP[SRMPModel]):
             set(
                 itertools.chain.from_iterable(
                     self.preference_relations[dm]._relations for dm in self.param["DM"]
+                )
+            )
+            | set(
+                itertools.chain.from_iterable(
+                    pref_refused._relations for pref_refused in self.preference_refused
                 )
             )
         )
@@ -65,6 +78,12 @@ class MIPSRMPCollective(MIP[SRMPModel]):
                 itertools.chain.from_iterable(
                     self.indifference_relations[dm]._relations
                     for dm in self.param["DM"]
+                )
+            )
+            | set(
+                itertools.chain.from_iterable(
+                    indif_refused._relations
+                    for indif_refused in self.indifference_refused
                 )
             )
         )
@@ -135,13 +154,23 @@ class MIPSRMPCollective(MIP[SRMPModel]):
             cat=LpInteger,
         )
 
+        # Variables used to model inconsistencies
+        self.var["R"] = LpVariable.dicts(
+            "Inconsistencies",
+            range(len(self.preference_refused)),
+            cat=LpBinary,
+        )
+
         ##############
         # LP problem #
         ##############
 
         self.prob = LpProblem("SRMP_Elicitation", LpMinimize)
 
-        self.prob += self.var["S"]
+        self.prob += self.var["S"] + 2 * (
+            len(preference_relations_union_indices)
+            + len(indifference_relations_union_indices)
+        ) * lpSum(self.var["R"])
 
         ###############
         # Constraints #
@@ -187,11 +216,15 @@ class MIPSRMPCollective(MIP[SRMPModel]):
                         >= self.var["delta"][a][h][j] + self.var["w"][j] - 1
                     )
 
-            # Constraints on the preference ranking variables
-            for index in preference_relations_union_indices:
-                self.prob += (
-                    self.var["s"][index][self.param["lexicographic_order"][0]] == 0
-                )
+        # Constraints on the preference ranking variables
+        for index in preference_relations_union_indices:
+            self.prob += self.var["s"][index][self.param["sigma"][0]] == 0
+
+            # for h in self.param["profile_indices"]:
+            #     self.prob += (
+            #         self.var["s"][index][self.param["sigma"][h]]
+            #         >= self.var["s"][index][self.param["sigma"][h - 1]]
+            #     )
 
         for h in self.param["profile_indices"]:
             # Constraints on the preferences
@@ -199,15 +232,13 @@ class MIPSRMPCollective(MIP[SRMPModel]):
                 a, b = relation.a, relation.b
                 self.prob += lpSum(
                     [
-                        self.var["omega"][a][self.param["lexicographic_order"][h]][j]
+                        self.var["omega"][a][self.param["sigma"][h]][j]
                         for j in self.param["M"]
                     ]
                 ) >= (
                     lpSum(
                         [
-                            self.var["omega"][b][self.param["lexicographic_order"][h]][
-                                j
-                            ]
+                            self.var["omega"][b][self.param["sigma"][h]][j]
                             for j in self.param["M"]
                         ]
                     )
@@ -215,45 +246,41 @@ class MIPSRMPCollective(MIP[SRMPModel]):
                     - (1 + self.gamma)
                     * (
                         1
-                        - self.var["s"][index][self.param["lexicographic_order"][h]]
-                        + self.var["s"][index][self.param["lexicographic_order"][h - 1]]
+                        - self.var["s"][index][self.param["sigma"][h]]
+                        + self.var["s"][index][self.param["sigma"][h - 1]]
                     )
                 )
 
                 self.prob += lpSum(
                     [
-                        self.var["omega"][a][self.param["lexicographic_order"][h]][j]
+                        self.var["omega"][a][self.param["sigma"][h]][j]
                         for j in self.param["M"]
                     ]
                 ) >= (
                     lpSum(
                         [
-                            self.var["omega"][b][self.param["lexicographic_order"][h]][
-                                j
-                            ]
+                            self.var["omega"][b][self.param["sigma"][h]][j]
                             for j in self.param["M"]
                         ]
                     )
-                    - self.var["s"][index][self.param["lexicographic_order"][h]]
-                    - self.var["s"][index][self.param["lexicographic_order"][h - 1]]
+                    - self.var["s"][index][self.param["sigma"][h]]
+                    - self.var["s"][index][self.param["sigma"][h - 1]]
                 )
 
                 self.prob += lpSum(
                     [
-                        self.var["omega"][a][self.param["lexicographic_order"][h]][j]
+                        self.var["omega"][a][self.param["sigma"][h]][j]
                         for j in self.param["M"]
                     ]
                 ) <= (
                     lpSum(
                         [
-                            self.var["omega"][b][self.param["lexicographic_order"][h]][
-                                j
-                            ]
+                            self.var["omega"][b][self.param["sigma"][h]][j]
                             for j in self.param["M"]
                         ]
                     )
-                    + self.var["s"][index][self.param["lexicographic_order"][h]]
-                    + self.var["s"][index][self.param["lexicographic_order"][h - 1]]
+                    + self.var["s"][index][self.param["sigma"][h]]
+                    + self.var["s"][index][self.param["sigma"][h - 1]]
                 )
 
             # Constraints on the indifferences
@@ -261,15 +288,13 @@ class MIPSRMPCollective(MIP[SRMPModel]):
                 a, b = relation.a, relation.b
                 self.prob += lpSum(
                     [
-                        self.var["omega"][a][self.param["lexicographic_order"][h]][j]
+                        self.var["omega"][a][self.param["sigma"][h]][j]
                         for j in self.param["M"]
                     ]
                 ) >= (
                     lpSum(
                         [
-                            self.var["omega"][b][self.param["lexicographic_order"][h]][
-                                j
-                            ]
+                            self.var["omega"][b][self.param["sigma"][h]][j]
                             for j in self.param["M"]
                         ]
                     )
@@ -278,28 +303,82 @@ class MIPSRMPCollective(MIP[SRMPModel]):
 
                 self.prob += lpSum(
                     [
-                        self.var["omega"][a][self.param["lexicographic_order"][h]][j]
+                        self.var["omega"][a][self.param["sigma"][h]][j]
                         for j in self.param["M"]
                     ]
                 ) <= (
                     lpSum(
                         [
-                            self.var["omega"][b][self.param["lexicographic_order"][h]][
-                                j
-                            ]
+                            self.var["omega"][b][self.param["sigma"][h]][j]
                             for j in self.param["M"]
                         ]
                     )
                     + self.var["s_star"][index]
                 )
 
+                # self.prob += lpSum(
+                #     [
+                #         self.var["omega"][a][self.param["sigma"][h]][j]
+                #         for j in self.param["M"]
+                #     ]
+                # ) >= (
+                #     lpSum(
+                #         [
+                #             self.var["omega"][b][self.param["sigma"][h]][j]
+                #             for j in self.param["M"]
+                #         ]
+                #     )
+                #     + self.gamma * self.var["s_star"][index]
+                # )
+
+                # self.prob += lpSum(
+                #     [
+                #         self.var["omega"][b][self.param["sigma"][h]][j]
+                #         for j in self.param["M"]
+                #     ]
+                # ) >= (
+                #     lpSum(
+                #         [
+                #             self.var["omega"][a][self.param["sigma"][h]][j]
+                #             for j in self.param["M"]
+                #         ]
+                #     )
+                #     + self.gamma * self.var["s_star"][index]
+                # )
+
+        # Constraint on refused preferences
+        for index in range(len(self.preference_refused)):
+            self.prob += (
+                lpSum(
+                    [
+                        self.var["s"][preference_relations_union.index(r)][
+                            self.param["sigma"][self.param["k"]]
+                        ]
+                        for r in self.preference_refused[index]
+                    ]
+                )
+                + lpSum(
+                    [
+                        1 - self.var["s_star"][indifference_relations_union.index(r)]
+                        for r in self.indifference_refused[index]
+                    ]
+                )
+                <= len(
+                    set(frozenset(r.elements) for r in self.preference_refused[index])
+                    | set(
+                        frozenset(r.elements) for r in self.indifference_refused[index]
+                    )
+                )
+                - self.count_refused[index] * (1 - self.var["R"][index])
+            )
+
         # Constraints on minimum number of preferences changes
         for dm in self.param["DM"]:
-            self.prob += self.var["S"] >= self.preferences_changes[dm] + lpSum(
+            self.prob += self.var["S"] >= self.preferences_changed[dm] + lpSum(
                 [
                     1
                     - self.var["s"][preference_relations_union.index(r)][
-                        self.param["lexicographic_order"][self.param["k"]]
+                        self.param["sigma"][self.param["k"]]
                     ]
                     for r in self.preference_relations[dm]
                 ]
@@ -309,6 +388,12 @@ class MIPSRMPCollective(MIP[SRMPModel]):
                     for r in self.indifference_relations[dm]
                 ]
             )
+
+        if self.best_objective is not None:
+            self.prob += self.var["S"] + 2 * (
+                len(preference_relations_union_indices)
+                + len(indifference_relations_union_indices)
+            ) * lpSum(self.var["R"]) <= self.best_objective - 1
 
     def create_solution(self):
         weights = np.array([value(self.var["w"][j]) for j in self.param["M"]])
@@ -322,5 +407,5 @@ class MIPSRMPCollective(MIP[SRMPModel]):
         return SRMPModel(
             profiles=profiles,
             weights=weights,
-            lexicographic_order=[p - 1 for p in self.param["lexicographic_order"][1:]],
+            lexicographic_order=[p - 1 for p in self.param["sigma"][1:]],
         )

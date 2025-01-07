@@ -1,7 +1,7 @@
 import csv
 from dataclasses import dataclass
 from math import exp
-from time import time
+import time
 from typing import TextIO
 
 from mcda.internal.core.interfaces import Learner
@@ -41,8 +41,8 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
         current_obj = self.objective(current_sol)
         self.best_sol = initial_sol
         self.best_obj = self.objective(self.best_sol)
-        start_time = time()
-        self.time = time() - start_time
+        start_time = time.process_time()
+        self.time = time.process_time() - start_time
         self.it = 0
         self.non_improving_it = 0
 
@@ -79,7 +79,6 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
         ):
             for _ in range(self.L):
                 # New iteration
-                self.time = time() - start_time
                 self.it += 1
                 self.non_improving_it += 1
 
@@ -110,6 +109,9 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
                         # Stop when optimum reached
                         if self.best_obj <= self.objective.optimum:
                             return self.best_sol
+                
+                # Update time
+                self.time = time.process_time() - start_time
 
                 if self.log_file:
                     log_writer.writerow(

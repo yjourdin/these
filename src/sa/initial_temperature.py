@@ -10,9 +10,7 @@ from .objective import Objective
 from .random_walk import RandomWalk
 
 
-def initial_temperature[
-    S
-](
+def initial_temperature[S](
     acceptance_rate: float,
     neighbor: Neighbor[S],
     objective: Objective,

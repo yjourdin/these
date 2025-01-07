@@ -1,4 +1,5 @@
 import csv
+
 from pandas import read_csv
 
 from ..performance_table.normal_performance_table import NormalPerformanceTable

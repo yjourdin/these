@@ -10,6 +10,7 @@ from ..model import GroupModel
 from ..models import model_from_json
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..random import rng
+from ..utils import add_filename_suffix
 from .argument_parser import TypeEnum, parse_args
 from .generate import noisy_comparisons, random_comparisons
 from .io import to_csv
@@ -61,7 +62,7 @@ def filename(dm):
     if NB_DM == 1:
         return path
     else:
-        return path.parent / (path.stem + f"_{dm}" + path.suffix)
+        return add_filename_suffix(path, f"_{dm}")
 
 
 for dm in DMS:

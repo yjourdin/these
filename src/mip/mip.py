@@ -28,11 +28,16 @@ class MIP[T](Learner[T | None]):
             kwargs["solver"] = "GUROBI"
             if seed is not None:
                 kwargs["seed"] = seed % 2_000_000_000
-            self.solver = getSolver(**kwargs)
+        if "HiGHS" in listSolvers(True):
+            kwargs["solver"] = "HiGHS"
+            if seed is not None:
+                kwargs["random_seed"] = seed % 2_000_000_000
         else:
             kwargs["solver"] = "PULP_CBC_CMD"
-            kwargs["options"] = [f"RandomS {seed % 2_000_000_000}"]
-            self.solver = getSolver(**kwargs)
+            if seed is not None:
+                kwargs["options"] = [f"RandomS {seed % 2_000_000_000}"]
+
+        self.solver = getSolver(**kwargs)
 
     def learn(self):
         self.create_problem()

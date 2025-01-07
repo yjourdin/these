@@ -93,10 +93,15 @@ with ThreadPoolExecutor() as thread_pool:
     # Start worker manager thread
     task_manager_thread = Thread(
         target=worker_manager,
-        args=(connections, task_queue, manager_connection, thread_pool, args.stop_error),
+        args=(
+            connections,
+            task_queue,
+            manager_connection,
+            thread_pool,
+            args.stop_error,
+        ),
     )
     task_manager_thread.start()
-
 
     # Main
     main(args, dir, thread_pool, task_queue)  # type: ignore

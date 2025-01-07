@@ -9,8 +9,11 @@ from .random import Random, seed
 
 
 class WeakOrder[Element](MutableMapping[Element, int], Random):
-    def __init__(self, scores: Sequence[int] = [], labels: list[Element] = []) -> None:
-        self.dict = dict(zip(labels, scores))
+    def __init__(
+        self, scores: Sequence[int] | None = None, labels: list[Element] | None = None
+    ) -> None:
+        if scores and labels:
+            self.dict = dict(zip(labels, scores))
 
     def __getitem__(self, key: Element):
         return self.dict[key]

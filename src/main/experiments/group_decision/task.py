@@ -1,64 +1,31 @@
-from abc import abstractmethod
-from dataclasses import InitVar, dataclass, field
-from enum import Enum
-from multiprocessing import Queue
-from pathlib import Path
-from typing import Any, ClassVar
+import csv
+import time
+from dataclasses import dataclass, field, replace
+from typing import cast
 
+from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
-from ..dataclass import FrozenDataclass
-from ..methods import MethodEnum
-from ..mip.main import learn_mip
-from ..model import GroupModel
-from ..models import GroupModelEnum, model
-from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..preference_structure.generate import noisy_comparisons, random_comparisons
-from ..preference_structure.io import from_csv, to_csv
-from ....random import Seed, SeedMixin, seed
-from ..sa.main import learn_sa
-from ..test.main import test_consensus, test_distance
-from ..test.test import DistanceRankingEnum
-from .experiments.elicitation.config import Config, MIPConfig, SAConfig, SRMPSAConfig
-from .directory import Directory
-from .fieldnames import DSizeFieldnames, SeedFieldnames, TestFieldnames, TrainFieldnames
-from .experiments.elicitation.seeds import Seeds
+from ....mip.main import learn_mip
+from ....models import GroupModelEnum, model_from_json
+from ....performance_table.normal_performance_table import NormalPerformanceTable
+from ....preference_path.main import compute_preference_path
+from ....preference_structure.generate import (
+    random_comparisons,
+)
+from ....preference_structure.io import from_csv, to_csv
+from ....random import Seed, rng
+from ....random import seed as random_seed
+from ....srmp.model import SRMPModel
+from ...task import SeedTask
+from ..elicitation.config import MIPConfig
+from .directory import DirectoryGroupDecision
+from .fieldnames import CollectiveFieldnames, PathFieldnames
+from .hyperparameters import AcceptHyperparameters, GenHyperparameters
 
 
 @dataclass(frozen=True)
-class Task(FrozenDataclass, SeedMixin):
-    name: ClassVar[str]
-    seeds: InitVar[Seeds]
-
-    @abstractmethod
-    def __post_init__(self, seeds: Seeds): ...
-
-    def __str__(self) -> str:
-        attributes = (
-            print_attribute(attr, getattr(self, attr, None), width)
-            for attr, width in WIDTH.items()
-        )
-        return f"{self.name:7} ({', '.join(attributes)})"
-
-    @abstractmethod
-    def __call__(
-        self,
-        dir: Directory,
-    ) -> None: ...
-
-    @property
-    def seed(self) -> Seed:
-        return abs(hash(self))
-
-    def print_seed(self, seed_queue: Queue):
-        seed_queue.put({SeedFieldnames.Task: self, SeedFieldnames.Seed: self.seed})
-
-    @abstractmethod
-    def already_done(self, dir: Directory): ...
-
-
-@dataclass(frozen=True)
-class AbstractMTask(Task):
+class AbstractMTask(SeedTask):
     m: int
 
 
@@ -66,373 +33,385 @@ class AbstractMTask(Task):
 class ATrainTask(AbstractMTask):
     name = "A_train"
     ntr: int
-    Atr_id: int
+    Atr_id: int = field(hash=False)
 
-    def __call__(self, A_train_file: Path, seed: Seed):
-        self.print_seed(dir.csv_files["seeds"].queue)
+    def task(self, dir: DirectoryGroupDecision, seed: Seed):
+        A = NormalPerformanceTable.random(self.ntr, self.m, self.rng(seed))
 
-        A = NormalPerformanceTable.random(self.ntr, self.m, self.rng)
-
-        with A_train_file.open("w") as f:
+        with self.A_train_file(dir).open("w") as f:
             A.data.to_csv(f, header=False, index=False)
 
-    def already_done(self, A_train_file: Path, seed: Seed):
-        return A_train_file.exists()
+    def A_train_file(self, dir: DirectoryGroupDecision):
+        return dir.A_train(self.m, self.ntr, self.Atr_id)
 
-
-@dataclass(frozen=True)
-class ATestTask(AbstractMTask):
-    name = "A_test"
-    nte: int
-    Ate_id: int = field(hash=False)
-    Ate_seed: Seed = field(init=False, hash=True, compare=False)
-
-    def __post_init__(self, seeds: Seeds):
-        super().__post_init__(seeds)
-        object.__setattr__(self, "Ate_seed", seeds.A_te[self.Ate_id])
-
-    def __call__(self, dir: Directory):
-        self.print_seed(dir.csv_files["seeds"].queue)
-
-        A = NormalPerformanceTable.random(self.nte, self.m, self.rng)
-
-        with self.A_test_file(dir).open("w") as f:
-            A.data.to_csv(f, header=False, index=False)
-
-    def A_test_file(self, dir: Directory):
-        return dir.A_test(self.m, self.nte, self.Ate_id)
-
-    def already_done(self, dir: Directory):
-        return self.A_test_file(dir).exists()
+    def done(self, dir: DirectoryGroupDecision, *args, **kwargs):
+        return self.A_train_file(dir).exists()
 
 
 @dataclass(frozen=True)
 class MoTask(AbstractMTask):
     name = "Mo"
-    Mo: GroupModelEnum
     ko: int
-    group_size: int
     Mo_id: int = field(hash=False)
-    Mo_seed: Seed = field(init=False, hash=True, compare=False)
 
-    def __post_init__(self, seeds: Seeds):
-        super().__post_init__(seeds)
-        object.__setattr__(self, "Mo_seed", seeds.Mo[self.group_size][self.Mo_id])
-
-    def __call__(self, dir: Directory):
-        self.print_seed(dir.csv_files["seeds"].queue)
-
-        Mo = model(*self.Mo.value, self.group_size).random(
-            nb_profiles=self.ko,
-            nb_crit=self.m,
-            rng=self.rng,
-            **({"group_size": self.group_size} if self.group_size > 1 else {}),
-        )
+    def task(self, dir: DirectoryGroupDecision, seed: Seed):
+        Mo = SRMPModel.random(nb_profiles=self.ko, nb_crit=self.m, rng=self.rng(seed))
 
         with self.Mo_file(dir).open("w") as f:
             f.write(Mo.to_json())
 
-    def Mo_file(self, dir: Directory):
-        return dir.Mo(self.m, self.Mo, self.ko, self.group_size, self.Mo_id)
+    def Mo_file(self, dir: DirectoryGroupDecision):
+        return dir.Mo(self.m, self.ko, self.Mo_id)
 
-    def already_done(self, dir: Directory):
+    def done(self, dir: DirectoryGroupDecision, *args, **kwargs):
         return self.Mo_file(dir).exists()
 
 
 @dataclass(frozen=True)
-class AbstractDTask(MoTask, ATrainTask):
+class AbstractMiTask(MoTask):
+    group_size: int
+    gen: GenHyperparameters
+    Mi_id: int = field(hash=False)
+
+    def Mi_file(self, dir: DirectoryGroupDecision, dm_id: int):
+        return dir.Mi(
+            self.m,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.gen,
+            dm_id,
+            self.Mi_id,
+        )
+
+
+@dataclass(frozen=True)
+class MiTask(AbstractMiTask):
+    name = "Mi"
+    dm_id: int
+
+    def task(self, dir: DirectoryGroupDecision, seed: Seed):
+        with self.Mo_file(dir).open("r") as f:
+            Mo = SRMPModel.from_json(f.read())
+
+        Mi = SRMPModel.from_reference(
+            Mo, self.gen.P, self.gen.W, self.gen.L, rng=self.rng(seed)
+        )
+
+        with self.Mi_file(dir, self.dm_id).open("w") as f:
+            f.write(Mi.to_json())
+
+    def done(self, dir: DirectoryGroupDecision, *args, **kwargs):
+        return self.Mi_file(dir, self.dm_id).exists()
+
+
+@dataclass(frozen=True)
+class AbstractDTask(AbstractMiTask, ATrainTask):
     nbc: int
     same_alt: bool
-    error: float
     D_id: int = field(hash=False)
-    D_seed: Seed = field(init=False, hash=True, compare=False)
 
-    def __post_init__(self, seeds: Seeds):
-        super().__post_init__(seeds)
-        object.__setattr__(self, "D_seed", seeds.D[self.D_id])
-
-    def D_file(self, dir: Directory, dm_id: int):
+    def D_file(self, dir: DirectoryGroupDecision, dm_id: int, it: int):
         return dir.D(
             self.m,
             self.ntr,
             self.Atr_id,
-            self.Mo,
+            self.Mo_id,
             self.ko,
             self.group_size,
-            self.Mo_id,
+            self.gen,
+            dm_id,
+            self.Mi_id,
             self.nbc,
             self.same_alt,
-            self.error,
-            dm_id,
             self.D_id,
+            it,
         )
 
 
 @dataclass(frozen=True)
-class DTask(AbstractDTask):
+class DTask(AbstractDTask, MiTask):
     name = "D"
-    dm_id: int
 
-    def __call__(self, dir: Directory):
-        self.print_seed(dir.csv_files["seeds"].queue)
-
-        with self.Mo_file(dir).open("r") as f:
-            Mo = model(*self.Mo.value, self.group_size).from_json(f.read())
-
+    def task(self, dir: DirectoryGroupDecision, seed: Seed):
         with self.A_train_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
-        rng_shuffle, rng_error = self.rng.spawn(2)
+        with self.Mi_file(dir, self.dm_id).open("r") as f:
+            Mi = SRMPModel.from_json(f.read())
 
-        D = random_comparisons(
-            A,
-            Mo[self.dm_id] if isinstance(Mo, GroupModel) else Mo,
-            self.nbc,
-            rng_shuffle,
-        )
+        if self.same_alt:
+            rng = replace(self, dm_id=0).rng(seed)
+        else:
+            rng = self.rng(seed)
 
-        if self.error:
-            D = noisy_comparisons(D, self.error, rng_error)
+        D = random_comparisons(A, Mi, self.nbc, rng)
 
-        with self.D_file(dir, self.dm_id).open("w") as f:
+        with self.D_file(dir, self.dm_id, 0).open("w") as f:
             to_csv(D, f)
 
-        dir.csv_files["D_size"].queue.put(
-            {
-                DSizeFieldnames.M: self.m,
-                DSizeFieldnames.N_tr: self.ntr,
-                DSizeFieldnames.Atr_id: self.Atr_id,
-                DSizeFieldnames.Mo: self.Mo,
-                DSizeFieldnames.Ko: self.ko,
-                DSizeFieldnames.Group_size: self.group_size,
-                DSizeFieldnames.Mo_id: self.Mo_id,
-                DSizeFieldnames.N_bc: self.nbc,
-                DSizeFieldnames.Same_alt: self.same_alt,
-                DSizeFieldnames.Error: self.error,
-                DSizeFieldnames.D_id: self.D_id,
-                DSizeFieldnames.Size: len(D),
-            }
-        )
-
-    def already_done(self, dir: Directory):
-        return self.D_file(dir, self.dm_id).exists()
+    def done(self, dir: DirectoryGroupDecision, *args, **kwargs):
+        return self.D_file(dir, self.dm_id, 0).exists()
 
 
 @dataclass(frozen=True)
-class AbstractElicitationTask(AbstractDTask):
-    Me: GroupModelEnum
-    ke: int
-    method: MethodEnum
-    config: Config
-    Me_id: int = field(hash=False)
-    Me_seed: Seed = field(init=False, hash=True, compare=False)
-
-    def __post_init__(self, seeds: Seeds):
-        super().__post_init__(seeds)
-        object.__setattr__(self, "Me_seed", seeds.Me[self.Me_id])
-
-    def Me_file(self, dir: Directory):
-        return dir.Me(
-            self.m,
-            self.ntr,
-            self.Atr_id,
-            self.Mo,
-            self.ko,
-            self.group_size,
-            self.Mo_id,
-            self.nbc,
-            self.same_alt,
-            self.error,
-            self.D_id,
-            self.Me,
-            self.ke,
-            self.method,
-            self.config,
-            self.Me_id,
-        )
-
-    def already_done(self, dir: Directory):
-        return self.Me_file(dir).exists()
-
-
-@dataclass(frozen=True)
-class MIPTask(AbstractElicitationTask):
-    name = "MIP"
-    method: MethodEnum = field(default=MethodEnum.MIP, init=False)
+class CollectiveTask(AbstractDTask):
+    name = "Collective"
     config: MIPConfig
+    Mc_id: int = field(hash=False)
+    it: int# = field(hash=False)
 
-    def __call__(self, dir: Directory):
-        self.print_seed(dir.csv_files["seeds"].queue)
-
+    def task(
+        self,
+        dir: DirectoryGroupDecision,
+        seed: Seed,
+    ):
         with self.A_train_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
-        D = []
+        D: list[PreferenceStructure] = []
         for dm_id in range(self.group_size):
             with self.D_file(dir, dm_id).open("r") as f:
                 D.append(from_csv(f))
 
+        C: list[int] = []
+        with self.C_file(dir).open("r", newline="") as f:
+            C_reader = csv.reader(f, dialect="unix")
+            for changes in C_reader:
+                C.append(int(changes[0]))
+
+        R: list[list[PreferenceStructure]] = []
+        for dm_id in range(self.group_size):
+            R_dm: list[PreferenceStructure] = []
+            for R_file in self.R_dir(dir, dm_id).iterdir():
+                with R_file.open("r") as f:
+                    R_dm.append(from_csv(f))
+            R.append(R_dm)
+
+        rng_lex, rng_mip = self.rng(seed).spawn(2)
+
         best_model, best_fitness, time = learn_mip(
-            self.Me,
-            self.ke,
+            GroupModelEnum.SRMP,
+            self.ko,
             A,
             D,
+            rng_lex,
+            random_seed(rng_mip),
             self.config.max_time,
-            seed=seed(self.rng, 2_000_000_000),
+            True,
+            C,
+            R,
             gamma=self.config.gamma,
         )
 
-        with self.Me_file(dir).open("w") as f:
+        with self.Mc_file(dir).open("w") as f:
             f.write(best_model.to_json() if best_model else "None")
 
-        dir.csv_files["train"].queue.put(
+        dir.csv_files["collective"].queue.put(
             {
-                TrainFieldnames.M: self.m,
-                TrainFieldnames.N_tr: self.ntr,
-                TrainFieldnames.Atr_id: self.Atr_id,
-                TrainFieldnames.Mo: self.Mo,
-                TrainFieldnames.Ko: self.ko,
-                TrainFieldnames.Group_size: self.group_size,
-                TrainFieldnames.Mo_id: self.Mo_id,
-                TrainFieldnames.N_bc: self.nbc,
-                TrainFieldnames.Same_alt: self.same_alt,
-                TrainFieldnames.Error: self.error,
-                TrainFieldnames.D_id: self.D_id,
-                TrainFieldnames.Me: self.Me,
-                TrainFieldnames.Ke: self.ke,
-                TrainFieldnames.Method: MethodEnum.MIP,
-                TrainFieldnames.Config: self.config,
-                TrainFieldnames.Me_id: self.Me_id,
-                TrainFieldnames.Time: time,
-                TrainFieldnames.Fitness: best_fitness,
+                CollectiveFieldnames.M: self.m,
+                CollectiveFieldnames.N_tr: self.ntr,
+                CollectiveFieldnames.Atr_id: self.Atr_id,
+                CollectiveFieldnames.Ko: self.ko,
+                CollectiveFieldnames.Mo_id: self.Mo_id,
+                CollectiveFieldnames.Group_size: self.group_size,
+                CollectiveFieldnames.Gen: self.gen,
+                CollectiveFieldnames.Mi_id: self.Mi_id,
+                CollectiveFieldnames.N_bc: self.nbc,
+                CollectiveFieldnames.Same_alt: self.same_alt,
+                CollectiveFieldnames.D_id: self.D_id,
+                CollectiveFieldnames.Config: self.config,
+                CollectiveFieldnames.It: self.it,
+                CollectiveFieldnames.Time: time,
+                CollectiveFieldnames.Fitness: best_fitness,
             }
         )
 
+    def C_file(self, dir: DirectoryGroupDecision):
+        return dir.C(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.gen,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.config,
+            self.Mc_id,
+            self.it,
+        )
+
+    def R_dir(self, dir: DirectoryGroupDecision, dm_id: int):
+        return dir.R_dir(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.gen,
+            dm_id,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.config,
+            self.Mc_id,
+        )
+
+    def R_file(self, dir: DirectoryGroupDecision, dm_id: int):
+        return dir.R_file(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.gen,
+            dm_id,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.config,
+            self.Mc_id,
+            self.it,
+        )
+
+    def Mc_file(self, dir: DirectoryGroupDecision):
+        return dir.Mc(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.gen,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.config,
+            self.Mc_id,
+            self.it,
+        )
+
+    def D_file(self, dir: DirectoryGroupDecision, dm_id: Seed):
+        return super().D_file(dir, dm_id, self.it)
+
+    def done(self, dir: DirectoryGroupDecision, *args, **kwargs):
+        return self.Mc_file(dir).exists()
+
 
 @dataclass(frozen=True)
-class SATask(AbstractElicitationTask):
-    name = "SA"
-    method: MethodEnum = field(default=MethodEnum.SA, init=False)
-    config: SAConfig
+class PreferencePathTask(CollectiveTask, MiTask):
+    name = "Path"
 
-    def __call__(self, dir: Directory):
-        self.print_seed(dir.csv_files["seeds"].queue)
+    def task(self, dir: DirectoryGroupDecision):
+        with self.A_train_file(dir).open("r") as f:
+            A = NormalPerformanceTable(read_csv(f, header=None))
+
+        with self.D_file(dir).open("r") as f:
+            D = from_csv(f)
+
+        with self.Mc_file(dir).open("r") as f:
+            Mc = cast(SRMPModel, model_from_json(f.read()))
+
+        start_time = time.process_time()
+        path = compute_preference_path(Mc, D, A)
+        computation_time = time.process_time() - start_time
+
+        for t, preferences in enumerate(path):
+            with self.P_file(dir, t).open("w") as f:
+                to_csv(preferences, f)
+
+        dir.csv_files["path"].queue.put(
+            {
+                PathFieldnames.M: self.m,
+                PathFieldnames.N_tr: self.ntr,
+                PathFieldnames.Atr_id: self.Atr_id,
+                PathFieldnames.Ko: self.ko,
+                PathFieldnames.Mo_id: self.Mo_id,
+                PathFieldnames.Group_size: self.group_size,
+                PathFieldnames.Gen: self.gen,
+                PathFieldnames.Mi_id: self.Mi_id,
+                PathFieldnames.N_bc: self.nbc,
+                PathFieldnames.Same_alt: self.same_alt,
+                PathFieldnames.D_id: self.D_id,
+                PathFieldnames.Config: self.config,
+                PathFieldnames.It: self.it,
+                PathFieldnames.Dm_id: self.dm_id,
+                PathFieldnames.Time: computation_time,
+                PathFieldnames.Length: t,
+            }
+        )
+
+    def P_file(self, dir: DirectoryGroupDecision, t: int):
+        return dir.P(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.gen,
+            self.dm_id,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.config,
+            self.Mc_id,
+            self.it,
+            t,
+        )
+
+    def D_file(self, dir: DirectoryGroupDecision):
+        return super().D_file(dir, self.dm_id)
+
+    def done(self, dir: DirectoryGroupDecision, *args, **kwargs):
+        return self.P_file(dir, 0).exists()
+
+
+@dataclass(frozen=True)
+class AcceptTask(PreferencePathTask):
+    name = "Accept"
+    accept: AcceptHyperparameters
+    t: int = field(hash=False)
+
+    def task(self, dir: DirectoryGroupDecision):
+        with self.Mi_file(dir, self.dm_id).open("r") as f:
+            Mi = SRMPModel.from_json(f.read())
 
         with self.A_train_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
-        D = []
-        for dm_id in range(self.group_size):
-            with self.D_file(dir, dm_id).open("r") as f:
-                D.append(from_csv(f))
+        with self.P_file(dir).open("r") as f:
+            D = from_csv(f)
 
-        rng_init, rng_sa = self.rng.spawn(2)
-
-        best_model, best_fitness, time, it = learn_sa(
-            self.Me.value[0],
-            self.ke,
+        best_model, best_fitness, time = learn_mip(
+            GroupModelEnum.SRMP,
+            self.ko,
             A,
-            D[0],
-            self.config.alpha,
-            rng_init,
-            rng_sa,
-            accept=self.config.accept,
-            max_time=self.config.max_time,
-            max_it=self.config.max_it,
-            **(
-                {"amp": self.config.amp}
-                if isinstance(self.config, SRMPSAConfig)
-                else {}  # type: ignore
-            ),
+            [D],
+            rng(0),
+            0,
+            self.config.max_time,
+            reference_model=Mi,
+            gamma=self.config.gamma,
+            profiles_amp=self.accept.P,
+            weights_amp=self.accept.W,
+            lexicographic_order_distance=self.accept.L,
         )
 
-        with self.Me_file(dir).open("w") as f:
-            f.write(best_model.to_json())
+        return best_model is not None
 
-        dir.csv_files["train"].queue.put(
-            {
-                TrainFieldnames.M: self.m,
-                TrainFieldnames.N_tr: self.ntr,
-                TrainFieldnames.Atr_id: self.Atr_id,
-                TrainFieldnames.Mo: self.Mo,
-                TrainFieldnames.Ko: self.ko,
-                TrainFieldnames.Group_size: self.group_size,
-                TrainFieldnames.Mo_id: self.Mo_id,
-                TrainFieldnames.N_bc: self.nbc,
-                TrainFieldnames.Same_alt: self.same_alt,
-                TrainFieldnames.Error: self.error,
-                TrainFieldnames.D_id: self.D_id,
-                TrainFieldnames.Me: self.Me,
-                TrainFieldnames.Ke: self.ke,
-                TrainFieldnames.Method: MethodEnum.SA,
-                TrainFieldnames.Config: self.config,
-                TrainFieldnames.Me_id: self.Me_id,
-                TrainFieldnames.Time: time,
-                TrainFieldnames.Fitness: best_fitness,
-                TrainFieldnames.It: it,
-            }
-        )
+    def P_file(self, dir: DirectoryGroupDecision):
+        return super().P_file(dir, self.t)
 
-
-@dataclass(frozen=True)
-class TestTask(ATestTask, AbstractElicitationTask):
-    name = "Test"
-
-    def __post_init__(self, seeds: Seeds):
-        super().__post_init__(seeds)
-
-    def __call__(self, dir: Directory):
-        csv_fields = {
-            TestFieldnames.M: self.m,
-            TestFieldnames.N_tr: self.ntr,
-            TestFieldnames.Atr_id: self.Atr_id,
-            TestFieldnames.Mo: self.Mo,
-            TestFieldnames.Ko: self.ko,
-            TestFieldnames.Group_size: self.group_size,
-            TestFieldnames.Mo_id: self.Mo_id,
-            TestFieldnames.N_bc: self.nbc,
-            TestFieldnames.Same_alt: self.same_alt,
-            TestFieldnames.Error: self.error,
-            TestFieldnames.D_id: self.D_id,
-            TestFieldnames.Me: self.Me,
-            TestFieldnames.Ke: self.ke,
-            TestFieldnames.Method: self.method,
-            TestFieldnames.Config: self.config,
-            TestFieldnames.Me_id: self.Me_id,
-            TestFieldnames.N_te: self.nte,
-            TestFieldnames.Ate_id: self.Ate_id,
-        }
-
-        with self.A_test_file(dir).open("r") as f:
-            A_test = NormalPerformanceTable(read_csv(f, header=None))
-
-        with self.Mo_file(dir).open("r") as f:
-            Mo = model(*self.Mo.value, self.group_size).from_json(f.read())
-
-        with self.Me_file(dir).open("r") as f:
-            s = f.read()
-            try:
-                Me = model(*self.Me.value, self.group_size).from_json(s)
-            except ValueError:
-                Me = None
-
-        def put_in_queue(name, value):
-            dir.csv_files["test"].queue.put(
-                csv_fields | {TestFieldnames.Name: name, TestFieldnames.Value: value}
-            )
-
-        def write_consensus(model: GroupModel, prefix: str = ""):
-            for name, value in test_consensus(model, A_test, distance):
-                put_in_queue("_".join([prefix, str(distance), name]), value)
-
-        for distance in DistanceRankingEnum:
-            if isinstance(Mo, GroupModel):
-                write_consensus(Mo, "Mo")
-            if Me:
-                if isinstance(Me, GroupModel):
-                    write_consensus(Me, "Me")
-                for name, value in test_distance(Mo, Me, A_test, distance):
-                    put_in_queue(name, value)
-
-    def already_done(self, dir: Directory):
+    def done(self, *args, **kwargs):
         return False

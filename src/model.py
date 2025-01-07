@@ -10,12 +10,12 @@ from mcda.relations import PreferenceStructure
 from numpy.random import Generator
 
 from .aggregator import agg_float, agg_rank
-from .dataclass import RandomDataclass
+from .dataclass import RandomDataclass, RandomFrozenDataclass
 from .preference_structure.fitness import fitness_comparisons_ranking
 from .random import Random
 
 
-@dataclass(unsafe_hash=True)
+@dataclass
 class Model(RandomDataclass):
     @abstractmethod
     def rank(self, performance_table: PerformanceTable) -> Ranking: ...
@@ -28,6 +28,14 @@ class Model(RandomDataclass):
     @classmethod
     def from_reference(cls, other: Self, rng: Generator, *args, **kwargs):
         return deepcopy(other)
+
+
+@dataclass(frozen=True)
+class FrozenModel[M: Model](RandomFrozenDataclass):
+    @property
+    @abstractmethod
+    def model(self) -> M:
+        ...
 
 
 @dataclass

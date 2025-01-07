@@ -1,6 +1,6 @@
+from ..random import rng
 from .argument_parser import parse_args
 from .normal_performance_table import NormalPerformanceTable
-from ..random import rng
 
 # Parse arguments
 args = parse_args()

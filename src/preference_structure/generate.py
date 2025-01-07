@@ -53,13 +53,15 @@ def random_comparisons(
     model: Model | None,
     nb: int | None = None,
     rng: Generator | None = None,
+    remove_dominance: bool = False,
 ):
-    dom_struct = dominance_structure(alternatives)
+    if remove_dominance:
+        dom_struct = dominance_structure(alternatives)
     if model:
         pref_struct = PreferenceStructure()
         ranking = model.rank(alternatives)
         for r in preference_relation_generator(ranking, rng=rng):
-            if r not in dom_struct:
+            if (not remove_dominance) or (r not in dom_struct):
                 pref_struct._relations.append(r)
             if len(pref_struct) == nb:
                 break

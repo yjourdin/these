@@ -1,7 +1,7 @@
 import csv
 import io
 from dataclasses import dataclass
-from time import time
+import time
 
 from mcda.internal.core.interfaces import Learner
 from numpy.random import Generator
@@ -29,8 +29,8 @@ class RandomWalk[S](Learner[S], Dataclass):
         # Initialise
         sol = initial_sol
         obj = self.objective(sol)
-        start_time = time()
-        self.time = time() - start_time
+        start_time = time.process_time()
+        self.time = time.process_time() - start_time
         self.it = 0
         self.non_improving_it = 0
 
@@ -53,7 +53,7 @@ class RandomWalk[S](Learner[S], Dataclass):
             (self.max_it is None) or (self.it < self.max_it)
         ):
             # New iteration
-            self.time = time() - start_time
+            self.time = time.process_time() - start_time
             self.it += 1
             self.non_improving_it += 1
 

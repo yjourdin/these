@@ -50,8 +50,3 @@ class ConfigFieldnames(Fieldnames):
     Id = "Id"
     Method = "Method"
     Config = "Config"
-
-
-class SeedFieldnames(Fieldnames):
-    Task = "Task"
-    Seed = "Seed"

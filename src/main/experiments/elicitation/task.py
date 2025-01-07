@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from pandas import read_csv
 
@@ -17,17 +17,12 @@ from ....test.test import DistanceRankingEnum
 from ...task import SeedTask
 from .config import Config, MIPConfig, SAConfig, SRMPSAConfig
 from .directory import DirectoryElicitation
-from .fieldnames import SeedFieldnames, TestFieldnames, TrainFieldnames
+from .fieldnames import TestFieldnames, TrainFieldnames
 
 
 @dataclass(frozen=True)
 class AbstractMTask(SeedTask):
     m: int
-
-    def print_seed(self, dir: DirectoryElicitation, seed: Seed):
-        dir.csv_files["seeds"].queue.put(
-            {SeedFieldnames.Task: self, SeedFieldnames.Seed: self.seed(seed)}
-        )
 
 
 @dataclass(frozen=True)
@@ -36,15 +31,11 @@ class ATrainTask(AbstractMTask):
     ntr: int
     Atr_id: int = field(hash=False)
 
-    def __call__(self, dir: DirectoryElicitation, seed: Seed):
-        self.print_seed(dir, seed)
-
+    def task(self, dir: DirectoryElicitation, seed: Seed):
         A = NormalPerformanceTable.random(self.ntr, self.m, self.rng(seed))
 
         with self.A_train_file(dir).open("w") as f:
             A.data.to_csv(f, header=False, index=False)
-
-        return True
 
     def A_train_file(self, dir: DirectoryElicitation):
         return dir.A_train(self.m, self.ntr, self.Atr_id)
@@ -59,15 +50,11 @@ class ATestTask(AbstractMTask):
     nte: int
     Ate_id: int = field(hash=False)
 
-    def __call__(self, dir: DirectoryElicitation, seed: Seed):
-        self.print_seed(dir, seed)
-
+    def task(self, dir: DirectoryElicitation, seed: Seed):
         A = NormalPerformanceTable.random(self.nte, self.m, self.rng(seed))
 
         with self.A_test_file(dir).open("w") as f:
             A.data.to_csv(f, header=False, index=False)
-
-        return True
 
     def A_test_file(self, dir: DirectoryElicitation):
         return dir.A_test(self.m, self.nte, self.Ate_id)
@@ -84,9 +71,7 @@ class MoTask(AbstractMTask):
     group_size: int
     Mo_id: int = field(hash=False)
 
-    def __call__(self, dir: DirectoryElicitation, seed: Seed):
-        self.print_seed(dir, seed)
-
+    def task(self, dir: DirectoryElicitation, seed: Seed):
         Mo = model(*self.Mo.value, self.group_size).random(
             nb_profiles=self.ko,
             nb_crit=self.m,
@@ -96,8 +81,6 @@ class MoTask(AbstractMTask):
 
         with self.Mo_file(dir).open("w") as f:
             f.write(Mo.to_json())
-        
-        return True
 
     def Mo_file(self, dir: DirectoryElicitation):
         return dir.Mo(self.m, self.Mo, self.ko, self.group_size, self.Mo_id)
@@ -135,9 +118,7 @@ class DTask(AbstractDTask):
     name = "D"
     dm_id: int
 
-    def __call__(self, dir: DirectoryElicitation, seed: Seed):
-        self.print_seed(dir, seed)
-
+    def task(self, dir: DirectoryElicitation, seed: Seed):
         with self.Mo_file(dir).open("r") as f:
             Mo = model(*self.Mo.value, self.group_size).from_json(f.read())
 
@@ -145,6 +126,8 @@ class DTask(AbstractDTask):
             A = NormalPerformanceTable(read_csv(f, header=None))
 
         rng_shuffle, rng_error = self.rng(seed).spawn(2)
+        if self.same_alt:
+            rng_shuffle = replace(self, dm_id=0).rng(seed)
 
         D = random_comparisons(
             A,
@@ -158,8 +141,6 @@ class DTask(AbstractDTask):
 
         with self.D_file(dir, self.dm_id).open("w") as f:
             to_csv(D, f)
-        
-        return True
 
     def done(self, dir: DirectoryElicitation, *args, **kwargs):
         return self.D_file(dir, self.dm_id).exists()
@@ -203,9 +184,7 @@ class MIPTask(AbstractElicitationTask):
     method: MethodEnum = field(default=MethodEnum.MIP, init=False)
     config: MIPConfig
 
-    def __call__(self, dir: DirectoryElicitation, seed: Seed):
-        self.print_seed(dir, seed)
-
+    def task(self, dir: DirectoryElicitation, seed: Seed):
         with self.A_train_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
@@ -214,13 +193,16 @@ class MIPTask(AbstractElicitationTask):
             with self.D_file(dir, dm_id).open("r") as f:
                 D.append(from_csv(f))
 
+        rng_lex, rng_mip = self.rng(seed).spawn(2)
+
         best_model, best_fitness, time = learn_mip(
             self.Me,
             self.ke,
             A,
             D,
+            rng_lex,
+            random_seed(rng_mip),
             self.config.max_time,
-            seed=random_seed(self.rng(seed), 2_000_000_000),
             gamma=self.config.gamma,
         )
 
@@ -249,8 +231,6 @@ class MIPTask(AbstractElicitationTask):
                 TrainFieldnames.Fitness: best_fitness,
             }
         )
-        
-        return True
 
 
 @dataclass(frozen=True)
@@ -259,9 +239,7 @@ class SATask(AbstractElicitationTask):
     method: MethodEnum = field(default=MethodEnum.SA, init=False)
     config: SAConfig
 
-    def __call__(self, dir: DirectoryElicitation, seed: Seed):
-        self.print_seed(dir, seed)
-
+    def task(self, dir: DirectoryElicitation, seed: Seed):
         with self.A_train_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
@@ -316,15 +294,13 @@ class SATask(AbstractElicitationTask):
                 TrainFieldnames.It: it,
             }
         )
-        
-        return True
 
 
 @dataclass(frozen=True)
 class TestTask(ATestTask, AbstractElicitationTask):
     name = "Test"
 
-    def __call__(self, dir: DirectoryElicitation):
+    def task(self, dir: DirectoryElicitation):
         csv_fields = {
             TestFieldnames.M: self.m,
             TestFieldnames.N_tr: self.ntr,
@@ -376,8 +352,6 @@ class TestTask(ATestTask, AbstractElicitationTask):
                     write_consensus(Me, "Me")
                 for name, value in test_distance(Mo, Me, A_test, distance):
                     put_in_queue(name, value)
-        
-        return True
 
     def done(self, *args, **kwargs):
         return False

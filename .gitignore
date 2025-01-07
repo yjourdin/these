@@ -178,3 +178,4 @@ logs
 *.bin
 *.stdout
 nohup.out
+ruff.toml

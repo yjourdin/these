@@ -2,6 +2,7 @@ import csv
 from pathlib import Path
 
 from .csv_file import CSVFile
+from .fieldnames import SeedFieldnames, TimeFieldnames
 
 RESULTS_DIR = "results"
 
@@ -9,7 +10,10 @@ RESULTS_DIR = "results"
 class Directory:
     def __init__(self, dir: str, name: str):
         self.dirs: dict[str, Path] = {"root": Path(dir, name)}
-        self.csv_files: dict[str, CSVFile] = {}
+        self.csv_files: dict[str, CSVFile] = {
+            "seeds": CSVFile(self.dirs["root"] / "seeds.csv", SeedFieldnames),
+            "times": CSVFile(self.dirs["root"] / "times.csv", TimeFieldnames),
+        }
 
         self.args = self.dirs["root"] / "args.json"
         self.log = self.dirs["root"] / "log.log"

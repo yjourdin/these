@@ -148,12 +148,12 @@ class NeighborImportanceRelation(Neighbor[RMPModel]):
         importance_relation = neighbor.importance_relation
         keys = list(importance_relation)
         min_score = max_score = 0
-        
+
         while min_score >= max_score:
             coalition = keys[rng.choice(len(importance_relation))]
             min_score = importance_relation.min(coalition)
             max_score = importance_relation.max(coalition)
-        
+
         if self.local:
             score = importance_relation[coalition]
             available_score = []
@@ -163,7 +163,7 @@ class NeighborImportanceRelation(Neighbor[RMPModel]):
                 available_score.append(score + 1)
         else:
             available_score = range(min_score, max_score + 1)
-        
+
         score = rng.choice(available_score)
         neighbor.importance_relation[coalition] = score
 

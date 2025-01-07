@@ -123,7 +123,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
         :return:
         """
         comp_df = self.performance_table.data >= self.profile.data
-        
+
         scores = np.array(
             [
                 self.importance_relation[frozenset(np.nonzero(a)[0])]
