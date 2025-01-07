@@ -17,7 +17,7 @@ def midpoints(performance_table: PerformanceTable) -> PerformanceTable:
     df = performance_table.data.transform(np.sort)
 
     # compute midpoints
-    df = df.rolling(2).mean().reset_index(drop=True).drop(df.index[0])
+    df = df.rolling(2).mean().reset_index(drop=True).drop(0)
 
     # add 0's and 1's at the beginning and the end
     df.loc[0, :] = [
