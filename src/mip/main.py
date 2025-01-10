@@ -1,20 +1,18 @@
-from collections import defaultdict
 from itertools import permutations, product
 from typing import NamedTuple, cast
 
 import numpy as np
-from mcda.relations import PreferenceStructure
+from mcda.relations import I, P, PreferenceStructure
 from numpy.random import Generator
 from pulp import value
-
-from src.preference_structure.utils import divide_preferences
-from src.rmp.permutation import all_max_adjacent_distance
 
 from ..constants import DEFAULT_MAX_TIME
 from ..model import Model
 from ..models import GroupModelEnum, ModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
+from ..preference_structure.utils import complementary_preference, divide_preferences
 from ..random import Seed
+from ..rmp.permutation import all_max_adjacent_distance
 from ..srmp.model import SRMPModel, SRMPParamEnum
 from .formulation.srmp import MIPSRMP
 from .formulation.srmp_accept import MIPSRMPAccept
@@ -40,7 +38,7 @@ def learn_mip(
     max_time: int = DEFAULT_MAX_TIME,
     collective: bool = False,
     preferences_changed: list[int] | None = None,
-    comparisons_refused: list[list[PreferenceStructure]] | None = None,
+    comparisons_refused: list[PreferenceStructure] | None = None,
     reference_model: SRMPModel | None = None,
     profiles_amp: float = 1,
     weights_amp: float = 1,
@@ -65,11 +63,11 @@ def learn_mip(
     time = 0
     time_left = max_time
 
-    preference_relations_list: list[PreferenceStructure] = []
-    indifference_relations_list: list[PreferenceStructure] = []
+    preference_relations_list: list[list[P]] = []
+    indifference_relations_list: list[list[I]] = []
     for dm in DMS:
         preference_relations_dm, indifference_relations_dm = divide_preferences(
-            comparisons[dm]
+            comparisons[dm]._relations
         )
         preference_relations_list.append(preference_relations_dm)
         indifference_relations_list.append(indifference_relations_dm)
@@ -141,29 +139,21 @@ def learn_mip(
                         )
                 elif collective:
                     assert comparisons_refused is not None
-                    comparisons_refused_list = []
-                    count_refused_dict = defaultdict(int)
-                    for comp_dm in comparisons_refused:
-                        count_refused_dict_dm = defaultdict(int)
-                        for comp in comp_dm:
-                            if comp not in comparisons_refused_list:
-                                comparisons_refused_list.append(comp)
-                            count_refused_dict_dm[
-                                comparisons_refused_list.index(comp)
-                            ] += 1
-                        for comp, count in count_refused_dict_dm.items():
-                            count_refused_dict[comp] = max(
-                                count_refused_dict[comp], count
+
+                    preference_to_accept_list: list[list[P]] = []
+                    indifference_to_accept_list: list[list[I]] = []
+                    for comp in comparisons_refused:
+                        comp_complementary: list[P | I] = []
+                        for r in comp:
+                            comp_complementary.extend(
+                                complementary_preference(cast(P | I, r))
                             )
-                    preference_refused_list = []
-                    indifference_refused_list = []
-                    for comp in comparisons_refused_list:
-                        preference_refused, indifference_refused = divide_preferences(
-                            comp
+
+                        preference_to_accept, indifference_to_accept = (
+                            divide_preferences(comp_complementary)
                         )
-                        preference_refused_list.append(preference_refused)
-                        indifference_refused_list.append(indifference_refused)
-                    count_refused_list = list(count_refused_dict.values())
+                        preference_to_accept_list.append(preference_to_accept)
+                        indifference_to_accept_list.append(indifference_to_accept)
 
                     mip = MIPSRMPCollective(
                         alternatives,
@@ -171,9 +161,8 @@ def learn_mip(
                         indifference_relations_list,
                         lexicographic_order,
                         preferences_changed,
-                        preference_refused_list,
-                        indifference_refused_list,
-                        count_refused_list,
+                        preference_to_accept_list,
+                        indifference_to_accept_list,
                         best_objective=best_objective,
                         time_limit=time_left,
                         seed=seed_mip,

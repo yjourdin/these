@@ -1,7 +1,6 @@
 import numpy as np
 
-from src.julia.function import generate_weak_order_ext
-
+from ..julia.function import generate_weak_order_ext
 from ..random import seed
 from ..weak_order import WeakOrder
 

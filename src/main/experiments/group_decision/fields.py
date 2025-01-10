@@ -1,9 +1,61 @@
 from dataclasses import dataclass, field
+from itertools import count
 
-from ....field import Field, group_field, group_group_field
+from ....dataclass import FrozenDataclass
+from ....field import Field, group_field
 from ....field import field as custom_field
 from ..elicitation.config import MIPConfig, create_config
-from .hyperparameters import AcceptHyperparameters, GenHyperparameters
+
+
+@dataclass(frozen=True)
+class SRMPParametersDeviation(FrozenDataclass):
+    P: float
+    W: float
+    L: int
+
+
+@custom_field("gen")
+@dataclass(frozen=True)
+class GenField(Field):
+    gen: SRMPParametersDeviation
+
+    @staticmethod
+    def field_decode(o):
+        return SRMPParametersDeviation.from_dict(o)
+
+
+@custom_field("accept")
+@dataclass(frozen=True)
+class AcceptField(Field):
+    accept: SRMPParametersDeviation
+
+    @staticmethod
+    def field_decode(o):
+        return SRMPParametersDeviation.from_dict(o)
+
+
+@dataclass(frozen=True)
+class GroupParameters(GenField, AcceptField, FrozenDataclass):
+    id: int = field(default_factory=count().__next__, init=False, hash=False)
+
+    def __str__(self) -> str:
+        return str(self.id)
+
+
+@custom_field("group")
+@dataclass
+class GroupParametersField(Field):
+    group: GroupParameters
+
+    @staticmethod
+    def field_decode(o):
+        return GroupParameters(**GroupParameters.decode(o))
+
+
+@group_field(fieldname="group", fieldclass=GroupParametersField)
+@dataclass
+class GroupGroupParametersField(Field):
+    group: list[GroupParameters] = field(default_factory=list)
 
 
 @custom_field("config")
@@ -20,35 +72,3 @@ class MIPConfigField(Field):
 @dataclass
 class GroupMIPConfigField(Field):
     config: list[MIPConfig] = field(default_factory=list)
-
-
-@custom_field("gen")
-@dataclass
-class GenHyperparameterField(Field):
-    gen: GenHyperparameters
-
-    @staticmethod
-    def field_decode(o):
-        return GenHyperparameters.from_dict(o)
-
-
-@group_field(fieldname="gen", fieldclass=GenHyperparameterField)
-@dataclass
-class GroupGenHyperparameterField(Field):
-    gen: list[GenHyperparameters] = field(default_factory=list)
-
-
-@custom_field("accept")
-@dataclass
-class AcceptHyperparameterField(Field):
-    accept: AcceptHyperparameters
-
-    @staticmethod
-    def field_decode(o):
-        return AcceptHyperparameters.from_dict(o)
-
-
-@group_group_field(fieldname="accept", fieldclass=AcceptHyperparameterField)
-@dataclass
-class GroupAcceptHyperparameterField(Field):
-    accept: list[list[AcceptHyperparameters]] = field(default_factory=list)

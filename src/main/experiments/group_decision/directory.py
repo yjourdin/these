@@ -1,10 +1,17 @@
-from ....utils import dirname, filename_csv, filename_json
+from ....utils import filename_csv, filename_json
 from ...csv_file import CSVFile
 from ...directory import Directory
 from ..elicitation.config import MIPConfig
 from ..elicitation.fieldnames import ConfigFieldnames
-from .fieldnames import CollectiveFieldnames, HyperparametersFieldnames, PathFieldnames
-from .hyperparameters import GenHyperparameters
+from .fieldnames import (
+    AcceptFieldnames,
+    CleanFieldnames,
+    CollectiveFieldnames,
+    CompromiseFieldnames,
+    GroupParametersFieldnames,
+    PathFieldnames,
+)
+from .fields import GroupParameters
 
 
 class DirectoryGroupDecision(Directory):
@@ -17,18 +24,24 @@ class DirectoryGroupDecision(Directory):
             D=self.dirs["root"] / "D",
             Mc=self.dirs["root"] / "Mc",
             C=self.dirs["root"] / "C",
-            R=self.dirs["root"] / "R",
+            RP=self.dirs["root"] / "RP",
+            RC=self.dirs["root"] / "RC",
             P=self.dirs["root"] / "P",
         )
         self.csv_files.update(
+            accept=CSVFile(self.dirs["root"] / "accept_results.csv", AcceptFieldnames),
+            clean=CSVFile(self.dirs["root"] / "clean_results.csv", CleanFieldnames),
             collective=CSVFile(
                 self.dirs["root"] / "collective_results.csv", CollectiveFieldnames
             ),
-            path=CSVFile(self.dirs["root"] / "path_results.csv", PathFieldnames),
-            configs=CSVFile(self.dirs["root"] / "configs.csv", ConfigFieldnames),
-            hyperparameters=CSVFile(
-                self.dirs["root"] / "hyperparameters.csv", HyperparametersFieldnames
+            compromise=CSVFile(
+                self.dirs["root"] / "compromise_results.csv", CompromiseFieldnames
             ),
+            configs=CSVFile(self.dirs["root"] / "configs.csv", ConfigFieldnames),
+            group_parameters=CSVFile(
+                self.dirs["root"] / "group_parameters.csv", GroupParametersFieldnames
+            ),
+            path=CSVFile(self.dirs["root"] / "path_results.csv", PathFieldnames),
         )
 
     def A_train(self, m: int, n: int, id: int):
@@ -43,7 +56,7 @@ class DirectoryGroupDecision(Directory):
         k: int,
         Mo_id: int,
         group_size: int,
-        gen: GenHyperparameters,
+        group: GroupParameters,
         dm_id: int,
         id: int,
     ):
@@ -57,7 +70,7 @@ class DirectoryGroupDecision(Directory):
         k: int,
         Mo_id: int,
         group_size: int,
-        gen: GenHyperparameters,
+        group: GroupParameters,
         dm_id: int,
         Mi_id: int,
         n: int,
@@ -75,13 +88,14 @@ class DirectoryGroupDecision(Directory):
         k: int,
         Mo_id: int,
         group_size: int,
-        gen: GenHyperparameters,
+        group: GroupParameters,
         Mi_id: int,
         n: int,
         same_alt: bool,
         D_id: int,
         config: MIPConfig,
         id: int,
+        P_id: int,
         it: int,
     ):
         return self.dirs["Mc"] / filename_json(locals())
@@ -94,18 +108,19 @@ class DirectoryGroupDecision(Directory):
         k: int,
         Mo_id: int,
         group_size: int,
-        gen: GenHyperparameters,
+        group: GroupParameters,
         Mi_id: int,
         n: int,
         same_alt: bool,
         D_id: int,
         config: MIPConfig,
         id: int,
+        P_id: int,
         it: int,
     ):
         return self.dirs["C"] / filename_csv(locals())
 
-    def R_dir(
+    def RP(
         self,
         m: int,
         ntr: int,
@@ -113,7 +128,7 @@ class DirectoryGroupDecision(Directory):
         k: int,
         Mo_id: int,
         group_size: int,
-        gen: GenHyperparameters,
+        group: GroupParameters,
         dm_id: int,
         Mi_id: int,
         n: int,
@@ -121,31 +136,31 @@ class DirectoryGroupDecision(Directory):
         D_id: int,
         config: MIPConfig,
         id: int,
-    ):
-        return self.dirs["R"] / dirname(locals())
-
-    def R_file(
-        self,
-        m: int,
-        ntr: int,
-        Atr_id: int,
-        k: int,
-        Mo_id: int,
-        group_size: int,
-        gen: GenHyperparameters,
-        dm_id: int,
-        Mi_id: int,
-        n: int,
-        same_alt: bool,
-        D_id: int,
-        config: MIPConfig,
-        id: int,
+        P_id: int,
         it: int,
     ):
-        return (
-            self.R_dir(**{k: v for k, v in locals().items() if k not in ("self", "it")})
-            / f"{it}.csv"
-        )
+        return self.dirs["RP"] / filename_csv(locals())
+
+    def RC(
+        self,
+        m: int,
+        ntr: int,
+        Atr_id: int,
+        k: int,
+        Mo_id: int,
+        group_size: int,
+        group: GroupParameters,
+        dm_id: int,
+        Mi_id: int,
+        n: int,
+        same_alt: bool,
+        D_id: int,
+        config: MIPConfig,
+        id: int,
+        P_id: int,
+        it: int,
+    ):
+        return self.dirs["RC"] / filename_csv(locals())
 
     def P(
         self,
@@ -155,7 +170,7 @@ class DirectoryGroupDecision(Directory):
         k: int,
         Mo_id: int,
         group_size: int,
-        gen: GenHyperparameters,
+        group: GroupParameters,
         dm_id: int,
         Mi_id: int,
         n: int,
@@ -163,6 +178,7 @@ class DirectoryGroupDecision(Directory):
         D_id: int,
         config: MIPConfig,
         Mc_id: int,
+        id: int,
         it: int,
         t: int,
     ):

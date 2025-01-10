@@ -1,7 +1,6 @@
-from src.utils import add_str_to_list
-
 from ..model import Group, GroupModel, Model
 from ..performance_table.normal_performance_table import NormalPerformanceTable
+from ..utils import add_str_to_list
 from .test import (
     DistanceRankingEnum,
     consensus_group_model,

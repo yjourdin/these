@@ -7,12 +7,13 @@ from typing import cast
 import numpy as np
 from mcda import PerformanceTable
 from more_itertools import powerset_of_sets
+from numpy.random import Generator
 
 from ..dataclass import Dataclass
 from ..rmp.permutation import adjacent_swap
 from ..srmp.model import FrozenSRMPModel
 from ..utils import midpoints
-
+from ..random import rng
 
 class Neighborhood[S](ABC):
     @abstractmethod
@@ -22,13 +23,16 @@ class Neighborhood[S](ABC):
 @dataclass
 class NeighborhoodCombined[S](Neighborhood[S], Dataclass):
     neighborhoods: list[Neighborhood[S]] = field(default_factory=list)
+    rng: Generator = rng()
 
-    def __call__(self, sol):
-        return list(
+    def __call__(self, sol: S):
+        neighbors = list(
             chain.from_iterable(
                 neighborhood(sol) for neighborhood in self.neighborhoods
             )
         )
+        self.rng.shuffle(neighbors) # type: ignore
+        return neighbors
 
 
 @dataclass
@@ -63,14 +67,12 @@ class NeighborhoodProfile(Neighborhood[FrozenSRMPModel], Dataclass):
                     )
 
                 for ind in indices:
-                    if 0 <= ind < len(crit):
-                        new_value = crit.iloc[ind]
-                        if bounds[0] <= new_value <= bounds[1]:
-                            neighbor = deepcopy(sol_mutable)
-                            neighbor.profiles.data.iloc[profile_ind, crit_ind] = (
-                                new_value
-                            )
-                            result.append(neighbor.frozen)
+                    if (0 <= ind < len(crit)) and (
+                        bounds[0] <= (new_value := crit.iloc[ind]) <= bounds[1]
+                    ):
+                        neighbor = deepcopy(sol_mutable)
+                        neighbor.profiles.data.iloc[profile_ind, crit_ind] = new_value
+                        result.append(neighbor.frozen)
 
         return result
 
@@ -96,8 +98,7 @@ class NeighborhoodWeight(Neighborhood[FrozenSRMPModel], Dataclass):
                 with_crit = []
                 without_crit = []
                 for set in self.powersets:
-                    weights_sum = sol_mutable.weights[list(set)].sum()
-                    if 0 < weights_sum < 1:
+                    if weights_sum := sol_mutable.weights[list(set)].sum():
                         if crit in set:
                             with_crit.append(weights_sum)
                         else:

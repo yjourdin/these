@@ -25,8 +25,7 @@ class Dataclass(Field):
         dct = cls.json_to_dict(s)
         if not dct:
             raise ValueError("Empty json")
-        classname = dct.pop("__class", cls.__name__)
-        if classname != cls.__name__:
+        if (classname := dct.pop("__class", cls.__name__)) != cls.__name__:
             raise ValueError(f"Wrong class name : {classname}")
         cls.decode(dct)
         return cls.from_dict(dct)
@@ -71,8 +70,7 @@ class FrozenDataclass(Field):
     @classmethod
     def from_json(cls, s: str):
         dct = cls.json_to_dict(s)
-        classname = dct.pop("__class", cls.__name__)
-        if classname != cls.__name__:
+        if (classname := dct.pop("__class", cls.__name__)) != cls.__name__:
             raise ValueError(f"Wrong class name : {classname}")
         cls.decode(dct)
         return cls.from_dict(dct)

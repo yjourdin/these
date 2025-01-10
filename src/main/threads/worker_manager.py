@@ -73,8 +73,7 @@ def worker_manager(
     # Stop waiting threads
     try:
         while True:
-            obj = task_queue.get(timeout=1)
-            if obj != SENTINEL:
+            if (obj := task_queue.get(timeout=1)) != SENTINEL:
                 task, args, thread_connection = obj
                 thread_connection.send(SENTINEL)
     except Empty:

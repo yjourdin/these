@@ -1,6 +1,6 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/25.0.1 Chrome/128.0.6613.186 Electron/32.2.6 Safari/537.36" version="25.0.1" pages="2">
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.0.4 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="26.0.4" pages="2">
   <diagram name="Page-1" id="FjsUFNsxTpDgcGU2gkwm">
-    <mxGraphModel dx="1722" dy="685" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
+    <mxGraphModel dx="2583" dy="1261" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -8,13 +8,13 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="qaabH04pQQgadvRFd-1W-6" value="Start" style="html=1;dashed=0;whiteSpace=wrap;shape=mxgraph.dfd.start" parent="1" vertex="1">
-          <mxGeometry x="200" y="200" width="80" height="40" as="geometry" />
+          <mxGeometry x="200" y="80" width="80" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="qaabH04pQQgadvRFd-1W-12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="qaabH04pQQgadvRFd-1W-8" target="qaabH04pQQgadvRFd-1W-11" edge="1">
+        <mxCell id="r5jwLnlyVtWZVsR178C1-6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="qaabH04pQQgadvRFd-1W-8" target="r5jwLnlyVtWZVsR178C1-5">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="qaabH04pQQgadvRFd-1W-8" value="Ask each DM their preferences&amp;nbsp;&lt;span style=&quot;background-color: initial;&quot;&gt;\(\mathcal{L}_i\) on alternatives \(A\)&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="180" y="280" width="120" height="80" as="geometry" />
+          <mxGeometry x="180" y="160" width="120" height="80" as="geometry" />
         </mxCell>
         <mxCell id="RybsW2xUJ8Wm3ZWdojGP-2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="qaabH04pQQgadvRFd-1W-11" target="RybsW2xUJ8Wm3ZWdojGP-1" edge="1">
           <mxGeometry relative="1" as="geometry" />
@@ -31,7 +31,7 @@
         <mxCell id="qaabH04pQQgadvRFd-1W-28" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="qaabH04pQQgadvRFd-1W-25" target="qaabH04pQQgadvRFd-1W-27" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="qaabH04pQQgadvRFd-1W-25" value="\(t_i \gets t_i + 1\)" style="whiteSpace=wrap;html=1;rounded=0;" parent="1" vertex="1">
+        <mxCell id="qaabH04pQQgadvRFd-1W-25" value="\(t \gets t + 1\)" style="whiteSpace=wrap;html=1;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="180" y="1160" width="120" height="80" as="geometry" />
         </mxCell>
         <mxCell id="qaabH04pQQgadvRFd-1W-45" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="qaabH04pQQgadvRFd-1W-27" target="qaabH04pQQgadvRFd-1W-41" edge="1">
@@ -39,17 +39,15 @@
             <mxPoint x="140" y="1220" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="qaabH04pQQgadvRFd-1W-54" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="qaabH04pQQgadvRFd-1W-27" target="qaabH04pQQgadvRFd-1W-11" edge="1">
+        <mxCell id="r5jwLnlyVtWZVsR178C1-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="qaabH04pQQgadvRFd-1W-27" target="r5jwLnlyVtWZVsR178C1-8">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="-120" y="680" as="targetPoint" />
             <Array as="points">
               <mxPoint x="240" y="1440" />
               <mxPoint y="1440" />
-              <mxPoint y="440" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="qaabH04pQQgadvRFd-1W-27" value="If &lt;span style=&quot;background-color: initial;&quot;&gt;\(\mathcal{L}_i^{t_i}\)&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;is accepted ?&lt;/span&gt;&lt;/div&gt;" style="rhombus;whiteSpace=wrap;html=1;rounded=0;" parent="1" vertex="1">
+        <mxCell id="qaabH04pQQgadvRFd-1W-27" value="If &lt;span style=&quot;background-color: initial;&quot;&gt;\(\mathcal{L}_i^t\)&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;are all accepted ?&lt;/span&gt;&lt;/div&gt;" style="rhombus;whiteSpace=wrap;html=1;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="180" y="1280" width="120" height="120" as="geometry" />
         </mxCell>
         <mxCell id="qaabH04pQQgadvRFd-1W-40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="qaabH04pQQgadvRFd-1W-29" target="FKqDToA3oZGnm_qYhe_x-12" edge="1">
@@ -70,7 +68,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="qaabH04pQQgadvRFd-1W-41" value="\(\mathcal{L}_i \gets \mathcal{L}_i^{t_i}\)" style="whiteSpace=wrap;html=1;rounded=0;" parent="1" vertex="1">
+        <mxCell id="qaabH04pQQgadvRFd-1W-41" value="\(\mathcal{L}_i \gets \mathcal{L}_i^t\)" style="whiteSpace=wrap;html=1;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="20" y="1100" width="120" height="80" as="geometry" />
         </mxCell>
         <mxCell id="qaabH04pQQgadvRFd-1W-49" value="End" style="html=1;dashed=0;whiteSpace=wrap;shape=mxgraph.dfd.start" parent="1" vertex="1">
@@ -91,7 +89,7 @@
         <mxCell id="FKqDToA3oZGnm_qYhe_x-13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="FKqDToA3oZGnm_qYhe_x-12" target="qaabH04pQQgadvRFd-1W-25" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="FKqDToA3oZGnm_qYhe_x-12" value="Select a DM&lt;div&gt;where \(\mathcal{L}_i \ne \mathcal{L}_c\)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="FKqDToA3oZGnm_qYhe_x-12" value="Select DMs&lt;div&gt;where \(\mathcal{L}_i \ne \mathcal{L}_c\)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="180" y="1040" width="120" height="80" as="geometry" />
         </mxCell>
         <mxCell id="RybsW2xUJ8Wm3ZWdojGP-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="RybsW2xUJ8Wm3ZWdojGP-1" target="qaabH04pQQgadvRFd-1W-13" edge="1">
@@ -103,8 +101,24 @@
         <mxCell id="RybsW2xUJ8Wm3ZWdojGP-6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="RybsW2xUJ8Wm3ZWdojGP-4" target="qaabH04pQQgadvRFd-1W-29" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="RybsW2xUJ8Wm3ZWdojGP-4" value="\(t_i \gets 0 \quad \forall i\)" style="whiteSpace=wrap;html=1;rounded=0;" parent="1" vertex="1">
+        <mxCell id="RybsW2xUJ8Wm3ZWdojGP-4" value="\(t \gets 0\)" style="whiteSpace=wrap;html=1;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="180" y="760" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="r5jwLnlyVtWZVsR178C1-7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="r5jwLnlyVtWZVsR178C1-5" target="qaabH04pQQgadvRFd-1W-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r5jwLnlyVtWZVsR178C1-5" value="\(R \gets \{\}\)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="180" y="280" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="r5jwLnlyVtWZVsR178C1-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="r5jwLnlyVtWZVsR178C1-8" target="qaabH04pQQgadvRFd-1W-11">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="r5jwLnlyVtWZVsR178C1-8" value="Add \(\mathcal{L}_i^t\) to \(R\)" style="whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-60" y="840" width="120" height="80" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

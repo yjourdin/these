@@ -1,19 +1,31 @@
+from collections.abc import Container, Sequence
+
 from mcda import PerformanceTable
 from mcda.relations import PreferenceStructure
+from numpy.random import Generator
 
+from ..constants import DEFAULT_MAX_TIME
+from ..model import FrozenModel
 from ..preference_structure.fitness import fitness_comparisons_ranking
+from ..random import rng
 from ..srmp.model import FrozenSRMPModel, SRMPModel
-from .a_star import A_star
+from .gbfs import GBFS
 from .neighborhood import (
     NeighborhoodCombined,
     NeighborhoodLexOrder,
     NeighborhoodProfile,
     NeighborhoodWeight,
 )
-from .preference_path import preference_path, remove_reverted_changes
+from .preference_path import preference_path, remove_refused, remove_reverted_changes
 
 
-def compute_preference_path(Mc: SRMPModel, D: PreferenceStructure, A: PerformanceTable):
+def compute_model_path(
+    Mc: SRMPModel,
+    D: PreferenceStructure,
+    A: PerformanceTable,
+    rng: Generator = rng(),
+    max_time: int = DEFAULT_MAX_TIME,
+):
     A = A.subtable(D.elements)
 
     neighborhood = NeighborhoodCombined(
@@ -21,22 +33,28 @@ def compute_preference_path(Mc: SRMPModel, D: PreferenceStructure, A: Performanc
             NeighborhoodProfile(A),
             NeighborhoodWeight(len(A.criteria)),
             NeighborhoodLexOrder(),
-        ]
+        ],
+        rng,
     )
 
     def heuristic(model: FrozenSRMPModel):
         return 1 - fitness_comparisons_ranking(D, model.model.rank(A))
 
-    model_paths = A_star(neighborhood)(Mc.frozen, 0, heuristic)
-    preference_paths = [preference_path(path, A, D) for path in model_paths]
+    gbfs = GBFS(neighborhood, heuristic, max_time)
+    path = gbfs(Mc.frozen)
 
-    max_len = 0
-    remove_reverted_changes(preference_paths[0])
-    max_path = preference_paths[0]
-    for path in preference_paths[1:]:
-        if len(path) > max_len:
-            remove_reverted_changes(path)
-            if len(path) > max_len:
-                max_path = path
+    return path, gbfs.time
 
-    return max_path
+
+def compute_preference_path(
+    model_path: Sequence[FrozenModel],
+    D: PreferenceStructure,
+    A: PerformanceTable,
+    refused: Container[PreferenceStructure],
+):
+    path = preference_path(model_path, A, D)
+
+    remove_refused(path, refused)
+    remove_reverted_changes(path)
+
+    return path

@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 
 import numpy as np
-from mcda.relations import PreferenceStructure
+from mcda.relations import P, I
 from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
 
 from ...constants import EPSILON
@@ -14,8 +14,8 @@ class MIPSRMP(MIP[SRMPModel]):
     def __init__(
         self,
         alternatives: NormalPerformanceTable,
-        preference_relations: PreferenceStructure,
-        indifference_relations: PreferenceStructure,
+        preference_relations: list[P],
+        indifference_relations: list[I],
         lexicographic_order: Sequence[int],
         gamma: float = EPSILON,
         inconsistencies: bool = True,

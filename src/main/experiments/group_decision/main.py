@@ -1,5 +1,5 @@
 from concurrent.futures import Future, ThreadPoolExecutor
-from itertools import chain, product
+from itertools import product
 
 from ....utils import list_replace
 from ...task import Task
@@ -9,7 +9,7 @@ from ..elicitation.config import MIPConfig
 from ..elicitation.fieldnames import ConfigFieldnames
 from .arguments import ArgumentsGroupDecision
 from .directory import DirectoryGroupDecision
-from .fieldnames import HyperparametersFieldnames
+from .fieldnames import GroupParametersFieldnames
 from .seeds import Seeds
 from .task import (
     ATrainTask,
@@ -32,13 +32,16 @@ def main(
     NB_MI = args.nb_Mi or NB_MO
     NB_D = args.nb_D or NB_MI
     NB_MC = args.nb_Mc or NB_D
+    NB_P = args.nb_P or NB_MC
 
     # Complete seeds
-    seeds = Seeds.from_seed(NB_ATR, NB_MO, NB_MI, NB_D, NB_MC, args.seed)
+    seeds = Seeds.from_seed(NB_ATR, NB_MO, NB_MI, NB_D, NB_MC, NB_P, args.seed)
     list_replace(seeds.A_tr, args.seeds.A_tr)
     list_replace(seeds.Mo, args.seeds.Mo)
     list_replace(seeds.Mi, args.seeds.Mi)
     list_replace(seeds.D, args.seeds.D)
+    list_replace(seeds.Mc, args.seeds.Mc)
+    list_replace(seeds.P, args.seeds.P)
 
     # Add missing configs
     if not args.config:
@@ -57,14 +60,12 @@ def main(
         )
 
     # Write hyperparameters
-    for hyperparameter in args.gen + list(chain.from_iterable(args.accept)):
-        dir.csv_files["hyperparameters"].queue.put(
+    for group_parameters in args.group:
+        dir.csv_files["group_parameters"].queue.put(
             {
-                HyperparametersFieldnames.Id: hyperparameter.id,
-                HyperparametersFieldnames.Type: hyperparameter.type,
-                HyperparametersFieldnames.Hyperparameter: {
-                    k: v for k, v in hyperparameter.to_dict().items() if k != "id"
-                },
+                GroupParametersFieldnames.Id: group_parameters.id,
+                GroupParametersFieldnames.Gen: group_parameters.gen,
+                GroupParametersFieldnames.Accept: group_parameters.accept,
             }
         )
 
@@ -95,10 +96,10 @@ def main(
                 dir,
             )
 
-            for group_size, gen in product(args.group_size, args.gen):
+            for group_size, group in product(args.group_size, args.group):
                 for Mi_id in range(args.nb_Mi) if args.nb_Mi else [Mo_id]:
                     for dm_id in range(group_size):
-                        task = MiTask(m, ko, Mo_id, group_size, gen, Mi_id, dm_id)
+                        task = MiTask(m, ko, Mo_id, group_size, group, Mi_id, dm_id)
                         futures[task] = thread_pool.submit(
                             task_thread,
                             task,
@@ -108,11 +109,11 @@ def main(
                             dir,
                         )
 
-        for n_tr, ko, group_size, gen, n_bc, same_alt in product(
+        for n_tr, ko, group_size, group, n_bc, same_alt in product(
             args.N_tr,
             args.Ko,
             args.group_size,
-            args.gen,
+            args.group,
             args.N_bc,
             args.same_alt,
         ):
@@ -128,7 +129,7 @@ def main(
                                     ko,
                                     Mo_id,
                                     group_size,
-                                    gen,
+                                    group,
                                     Mi_id,
                                     dm_id,
                                     n_bc,
@@ -148,7 +149,7 @@ def main(
                                                 ko,
                                                 Mo_id,
                                                 group_size,
-                                                gen,
+                                                group,
                                                 Mi_id,
                                                 dm_id,
                                             )
@@ -157,51 +158,52 @@ def main(
                                     dir,
                                 )
 
-                            for config, accept in product(
-                                args.config,
-                                args.accept[args.gen.index(gen)],
-                            ):
+                            for config in args.config:
                                 for Mc_id in (
                                     range(args.nb_Mc) if args.nb_Mc else [D_id]
                                 ):
-                                    thread_pool.submit(
-                                        collective_thread,
-                                        {
-                                            "m": m,
-                                            "n_tr": n_tr,
-                                            "Atr_id": Atr_id,
-                                            "ko": ko,
-                                            "Mo_id": Mo_id,
-                                            "group_size": group_size,
-                                            "gen": gen,
-                                            "Mi_id": Mi_id,
-                                            "n_bc": n_bc,
-                                            "same_alt": same_alt,
-                                            "D_id": D_id,
-                                            "config": config,
-                                            "Mc_id": Mc_id,
-                                            "accept": accept,
-                                            "seeds": seeds,
-                                        },
-                                        task_queue,
-                                        [
-                                            futures[
-                                                DTask(
-                                                    m,
-                                                    n_tr,
-                                                    Atr_id,
-                                                    ko,
-                                                    Mo_id,
-                                                    group_size,
-                                                    gen,
-                                                    Mi_id,
-                                                    dm_id,
-                                                    n_bc,
-                                                    same_alt,
-                                                    D_id,
-                                                )
-                                            ]
-                                            for dm_id in range(group_size)
-                                        ],
-                                        dir,
-                                    )
+                                    for P_id in (
+                                        range(args.nb_P) if args.nb_P else [Mc_id]
+                                    ):
+                                        futures[task] = thread_pool.submit(
+                                            collective_thread,
+                                            {
+                                                "max_time": args.max_time,
+                                                "m": m,
+                                                "n_tr": n_tr,
+                                                "ko": ko,
+                                                "Atr_id": Atr_id,
+                                                "Mo_id": Mo_id,
+                                                "Mi_id": Mi_id,
+                                                "Mc_id": Mc_id,
+                                                "P_id": P_id,
+                                                "group_size": group_size,
+                                                "group": group,
+                                                "n_bc": n_bc,
+                                                "same_alt": same_alt,
+                                                "D_id": D_id,
+                                                "config": config,
+                                                "seeds": seeds,
+                                            },
+                                            task_queue,
+                                            [
+                                                futures[
+                                                    DTask(
+                                                        m,
+                                                        n_tr,
+                                                        Atr_id,
+                                                        ko,
+                                                        Mo_id,
+                                                        group_size,
+                                                        group,
+                                                        Mi_id,
+                                                        dm_id,
+                                                        n_bc,
+                                                        same_alt,
+                                                        D_id,
+                                                    )
+                                                ]
+                                                for dm_id in range(group_size)
+                                            ],
+                                            dir,
+                                        )

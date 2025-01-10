@@ -2,7 +2,7 @@ import itertools
 from collections.abc import Sequence
 
 import numpy as np
-from mcda.relations import PreferenceStructure
+from mcda.relations import I, P
 from pulp import LpBinary, LpInteger, LpMinimize, LpProblem, LpVariable, lpSum, value
 
 from ...constants import EPSILON
@@ -15,13 +15,12 @@ class MIPSRMPCollective(MIP[SRMPModel]):
     def __init__(
         self,
         alternatives: NormalPerformanceTable,
-        preference_relations: list[PreferenceStructure],
-        indifference_relations: list[PreferenceStructure],
+        preference_relations: list[list[P]],
+        indifference_relations: list[list[I]],
         lexicographic_order: Sequence[int],
         preferences_changed: list[int],
-        preference_refused: list[PreferenceStructure],
-        indifference_refused: list[PreferenceStructure],
-        count_refused: list[int],
+        preference_to_accept: list[list[P]],
+        indifference_to_accept: list[list[I]],
         gamma: float = EPSILON,
         best_objective: float | None = None,
         *args,
@@ -33,9 +32,8 @@ class MIPSRMPCollective(MIP[SRMPModel]):
         self.indifference_relations = indifference_relations
         self.lexicographic_order = lexicographic_order
         self.preferences_changed = preferences_changed
-        self.preference_refused = preference_refused
-        self.indifference_refused = indifference_refused
-        self.count_refused = count_refused
+        self.preference_to_accept = preference_to_accept
+        self.indifference_to_accept = indifference_to_accept
         self.gamma = gamma
         self.best_objective = best_objective
 
@@ -62,32 +60,50 @@ class MIPSRMPCollective(MIP[SRMPModel]):
         preference_relations_union = list(
             set(
                 itertools.chain.from_iterable(
-                    self.preference_relations[dm]._relations for dm in self.param["DM"]
+                    self.preference_relations[dm] for dm in self.param["DM"]
                 )
             )
             | set(
                 itertools.chain.from_iterable(
-                    pref_refused._relations for pref_refused in self.preference_refused
+                    pref_refused for pref_refused in self.preference_to_accept
                 )
             )
         )
         preference_relations_union_indices = range(len(preference_relations_union))
         # Binary comparisons with indifference
+        # indifference_relations = list(
+        #     set(
+        #         itertools.chain.from_iterable(
+        #             self.indifference_relations[dm]._relations
+        #             for dm in self.param["DM"]
+        #         )
+        #     )
+        # )
+        # indifference_relations_indices = range(len(indifference_relations))
+        # indifference_refused = list(
+        #     set(
+        #         itertools.chain.from_iterable(
+        #             indif_refused._relations
+        #             for indif_refused in self.indifference_refused
+        #         )
+        #     )
+        # )
+        # indifference_refused_indices = range(len(indifference_refused))
         indifference_relations_union = list(
             set(
                 itertools.chain.from_iterable(
-                    self.indifference_relations[dm]._relations
-                    for dm in self.param["DM"]
+                    self.indifference_relations[dm] for dm in self.param["DM"]
                 )
             )
             | set(
                 itertools.chain.from_iterable(
-                    indif_refused._relations
-                    for indif_refused in self.indifference_refused
+                    indif_refused for indif_refused in self.indifference_to_accept
                 )
             )
         )
         indifference_relations_union_indices = range(len(indifference_relations_union))
+        # self.p = preference_relations_union
+        # self.i = indifference_refused
 
         #############
         # Variables #
@@ -143,7 +159,7 @@ class MIPSRMPCollective(MIP[SRMPModel]):
 
         # Variables used to model the ranking rule with indifference relations
         self.var["s_star"] = LpVariable.dicts(
-            "IndifferenceRankingVariable",
+            "IndifferenceRankingVariableS",
             indifference_relations_union_indices,
             cat=LpBinary,
         )
@@ -154,23 +170,17 @@ class MIPSRMPCollective(MIP[SRMPModel]):
             cat=LpInteger,
         )
 
-        # Variables used to model inconsistencies
-        self.var["R"] = LpVariable.dicts(
-            "Inconsistencies",
-            range(len(self.preference_refused)),
-            cat=LpBinary,
-        )
-
         ##############
         # LP problem #
         ##############
 
         self.prob = LpProblem("SRMP_Elicitation", LpMinimize)
 
-        self.prob += self.var["S"] + 2 * (
-            len(preference_relations_union_indices)
-            + len(indifference_relations_union_indices)
-        ) * lpSum(self.var["R"])
+        self.prob += self.var["S"]
+        # + 2 * (
+        #     len(preference_relations_union_indices)
+        #     + len(indifference_relations_union_indices)
+        # ) * lpSum(self.var["R"])
 
         ###############
         # Constraints #
@@ -218,7 +228,7 @@ class MIPSRMPCollective(MIP[SRMPModel]):
 
         # Constraints on the preference ranking variables
         for index in preference_relations_union_indices:
-            self.prob += self.var["s"][index][self.param["sigma"][0]] == 0
+            self.prob += self.var["s"][index][self.param["sigma"][self.param["k"]]] == 1
 
             # for h in self.param["profile_indices"]:
             #     self.prob += (
@@ -286,100 +296,95 @@ class MIPSRMPCollective(MIP[SRMPModel]):
             # Constraints on the indifferences
             for index, relation in enumerate(indifference_relations_union):
                 a, b = relation.a, relation.b
-                self.prob += lpSum(
-                    [
-                        self.var["omega"][a][self.param["sigma"][h]][j]
-                        for j in self.param["M"]
-                    ]
-                ) >= (
+                self.prob += (
+                    lpSum(
+                        [
+                            self.var["omega"][a][self.param["sigma"][h]][j]
+                            for j in self.param["M"]
+                        ]
+                    )
+                    - lpSum(
+                        [
+                            self.var["omega"][b][self.param["sigma"][h]][j]
+                            for j in self.param["M"]
+                        ]
+                    )
+                    <= self.var["s_star"][index]
+                )
+
+                self.prob += (
                     lpSum(
                         [
                             self.var["omega"][b][self.param["sigma"][h]][j]
                             for j in self.param["M"]
                         ]
                     )
-                    - self.var["s_star"][index]
-                )
-
-                self.prob += lpSum(
-                    [
-                        self.var["omega"][a][self.param["sigma"][h]][j]
-                        for j in self.param["M"]
-                    ]
-                ) <= (
-                    lpSum(
+                    - lpSum(
                         [
-                            self.var["omega"][b][self.param["sigma"][h]][j]
+                            self.var["omega"][a][self.param["sigma"][h]][j]
                             for j in self.param["M"]
                         ]
                     )
-                    + self.var["s_star"][index]
+                    <= self.var["s_star"][index]
                 )
-
-                # self.prob += lpSum(
-                #     [
-                #         self.var["omega"][a][self.param["sigma"][h]][j]
-                #         for j in self.param["M"]
-                #     ]
-                # ) >= (
-                #     lpSum(
-                #         [
-                #             self.var["omega"][b][self.param["sigma"][h]][j]
-                #             for j in self.param["M"]
-                #         ]
-                #     )
-                #     + self.gamma * self.var["s_star"][index]
-                # )
-
-                # self.prob += lpSum(
-                #     [
-                #         self.var["omega"][b][self.param["sigma"][h]][j]
-                #         for j in self.param["M"]
-                #     ]
-                # ) >= (
-                #     lpSum(
-                #         [
-                #             self.var["omega"][a][self.param["sigma"][h]][j]
-                #             for j in self.param["M"]
-                #         ]
-                #     )
-                #     + self.gamma * self.var["s_star"][index]
-                # )
 
         # Constraint on refused preferences
-        for index in range(len(self.preference_refused)):
+        # print(self.preference_refused, self.indifference_refused)
+        for index in range(len(self.preference_to_accept)):
             self.prob += (
                 lpSum(
                     [
-                        self.var["s"][preference_relations_union.index(r)][
-                            self.param["sigma"][self.param["k"]]
-                        ]
-                        for r in self.preference_refused[index]
+                        self.var["s"][preference_relations_union.index(r)][0]
+                        for r in self.preference_to_accept[index]
                     ]
                 )
                 + lpSum(
                     [
-                        1 - self.var["s_star"][indifference_relations_union.index(r)]
-                        for r in self.indifference_refused[index]
+                        self.var["s_star"][indifference_relations_union.index(r)]
+                        for r in self.indifference_to_accept[index]
                     ]
                 )
-                <= len(
-                    set(frozenset(r.elements) for r in self.preference_refused[index])
-                    | set(
-                        frozenset(r.elements) for r in self.indifference_refused[index]
-                    )
-                )
-                - self.count_refused[index] * (1 - self.var["R"][index])
+                <= len(self.preference_to_accept[index])
+                + len(self.indifference_to_accept[index])
+                - 1
             )
+
+            # self.prob += (
+            #     lpSum(
+            #         [
+            #             self.var["s"][preference_relations_union.index(r)][
+            #                 self.param["sigma"][self.param["k"]]
+            #             ]
+            #             for r in self.preference_refused[index]
+            #         ]
+            #     )
+            #     + lpSum(
+            #         [
+            #             1 - self.var["s_star"][indifference_relations_union.index(r)]
+            #             for r in self.indifference_refused[index]
+            #         ]
+            #     )
+            #     <= len(
+            #         set(frozenset(r.elements) for r in self.preference_refused[index])
+            #         | set(
+            #             frozenset(r.elements) for r in self.indifference_refused[index]
+            #         )
+            #     )
+            #     - 1
+            # )
+            # print(
+            #     f"{[r for r in self.preference_to_accept[index]]}",
+            #     f"{[r for r in self.indifference_to_accept[index]]}",
+            #     len(self.preference_to_accept[index])
+            #     + len(self.indifference_to_accept[index])
+            #     - 1,
+            # )
 
         # Constraints on minimum number of preferences changes
         for dm in self.param["DM"]:
             self.prob += self.var["S"] >= self.preferences_changed[dm] + lpSum(
                 [
-                    1
-                    - self.var["s"][preference_relations_union.index(r)][
-                        self.param["sigma"][self.param["k"]]
-                    ]
+                    self.var["s"][preference_relations_union.index(r)][0]
                     for r in self.preference_relations[dm]
                 ]
             ) + lpSum(
@@ -390,10 +395,16 @@ class MIPSRMPCollective(MIP[SRMPModel]):
             )
 
         if self.best_objective is not None:
-            self.prob += self.var["S"] + 2 * (
-                len(preference_relations_union_indices)
-                + len(indifference_relations_union_indices)
-            ) * lpSum(self.var["R"]) <= self.best_objective - 1
+            self.prob += (
+                self.var["S"]
+                # + 2
+                # * (
+                #     len(preference_relations_union_indices)
+                #     + len(indifference_relations_union_indices)
+                # )
+                # * lpSum(self.var["R"])
+                <= self.best_objective - 1
+            )
 
     def create_solution(self):
         weights = np.array([value(self.var["w"][j]) for j in self.param["M"]])
@@ -403,6 +414,11 @@ class MIPSRMPCollective(MIP[SRMPModel]):
                 for h in self.param["profile_indices"]
             ]
         )
+
+        # for i, r in enumerate(self.p):
+        #     print(r, value(self.var["s"][i][self.param["k"]]))
+        # for i, r in enumerate(self.i):
+        #     print(r, value(self.var["r_star"][i]))
 
         return SRMPModel(
             profiles=profiles,

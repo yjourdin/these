@@ -2,12 +2,11 @@ import csv
 
 from pandas import read_csv
 
-from src.test.main import test_consensus, test_distance
-
 from ..model import GroupModel
 from ..models import model_from_json
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from .argument_parser import TestEnum, parse_args
+from .main import test_consensus, test_distance
 
 # Parse arguments
 args = parse_args()

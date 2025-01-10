@@ -2,17 +2,13 @@ import math
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from typing import NamedTuple
-import numpy as np
 
 from mcda import PerformanceTable
 from mcda.internal.core.values import Ranking
 from mcda.relations import PreferenceStructure
 
-from src.srmp.model import FrozenSRMPModel
-
-from ..model import FrozenModel
-
 from ..dataclass import Dataclass
+from ..model import FrozenModel
 from ..preference_structure.fitness import fitness_comparisons_ranking
 from .neighborhood import Neighborhood
 
@@ -45,11 +41,10 @@ class ModelGraph[S: FrozenModel](Dataclass):
             v = Q.popleft()
             for dm, target in enumerate(targets):
                 if distances[v] <= distances_max[dm]:
-                    a = fitness_comparisons_ranking(target, rankings[v])
-                    if a == 1:
+                    if fitness_comparisons_ranking(target, rankings[v]) == 1:
                         dm_models[dm].append(v)
                         distances_max[dm] = distances[v]
-            
+
             if distances[v] < max(distances_max):
                 for w in self.neighborhood(v):
                     if w not in rankings:

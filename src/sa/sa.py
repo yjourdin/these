@@ -1,15 +1,14 @@
 import csv
+from time import process_time
 from dataclasses import dataclass
 from math import exp
-import time
 from typing import TextIO
 
 from mcda.internal.core.interfaces import Learner
 from numpy.random import Generator
 
-from src.dataclass import Dataclass
-
 from ..constants import DEFAULT_MAX_TIME
+from ..dataclass import Dataclass
 from .cooling_schedule import CoolingSchedule
 from .neighbor import Neighbor
 from .objective import Objective
@@ -41,8 +40,8 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
         current_obj = self.objective(current_sol)
         self.best_sol = initial_sol
         self.best_obj = self.objective(self.best_sol)
-        start_time = time.process_time()
-        self.time = time.process_time() - start_time
+        start_time = process_time()
+        self.time = process_time() - start_time
         self.it = 0
         self.non_improving_it = 0
 
@@ -109,9 +108,9 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
                         # Stop when optimum reached
                         if self.best_obj <= self.objective.optimum:
                             return self.best_sol
-                
+
                 # Update time
-                self.time = time.process_time() - start_time
+                self.time = process_time() - start_time
 
                 if self.log_file:
                     log_writer.writerow(

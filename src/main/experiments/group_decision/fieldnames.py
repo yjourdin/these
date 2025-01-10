@@ -1,6 +1,12 @@
 from ...fieldnames import Fieldnames
 
 
+class GroupParametersFieldnames(Fieldnames):
+    Id = "Id"
+    Gen = "Gen"
+    Accept = "Accept"
+
+
 class CollectiveFieldnames(Fieldnames):
     M = "M"
     N_tr = "N_tr"
@@ -8,7 +14,7 @@ class CollectiveFieldnames(Fieldnames):
     Ko = "Ko"
     Mo_id = "Mo_id"
     Group_size = "Group_size"
-    Gen = "Gen"
+    Group = "Group"
     Mi_id = "Mi_id"
     N_bc = "N_bc"
     Same_alt = "Same_alt"
@@ -26,7 +32,7 @@ class PathFieldnames(Fieldnames):
     Ko = "Ko"
     Mo_id = "Mo_id"
     Group_size = "Group_size"
-    Gen = "Gen"
+    Group = "Group"
     Mi_id = "Mi_id"
     N_bc = "N_bc"
     Same_alt = "Same_alt"
@@ -36,9 +42,60 @@ class PathFieldnames(Fieldnames):
     Dm_id = "Dm_id"
     Time = "Time"
     Length = "Length"
+    Model_Length = "Model_Length"
 
 
-class HyperparametersFieldnames(Fieldnames):
-    Id = "Id"
-    Type = "Type"
-    Hyperparameter = "Hyperparameter"
+class AcceptFieldnames(Fieldnames):
+    M = "M"
+    N_tr = "N_tr"
+    Atr_id = "Atr_id"
+    Ko = "Ko"
+    Mo_id = "Mo_id"
+    Group_size = "Group_size"
+    Group = "Group"
+    Mi_id = "Mi_id"
+    N_bc = "N_bc"
+    Same_alt = "Same_alt"
+    D_id = "D_id"
+    Config = "Config"
+    It = "It"
+    Dm_id = "Dm_id"
+    T = "T"
+    Accept = "Accept"
+
+
+class CleanFieldnames(Fieldnames):
+    M = "M"
+    N_tr = "N_tr"
+    Atr_id = "Atr_id"
+    Ko = "Ko"
+    Mo_id = "Mo_id"
+    Group_size = "Group_size"
+    Group = "Group"
+    Mi_id = "Mi_id"
+    N_bc = "N_bc"
+    Same_alt = "Same_alt"
+    D_id = "D_id"
+    Config = "Config"
+    It = "It"
+    Dm_id = "Dm_id"
+    Removed = "Removed"
+    Total = "Total"
+    
+
+class CompromiseFieldnames(Fieldnames):
+    M = "M"
+    N_tr = "N_tr"
+    Atr_id = "Atr_id"
+    Ko = "Ko"
+    Mo_id = "Mo_id"
+    Group_size = "Group_size"
+    Group = "Group"
+    Mi_id = "Mi_id"
+    N_bc = "N_bc"
+    Same_alt = "Same_alt"
+    D_id = "D_id"
+    Config = "Config"
+    Compromise = "Compromise"
+    Time = "Time"
+    It = "It"

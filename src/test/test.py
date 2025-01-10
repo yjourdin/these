@@ -8,8 +8,7 @@ from mcda import PerformanceTable
 from mcda.internal.core.values import Ranking
 from scipy.stats import kendalltau, spearmanr
 
-from src.enum_base import Enum
-
+from ..enum_base import Enum
 from ..model import GroupModel, Model
 from ..preference_structure.fitness import fitness_outranking
 

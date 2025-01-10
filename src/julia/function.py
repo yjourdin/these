@@ -33,7 +33,7 @@ def generate_partial_sum(m: int) -> None:
 def generate_weak_order(m: int, seed: Seed | None = None) -> list[int]:
     file = S_file(m)
 
-    if not file.is_file():
+    if not file.exists():
         generate_partial_sum(m)
 
     return ast.literal_eval(

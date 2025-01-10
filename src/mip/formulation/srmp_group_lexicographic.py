@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 
 import numpy as np
-from mcda.relations import PreferenceStructure
+from mcda.relations import I, P
 from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
 
 from ...constants import EPSILON
@@ -28,8 +28,8 @@ class MIPSRMPGroupLexicographicOrder(
     def __init__(
         self,
         alternatives: NormalPerformanceTable,
-        preference_relations: list[PreferenceStructure],
-        indifference_relations: list[PreferenceStructure],
+        preference_relations: list[list[P]],
+        indifference_relations: list[list[I]],
         lexicographic_order: Sequence[int],
         shared_params: set[SRMPParamEnum] = set(),
         gamma: float = EPSILON,
@@ -351,23 +351,29 @@ class MIPSRMPGroupLexicographicOrder(
                             )
 
         if self.inconsistencies and (self.best_fitness is not None):
-            self.prob += lpSum(
-                [
+            self.prob += (
+                lpSum(
                     [
-                        self.var["s"][dm][index][0]
-                        for index in self.param["preference_relations_indices"][dm]
+                        [
+                            self.var["s"][dm][index][0]
+                            for index in self.param["preference_relations_indices"][dm]
+                        ]
+                        for dm in self.param["DM"]
                     ]
-                    for dm in self.param["DM"]
-                ]
-            ) + lpSum(
-                [
+                )
+                + lpSum(
                     [
-                        self.var["s_star"][dm][index]
-                        for index in self.param["indifference_relations_indices"][dm]
+                        [
+                            self.var["s_star"][dm][index]
+                            for index in self.param["indifference_relations_indices"][
+                                dm
+                            ]
+                        ]
+                        for dm in self.param["DM"]
                     ]
-                    for dm in self.param["DM"]
-                ]
-            ) >= self.best_fitness + self.gamma
+                )
+                >= self.best_fitness + self.gamma
+            )
 
     def create_solution(self):
         weights = (

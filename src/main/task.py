@@ -1,4 +1,4 @@
-import time
+from time import process_time
 from abc import abstractmethod
 from dataclasses import dataclass, fields
 from typing import Any, ClassVar
@@ -17,9 +17,9 @@ class Task(FrozenDataclass):
         return f"{self.name:10} ({', '.join(f"{field.name}: {str(getattr(self, field.name))}" for field in fields(self))})"
 
     def __call__(self, dir: Directory, *args, **kwargs) -> Any:
-        tic = time.process_time()
+        tic = process_time()
         result = self.task(dir=dir, *args, **kwargs)
-        toc = time.process_time()
+        toc = process_time()
         dir.csv_files["times"].queue.put(
             {TimeFieldnames.Task: self, TimeFieldnames.Time: toc - tic}
         )

@@ -81,9 +81,11 @@ def add_str_to_list(
 
 
 def pathname(dct: dict[str, Any], ext: str):
-    return "_".join(
-        to_str(k) + "_" + to_str(v) for k, v in dct.items() if k != "self"
-    ) + ext
+    return (
+        "_".join(to_str(k) + "_" + to_str(v) for k, v in dct.items() if k != "self")
+        + ext
+    )
+
 
 dirname = partial(pathname, ext="")
 filename_csv = partial(pathname, ext=".csv")
@@ -115,8 +117,7 @@ def round_epsilon(x, epsilon: float = EPSILON):
 
 
 def raise_exception(future: Future):
-    err = future.exception()
-    if err is not None:
+    if (err := future.exception()) is not None:
         raise err
 
 

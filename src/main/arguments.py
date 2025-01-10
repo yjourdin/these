@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from src.enum_base import StrEnum
+from ..enum_base import StrEnum
 
 from ..dataclass import Dataclass
 from ..default_max_jobs import DEFAULT_MAX_JOBS
