@@ -99,3 +99,4 @@ class CompromiseFieldnames(Fieldnames):
     Compromise = "Compromise"
     Time = "Time"
     It = "It"
+    Changes = "Changes"

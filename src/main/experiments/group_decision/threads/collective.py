@@ -159,8 +159,14 @@ def collective_thread(
                         dm_id for dm_id in dms if tasks_P[dm_id].P_file(dir, t).exists()
                     ]
 
+                changes: list[int] = []
+                with task_Mc.C_file(dir).open("r", newline="") as f:
+                    C_reader = csv.reader(f, dialect="unix")
+                    for row in C_reader:
+                        changes.append(int(row[0]))
+                        
                 it += 1
-                new_task_Mc = CollectiveTask(
+                task_Mc = CollectiveTask(
                     args["m"],
                     args["n_tr"],
                     args["Atr_id"],
@@ -178,13 +184,8 @@ def collective_thread(
                     it,
                 )
 
-                changes: list[int] = []
-                with task_Mc.C_file(dir).open("r", newline="") as f:
-                    C_reader = csv.reader(f, dialect="unix")
-                    for row in C_reader:
-                        changes.append(int(row[0]))
 
-                with new_task_Mc.C_file(dir).open("w", newline="") as f:
+                with task_Mc.C_file(dir).open("w", newline="") as f:
                     C_writer = csv.writer(f, dialect="unix")
 
                     for dm_id in range(args["group_size"]):
@@ -195,7 +196,7 @@ def collective_thread(
 
                         copy(
                             tasks_P[dm_id].P_file(dir, accepted_t),
-                            new_task_Mc.D_file(dir, dm_id),
+                            task_Mc.D_file(dir, dm_id),
                         )
 
                         with tasks_P[dm_id].P_file(dir, 0).open("r") as P0f:
@@ -219,14 +220,12 @@ def collective_thread(
                                         # ) as f:
                                         #     to_csv(P2, f)
 
-                                        with new_task_Mc.RC_file(dir, dm_id, it).open(
+                                        with task_Mc.RC_file(dir, dm_id, it).open(
                                             "w"
                                         ) as f:
                                             to_csv(P2 - P1, f)
 
-                if dms_refusing:
-                    task_Mc = new_task_Mc
-                else:
+                if not dms_refusing:
                     compromise_found = True
             else:
                 futures_clean: list[Future] = []
@@ -282,5 +281,6 @@ def collective_thread(
             CompromiseFieldnames.Compromise: compromise_found,
             CompromiseFieldnames.Time: max_time - time_left,
             CompromiseFieldnames.It: it,
+            CompromiseFieldnames.Changes: sum(changes)
         }
     )
