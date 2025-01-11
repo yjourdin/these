@@ -1,5 +1,4 @@
-from collections.abc import Iterable, Iterator
-from concurrent.futures import FIRST_EXCEPTION, Future, wait
+from collections.abc import Iterator
 from enum import Enum
 from functools import partial, reduce
 from itertools import chain, count
@@ -114,14 +113,3 @@ def add_filename_suffix(filename: Path, suffix: str):
 
 def round_epsilon(x, epsilon: float = EPSILON):
     return np.round(x / EPSILON) * EPSILON
-
-
-def raise_exception(future: Future):
-    if (err := future.exception()) is not None:
-        raise err
-
-
-def raise_exceptions(futures: Iterable[Future]):
-    done, not_done = wait(futures, return_when=FIRST_EXCEPTION)
-    for future in done:
-        raise_exception(future)

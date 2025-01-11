@@ -1,26 +1,30 @@
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
-from multiprocessing.connection import Connection, wait
-from queue import Empty, LifoQueue
-from typing import Any, cast
+from multiprocessing.connection import wait
+from queue import Empty
+from typing import cast
 
-from ...constants import SENTINEL, SENTINEL_TYPE
-from ..task import Task
-
-type TaskQueue = LifoQueue[tuple[Task, Mapping[str, Any], Connection] | SENTINEL_TYPE]
+from ...constants import SENTINEL
+from ..connection import (
+    ManagerStopConnection,
+    ManagerTaskConnection,
+    ManagerWorkerConnection,
+    TaskQueue,
+    WorkerArguments,
+)
 
 
 def worker_manager(
-    worker_connections: Iterable[Connection],
+    worker_connections: Iterable[ManagerWorkerConnection],
     task_queue: TaskQueue,
-    stop_connection: Connection,
+    stop_connection: ManagerStopConnection,
     thread_pool: ThreadPoolExecutor,
     stop_error: bool,
 ):
     connections = set(worker_connections) | {stop_connection}
-    waiting_connections: set[Connection] = set(worker_connections)
-    working_connections: dict[Connection, Connection] = {}
+    waiting_connections: set[ManagerWorkerConnection] = set(worker_connections)
+    working_connections: dict[ManagerWorkerConnection, ManagerTaskConnection] = {}
 
     stop = False
     while (not stop) and connections:
@@ -40,25 +44,28 @@ def worker_manager(
                     task, args, thread_connection = obj
                     connection = waiting_connections.pop()
                     working_connections[connection] = thread_connection
-                    connection.send((task, args))
+                    connection.send(WorkerArguments(task, args))
 
         # Wait a worker to finish a task
         if (not stop) and working_connections:
             timeout = 1 if waiting_connections else None
 
-            for connection in cast(
-                list[Connection], wait(connections, timeout=timeout)
-            ):
+            for connection in wait(connections, timeout=timeout):  # type: ignore
+                connection = cast(
+                    ManagerWorkerConnection | ManagerStopConnection, connection
+                )
                 try:
                     obj = connection.recv()
                 except EOFError:
                     connections.remove(connection)
                 else:
-                    if obj == SENTINEL:
-                        if (connection == stop_connection) or stop_error:
-                            stop = True
-                            break
+                    if obj == SENTINEL and (
+                        (connection == stop_connection) or stop_error
+                    ):
+                        stop = True
+                        break
                     else:
+                        connection = cast(ManagerWorkerConnection, connection)
                         working_connections[connection].send(obj)
                         del working_connections[connection]
                         waiting_connections.add(connection)

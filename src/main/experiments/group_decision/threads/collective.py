@@ -1,12 +1,11 @@
 import csv
 from concurrent.futures import Future, ThreadPoolExecutor
 from shutil import copy
-from time import time
 from typing import Any
 
 from .....constants import DEFAULT_MAX_TIME
 from .....preference_structure.io import from_csv, to_csv
-from .....utils import raise_exception, raise_exceptions
+from ....task import FutureTaskException, raise_exception, raise_exceptions
 from ....threads.task import task_thread
 from ....threads.worker_manager import TaskQueue
 from ..directory import DirectoryGroupDecision
@@ -51,12 +50,9 @@ def collective_thread(
         # for dm_id in range(args["group_size"]):
         #     task_Mc.R_dir(dir, dm_id).mkdir(exist_ok=True)
 
-        start_time = time()
-        time_left = max_time - (time() - start_time)
+        time_left = max_time
         compromise_found = False
         while (not compromise_found) and (time_left >= 1):
-            time_left = max_time - (time() - start_time)
-
             future_Mc = thread_pool.submit(
                 task_thread,
                 task_Mc,
@@ -66,13 +62,14 @@ def collective_thread(
                 dir,
             )
 
-            raise_exception(future_Mc)
+            if raise_exception(future_Mc):
+                result, time = future_Mc.result()
 
-            time_left = max_time - (time() - start_time)
+            time_left -= time
 
-            if future_Mc.result():
+            if result:
                 tasks_P: dict[int, PreferencePathTask] = {}
-                futures_P: dict[int, Future] = {}
+                futures_P: dict[int, FutureTaskException] = {}
                 for dm_id in range(args["group_size"]):
                     tasks_P[dm_id] = PreferencePathTask(
                         args["m"],
@@ -95,13 +92,20 @@ def collective_thread(
                     futures_P[dm_id] = thread_pool.submit(
                         task_thread,
                         tasks_P[dm_id],
-                        {"seed": args["seeds"].P[args["P_id"]], "max_time": time_left},
+                        {
+                            "seed": args["seeds"].P[args["P_id"]],
+                            "max_time": time_left,
+                        },
                         task_queue,
                         [future_Mc],
                         dir,
                     )
 
-                raise_exceptions(futures_P.values())
+                futures_P_values = futures_P.values()
+                if raise_exceptions(futures_P_values):
+                    time_left -= max(
+                        future.result().time for future in futures_P_values
+                    )
 
                 t = 1
                 dms = range(args["group_size"])
@@ -113,10 +117,9 @@ def collective_thread(
                 dms_refusing: list[int] = []
 
                 while dms:
-                    futures_accept: dict[int, Future] = {}
+                    futures_accept: dict[int, FutureTaskException] = {}
 
                     for dm_id in dms:
-                        # print(repr(args["accept"]))
                         tasks_accept = AcceptTask(
                             args["m"],
                             args["n_tr"],
@@ -164,7 +167,7 @@ def collective_thread(
                     C_reader = csv.reader(f, dialect="unix")
                     for row in C_reader:
                         changes.append(int(row[0]))
-                        
+
                 it += 1
                 task_Mc = CollectiveTask(
                     args["m"],
@@ -183,7 +186,6 @@ def collective_thread(
                     args["P_id"],
                     it,
                 )
-
 
                 with task_Mc.C_file(dir).open("w", newline="") as f:
                     C_writer = csv.writer(f, dialect="unix")
@@ -215,10 +217,10 @@ def collective_thread(
                                     ):
                                         P2 = from_csv(P2f)
 
-                                        # with new_task_Mc.RP_file(dir, dm_id, it).open(
-                                        #     "w"
-                                        # ) as f:
-                                        #     to_csv(P2, f)
+                                        with task_Mc.RP_file(dir, dm_id, it).open(
+                                            "w"
+                                        ) as f:
+                                            to_csv(P2, f)
 
                                         with task_Mc.RC_file(dir, dm_id, it).open(
                                             "w"
@@ -228,7 +230,7 @@ def collective_thread(
                 if not dms_refusing:
                     compromise_found = True
             else:
-                futures_clean: list[Future] = []
+                futures_clean: list[FutureTaskException] = []
                 for dm_id in range(args["group_size"]):
                     task_clean = CleanTask(
                         args["m"],
@@ -262,8 +264,6 @@ def collective_thread(
 
                 raise_exceptions(futures_clean)
 
-            time_left = max_time - (time() - start_time)
-
     dir.csv_files["compromise"].queue.put(
         {
             CompromiseFieldnames.M: args["m"],
@@ -281,6 +281,6 @@ def collective_thread(
             CompromiseFieldnames.Compromise: compromise_found,
             CompromiseFieldnames.Time: max_time - time_left,
             CompromiseFieldnames.It: it,
-            CompromiseFieldnames.Changes: sum(changes)
+            CompromiseFieldnames.Changes: sum(changes),
         }
     )

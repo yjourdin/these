@@ -1,8 +1,8 @@
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from itertools import product
 
 from ....utils import list_replace
-from ...task import Task
+from ...task import FutureTaskException, Task
 from ...threads.task import task_thread
 from ...threads.worker_manager import TaskQueue
 from ..elicitation.config import MIPConfig
@@ -70,7 +70,7 @@ def main(
         )
 
     # Task dict
-    futures: dict[Task, Future] = {}
+    futures: dict[Task, FutureTaskException] = {}
 
     # Main
     for m in args.M:

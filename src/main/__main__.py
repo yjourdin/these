@@ -1,6 +1,6 @@
 import logging.config
 from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import Pipe, Process, Queue
+from multiprocessing import Process, Queue
 from multiprocessing.connection import Connection
 from queue import LifoQueue
 from threading import Thread
@@ -8,6 +8,7 @@ from threading import Thread
 from ..constants import SENTINEL
 from .argument_parser import parse_args
 from .arguments import ExperimentEnum
+from .connection import StopPipe, WorkerPipe
 from .experiments.elicitation.directory import DirectoryElicitation
 from .experiments.elicitation.main import main as main_elicitation
 from .experiments.group_decision.directory import DirectoryGroupDecision
@@ -53,7 +54,7 @@ logging_queue: Queue = Queue()
 workers: list[Process] = []
 connections: list[Connection] = []
 for i in range(args.jobs):
-    worker_connection, manager_connection = Pipe()
+    worker_connection, manager_connection = WorkerPipe()
     worker_process = Process(
         target=worker, args=(worker_connection, logging_queue, dir)
     )
@@ -82,7 +83,7 @@ dir.run.touch()
 
 
 # Start stopping thread
-stop_connection, manager_connection = Pipe()
+stop_connection, manager_connection = StopPipe()
 stop_thread = Thread(
     target=stopping_thread, args=(dir.run, stop_connection, task_queue)
 )

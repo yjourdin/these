@@ -1,11 +1,11 @@
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from itertools import product
 from typing import cast
 
 from ....methods import MethodEnum
 from ....models import ModelEnum
 from ....utils import list_replace
-from ...task import Task
+from ...task import FutureTaskException, Task
 from ...threads.task import task_thread
 from ...threads.worker_manager import TaskQueue
 from .arguments import ArgumentsElicitation
@@ -55,7 +55,7 @@ def main(
         )
 
     # Task dict
-    futures: dict[Task, Future] = {}
+    futures: dict[Task, FutureTaskException] = {}
 
     # Main
     for m in args.M:
@@ -166,9 +166,9 @@ def main(
                                             cast(SAConfig, config),
                                             Me_id,
                                         )
-                                    case MethodEnum.MIP if Me.value[
-                                        0
-                                    ] is ModelEnum.SRMP:
+                                    case MethodEnum.MIP if (
+                                        Me.value[0] is ModelEnum.SRMP
+                                    ):
                                         task_Me = MIPTask(
                                             m,
                                             n_tr,
