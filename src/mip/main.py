@@ -37,7 +37,7 @@ def learn_mip(
     seed_mip: Seed,
     max_time: int = DEFAULT_MAX_TIME,
     collective: bool = False,
-    preferences_changed: list[int] | None = None,
+    preferences_changes: list[int] | None = None,
     comparisons_refused: list[PreferenceStructure] | None = None,
     reference_model: SRMPModel | None = None,
     profiles_amp: float = 1,
@@ -78,7 +78,7 @@ def learn_mip(
         or collective
     )
 
-    preferences_changed = preferences_changed or ([0] * NB_DM)
+    preferences_changes = preferences_changes or ([0] * NB_DM)
 
     shared_params = cast(set[SRMPParamEnum], model_type.value[1])
 
@@ -138,8 +138,7 @@ def learn_mip(
                             **kwargs,
                         )
                 elif collective:
-                    assert comparisons_refused is not None
-
+                    comparisons_refused = comparisons_refused or []
                     preference_to_accept_list: list[list[P]] = []
                     indifference_to_accept_list: list[list[I]] = []
                     for comp in comparisons_refused:
@@ -160,7 +159,7 @@ def learn_mip(
                         preference_relations_list,
                         indifference_relations_list,
                         lexicographic_order,
-                        preferences_changed,
+                        preferences_changes,
                         preference_to_accept_list,
                         indifference_to_accept_list,
                         best_objective=best_objective,
@@ -210,7 +209,7 @@ def learn_mip(
                     best_model = model
                     best_objective = cast(int, value(objective))
 
-                    if best_objective - sum(preferences_changed) == 0:
+                    if best_objective - sum(preferences_changes) == 0:
                         break
                 else:
                     best_model = model

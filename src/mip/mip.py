@@ -15,6 +15,8 @@ class MIP[T](Learner[T | None]):
         time_limit: int = DEFAULT_MAX_TIME,
         seed: int | None = None,
         verbose: bool = False,
+        *args,
+        **kw,
     ):
         self.var: dict[str, Any] = {}
         self.param: dict[str, Any] = {}

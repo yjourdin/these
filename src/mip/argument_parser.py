@@ -22,7 +22,13 @@ parser.add_argument(
     "-c", "--collective", action="store_true", help="Elicit collective model"
 )
 parser.add_argument(
-    "--preferences-changes", nargs="+", type=int, help="Preferences previously changed"
+    "--changes", nargs="+", type=int, help="Preferences previously changed"
+)
+parser.add_argument(
+    "--refused", nargs="+", type=argparse.FileType("r"), help="Refused preferences"
+)
+parser.add_argument(
+    "--reference", type=argparse.FileType("r"), help="Reference model"
 )
 parser.add_argument(
     "--max-time", type=int, default=DEFAULT_MAX_TIME, help="Time limit (in seconds)"

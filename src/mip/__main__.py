@@ -34,9 +34,13 @@ best_model, best_fitness, time = learn_mip(
     D,
     rng_lex,
     seed(rng_mip),
+    args.max_time,
+    args.collective,
+    args.changes,
+    args.refused,
+    args.reference,
     gamma=args.gamma,
     inconsistencies=not args.no_inconsistencies,
-    seed=args.seed,
     verbose=args.verbose,
 )
 
