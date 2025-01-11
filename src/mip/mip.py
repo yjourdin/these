@@ -30,7 +30,7 @@ class MIP[T](Learner[T | None]):
             kwargs["solver"] = "GUROBI"
             if seed is not None:
                 kwargs["seed"] = seed % 2_000_000_000
-        if "HiGHS" in listSolvers(True):
+        elif "HiGHS" in listSolvers(True):
             kwargs["solver"] = "HiGHS"
             if seed is not None:
                 kwargs["random_seed"] = seed % 2_000_000_000
