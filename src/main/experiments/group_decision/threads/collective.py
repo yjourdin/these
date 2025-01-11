@@ -65,6 +65,7 @@ def collective_thread(
 
             if raise_exception(future_Mc):
                 result, time = future_Mc.result()
+            
 
             time_left -= time
             if time_left < 1:
@@ -109,13 +110,12 @@ def collective_thread(
                     time_left -= max(
                         future.result().time for future in futures_P_values
                     )
+                if time_left < 1:
+                    break
 
                 t = 1
                 dms = range(args["group_size"])
                 dms = [dm_id for dm_id in dms if tasks_P[dm_id].P_file(dir, t).exists()]
-
-                if not dms:
-                    break
 
                 dms_refusing: list[int] = []
 
