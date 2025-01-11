@@ -113,7 +113,7 @@ class NeighborhoodWeight(Neighborhood[FrozenSRMPModel], Dataclass):
                     1 - (with_crit_np - weight) / (1 - weight),
                 )
 
-                if not progress_factor:
+                if (progress_factor == 0).any():
                     continue
                 progress = diff / progress_factor
 
