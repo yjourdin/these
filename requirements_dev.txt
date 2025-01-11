@@ -1,5 +1,7 @@
 mcda[all]
+more-itertools
+drs
+highspy
+ipykernel
 seaborn
 snakeviz
-more-itertools
-ipykernel
