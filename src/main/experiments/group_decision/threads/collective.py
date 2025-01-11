@@ -24,6 +24,7 @@ def collective_thread(
 
     with ThreadPoolExecutor() as thread_pool:
         it = 0
+        changes: list[int] = [0] * args["group_size"]
 
         task_Mc = CollectiveTask(
             args["m"],
@@ -66,6 +67,8 @@ def collective_thread(
                 result, time = future_Mc.result()
 
             time_left -= time
+            if time_left < 1:
+                break
 
             if result:
                 tasks_P: dict[int, PreferencePathTask] = {}
@@ -162,7 +165,7 @@ def collective_thread(
                         dm_id for dm_id in dms if tasks_P[dm_id].P_file(dir, t).exists()
                     ]
 
-                changes: list[int] = []
+                changes = []
                 with task_Mc.C_file(dir).open("r", newline="") as f:
                     C_reader = csv.reader(f, dialect="unix")
                     for row in C_reader:

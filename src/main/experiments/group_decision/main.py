@@ -206,4 +206,5 @@ def main(
                                                 for dm_id in range(group_size)
                                             ],
                                             dir,
+                                            args.max_time,
                                         )
