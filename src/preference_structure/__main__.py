@@ -43,7 +43,7 @@ match args.type:
             model_dm = model[dm] if isinstance(model, GroupModel) else model
             if args.same:
                 rng_shuffle = rng(seed_shuffle)
-            D.append(random_comparisons(A, model_dm, args.n, rng_shuffle))
+            D.append(random_comparisons(A, model_dm, args.n, rng=rng_shuffle))
 
         # Add errors
         rng_error = rng(seed_error)

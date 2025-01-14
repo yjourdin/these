@@ -3,10 +3,7 @@ from dataclasses import dataclass, field
 from ....constants import DEFAULT_MAX_TIME
 from ....random import Seed
 from ...arguments import Arguments, ExperimentEnum
-from .fields import (
-    GroupGroupParametersField,
-    GroupMIPConfigField,
-)
+from .fields import GroupGroupParametersField, GroupMIPConfigField
 from .seeds import Seeds
 
 
@@ -30,3 +27,4 @@ class ArgumentsGroupDecision(Arguments, GroupMIPConfigField, GroupGroupParameter
     Ko: list[int] = field(default_factory=list)
     N_bc: list[int] = field(default_factory=list)
     same_alt: list[bool] = field(default_factory=lambda: [True])
+    path: list[bool] = field(default_factory=lambda: [True])

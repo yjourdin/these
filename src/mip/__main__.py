@@ -3,6 +3,8 @@ import csv
 from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
+from src.srmp.model import SRMPModel
+
 from ..models import GroupModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..preference_structure.io import from_csv
@@ -21,6 +23,14 @@ D: list[PreferenceStructure] = []
 for d in args.D:
     D.append(from_csv(d))
 
+R: list[PreferenceStructure] = []
+print()
+for r in args.refused:
+    R.append(from_csv(r))
+
+ref = None
+if args.reference:
+    ref = SRMPModel.from_json(args.reference.read())
 
 # Create random seeds
 rng_lex, rng_mip = rng(args.seed).spawn(2)
@@ -37,8 +47,8 @@ best_model, best_fitness, time = learn_mip(
     args.max_time,
     args.collective,
     args.changes,
-    args.refused,
-    args.reference,
+    R,
+    ref,
     gamma=args.gamma,
     inconsistencies=not args.no_inconsistencies,
     verbose=args.verbose,

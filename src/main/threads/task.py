@@ -1,11 +1,10 @@
 from concurrent.futures import Future
-from multiprocessing.connection import Connection
-from typing import Any, cast
+from typing import Any
 
 from ...constants import SENTINEL
 from ..connection import TaskPipe, TaskQueueElement
 from ..directory import Directory
-from ..task import Task, raise_exceptions
+from ..task import Task, wait_exception_iterable
 from .worker_manager import TaskQueue
 
 
@@ -17,11 +16,11 @@ def task_thread(
     dir: Directory,
 ):
     if not task.done(dir, **args):
-        raise_exceptions(precede_futures)
+        wait_exception_iterable(precede_futures)
 
         thread_connection, manager_connection = TaskPipe()
         task_queue.put(TaskQueueElement(task, args, manager_connection))
-        
+
         result = thread_connection.recv()
         if result == SENTINEL:
             raise Exception()

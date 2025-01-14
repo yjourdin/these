@@ -52,6 +52,7 @@ def random_comparisons(
     alternatives: PerformanceTable,
     model: Model | None,
     nb: int | None = None,
+    pairs: Iterable[tuple[Any, Any]] | None = None,
     rng: Generator | None = None,
     remove_dominance: bool = False,
 ):
@@ -60,7 +61,7 @@ def random_comparisons(
     if model:
         pref_struct = PreferenceStructure()
         ranking = model.rank(alternatives)
-        for r in preference_relation_generator(ranking, rng=rng):
+        for r in preference_relation_generator(ranking, pairs, rng):
             if (not remove_dominance) or (r not in dom_struct):
                 pref_struct._relations.append(r)
             if len(pref_struct) == nb:
@@ -68,7 +69,8 @@ def random_comparisons(
     else:
         assert rng
         pref_struct = random_preference_relation(alternatives, rng)
-        pref_struct = pref_struct - dom_struct
+        if remove_dominance:
+            pref_struct -= dom_struct
 
     return pref_struct
 

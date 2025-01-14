@@ -1,6 +1,6 @@
 from abc import abstractmethod
-from collections.abc import Iterable
-from concurrent.futures import FIRST_EXCEPTION, Future, wait
+from collections.abc import Iterable, Mapping
+from concurrent.futures import FIRST_EXCEPTION, Future, as_completed, wait
 from dataclasses import dataclass, fields
 from time import process_time
 from typing import Any, ClassVar, NamedTuple, TypeGuard
@@ -20,19 +20,24 @@ type FutureTask = Future[TaskResult]
 type FutureTaskException = Future[TaskResult | None]
 
 
-def raise_exception(future: FutureTaskException) -> TypeGuard[FutureTask]:
+def wait_exception(future: FutureTaskException) -> TypeGuard[FutureTask]:
     if (err := future.exception()) is not None:
         raise err
     return True
 
 
-def raise_exceptions(
+def wait_exception_iterable(
     futures: Iterable[FutureTaskException],
 ) -> TypeGuard[Iterable[FutureTask]]:
-    done, not_done = wait(futures, return_when=FIRST_EXCEPTION)
-    for future in done:
-        raise_exception(future)
+    for future in as_completed(futures):
+        wait_exception(future)
     return True
+
+
+def wait_exception_mapping(
+    futures: Mapping[Any, FutureTaskException],
+) -> TypeGuard[Mapping[Any, FutureTask]]:
+    return wait_exception_iterable(futures.values())
 
 
 @dataclass(frozen=True)

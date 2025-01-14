@@ -95,6 +95,7 @@ class DirectoryGroupDecision(Directory):
         D_id: int,
         config: MIPConfig,
         id: int,
+        path: bool,
         P_id: int,
         it: int,
     ):
@@ -114,7 +115,8 @@ class DirectoryGroupDecision(Directory):
         same_alt: bool,
         D_id: int,
         config: MIPConfig,
-        id: int,
+        Mc_id: int,
+        path: bool,
         P_id: int,
         it: int,
     ):
@@ -135,7 +137,8 @@ class DirectoryGroupDecision(Directory):
         same_alt: bool,
         D_id: int,
         config: MIPConfig,
-        id: int,
+        Mc_id: int,
+        path: bool,
         P_id: int,
         it: int,
     ):
@@ -156,7 +159,8 @@ class DirectoryGroupDecision(Directory):
         same_alt: bool,
         D_id: int,
         config: MIPConfig,
-        id: int,
+        Mc_id: int,
+        path: bool,
         P_id: int,
         it: int,
     ):
@@ -178,6 +182,7 @@ class DirectoryGroupDecision(Directory):
         D_id: int,
         config: MIPConfig,
         Mc_id: int,
+        path: bool,
         id: int,
         it: int,
         t: int,

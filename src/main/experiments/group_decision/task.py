@@ -9,9 +9,7 @@ from ....mip.main import learn_mip
 from ....models import GroupModelEnum, model_from_json
 from ....performance_table.normal_performance_table import NormalPerformanceTable
 from ....preference_path.main import compute_model_path, compute_preference_path
-from ....preference_structure.generate import (
-    random_comparisons,
-)
+from ....preference_structure.generate import random_comparisons
 from ....preference_structure.io import from_csv, to_csv
 from ....random import Seed, rng
 from ....random import seed as random_seed
@@ -149,7 +147,7 @@ class DTask(AbstractDTask, MiTask):
         else:
             rng = self.rng(seed)
 
-        D = random_comparisons(A, Mi, self.nbc, rng)
+        D = random_comparisons(A, Mi, self.nbc, rng=rng)
 
         with self.D_file(dir, self.dm_id, 0).open("w") as f:
             to_csv(D, f)
@@ -165,6 +163,7 @@ class CollectiveTask(AbstractDTask):
     name = "Collective"
     config: MIPConfig
     Mc_id: int = field(hash=False)
+    path: bool = field(hash=False)
     P_id: int = field(hash=False)
     it: int  # = field(hash=False)
 
@@ -188,9 +187,9 @@ class CollectiveTask(AbstractDTask):
         R: list[PreferenceStructure] = []
         for dm_id in range(self.group_size):
             for it in range(1, self.it + 1):
-                if (RP_file := self.RP_file(dir, dm_id, it)).exists():
-                    with RP_file.open("r") as f:
-                        R.append(from_csv(f))
+                # if (RP_file := self.RP_file(dir, dm_id, it)).exists():
+                #     with RP_file.open("r") as f:
+                #         R.append(from_csv(f))
                 if (RC_file := self.RC_file(dir, dm_id, it)).exists():
                     with RC_file.open("r") as f:
                         if (RC := from_csv(f)) not in R:
@@ -232,6 +231,9 @@ class CollectiveTask(AbstractDTask):
                 CollectiveFieldnames.Same_alt: self.same_alt,
                 CollectiveFieldnames.D_id: self.D_id,
                 CollectiveFieldnames.Config: self.config,
+                CollectiveFieldnames.Mc_id: self.Mc_id,
+                CollectiveFieldnames.Path: self.path,
+                CollectiveFieldnames.P_id: self.P_id,
                 CollectiveFieldnames.It: self.it,
                 CollectiveFieldnames.Time: time,
                 CollectiveFieldnames.Fitness: best_fitness,
@@ -255,6 +257,7 @@ class CollectiveTask(AbstractDTask):
             self.D_id,
             self.config,
             self.Mc_id,
+            self.path,
             self.P_id,
             self.it,
         )
@@ -275,6 +278,7 @@ class CollectiveTask(AbstractDTask):
             self.D_id,
             self.config,
             self.Mc_id,
+            self.path,
             self.P_id,
             it,
         )
@@ -295,6 +299,7 @@ class CollectiveTask(AbstractDTask):
             self.D_id,
             self.config,
             self.Mc_id,
+            self.path,
             self.P_id,
             it,
         )
@@ -314,6 +319,7 @@ class CollectiveTask(AbstractDTask):
             self.D_id,
             self.config,
             self.Mc_id,
+            self.path,
             self.P_id,
             self.it,
         )
@@ -339,7 +345,7 @@ class PreferencePathTask(CollectiveTask, MiTask):
             D = from_csv(f)
 
         with self.Mc_file(dir).open("r") as f:
-            Mc = cast(SRMPModel, model_from_json(f.read()))
+            Mc = SRMPModel.from_json(f.read())
 
         R = []
         for RP_file in self.RP_file(dir).parent.iterdir():
@@ -376,6 +382,8 @@ class PreferencePathTask(CollectiveTask, MiTask):
                 PathFieldnames.Same_alt: self.same_alt,
                 PathFieldnames.D_id: self.D_id,
                 PathFieldnames.Config: self.config,
+                PathFieldnames.Mc_id: self.Mc_id,
+                PathFieldnames.P_id: self.P_id,
                 PathFieldnames.It: self.it,
                 PathFieldnames.Dm_id: self.dm_id,
                 PathFieldnames.Time: time,
@@ -383,6 +391,62 @@ class PreferencePathTask(CollectiveTask, MiTask):
                 PathFieldnames.Model_Length: len(model_path),
             }
         )
+
+    def P_file(self, dir: DirectoryGroupDecision, t: int, path: bool = True):
+        return dir.P(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.group,
+            self.dm_id,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.config,
+            self.Mc_id,
+            path,
+            self.P_id,
+            self.it,
+            t,
+        )
+
+    def D_file(self, dir: DirectoryGroupDecision):
+        return super().D_file(dir, self.dm_id)
+
+    def RP_file(self, dir: DirectoryGroupDecision):
+        return super().RP_file(dir, self.dm_id, self.it)
+
+    def done(self, dir: DirectoryGroupDecision, *args, **kwargs):
+        return self.P_file(dir, 0).exists()
+
+
+@dataclass(frozen=True)
+class NoPathTask(CollectiveTask, MiTask):
+    name = "NoPath"
+
+    def task(
+        self, dir: DirectoryGroupDecision, seed: Seed, max_time: int | None = None
+    ):
+        with self.A_train_file(dir).open("r") as f:
+            A = NormalPerformanceTable(read_csv(f, header=None))
+
+        with self.Mc_file(dir).open("r") as f:
+            Mc = SRMPModel.from_json(f.read())
+
+        with self.D_file(dir).open("r") as f:
+            D = from_csv(f)
+
+        Dc = random_comparisons(A, Mc, len(D), [r.elements for r in D])
+
+        with self.P_file(dir, 0).open("w") as f:
+            to_csv(D, f)
+        
+        with self.P_file(dir, 1).open("w") as f:
+            to_csv(Dc, f)
 
     def P_file(self, dir: DirectoryGroupDecision, t: int):
         return dir.P(
@@ -400,16 +464,14 @@ class PreferencePathTask(CollectiveTask, MiTask):
             self.D_id,
             self.config,
             self.Mc_id,
+            False,
             self.P_id,
             self.it,
             t,
         )
-
+    
     def D_file(self, dir: DirectoryGroupDecision):
         return super().D_file(dir, self.dm_id)
-
-    def RP_file(self, dir: DirectoryGroupDecision):
-        return super().RP_file(dir, self.dm_id, self.it)
 
     def done(self, dir: DirectoryGroupDecision, *args, **kwargs):
         return self.P_file(dir, 0).exists()
@@ -459,6 +521,9 @@ class AcceptTask(PreferencePathTask):
                 AcceptFieldnames.Same_alt: self.same_alt,
                 AcceptFieldnames.D_id: self.D_id,
                 AcceptFieldnames.Config: self.config,
+                AcceptFieldnames.Mc_id: self.Mc_id,
+                AcceptFieldnames.Path: self.path,
+                AcceptFieldnames.P_id: self.P_id,
                 AcceptFieldnames.It: self.it,
                 AcceptFieldnames.Dm_id: self.dm_id,
                 AcceptFieldnames.T: self.t,
@@ -469,7 +534,7 @@ class AcceptTask(PreferencePathTask):
         return best_model is not None
 
     def P_file(self, dir: DirectoryGroupDecision):
-        return super().P_file(dir, self.t)
+        return super().P_file(dir, self.t, self.path)
 
     def done(self, *args, **kwargs):
         return False
@@ -528,6 +593,9 @@ class CleanTask(PreferencePathTask):
                 CleanFieldnames.Same_alt: self.same_alt,
                 CleanFieldnames.D_id: self.D_id,
                 CleanFieldnames.Config: self.config,
+                CleanFieldnames.Mc_id: self.Mc_id,
+                CleanFieldnames.Path: self.path,
+                CleanFieldnames.P_id: self.P_id,
                 CleanFieldnames.It: self.it,
                 CleanFieldnames.Dm_id: self.dm_id,
                 CleanFieldnames.Removed: count,

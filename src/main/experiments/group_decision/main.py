@@ -18,6 +18,7 @@ from .task import (
     MoTask,
 )
 from .threads.collective import collective_thread
+from .threads.collective_no_path import collective_no_path_thread
 
 
 def main(
@@ -158,15 +159,60 @@ def main(
                                     dir,
                                 )
 
-                            for config in args.config:
+                            for config, path in product(args.config, args.path):
                                 for Mc_id in (
                                     range(args.nb_Mc) if args.nb_Mc else [D_id]
                                 ):
-                                    for P_id in (
-                                        range(args.nb_P) if args.nb_P else [Mc_id]
-                                    ):
+                                    if path:
+                                        for P_id in (
+                                            range(args.nb_P) if args.nb_P else [Mc_id]
+                                        ):
+                                            futures[task] = thread_pool.submit(
+                                                collective_thread,
+                                                {
+                                                    "max_time": args.max_time,
+                                                    "m": m,
+                                                    "n_tr": n_tr,
+                                                    "ko": ko,
+                                                    "Atr_id": Atr_id,
+                                                    "Mo_id": Mo_id,
+                                                    "Mi_id": Mi_id,
+                                                    "Mc_id": Mc_id,
+                                                    "P_id": P_id,
+                                                    "group_size": group_size,
+                                                    "group": group,
+                                                    "n_bc": n_bc,
+                                                    "same_alt": same_alt,
+                                                    "D_id": D_id,
+                                                    "config": config,
+                                                    "seeds": seeds,
+                                                },
+                                                task_queue,
+                                                [
+                                                    futures[
+                                                        DTask(
+                                                            m,
+                                                            n_tr,
+                                                            Atr_id,
+                                                            ko,
+                                                            Mo_id,
+                                                            group_size,
+                                                            group,
+                                                            Mi_id,
+                                                            dm_id,
+                                                            n_bc,
+                                                            same_alt,
+                                                            D_id,
+                                                        )
+                                                    ]
+                                                    for dm_id in range(group_size)
+                                                ],
+                                                dir,
+                                                args.max_time,
+                                            )
+                                    else:
                                         futures[task] = thread_pool.submit(
-                                            collective_thread,
+                                            collective_no_path_thread,
                                             {
                                                 "max_time": args.max_time,
                                                 "m": m,
