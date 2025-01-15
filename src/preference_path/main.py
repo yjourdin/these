@@ -25,17 +25,16 @@ def compute_model_path(
     A: PerformanceTable,
     rng: Generator = rng(),
     max_time: int = DEFAULT_MAX_TIME,
+    fixed_lex_order: bool = False,
 ):
     A = A.subtable(D.elements)
 
-    neighborhood = NeighborhoodCombined(
-        [
-            NeighborhoodProfile(A),
-            NeighborhoodWeight(len(A.criteria)),
-            NeighborhoodLexOrder(),
-        ],
-        rng,
-    )
+    neighborhoods = [NeighborhoodProfile(A), NeighborhoodWeight(len(A.criteria))]
+
+    if not fixed_lex_order:
+        neighborhoods.append(NeighborhoodLexOrder())
+
+    neighborhood = NeighborhoodCombined(neighborhoods, rng)
 
     def heuristic(model: FrozenSRMPModel):
         return 1 - fitness_comparisons_ranking(D, model.model.rank(A))

@@ -36,6 +36,7 @@ def learn_mip(
     rng_lexicographic_order: Generator,
     seed_mip: Seed,
     max_time: int = DEFAULT_MAX_TIME,
+    lex_order: list[int] | None = None,
     collective: bool = False,
     preferences_changes: list[int] | None = None,
     comparisons_refused: list[PreferenceStructure] | None = None,
@@ -86,7 +87,9 @@ def learn_mip(
         preference_relations = preference_relations_list[0]
         indifference_relations = indifference_relations_list[0]
 
-    if lex_order_shared:
+    if lex_order:
+        lexicographic_orders = np.array([lex_order])
+    elif lex_order_shared:
         if reference_model is None or lexicographic_order_distance == 0:
             lexicographic_orders = np.array(list(permutations(range(k))))
         else:

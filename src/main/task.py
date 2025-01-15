@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from collections.abc import Iterable, Mapping
-from concurrent.futures import FIRST_EXCEPTION, Future, as_completed, wait
+from concurrent.futures import Future, as_completed
 from dataclasses import dataclass, fields
 from time import process_time
 from typing import Any, ClassVar, NamedTuple, TypeGuard

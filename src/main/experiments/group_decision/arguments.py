@@ -28,3 +28,4 @@ class ArgumentsGroupDecision(Arguments, GroupMIPConfigField, GroupGroupParameter
     N_bc: list[int] = field(default_factory=list)
     same_alt: list[bool] = field(default_factory=lambda: [True])
     path: list[bool] = field(default_factory=lambda: [True])
+    fixed_lex_order: bool = False

@@ -1,12 +1,11 @@
 import csv
 from dataclasses import dataclass, field, replace
-from typing import cast
 
 from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
 from ....mip.main import learn_mip
-from ....models import GroupModelEnum, model_from_json
+from ....models import GroupModelEnum
 from ....performance_table.normal_performance_table import NormalPerformanceTable
 from ....preference_path.main import compute_model_path, compute_preference_path
 from ....preference_structure.generate import random_comparisons
@@ -55,12 +54,25 @@ class MoTask(AbstractMTask):
     name = "Mo"
     ko: int
     Mo_id: int = field(hash=False)
+    fixed_lex_order: bool = field(hash=False)
 
     def task(self, dir: DirectoryGroupDecision, seed: Seed):
         Mo = SRMPModel.random(nb_profiles=self.ko, nb_crit=self.m, rng=self.rng(seed))
 
+        if self.fixed_lex_order:
+            Mo.lexicographic_order = self.lexicographic_order
+
         with self.Mo_file(dir).open("w") as f:
             f.write(Mo.to_json())
+
+    @property
+    def lexicographic_order(self) -> list[int]:
+        return (
+            MoTask(self.m, self.ko, self.Mo_id, True)
+            .rng(self.Mo_id)
+            .permutation(self.ko)
+            .tolist()
+        )
 
     def Mo_file(self, dir: DirectoryGroupDecision):
         return dir.Mo(self.m, self.ko, self.Mo_id)
@@ -97,7 +109,11 @@ class MiTask(AbstractMiTask):
             Mo = SRMPModel.from_json(f.read())
 
         Mi = SRMPModel.from_reference(
-            Mo, self.group.gen.P, self.group.gen.W, self.group.gen.L, rng=self.rng(seed)
+            Mo,
+            self.group.gen.P,
+            self.group.gen.W,
+            self.group.gen.L if not self.fixed_lex_order else 0,
+            rng=self.rng(seed),
         )
 
         with self.Mi_file(dir, self.dm_id).open("w") as f:
@@ -207,6 +223,7 @@ class CollectiveTask(AbstractDTask):
             min(max_time, self.config.max_time)
             if max_time is not None
             else self.config.max_time,
+            self.lexicographic_order,
             True,
             C,
             R,
@@ -360,6 +377,7 @@ class PreferencePathTask(CollectiveTask, MiTask):
             min(max_time, self.config.max_time)
             if max_time is not None
             else self.config.max_time,
+            self.fixed_lex_order,
         )
         preference_path = compute_preference_path(model_path, D, A, R)
 
@@ -444,7 +462,7 @@ class NoPathTask(CollectiveTask, MiTask):
 
         with self.P_file(dir, 0).open("w") as f:
             to_csv(D, f)
-        
+
         with self.P_file(dir, 1).open("w") as f:
             to_csv(Dc, f)
 
@@ -469,7 +487,7 @@ class NoPathTask(CollectiveTask, MiTask):
             self.it,
             t,
         )
-    
+
     def D_file(self, dir: DirectoryGroupDecision):
         return super().D_file(dir, self.dm_id)
 
@@ -500,6 +518,7 @@ class AcceptTask(PreferencePathTask):
             rng(0),
             0,
             self.config.max_time,
+            self.lexicographic_order,
             reference_model=Mi,
             gamma=self.config.gamma,
             profiles_amp=self.group.accept.P,
@@ -568,6 +587,7 @@ class CleanTask(PreferencePathTask):
                     rng(0),
                     0,
                     self.config.max_time,
+                    self.lexicographic_order,
                     reference_model=Mi,
                     gamma=self.config.gamma,
                     profiles_amp=self.group.accept.P,

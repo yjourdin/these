@@ -45,6 +45,7 @@ best_model, best_fitness, time = learn_mip(
     rng_lex,
     seed(rng_mip),
     args.max_time,
+    args.lex_order,
     args.collective,
     args.changes,
     R,

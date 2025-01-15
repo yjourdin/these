@@ -87,7 +87,7 @@ def main(
             )
 
         for ko, Mo_id in product(args.Ko, range(NB_MO)):
-            task = MoTask(m, ko, Mo_id)
+            task = MoTask(m, ko, Mo_id, args.fixed_lex_order)
             futures[task] = thread_pool.submit(
                 task_thread,
                 task,
@@ -100,13 +100,22 @@ def main(
             for group_size, group in product(args.group_size, args.group):
                 for Mi_id in range(args.nb_Mi) if args.nb_Mi else [Mo_id]:
                     for dm_id in range(group_size):
-                        task = MiTask(m, ko, Mo_id, group_size, group, Mi_id, dm_id)
+                        task = MiTask(
+                            m,
+                            ko,
+                            Mo_id,
+                            args.fixed_lex_order,
+                            group_size,
+                            group,
+                            Mi_id,
+                            dm_id,
+                        )
                         futures[task] = thread_pool.submit(
                             task_thread,
                             task,
                             {"seed": seeds.Mi[Mi_id]},
                             task_queue,
-                            [futures[MoTask(m, ko, Mo_id)]],
+                            [futures[MoTask(m, ko, Mo_id, args.fixed_lex_order)]],
                             dir,
                         )
 
@@ -129,6 +138,7 @@ def main(
                                     Atr_id,
                                     ko,
                                     Mo_id,
+                                    args.fixed_lex_order,
                                     group_size,
                                     group,
                                     Mi_id,
@@ -149,6 +159,7 @@ def main(
                                                 m,
                                                 ko,
                                                 Mo_id,
+                                                args.fixed_lex_order,
                                                 group_size,
                                                 group,
                                                 Mi_id,
@@ -179,6 +190,7 @@ def main(
                                                     "Mi_id": Mi_id,
                                                     "Mc_id": Mc_id,
                                                     "P_id": P_id,
+                                                    "fixed_lex_order": args.fixed_lex_order,
                                                     "group_size": group_size,
                                                     "group": group,
                                                     "n_bc": n_bc,
@@ -196,6 +208,7 @@ def main(
                                                             Atr_id,
                                                             ko,
                                                             Mo_id,
+                                                            args.fixed_lex_order,
                                                             group_size,
                                                             group,
                                                             Mi_id,
@@ -240,6 +253,7 @@ def main(
                                                         Atr_id,
                                                         ko,
                                                         Mo_id,
+                                                        args.fixed_lex_order,
                                                         group_size,
                                                         group,
                                                         Mi_id,

@@ -11,6 +11,9 @@ parser.add_argument("k", type=int, help="Number of profiles")
 parser.add_argument("A", type=argparse.FileType("r"), help="Alternatives")
 parser.add_argument("D", nargs="+", type=argparse.FileType("r"), help="Comparisons")
 parser.add_argument(
+    "-l", "--lex-order", nargs="+", type=int, help="Lexicographic order"
+)
+parser.add_argument(
     "--shared",
     nargs="*",
     default=[],
@@ -27,9 +30,7 @@ parser.add_argument(
 parser.add_argument(
     "--refused", nargs="+", type=argparse.FileType("r"), help="Refused preferences"
 )
-parser.add_argument(
-    "--reference", type=argparse.FileType("r"), help="Reference model"
-)
+parser.add_argument("--reference", type=argparse.FileType("r"), help="Reference model")
 parser.add_argument(
     "--max-time", type=int, default=DEFAULT_MAX_TIME, help="Time limit (in seconds)"
 )
