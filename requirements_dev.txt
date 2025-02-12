@@ -5,3 +5,4 @@ highspy
 ipykernel
 seaborn
 snakeviz
+https://github.com/JasonGross/tikzplotlib/archive/refs/tags/v0.10.1.post13.zip
