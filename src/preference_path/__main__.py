@@ -1,3 +1,4 @@
+import csv
 from pathlib import Path
 
 from pandas import read_csv
@@ -28,15 +29,32 @@ R = [from_csv(R_file) for R_file in args.R] if args.R is not None else []
 rng = rng(args.seed)
 
 
-# Compute path
+# Compute model path
 model_path, time = compute_model_path(Mc, D, A, rng, args.max_time)
 
+
+# Write model path
+if args.model_output:
+    for index, model in enumerate(model_path):
+        filename = add_filename_suffix(Path(args.model_output), f"_{index}")
+
+        with filename.open("w") as f:
+            f.write(model.to_json())
+
+
+# Compute path
 path = compute_preference_path(model_path, D, A, R)
 
 
 # Write path
-for index, preferences in enumerate(path):
-    filename = add_filename_suffix(Path(args.output), f"_{index}")
+if args.output:
+    for index, preferences in enumerate(path):
+        filename = add_filename_suffix(Path(args.output), f"_{index}")
 
-    with filename.open("w") as f:
-        to_csv(preferences, f)
+        with filename.open("w") as f:
+            to_csv(preferences, f)
+
+
+# Write results
+writer = csv.writer(args.result, "unix")
+writer.writerow([len(path), len(model_path)])

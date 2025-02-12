@@ -13,7 +13,8 @@ from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..preference_structure.utils import complementary_preference, divide_preferences
 from ..random import Seed
 from ..rmp.permutation import all_max_adjacent_distance
-from ..srmp.model import SRMPModel, SRMPParamEnum
+from ..srmp.model import SRMPModel, SRMPParamFlag
+from ..utils import tolist
 from .formulation.srmp import MIPSRMP
 from .formulation.srmp_accept import MIPSRMPAccept
 from .formulation.srmp_collective import MIPSRMPCollective
@@ -40,6 +41,7 @@ def learn_mip(
     collective: bool = False,
     preferences_changes: list[int] | None = None,
     comparisons_refused: list[PreferenceStructure] | None = None,
+    comparisons_accepted: PreferenceStructure | None = None,
     reference_model: SRMPModel | None = None,
     profiles_amp: float = 1,
     weights_amp: float = 1,
@@ -47,7 +49,7 @@ def learn_mip(
     *args,
     **kwargs,
 ):
-    if model_type.value[0] is not ModelEnum.SRMP:
+    if model_type.model is not ModelEnum.SRMP:
         return MIPResult()
 
     NB_DM = len(comparisons)
@@ -58,9 +60,7 @@ def learn_mip(
     )
 
     best_model = None
-    best_objective: float | None = (
-        None  # = sum(len(comp) for comp in comparisons) if collective else 0
-    )
+    best_objective: float | None = None
     time = 0
     time_left = max_time
 
@@ -74,14 +74,14 @@ def learn_mip(
         indifference_relations_list.append(indifference_relations_dm)
 
     lex_order_shared = (
-        (SRMPParamEnum.LEXICOGRAPHIC_ORDER in model_type.value[1])
+        (SRMPParamFlag.LEXICOGRAPHIC_ORDER in model_type.shared_params)
         or (NB_DM == 1)
         or collective
     )
 
     preferences_changes = preferences_changes or ([0] * NB_DM)
 
-    shared_params = cast(set[SRMPParamEnum], model_type.value[1])
+    shared_params = SRMPParamFlag(model_type.shared_params)
 
     if NB_DM == 1:
         preference_relations = preference_relations_list[0]
@@ -112,7 +112,7 @@ def learn_mip(
         if time_left >= 1:
             mip: MIP
             if lex_order_shared:
-                lexicographic_order = cast(list[int], lexicographic_order.tolist())
+                lexicographic_order = cast(list[int], tolist(lexicographic_order))
                 if NB_DM == 1:
                     if reference_model:
                         mip = MIPSRMPAccept(
@@ -145,17 +145,18 @@ def learn_mip(
                     preference_to_accept_list: list[list[P]] = []
                     indifference_to_accept_list: list[list[I]] = []
                     for comp in comparisons_refused:
-                        comp_complementary: list[P | I] = []
-                        for r in comp:
-                            comp_complementary.extend(
-                                complementary_preference(cast(P | I, r))
-                            )
+                        comp_complementary = complementary_preference(comp)
 
                         preference_to_accept, indifference_to_accept = (
                             divide_preferences(comp_complementary)
                         )
                         preference_to_accept_list.append(preference_to_accept)
                         indifference_to_accept_list.append(indifference_to_accept)
+                    
+                    comparisons_accepted = comparisons_accepted or PreferenceStructure()
+                    preference_accepted_list, indifference_accepted_list = (
+                        divide_preferences(comparisons_accepted)
+                    )
 
                     mip = MIPSRMPCollective(
                         alternatives,
@@ -165,6 +166,8 @@ def learn_mip(
                         preferences_changes,
                         preference_to_accept_list,
                         indifference_to_accept_list,
+                        preference_accepted_list,
+                        indifference_accepted_list,
                         best_objective=best_objective,
                         time_limit=time_left,
                         seed=seed_mip,
@@ -184,9 +187,7 @@ def learn_mip(
                         **kwargs,
                     )
             else:
-                lexicographic_order = cast(
-                    list[list[int]], lexicographic_order.tolist()
-                )
+                lexicographic_order = cast(list[list[int]], tolist(lexicographic_order))
                 mip = MIPSRMPGroup(
                     alternatives,
                     preference_relations_list,

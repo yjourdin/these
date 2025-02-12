@@ -1,6 +1,8 @@
-from .enum_base import StrEnum
+from enum import auto
+
+from .enum import StrEnum
 
 
 class MethodEnum(StrEnum):
-    MIP = "MIP"
-    SA = "SA"
+    MIP = auto()
+    SA = auto()

@@ -1,14 +1,14 @@
 import csv
+from functools import reduce
 
 from mcda.relations import PreferenceStructure
 from pandas import read_csv
-
-from src.srmp.model import SRMPModel
 
 from ..models import GroupModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..preference_structure.io import from_csv
 from ..random import rng, seed
+from ..srmp.model import SRMPModel
 from .argument_parser import parse_args
 from .main import learn_mip
 
@@ -23,10 +23,11 @@ D: list[PreferenceStructure] = []
 for d in args.D:
     D.append(from_csv(d))
 
-R: list[PreferenceStructure] = []
-print()
+Refused: list[PreferenceStructure] = []
 for r in args.refused:
-    R.append(from_csv(r))
+    Refused.append(from_csv(r))
+
+Accepted = from_csv(args.accepted)
 
 ref = None
 if args.reference:
@@ -38,7 +39,7 @@ rng_lex, rng_mip = rng(args.seed).spawn(2)
 
 # Learn MIP
 best_model, best_fitness, time = learn_mip(
-    GroupModelEnum((args.model, set(args.shared))),  # type: ignore
+    GroupModelEnum((args.model, reduce(lambda x, y: x | y, args.shared))),
     args.k,
     A,
     D,
@@ -48,7 +49,8 @@ best_model, best_fitness, time = learn_mip(
     args.lex_order,
     args.collective,
     args.changes,
-    R,
+    Refused,
+    Accepted,
     ref,
     gamma=args.gamma,
     inconsistencies=not args.no_inconsistencies,

@@ -5,13 +5,12 @@ from typing import cast
 from ....methods import MethodEnum
 from ....models import ModelEnum
 from ....utils import list_replace
-from ...task import FutureTaskException, Task
+from ...task import FutureTaskException, Task, wait_exception_mapping
 from ...threads.task import task_thread
 from ...threads.worker_manager import TaskQueue
 from .arguments import ArgumentsElicitation
 from .config import MIPConfig, SAConfig, create_config
 from .directory import DirectoryElicitation
-from .fieldnames import ConfigFieldnames
 from .seeds import Seeds
 from .task import ATestTask, ATrainTask, DTask, MIPTask, MoTask, SATask, TestTask
 
@@ -37,6 +36,10 @@ def main(
     list_replace(seeds.D, args.seeds.D)
     list_replace(seeds.Me, args.seeds.Me)
 
+    # Write seeds
+    with dir.seeds.open("w") as f:
+        f.write(seeds.to_json())
+
     # Add missing configs
     for method in args.method:
         if not any(config.method is method for config in args.config):
@@ -44,14 +47,9 @@ def main(
 
     # Write configs
     for config in args.config:
-        dir.csv_files["configs"].queue.put(
-            {
-                ConfigFieldnames.Id: config.id,
-                ConfigFieldnames.Method: config.method,
-                ConfigFieldnames.Config: {
-                    k: v for k, v in config.to_dict().items() if k != "id"
-                },
-            }
+        csv_file = dir.csv_files["configs"]
+        csv_file.writerow(
+            csv_file.fields(Id=config.id, Method=config.method, Config=config)
         )
 
     # Task dict
@@ -86,7 +84,7 @@ def main(
         for Mo, ko, group_size, Mo_id in product(
             args.Mo, args.Ko, args.group_size, range(NB_MO)
         ):
-            task = MoTask(m, Mo, ko, group_size, Mo_id)
+            task = MoTask(m, Mo, ko, group_size, args.fixed_lex_order, Mo_id)
             futures[task] = thread_pool.submit(
                 task_thread,
                 task,
@@ -116,6 +114,7 @@ def main(
                                 Mo,
                                 ko,
                                 group_size,
+                                args.fixed_lex_order,
                                 Mo_id,
                                 n_bc,
                                 same_alt,
@@ -130,14 +129,23 @@ def main(
                                 task_queue,
                                 [
                                     futures[ATrainTask(m, n_tr, Atr_id)],
-                                    futures[MoTask(m, Mo, ko, group_size, Mo_id)],
+                                    futures[
+                                        MoTask(
+                                            m,
+                                            Mo,
+                                            ko,
+                                            group_size,
+                                            args.fixed_lex_order,
+                                            Mo_id,
+                                        )
+                                    ],
                                 ],
                                 dir,
                             )
 
                         for Me, ke, method, Me_id in product(
                             args.Me if args.Me else [Mo],
-                            args.Ke if args.Ke else [ko],
+                            args.Ke if (not args.fixed_lex_order and args.Ke) else [ko],
                             args.method,
                             range(args.nb_Me) if args.nb_Me else [D_id],
                         ):
@@ -156,6 +164,7 @@ def main(
                                             Mo,
                                             ko,
                                             group_size,
+                                            args.fixed_lex_order,
                                             Mo_id,
                                             n_bc,
                                             same_alt,
@@ -176,6 +185,7 @@ def main(
                                             Mo,
                                             ko,
                                             group_size,
+                                            args.fixed_lex_order,
                                             Mo_id,
                                             n_bc,
                                             same_alt,
@@ -202,6 +212,7 @@ def main(
                                                 Mo,
                                                 ko,
                                                 group_size,
+                                                args.fixed_lex_order,
                                                 Mo_id,
                                                 n_bc,
                                                 same_alt,
@@ -226,6 +237,7 @@ def main(
                                         Mo,
                                         ko,
                                         group_size,
+                                        args.fixed_lex_order,
                                         Mo_id,
                                         n_bc,
                                         same_alt,
@@ -250,3 +262,5 @@ def main(
                                         ],
                                         dir,
                                     )
+
+    wait_exception_mapping(futures)

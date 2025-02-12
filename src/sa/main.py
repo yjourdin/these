@@ -38,6 +38,7 @@ def learn_sa(
     alpha: float,
     rng_init: Generator,
     rng_sa: Generator,
+    lex_order: list[int] | None = None,
     T0: float | None = None,
     accept: float | None = None,
     L: int = 1,
@@ -52,7 +53,6 @@ def learn_sa(
 
     M = len(alternatives.criteria)
 
-    init_sol = None
     match model:
         case ModelEnum.RMP:
             init_sol = RMPModel.random(
@@ -68,7 +68,8 @@ def learn_sa(
                 rng=rng_init,
                 profiles_values=midpoints(alternatives),
             )
-    assert init_sol
+    if lex_order:
+        init_sol.lexicographic_order = lex_order
 
     neighbors: list[Neighbor] = []
     prob: list[int] = []
@@ -82,12 +83,12 @@ def learn_sa(
             prob.append(2**M)
         case ModelEnum.SRMP:
             if "amp" in kwargs:
-                neighbors.append(NeighborWeight(kwargs["amp"]))
+                neighbors.append(NeighborWeight(M))
             else:
                 raise ValueError("amp must be specified")
             prob.append(M)
 
-    if k >= 2:
+    if (not lex_order) and (k >= 2):
         neighbors.append(NeighborLexOrder())
         prob.append(k)
 

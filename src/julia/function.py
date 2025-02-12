@@ -27,7 +27,7 @@ def generate_linext(m: int, seed: Seed | None = None) -> list[list[bool]]:
 
 
 def generate_partial_sum(m: int) -> None:
-    run_julia("generate_partial_sum.jl", m, S_file(m))
+    run_julia("generate_partial_sum.jl", m, output = S_file(m))
 
 
 def generate_weak_order(m: int, seed: Seed | None = None) -> list[int]:

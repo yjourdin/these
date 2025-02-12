@@ -1,4 +1,5 @@
 import argparse
+from sys import stdout
 
 from ..constants import DEFAULT_MAX_TIME
 
@@ -10,9 +11,13 @@ parser.add_argument("-o", "--output", help="Output filename")
 parser.add_argument(
     "--max-time", type=int, default=DEFAULT_MAX_TIME, help="Time limit (in seconds)"
 )
-parser.add_argument("-s", "--seed", default=0, type=int, help="Random seed")
+parser.add_argument("-s", "--seed", type=int, help="Random seed")
 parser.add_argument(
     "-R", nargs="+", type=argparse.FileType("r"), help="Refused comparisons"
+)
+parser.add_argument("--model-output", help="Output model files")
+parser.add_argument(
+    "-r", "--result", default=stdout, type=argparse.FileType("a"), help="Result file"
 )
 
 

@@ -1,7 +1,7 @@
 import argparse
 from sys import stdout
 
-from .model import RMPParamEnum
+from .model import RMPParamFlag
 
 parser = argparse.ArgumentParser()
 parser.add_argument("group_size", type=int, default=1, help="Group size")
@@ -11,8 +11,8 @@ parser.add_argument(
     "--shared",
     nargs="*",
     default=[],
-    type=RMPParamEnum,  # type: ignore
-    choices=RMPParamEnum,
+    type=RMPParamFlag,
+    choices=RMPParamFlag,
     help="Parameters shared between decision makers",
 )
 parser.add_argument(
@@ -23,11 +23,7 @@ parser.add_argument(
 )
 parser.add_argument("-s", "--seed", type=int, help="Random seed")
 parser.add_argument(
-    "-o",
-    "--output",
-    default=stdout,
-    type=argparse.FileType("w"),
-    help="Output file",
+    "-o", "--output", default=stdout, type=argparse.FileType("w"), help="Output file"
 )
 
 

@@ -1,51 +1,81 @@
+from pathlib import Path
+
 from ....utils import filename_csv, filename_json
-from ...csv_file import CSVFile
 from ...directory import Directory
 from ..elicitation.config import MIPConfig
-from ..elicitation.fieldnames import ConfigFieldnames
-from .fieldnames import (
-    AcceptFieldnames,
-    CleanFieldnames,
-    CollectiveFieldnames,
-    CompromiseFieldnames,
-    GroupParametersFieldnames,
-    PathFieldnames,
+from ..elicitation.csv_files import ConfigCSVFile
+from .csv_files import (
+    AcceptCSVFile,
+    ChangesCSVFile,
+    CleanCSVFile,
+    CompromiseCSVFile,
+    GroupParametersCSVFile,
+    MIPCSVFile,
+    PathCSVFile,
 )
 from .fields import GroupParameters
 
 
 class DirectoryGroupDecision(Directory):
+    class Dirs(Directory.Dirs):
+        A: Path
+        Mo: Path
+        Mi: Path
+        D: Path
+        Di: Path
+        Mc: Path
+        Dc: Path
+        C: Path
+        Dr: Path
+        Cr: Path
+        P: Path
+
+    class CSVFiles(Directory.CSVFiles):
+        accept: AcceptCSVFile
+        changes: ChangesCSVFile
+        clean: CleanCSVFile
+        mip: MIPCSVFile
+        compromise: CompromiseCSVFile
+        configs: ConfigCSVFile
+        group_parameters: GroupParametersCSVFile
+        path: PathCSVFile
+
     def __init__(self, dir: str, name: str):
         super().__init__(dir, name)
-        self.dirs.update(
-            A_train=self.dirs["root"] / "A_train",
+
+        self.dirs = self.Dirs(
+            self.dirs,
+            A=self.dirs["root"] / "A",
             Mo=self.dirs["root"] / "Mo",
             Mi=self.dirs["root"] / "Mi",
             D=self.dirs["root"] / "D",
+            Di=self.dirs["root"] / "Di",
             Mc=self.dirs["root"] / "Mc",
+            Dc=self.dirs["root"] / "Dc",
             C=self.dirs["root"] / "C",
-            RP=self.dirs["root"] / "RP",
-            RC=self.dirs["root"] / "RC",
+            Dr=self.dirs["root"] / "Dr",
+            Cr=self.dirs["root"] / "Cr",
             P=self.dirs["root"] / "P",
         )
-        self.csv_files.update(
-            accept=CSVFile(self.dirs["root"] / "accept_results.csv", AcceptFieldnames),
-            clean=CSVFile(self.dirs["root"] / "clean_results.csv", CleanFieldnames),
-            collective=CSVFile(
-                self.dirs["root"] / "collective_results.csv", CollectiveFieldnames
+
+        self.seeds = self.dirs["root"] / "seeds.json"
+
+        self.csv_files = self.CSVFiles(
+            self.csv_files,
+            accept=AcceptCSVFile(self.dirs["root"] / "accept_results.csv"),
+            changes=ChangesCSVFile(self.dirs["root"] / "changes_results.csv"),
+            clean=CleanCSVFile(self.dirs["root"] / "clean_results.csv"),
+            mip=MIPCSVFile(self.dirs["root"] / "mip_results.csv"),
+            compromise=CompromiseCSVFile(self.dirs["root"] / "compromise_results.csv"),
+            configs=ConfigCSVFile(self.dirs["root"] / "configs.csv"),
+            group_parameters=GroupParametersCSVFile(
+                self.dirs["root"] / "group_parameters.csv"
             ),
-            compromise=CSVFile(
-                self.dirs["root"] / "compromise_results.csv", CompromiseFieldnames
-            ),
-            configs=CSVFile(self.dirs["root"] / "configs.csv", ConfigFieldnames),
-            group_parameters=CSVFile(
-                self.dirs["root"] / "group_parameters.csv", GroupParametersFieldnames
-            ),
-            path=CSVFile(self.dirs["root"] / "path_results.csv", PathFieldnames),
+            path=PathCSVFile(self.dirs["root"] / "path_results.csv"),
         )
 
-    def A_train(self, m: int, n: int, id: int):
-        return self.dirs["A_train"] / filename_csv(locals())
+    def A(self, m: int, n: int, id: int):
+        return self.dirs["A"] / filename_csv(locals())
 
     def Mo(self, m: int, k: int, id: int):
         return self.dirs["Mo"] / filename_json(locals())
@@ -76,9 +106,30 @@ class DirectoryGroupDecision(Directory):
         n: int,
         same_alt: bool,
         id: int,
-        it: int,
     ):
         return self.dirs["D"] / filename_csv(locals())
+
+    def Di(
+        self,
+        m: int,
+        ntr: int,
+        Atr_id: int,
+        k: int,
+        Mo_id: int,
+        group_size: int,
+        group: GroupParameters,
+        dm_id: int,
+        Mi_id: int,
+        n: int,
+        same_alt: bool,
+        D_id: int,
+        config: MIPConfig,
+        id: int,
+        path: bool,
+        P_id: int,
+        it: int,
+    ):
+        return self.dirs["Di"] / filename_json(locals())
 
     def Mc(
         self,
@@ -101,6 +152,27 @@ class DirectoryGroupDecision(Directory):
     ):
         return self.dirs["Mc"] / filename_json(locals())
 
+    def Dc(
+        self,
+        m: int,
+        ntr: int,
+        Atr_id: int,
+        k: int,
+        Mo_id: int,
+        group_size: int,
+        group: GroupParameters,
+        Mi_id: int,
+        n: int,
+        same_alt: bool,
+        D_id: int,
+        config: MIPConfig,
+        id: int,
+        path: bool,
+        P_id: int,
+        it: int,
+    ):
+        return self.dirs["Dc"] / filename_csv(locals())
+
     def C(
         self,
         m: int,
@@ -122,7 +194,7 @@ class DirectoryGroupDecision(Directory):
     ):
         return self.dirs["C"] / filename_csv(locals())
 
-    def RP(
+    def Dr(
         self,
         m: int,
         ntr: int,
@@ -142,9 +214,9 @@ class DirectoryGroupDecision(Directory):
         P_id: int,
         it: int,
     ):
-        return self.dirs["RP"] / filename_csv(locals())
+        return self.dirs["Dr"] / filename_csv(locals())
 
-    def RC(
+    def Cr(
         self,
         m: int,
         ntr: int,
@@ -164,7 +236,7 @@ class DirectoryGroupDecision(Directory):
         P_id: int,
         it: int,
     ):
-        return self.dirs["RC"] / filename_csv(locals())
+        return self.dirs["Cr"] / filename_csv(locals())
 
     def P(
         self,

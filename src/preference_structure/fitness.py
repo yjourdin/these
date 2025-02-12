@@ -1,6 +1,7 @@
 from typing import cast
 
 import numpy as np
+import numpy.typing as npt
 from mcda.internal.core.matrices import OutrankingMatrix
 from mcda.internal.core.relations import Relation
 from mcda.internal.core.values import Ranking
@@ -9,11 +10,11 @@ from mcda.relations import I, P, PreferenceStructure
 from .utils import OutrankingMatrixClass, RankingClass, outranking_numpy
 
 
-def fitness_comparisons(Co: PreferenceStructure, Ce: PreferenceStructure) -> float:
+def fitness_comparisons(Co: PreferenceStructure, Ce: PreferenceStructure):
     return sum(r in Ce for r in Co) / len(Co)
 
 
-def fitness_comparisons_ranking(Co: PreferenceStructure, Re: Ranking) -> float:
+def fitness_comparisons_ranking(Co: PreferenceStructure, Re: Ranking):
     Re_dict = Re.data.to_dict()
 
     def correct(r: Relation):
@@ -29,9 +30,7 @@ def fitness_comparisons_ranking(Co: PreferenceStructure, Re: Ranking) -> float:
     return sum(map(correct, Co)) / len(Co)
 
 
-def fitness_comparisons_outranking(
-    Co: PreferenceStructure, Oe: OutrankingMatrix
-) -> float:
+def fitness_comparisons_outranking(Co: PreferenceStructure, Oe: OutrankingMatrix):
     def correct(r: Relation):
         a, b = r.elements
         match r:
@@ -45,7 +44,7 @@ def fitness_comparisons_outranking(
     return sum(map(correct, Co)) / len(Co)
 
 
-def fitness_ranking_comparisons(Ro: Ranking, Ce: PreferenceStructure) -> float:
+def fitness_ranking_comparisons(Ro: Ranking, Ce: PreferenceStructure):
     n = len(Ro)
     Ro_dict = Ro.data.to_dict()
 
@@ -62,9 +61,7 @@ def fitness_ranking_comparisons(Ro: Ranking, Ce: PreferenceStructure) -> float:
     return sum(map(correct, Ce)) / (n * (n - 1) / 2)
 
 
-def fitness_outranking_comparisons(
-    Oo: OutrankingMatrix, Ce: PreferenceStructure
-) -> float:
+def fitness_outranking_comparisons(Oo: OutrankingMatrix, Ce: PreferenceStructure):
     n = len(Oo.data)
 
     def correct(r: Relation):
@@ -80,7 +77,7 @@ def fitness_outranking_comparisons(
     return sum(map(correct, Ce)) / (n * (n - 1) / 2)
 
 
-def fitness_outranking_numpy(Oo: np.ndarray, Oe: np.ndarray) -> float:
+def fitness_outranking_numpy(Oo: npt.NDArray[np.bool_], Oe: npt.NDArray[np.bool_]):
     ind = np.triu_indices(Oo.shape[0], 1)
 
     Or = np.logical_not(np.logical_xor(Oo, Oe))
@@ -91,16 +88,14 @@ def fitness_outranking_numpy(Oo: np.ndarray, Oe: np.ndarray) -> float:
     return s / ss
 
 
-def fitness_outranking(
-    Oo: OutrankingMatrix | Ranking, Oe: OutrankingMatrix | Ranking
-) -> float:
+def fitness_outranking(Oo: OutrankingMatrix | Ranking, Oe: OutrankingMatrix | Ranking):
     return fitness_outranking_numpy(outranking_numpy(Oo), outranking_numpy(Oe))
 
 
 def fitness(
     o: PreferenceStructure | OutrankingMatrix | Ranking,
     e: PreferenceStructure | OutrankingMatrix | Ranking,
-) -> float:
+):
     if isinstance(o, PreferenceStructure):
         if isinstance(e, PreferenceStructure):
             return fitness_comparisons(o, e)

@@ -35,7 +35,7 @@ class GBFS[T](Dataclass):
         # Initialise
         start_time = process_time()
         self.time = process_time() - start_time
-        visited = {source}
+        # visited = {source}
         open_heap = [Node(source, self.heuristic(source))]
         closed_set = {source}
         parent: dict[T, T | None] = {source: None}
@@ -44,21 +44,33 @@ class GBFS[T](Dataclass):
         while (self.time < self.max_time) and open_heap:
             # Best node
             current = heapq.heappop(open_heap)
+            # print(
+            #     current.heuristic,
+            #     current.item.profiles[0],
+            #     current.item.weights,
+            #     current.item.importance_relation,
+            # )
+            # print()
+            # print("Cur", current.heuristic, current.item.weights)
+            # print("Cur", current.item.weights)
 
             # Explore neighborhood
             for neighbor in self.neighborhood(current.item):
+                # print("Nei", neighbor.weights)
                 if neighbor not in closed_set:
+                    # print("passed")
                     parent[neighbor] = current.item
 
                     # Stop when target reached
                     if (heuristic_value := self.heuristic(neighbor)) == 0:
+                        # print(len(closed_set))
                         return PathsReconstructor(parent)(neighbor)
                     else:
-                        # print(heuristic_value)
                         # Add neighbor to queue
                         heapq.heappush(open_heap, Node(neighbor, heuristic_value))
+                        # print("Nei", heuristic_value, neighbor.weights)
                         closed_set.add(neighbor)
-                        visited.add(neighbor)
+                        # visited.add(neighbor)
 
             # Update time
             self.time = process_time() - start_time

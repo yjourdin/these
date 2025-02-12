@@ -32,6 +32,7 @@ from mcda.values import CommensurableValues, Values
 from pandas import DataFrame, Series, concat
 from scipy.stats import rankdata
 
+from ..utils import tolist
 from .importance_relation import ImportanceRelation
 
 
@@ -213,7 +214,7 @@ class RMP(Ranker):
         return CommensurableValues(
             ranks,
             scale=DiscreteQuantitativeScale(
-                ranks.tolist(),
+                list(ranks),
                 PreferenceDirection.MIN,
             ),
         )
@@ -486,7 +487,7 @@ class RMP(Ranker):
         # Draw horizontal striped background
         ax.add_plot(
             HorizontalStripes(
-                yminorticks.tolist(),
+                tolist(yminorticks),
                 color="black",
                 alpha=0.1,
                 attach_yticks=True,
@@ -517,7 +518,7 @@ class RMP(Ranker):
             # Current alternative's ranks
             current_ranks = ranks[alt]
             # Update offsets (return to 0.5 if it's a new rank)
-            offsets = np.where(current_ranks == previous_ranks, offsets, 0.5).tolist()
+            offsets = tolist(np.where(current_ranks == previous_ranks, offsets, 0.5))
             offsets = [
                 offsets[profile] - offsets_width.loc[profile, current_ranks[profile]]
                 for profile in range(nb_profiles)
@@ -600,7 +601,7 @@ class NormalRMP(RMP):
         return CommensurableValues(
             Series(ranks, self.performance_table.alternatives),
             scale=DiscreteQuantitativeScale(
-                ranks.tolist(),
+                list(ranks),
                 PreferenceDirection.MIN,
             ),
         )

@@ -1,5 +1,5 @@
 from collections.abc import Collection
-from enum import member
+from enum import Enum, member
 from typing import NamedTuple, cast
 
 import numpy as np
@@ -8,7 +8,6 @@ from mcda import PerformanceTable
 from mcda.internal.core.values import Ranking
 from scipy.stats import kendalltau, spearmanr
 
-from ..enum_base import Enum
 from ..model import GroupModel, Model
 from ..preference_structure.fitness import fitness_outranking
 
@@ -36,6 +35,9 @@ class DistanceRankingEnum(Enum):
 
     def __call__(self, Ra: Ranking, Rb: Ranking) -> float:
         return self.value(self, Ra, Rb)
+
+    def __str__(self) -> str:
+        return self.name
 
 
 def rccd(distance: DistanceRankingEnum):
@@ -78,7 +80,7 @@ def consensus_group_model(
     collective_ranking = model.collective_model.rank(performance_table)
 
     between_individual = cast(
-        npt.NDArray[np.float32],
+        npt.NDArray[np.float64],
         np.array(
             [
                 [
@@ -91,11 +93,11 @@ def consensus_group_model(
         ),
     )
     individual = cast(
-        npt.NDArray[np.float32], (between_individual.sum(1) / (NB_DM - 1))
+        npt.NDArray[np.float64], (between_individual.sum(1) / (NB_DM - 1))
     )
     among_dm = cast(float, individual.sum() / NB_DM)
     between_individual_and_collective = cast(
-        npt.NDArray[np.float32],
+        npt.NDArray[np.float64],
         np.array([distance(dm_rankings[dm_a], collective_ranking) for dm_a in DMS]),
     )
     collective = between_individual_and_collective.sum() / NB_DM

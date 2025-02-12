@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.typing as npt
 from mcda import PerformanceTable
 from mcda.internal.core.scales import NormalScale
 from mcda.outranking.srmp import SRMP, ProfileWiseOutranking
@@ -7,7 +8,7 @@ from mcda.values import CommensurableValues, Values
 from pandas import Series
 from scipy.stats import rankdata
 
-OutrankingMatrix = np.ndarray
+OutrankingMatrix = npt.NDArray[np.bool_]
 
 
 class NormalProfileWiseOutranking(ProfileWiseOutranking):
@@ -26,7 +27,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
     def __init__(
         self,
         performance_table: PerformanceTable[NormalScale],
-        criteria_weights: np.ndarray,
+        criteria_weights: npt.NDArray[np.float64],
         profile: Values[NormalScale],
     ):
         self.performance_table = performance_table
@@ -60,7 +61,7 @@ class NormalSRMP(SRMP):
     def __init__(
         self,
         performance_table: PerformanceTable[NormalScale],
-        criteria_weights: np.ndarray,
+        criteria_weights: npt.NDArray[np.float64],
         profiles: PerformanceTable[NormalScale],
         lexicographic_order: list[int],
     ):
@@ -105,7 +106,7 @@ class NormalSRMP(SRMP):
         return CommensurableValues(
             Series(ranks, self.performance_table.alternatives),
             scale=DiscreteQuantitativeScale(
-                ranks.tolist(),
+                list(ranks),
                 PreferenceDirection.MIN,
             ),
         )

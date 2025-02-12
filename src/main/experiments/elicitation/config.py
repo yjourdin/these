@@ -38,7 +38,10 @@ class SRMPSAConfig(SAConfig):
 
 def create_config(**kwargs) -> Config:
     kwargs.pop("id", None)
-    match method := kwargs.pop("method", None):
+    method = kwargs.pop("method", None)
+    if not isinstance(method, str):
+        raise TypeError(f"Unknown method : {method}")
+    match method.lower():
         case MethodEnum.MIP:
             return MIPConfig.from_dict(kwargs)
         case MethodEnum.SA:

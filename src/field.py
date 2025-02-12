@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Any
 
 from numpy.random import Generator
@@ -8,36 +8,36 @@ from .utils import compose
 
 
 class Field(ABC):
-    @classmethod
-    def decode(cls, dct: dict):
-        return dct
-
-    @classmethod
-    def encode(cls, dct: dict):
+    @staticmethod
+    def decode(dct: dict[Any, Any]) -> dict[Any, Any]:
         return dct
 
     @staticmethod
-    def field_decode(o):
+    def encode(dct: dict[Any, Any]) -> dict[Any, Any]:
+        return dct
+
+    @staticmethod
+    def field_decode(o: Any) -> Any:
         return o
 
     @staticmethod
-    def field_encode(o):
+    def field_encode(o: Any) -> Any:
         return o
 
 
 def field(fieldname: str):
-    def decorator(original_class):
+    def decorator(original_class: Field):
         __class__ = original_class  # noqa: F841
 
-        @classmethod
-        def decode(cls, dct: dict):
+        @staticmethod
+        def decode(dct: dict[Any, Any]):
             super().decode(dct)  # type: ignore
             if fieldname in dct:
                 dct[fieldname] = original_class.field_decode(dct[fieldname])
             return dct
 
-        @classmethod
-        def encode(cls, dct: dict):
+        @staticmethod
+        def encode(dct: dict[Any, Any]):
             super().encode(dct)  # type: ignore
             if fieldname in dct:
                 dct[fieldname] = original_class.field_encode(dct[fieldname])
@@ -52,16 +52,19 @@ def field(fieldname: str):
 
 
 class RandomField(Random, Field):
+    @classmethod
+    def random(cls, init_dict: dict[str, Any] = {}, *args: Any, **kwargs: Any): ...
+
     @staticmethod
-    def field_random(rng: Generator, *args, **kwargs): ...
+    def field_random(rng: Generator, *args: Any, **kwargs: Any) -> Any: ...
 
 
 def random_field(fieldname: str):
-    def decorator(original_class):
+    def decorator(original_class: RandomField):
         __class__ = original_class  # noqa: F841
 
         @classmethod
-        def random(cls, init_dict: dict[str, Any] = {}, *args, **kwargs):
+        def random(cls, init_dict: dict[str, Any] = {}, *args: Any, **kwargs: Any): # type: ignore
             super().random(init_dict=init_dict, *args, **kwargs)  # type: ignore
             init_dict[fieldname] = original_class.field_random(*args, **kwargs)
 

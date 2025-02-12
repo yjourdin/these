@@ -46,7 +46,9 @@ parser.add_argument(
 parser.add_argument(
     "-r", "--result", default=stdout, type=argparse.FileType("a"), help="Result file"
 )
-parser.add_argument("-l", "--log", type=argparse.FileType("w"), help="Log file")
+parser.add_argument(
+    "-l", "--log", nargs="?", type=argparse.FileType("w"), const=stdout, help="Log file"
+)
 
 
 def parse_args():

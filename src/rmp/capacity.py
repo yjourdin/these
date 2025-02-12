@@ -7,6 +7,7 @@ from more_itertools import powerset
 from numpy.random import Generator
 
 from ..random import seed
+from ..utils import tolist
 
 type Capacity[T: float] = dict[frozenset[Any], T]
 
@@ -28,7 +29,7 @@ def random_capacity(nb_crit: int, rng: Generator) -> Capacity[float]:
     return dict(
         zip(
             [
-                frozenset(crits[np.array([bool(int(x)) for x in node])].tolist())
+                frozenset(tolist(crits[np.array([bool(int(x)) for x in node])]))
                 for node in linext
             ],
             np.sort(rng.random(2**nb_crit)),

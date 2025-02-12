@@ -1,13 +1,12 @@
-from collections.abc import Container
-from typing import cast
+from enum import Enum, auto
 
 from .dataclass import Dataclass
-from .enum_base import Enum, StrEnum
+from .enum import ParamFlag, StrEnum
 from .model import Model
 from .random_model.model import RandomGroup, RandomModel
-from .rmp.model import RMPParamEnum, rmp_group_model, rmp_model, rmp_model_from_name
+from .rmp.model import RMPParamFlag, rmp_group_model, rmp_model, rmp_model_from_name
 from .srmp.model import (
-    SRMPParamEnum,
+    SRMPParamFlag,
     srmp_group_model,
     srmp_model,
     srmp_model_from_name,
@@ -15,150 +14,79 @@ from .srmp.model import (
 
 
 class ModelEnum(StrEnum):
-    RMP = "RMP"
-    SRMP = "SRMP"
-    RANDOM = "Random"
+    RMP = auto()
+    SRMP = auto()
+    RANDOM = auto()
 
 
 class GroupModelEnum(Enum):
-    RMP_WPL = (
+    RMP_IPL = (
         ModelEnum.RMP,
-        set(
-            (
-                SRMPParamEnum.WEIGHTS,
-                SRMPParamEnum.PROFILES,
-                SRMPParamEnum.LEXICOGRAPHIC_ORDER,
-            )
-        ),
+        RMPParamFlag.IMPORTANCE_RELATION
+        | RMPParamFlag.PROFILES
+        | RMPParamFlag.LEXICOGRAPHIC_ORDER,
     )
-    RMP_WP = (
+    RMP_IP = (ModelEnum.RMP, RMPParamFlag.IMPORTANCE_RELATION | RMPParamFlag.PROFILES)
+    RMP_IL = (
         ModelEnum.RMP,
-        set(
-            (
-                SRMPParamEnum.WEIGHTS,
-                SRMPParamEnum.PROFILES,
-            )
-        ),
+        RMPParamFlag.IMPORTANCE_RELATION | RMPParamFlag.LEXICOGRAPHIC_ORDER,
     )
-    RMP_WL = (
-        ModelEnum.RMP,
-        set(
-            (
-                SRMPParamEnum.WEIGHTS,
-                SRMPParamEnum.LEXICOGRAPHIC_ORDER,
-            )
-        ),
-    )
-    RMP_PL = (
-        ModelEnum.RMP,
-        set(
-            (
-                SRMPParamEnum.PROFILES,
-                SRMPParamEnum.LEXICOGRAPHIC_ORDER,
-            )
-        ),
-    )
-    RMP_W = (
-        ModelEnum.RMP,
-        set((SRMPParamEnum.WEIGHTS,)),
-    )
-    RMP_P = (
-        ModelEnum.RMP,
-        set((SRMPParamEnum.PROFILES,)),
-    )
-    RMP_L = (
-        ModelEnum.RMP,
-        set((SRMPParamEnum.LEXICOGRAPHIC_ORDER,)),
-    )
-    RMP = (
-        ModelEnum.RMP,
-        set(),
-    )  # type: ignore
+    RMP_PL = (ModelEnum.RMP, RMPParamFlag.PROFILES | RMPParamFlag.LEXICOGRAPHIC_ORDER)
+    RMP_I = (ModelEnum.RMP, RMPParamFlag.IMPORTANCE_RELATION)
+    RMP_P = (ModelEnum.RMP, RMPParamFlag.PROFILES)
+    RMP_L = (ModelEnum.RMP, RMPParamFlag.LEXICOGRAPHIC_ORDER)
+    RMP = (ModelEnum.RMP, RMPParamFlag(0))
     SRMP_WPL = (
         ModelEnum.SRMP,
-        set(
-            (
-                SRMPParamEnum.WEIGHTS,
-                SRMPParamEnum.PROFILES,
-                SRMPParamEnum.LEXICOGRAPHIC_ORDER,
-            )
-        ),
+        SRMPParamFlag.WEIGHTS
+        | SRMPParamFlag.PROFILES
+        | SRMPParamFlag.LEXICOGRAPHIC_ORDER,
     )
-    SRMP_WP = (
-        ModelEnum.SRMP,
-        set(
-            (
-                SRMPParamEnum.WEIGHTS,
-                SRMPParamEnum.PROFILES,
-            )
-        ),
-    )
+    SRMP_WP = (ModelEnum.SRMP, SRMPParamFlag.WEIGHTS | SRMPParamFlag.PROFILES)
     SRMP_WL = (
         ModelEnum.SRMP,
-        set(
-            (
-                SRMPParamEnum.WEIGHTS,
-                SRMPParamEnum.LEXICOGRAPHIC_ORDER,
-            )
-        ),
+        SRMPParamFlag.WEIGHTS | SRMPParamFlag.LEXICOGRAPHIC_ORDER,
     )
     SRMP_PL = (
         ModelEnum.SRMP,
-        set(
-            (
-                SRMPParamEnum.PROFILES,
-                SRMPParamEnum.LEXICOGRAPHIC_ORDER,
-            )
-        ),
+        SRMPParamFlag.PROFILES | SRMPParamFlag.LEXICOGRAPHIC_ORDER,
     )
-    SRMP_W = (
-        ModelEnum.SRMP,
-        set((SRMPParamEnum.WEIGHTS,)),
-    )
-    SRMP_P = (
-        ModelEnum.SRMP,
-        set((SRMPParamEnum.PROFILES,)),
-    )
-    SRMP_L = (
-        ModelEnum.SRMP,
-        set((SRMPParamEnum.LEXICOGRAPHIC_ORDER,)),
-    )
-    SRMP = (
-        ModelEnum.SRMP,
-        set(),
-    )  # type: ignore
-    RANDOM = (ModelEnum.RANDOM, set())  # type: ignore
+    SRMP_W = (ModelEnum.SRMP, SRMPParamFlag.WEIGHTS)
+    SRMP_P = (ModelEnum.SRMP, SRMPParamFlag.PROFILES)
+    SRMP_L = (ModelEnum.SRMP, SRMPParamFlag.LEXICOGRAPHIC_ORDER)
+    SRMP = (ModelEnum.SRMP, SRMPParamFlag(0))
+    RANDOM = (ModelEnum.RANDOM, RMPParamFlag(0))
+
+    def __init__(self, model: ModelEnum, shared_params: ParamFlag):
+        self.model = model
+        self.shared_params = shared_params
 
     def __str__(self) -> str:
         return self.name
 
 
-def group_model(
-    model: ModelEnum, shared_params: Container[RMPParamEnum | SRMPParamEnum]
-):
+def group_model(model: ModelEnum, shared_params: ParamFlag):
     if model is ModelEnum.RMP:
-        shared_params = cast(Container[RMPParamEnum], shared_params)
+        shared_params = RMPParamFlag(shared_params)
         return rmp_group_model(shared_params)
     elif model is ModelEnum.SRMP:
-        shared_params = cast(Container[SRMPParamEnum], shared_params)
+        shared_params = SRMPParamFlag(shared_params)
         return srmp_group_model(shared_params)
     else:
         return RandomGroup
 
 
 def model(
-    model: ModelEnum,
-    shared_params: Container[RMPParamEnum | SRMPParamEnum],
+    group_model: GroupModelEnum,
     group_size: int,
 ):
-    if model is ModelEnum.RMP:
-        shared_params = cast(Container[RMPParamEnum], shared_params)
-        return rmp_model(group_size, shared_params)
-    elif model is ModelEnum.SRMP:
-        shared_params = cast(Container[SRMPParamEnum], shared_params)
-        return srmp_model(group_size, shared_params)
-    else:
-        return RandomModel()
+    match group_model.model:
+        case ModelEnum.RMP:
+            return rmp_model(group_size, RMPParamFlag(group_model.shared_params))
+        case ModelEnum.SRMP:
+            return srmp_model(group_size, SRMPParamFlag(group_model.shared_params))
+        case ModelEnum.RANDOM:
+            return RandomModel
 
 
 def model_from_json(s) -> Model:
@@ -166,10 +94,10 @@ def model_from_json(s) -> Model:
     if not dct:
         raise ValueError("Empty json")
     classname = Dataclass.pop_class_name(dct)
-    upper_classname = classname.upper()
-    if ModelEnum.SRMP.value in upper_classname:
+    lower_classname = classname.lower()
+    if ModelEnum.SRMP in lower_classname:
         cls = srmp_model_from_name(classname)
-    elif ModelEnum.RMP.value in upper_classname:
+    elif ModelEnum.RMP in lower_classname:
         cls = rmp_model_from_name(classname)
     else:
         cls = RandomModel

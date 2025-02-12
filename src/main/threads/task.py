@@ -23,5 +23,5 @@ def task_thread(
 
         result = thread_connection.recv()
         if result == SENTINEL:
-            raise Exception()
+            raise Exception("Task error")
         return result

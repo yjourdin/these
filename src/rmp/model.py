@@ -1,11 +1,10 @@
-from collections.abc import Container
 from dataclasses import dataclass
+from enum import auto
 from typing import Self
 
 from numpy.random import Generator
 
-from ..dataclass import RandomDataclass
-from ..enum_base import StrEnum
+from ..enum import ParamFlag
 from ..model import GroupModel, Model
 from ..utils import print_list
 from .field import (
@@ -20,16 +19,15 @@ from .perturbations import PerturbImportanceRelation, PerturbLexOrder, PerturbPr
 from .rmp import NormalRMP
 
 
-class RMPParamEnum(StrEnum):
-    PROFILES = "profiles"
-    IMPORTANCE_RELATION = "importance_relation"
-    LEXICOGRAPHIC_ORDER = "lexicographic_order"
+class RMPParamFlag(ParamFlag):
+    PROFILES = auto()
+    IMPORTANCE_RELATION = auto()
+    LEXICOGRAPHIC_ORDER = auto()
 
 
 @dataclass(unsafe_hash=True)
-class RMPModel(  # type: ignore
+class RMPModel(
     Model,
-    RandomDataclass,
     ProfilesField,
     ImportanceRelationField,
     LexicographicOrderField,
@@ -70,9 +68,8 @@ class RMPModel(  # type: ignore
 
 
 @dataclass
-class RMPGroupModelImportanceProfilesLexicographic(  # type: ignore
+class RMPGroupModelImportanceProfilesLexicographic(
     GroupModel[RMPModel],
-    RandomDataclass,
     ProfilesField,
     ImportanceRelationField,
     LexicographicOrderField,
@@ -94,9 +91,8 @@ class RMPGroupModelImportanceProfilesLexicographic(  # type: ignore
 
 
 @dataclass
-class RMPGroupModelImportanceProfiles(  # type: ignore
+class RMPGroupModelImportanceProfiles(
     GroupModel[RMPModel],
-    RandomDataclass,
     ProfilesField,
     ImportanceRelationField,
     GroupLexicographicOrderField,
@@ -110,9 +106,8 @@ class RMPGroupModelImportanceProfiles(  # type: ignore
 
 
 @dataclass
-class RMPGroupModelImportanceLexicographic(  # type: ignore
+class RMPGroupModelImportanceLexicographic(
     GroupModel[RMPModel],
-    RandomDataclass,
     GroupProfilesField,
     ImportanceRelationField,
     LexicographicOrderField,
@@ -126,9 +121,8 @@ class RMPGroupModelImportanceLexicographic(  # type: ignore
 
 
 @dataclass
-class RMPGroupModelProfilesLexicographic(  # type: ignore
+class RMPGroupModelProfilesLexicographic(
     GroupModel[RMPModel],
-    RandomDataclass,
     ProfilesField,
     GroupImportanceRelationField,
     LexicographicOrderField,
@@ -144,7 +138,6 @@ class RMPGroupModelProfilesLexicographic(  # type: ignore
 @dataclass
 class RMPGroupModelImportance(
     GroupModel[RMPModel],
-    RandomDataclass,
     GroupProfilesField,
     ImportanceRelationField,
     GroupLexicographicOrderField,
@@ -160,7 +153,6 @@ class RMPGroupModelImportance(
 @dataclass
 class RMPGroupModelProfiles(
     GroupModel[RMPModel],
-    RandomDataclass,
     ProfilesField,
     GroupImportanceRelationField,
     GroupLexicographicOrderField,
@@ -176,7 +168,6 @@ class RMPGroupModelProfiles(
 @dataclass
 class RMPGroupModelLexicographic(
     GroupModel[RMPModel],
-    RandomDataclass,
     GroupProfilesField,
     GroupImportanceRelationField,
     LexicographicOrderField,
@@ -192,7 +183,6 @@ class RMPGroupModelLexicographic(
 @dataclass
 class RMPGroupModel(
     GroupModel[RMPModel],
-    RandomDataclass,
     GroupProfilesField,
     GroupImportanceRelationField,
     GroupLexicographicOrderField,
@@ -206,37 +196,34 @@ class RMPGroupModel(
 
 
 def rmp_group_model(
-    shared_params: Container[RMPParamEnum],
+    shared_params: RMPParamFlag,
 ) -> type[GroupModel[RMPModel]]:
-    if RMPParamEnum.PROFILES in shared_params:
-        if RMPParamEnum.IMPORTANCE_RELATION in shared_params:
-            if RMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+    if RMPParamFlag.PROFILES in shared_params:
+        if RMPParamFlag.IMPORTANCE_RELATION in shared_params:
+            if RMPParamFlag.LEXICOGRAPHIC_ORDER in shared_params:
                 return RMPGroupModelImportanceProfilesLexicographic
             else:
                 return RMPGroupModelImportanceProfiles
         else:
-            if RMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+            if RMPParamFlag.LEXICOGRAPHIC_ORDER in shared_params:
                 return RMPGroupModelProfilesLexicographic
             else:
                 return RMPGroupModelProfiles
     else:
-        if RMPParamEnum.IMPORTANCE_RELATION in shared_params:
-            if RMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+        if RMPParamFlag.IMPORTANCE_RELATION in shared_params:
+            if RMPParamFlag.LEXICOGRAPHIC_ORDER in shared_params:
                 return RMPGroupModelImportanceLexicographic
             else:
                 return RMPGroupModelImportance
         else:
-            if RMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+            if RMPParamFlag.LEXICOGRAPHIC_ORDER in shared_params:
                 return RMPGroupModelLexicographic
             else:
                 return RMPGroupModel
 
 
-def rmp_model(group_size: int, shared_params: Container[RMPParamEnum] = set()):
-    if group_size == 1:
-        return RMPModel
-    else:
-        return rmp_group_model(shared_params)
+def rmp_model(group_size: int, shared_params: RMPParamFlag = RMPParamFlag(0)):
+    return RMPModel if group_size == 1 else rmp_group_model(shared_params)
 
 
 def rmp_model_from_name(name: str) -> type[Model]:

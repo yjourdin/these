@@ -6,6 +6,7 @@ from numpy.random import Generator
 
 from ..dataclass import Dataclass
 from ..performance_table.normal_performance_table import NormalPerformanceTable
+from ..utils import tolist
 from .importance_relation import ImportanceRelation
 from .permutation import all_max_adjacent_distance
 
@@ -16,7 +17,6 @@ class PerturbProfile(Dataclass):
 
     def __call__(self, profiles: NormalPerformanceTable, rng: Generator):
         profiles_numpy = profiles.data.to_numpy()
-
         return NormalPerformanceTable(
             np.sort(
                 rng.uniform(
@@ -66,10 +66,10 @@ class PerturbLexOrder(Dataclass):
         self.all_permutations = all_max_adjacent_distance(list(range(k)), nb)
 
     def __call__(self, lex_order: list[int], rng: Generator) -> list[int]:
-        lex_order_numpy = np.array(lex_order)
+        lex_order_numpy = np.array(lex_order, dtype=np.int_)
 
         permutation = list(
             tuple(self.all_permutations)[rng.choice(len(self.all_permutations))]
         )
 
-        return lex_order_numpy[permutation].tolist()
+        return tolist(lex_order_numpy[permutation])

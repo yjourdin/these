@@ -14,10 +14,10 @@ from ....random import seed as random_seed
 from ....sa.main import learn_sa
 from ....test.main import test_consensus, test_distance
 from ....test.test import DistanceRankingEnum
+from ....utils import tolist
 from ...task import SeedTask
 from .config import Config, MIPConfig, SAConfig, SRMPSAConfig
 from .directory import DirectoryElicitation
-from .fieldnames import TestFieldnames, TrainFieldnames
 
 
 @dataclass(frozen=True)
@@ -69,10 +69,11 @@ class MoTask(AbstractMTask):
     Mo: GroupModelEnum
     ko: int
     group_size: int
+    fixed_lex_order: bool = field(hash=False)
     Mo_id: int = field(hash=False)
 
     def task(self, dir: DirectoryElicitation, seed: Seed):
-        Mo = model(*self.Mo.value, self.group_size).random(
+        Mo = model(self.Mo, self.group_size).random(
             nb_profiles=self.ko,
             nb_crit=self.m,
             rng=self.rng(seed),
@@ -81,6 +82,14 @@ class MoTask(AbstractMTask):
 
         with self.Mo_file(dir).open("w") as f:
             f.write(Mo.to_json())
+
+    @property
+    def lexicographic_order(self) -> list[int]:
+        return tolist(
+            MoTask(self.m, self.Mo, self.ko, self.group_size, True, self.Mo_id)
+            .rng(self.Mo_id)
+            .permutation(self.ko)
+        )
 
     def Mo_file(self, dir: DirectoryElicitation):
         return dir.Mo(self.m, self.Mo, self.ko, self.group_size, self.Mo_id)
@@ -120,7 +129,7 @@ class DTask(AbstractDTask):
 
     def task(self, dir: DirectoryElicitation, seed: Seed):
         with self.Mo_file(dir).open("r") as f:
-            Mo = model(*self.Mo.value, self.group_size).from_json(f.read())
+            Mo = model(self.Mo, self.group_size).from_json(f.read())
 
         with self.A_train_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
@@ -133,7 +142,7 @@ class DTask(AbstractDTask):
             A,
             Mo[self.dm_id] if isinstance(Mo, GroupModel) else Mo,
             self.nbc,
-            rng_shuffle,
+            rng=rng_shuffle,
         )
 
         if self.error:
@@ -203,33 +212,35 @@ class MIPTask(AbstractElicitationTask):
             rng_lex,
             random_seed(rng_mip),
             self.config.max_time,
+            self.lexicographic_order if self.fixed_lex_order else None,
             gamma=self.config.gamma,
         )
 
         with self.Me_file(dir).open("w") as f:
             f.write(best_model.to_json() if best_model else "None")
 
-        dir.csv_files["train"].queue.put(
-            {
-                TrainFieldnames.M: self.m,
-                TrainFieldnames.N_tr: self.ntr,
-                TrainFieldnames.Atr_id: self.Atr_id,
-                TrainFieldnames.Mo: self.Mo,
-                TrainFieldnames.Ko: self.ko,
-                TrainFieldnames.Group_size: self.group_size,
-                TrainFieldnames.Mo_id: self.Mo_id,
-                TrainFieldnames.N_bc: self.nbc,
-                TrainFieldnames.Same_alt: self.same_alt,
-                TrainFieldnames.Error: self.error,
-                TrainFieldnames.D_id: self.D_id,
-                TrainFieldnames.Me: self.Me,
-                TrainFieldnames.Ke: self.ke,
-                TrainFieldnames.Method: MethodEnum.MIP,
-                TrainFieldnames.Config: self.config,
-                TrainFieldnames.Me_id: self.Me_id,
-                TrainFieldnames.Time: time,
-                TrainFieldnames.Fitness: best_fitness,
-            }
+        csv_file = dir.csv_files["train"]
+        csv_file.writerow(
+            csv_file.fields(
+                M=self.m,
+                N_tr=self.ntr,
+                Atr_id=self.Atr_id,
+                Mo=self.Mo,
+                Ko=self.ko,
+                Group_size=self.group_size,
+                Mo_id=self.Mo_id,
+                N_bc=self.nbc,
+                Same_alt=self.same_alt,
+                Error=self.error,
+                D_id=self.D_id,
+                Me=self.Me,
+                Ke=self.ke,
+                Method=MethodEnum.MIP,
+                Config=self.config,
+                Me_id=self.Me_id,
+                Time=time,
+                Fitness=best_fitness,
+            )
         )
 
 
@@ -258,6 +269,7 @@ class SATask(AbstractElicitationTask):
             self.config.alpha,
             rng_init,
             rng_sa,
+            self.lexicographic_order if self.fixed_lex_order else None,
             accept=self.config.accept,
             max_time=self.config.max_time,
             max_it=self.config.max_it,
@@ -271,28 +283,29 @@ class SATask(AbstractElicitationTask):
         with self.Me_file(dir).open("w") as f:
             f.write(best_model.to_json())
 
-        dir.csv_files["train"].queue.put(
-            {
-                TrainFieldnames.M: self.m,
-                TrainFieldnames.N_tr: self.ntr,
-                TrainFieldnames.Atr_id: self.Atr_id,
-                TrainFieldnames.Mo: self.Mo,
-                TrainFieldnames.Ko: self.ko,
-                TrainFieldnames.Group_size: self.group_size,
-                TrainFieldnames.Mo_id: self.Mo_id,
-                TrainFieldnames.N_bc: self.nbc,
-                TrainFieldnames.Same_alt: self.same_alt,
-                TrainFieldnames.Error: self.error,
-                TrainFieldnames.D_id: self.D_id,
-                TrainFieldnames.Me: self.Me,
-                TrainFieldnames.Ke: self.ke,
-                TrainFieldnames.Method: MethodEnum.SA,
-                TrainFieldnames.Config: self.config,
-                TrainFieldnames.Me_id: self.Me_id,
-                TrainFieldnames.Time: time,
-                TrainFieldnames.Fitness: best_fitness,
-                TrainFieldnames.It: it,
-            }
+        csv_file = dir.csv_files["train"]
+        csv_file.writerow(
+            csv_file.fields(
+                M=self.m,
+                N_tr=self.ntr,
+                Atr_id=self.Atr_id,
+                Mo=self.Mo,
+                Ko=self.ko,
+                Group_size=self.group_size,
+                Mo_id=self.Mo_id,
+                N_bc=self.nbc,
+                Same_alt=self.same_alt,
+                Error=self.error,
+                D_id=self.D_id,
+                Me=self.Me,
+                Ke=self.ke,
+                Method=MethodEnum.SA,
+                Config=self.config,
+                Me_id=self.Me_id,
+                Time=time,
+                It=it,
+                Fitness=best_fitness,
+            )
         )
 
 
@@ -301,43 +314,44 @@ class TestTask(ATestTask, AbstractElicitationTask):
     name = "Test"
 
     def task(self, dir: DirectoryElicitation):
-        csv_fields = {
-            TestFieldnames.M: self.m,
-            TestFieldnames.N_tr: self.ntr,
-            TestFieldnames.Atr_id: self.Atr_id,
-            TestFieldnames.Mo: self.Mo,
-            TestFieldnames.Ko: self.ko,
-            TestFieldnames.Group_size: self.group_size,
-            TestFieldnames.Mo_id: self.Mo_id,
-            TestFieldnames.N_bc: self.nbc,
-            TestFieldnames.Same_alt: self.same_alt,
-            TestFieldnames.Error: self.error,
-            TestFieldnames.D_id: self.D_id,
-            TestFieldnames.Me: self.Me,
-            TestFieldnames.Ke: self.ke,
-            TestFieldnames.Method: self.method,
-            TestFieldnames.Config: self.config,
-            TestFieldnames.Me_id: self.Me_id,
-            TestFieldnames.N_te: self.nte,
-            TestFieldnames.Ate_id: self.Ate_id,
-        }
-
         with self.A_test_file(dir).open("r") as f:
             A_test = NormalPerformanceTable(read_csv(f, header=None))
 
         with self.Mo_file(dir).open("r") as f:
-            Mo = model(*self.Mo.value, self.group_size).from_json(f.read())
+            Mo = model(self.Mo, self.group_size).from_json(f.read())
 
         with self.Me_file(dir).open("r") as f:
             s = f.read()
             try:
-                Me = model(*self.Me.value, self.group_size).from_json(s)
+                Me = model(self.Me, self.group_size).from_json(s)
             except ValueError:
                 Me = None
 
         def put_in_queue(name, value):
-            dir.csv_files["test"].queue.put(
-                csv_fields | {TestFieldnames.Name: name, TestFieldnames.Value: value}
+            csv_file = dir.csv_files["test"]
+            csv_file.writerow(
+                csv_file.fields(
+                    M=self.m,
+                    N_tr=self.ntr,
+                    Atr_id=self.Atr_id,
+                    Mo=self.Mo,
+                    Ko=self.ko,
+                    Group_size=self.group_size,
+                    Mo_id=self.Mo_id,
+                    N_bc=self.nbc,
+                    Same_alt=self.same_alt,
+                    Error=self.error,
+                    D_id=self.D_id,
+                    Me=self.Me,
+                    Ke=self.ke,
+                    Method=self.method,
+                    Config=self.config,
+                    Me_id=self.Me_id,
+                    N_te=self.nte,
+                    Ate_id=self.Ate_id,
+                    Name=name,
+                    Value=value,
+                )
             )
 
         def write_consensus(model: GroupModel, prefix: str = ""):

@@ -7,8 +7,9 @@ from typing import Any, ClassVar, NamedTuple, TypeGuard
 
 from ..dataclass import FrozenDataclass
 from ..random import Seed, SeedMixin
+from .abstract_task import AbstractTask
+from .csv_files import TaskFields
 from .directory import Directory
-from .fieldnames import SeedFieldnames, TimeFieldnames
 
 
 class TaskResult(NamedTuple):
@@ -41,7 +42,7 @@ def wait_exception_mapping(
 
 
 @dataclass(frozen=True)
-class Task(FrozenDataclass):
+class Task(FrozenDataclass, AbstractTask):
     name: ClassVar[str]
 
     def __str__(self) -> str:
@@ -53,30 +54,27 @@ class Task(FrozenDataclass):
         toc = process_time()
 
         time = toc - tic
-        dir.csv_files["times"].queue.put(
-            {TimeFieldnames.Task: self, TimeFieldnames.Time: time}
-        )
+        csv_file = dir.csv_files["tasks"]
+        csv_file.writerow(self.log(csv_file.fields, time, *args, **kwargs))
 
         return TaskResult(result, time)
 
     @abstractmethod
-    def task(self, dir: Directory, *args, **kwargs): ...
+    def task(self, dir: Directory, *args, **kwargs) -> Any: ...
 
     @abstractmethod
-    def done(self, *args, **kwargs) -> bool: ...
+    def done(self, *args, **kwargs) -> bool:
+        return False
+
+    def log(self, fields: type[TaskFields], time: float, *args, **kwargs):
+        return fields(Task=self, Time=time, Seed=None)
 
 
 @dataclass(frozen=True)
 class SeedTask(Task, SeedMixin):
-    def seed(self, seed: Seed):
+    def seed(self, seed: Seed) -> Seed:
         return abs(hash((self, seed)))
 
-    def __call__(self, dir: Directory, *args, **kwargs):
-        if "seed" in kwargs:
-            dir.csv_files["seeds"].queue.put(
-                {
-                    SeedFieldnames.Task: self,
-                    SeedFieldnames.Seed: self.seed(kwargs["seed"]),
-                }
-            )
-        return super().__call__(dir=dir, *args, **kwargs)
+    def log(self, fields: type[TaskFields], time: float, *args, **kwargs):
+        seed = self.seed(s) if ((s := kwargs.get("seed", None)) is not None) else None
+        return fields(Task=self, Time=time, Seed=seed)

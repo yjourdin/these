@@ -1,18 +1,18 @@
 from collections.abc import Sequence
 
 import numpy as np
-from mcda.relations import P, I
+from mcda.relations import I, P
 from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
 
 from ...constants import EPSILON
-from ...models import ModelEnum, group_model
 from ...performance_table.normal_performance_table import NormalPerformanceTable
 from ...srmp.model import (
     SRMPGroupModel,
     SRMPGroupModelProfiles,
     SRMPGroupModelWeights,
     SRMPGroupModelWeightsProfiles,
-    SRMPParamEnum,
+    SRMPParamFlag,
+    srmp_group_model,
 )
 from ..mip import MIP
 
@@ -31,7 +31,7 @@ class MIPSRMPGroup(
         preference_relations: list[list[P]],
         indifference_relations: list[list[I]],
         lexicographic_order: Sequence[Sequence[int]],
-        shared_params: set[SRMPParamEnum] = set(),
+        shared_params: SRMPParamFlag = SRMPParamFlag(0),
         gamma: float = EPSILON,
         inconsistencies: bool = True,
         best_fitness: float | None = None,
@@ -53,8 +53,8 @@ class MIPSRMPGroup(
         # Parameters #
         ##############
 
-        self.param["profiles_shared"] = SRMPParamEnum.PROFILES in self.shared_params
-        self.param["weights_shared"] = SRMPParamEnum.WEIGHTS in self.shared_params
+        self.param["profiles_shared"] = SRMPParamFlag.PROFILES in self.shared_params
+        self.param["weights_shared"] = SRMPParamFlag.WEIGHTS in self.shared_params
         # List of alternatives
         self.param["A"] = self.alternatives.alternatives
         # List of criteria
@@ -404,8 +404,8 @@ class MIPSRMPGroup(
             ]
         )
 
-        return group_model(
-            ModelEnum.SRMP, self.shared_params
+        return srmp_group_model(
+            self.shared_params
         )(
             group_size=len(self.param["DM"]),
             profiles=profiles,  # type: ignore

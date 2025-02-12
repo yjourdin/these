@@ -9,6 +9,7 @@ from ..field import (
     random_group_field,
 )
 from ..performance_table.normal_performance_table import NormalPerformanceTable
+from ..utils import tolist
 from .importance_relation import ImportanceRelation
 from .profile import random_profiles
 
@@ -24,7 +25,7 @@ class ProfilesField(RandomField):
 
     @staticmethod
     def field_encode(o):
-        return o.data.values.tolist()
+        return tolist(o.data.values)
 
     @staticmethod
     def field_random(
@@ -41,6 +42,16 @@ class ProfilesField(RandomField):
             rng,
             profiles_values,
         )
+
+
+@random_field("profiles")
+@dataclass(frozen=True)
+class FrozenProfilesField(RandomField):
+    profiles: tuple[tuple[float, ...], ...]
+
+    @staticmethod
+    def field_decode(o):
+        return tuple(tuple(profile) for profile in o)
 
 
 @random_group_field(fieldname="profiles", fieldclass=ProfilesField)
@@ -83,7 +94,17 @@ class LexicographicOrderField(RandomField):
 
     @staticmethod
     def field_random(nb_profiles: int, rng: Generator, *args, **kwargs):
-        return rng.permutation(nb_profiles).tolist()
+        return tolist(rng.permutation(nb_profiles))
+
+
+@random_field("profiles")
+@dataclass(frozen=True)
+class FrozenLexicographicOrderField(RandomField):
+    lexicographic_order: tuple[int, ...]
+
+    @staticmethod
+    def field_decode(o):
+        return tuple(o)
 
 
 @random_group_field(fieldname="lexicographic_order", fieldclass=LexicographicOrderField)

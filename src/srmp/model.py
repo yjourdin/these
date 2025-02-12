@@ -1,39 +1,38 @@
-from collections.abc import Container
-from dataclasses import dataclass, field
+from dataclasses import dataclass, replace
+from enum import auto
 from typing import Self, cast
 
 import numpy as np
+import numpy.typing as npt
 from numpy.random import Generator
 
-from ..dataclass import RandomDataclass
-from ..enum_base import StrEnum
 from ..model import FrozenModel, GroupModel, Model
+from ..enum import ParamFlag
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..rmp.field import (
+    FrozenLexicographicOrderField,
+    FrozenProfilesField,
     GroupLexicographicOrderField,
     GroupProfilesField,
     LexicographicOrderField,
     ProfilesField,
 )
-from ..rmp.model import RMPParamEnum
 from ..rmp.perturbations import PerturbLexOrder, PerturbProfile
 from ..srmp.perturbations import PerturbWeight
-from ..utils import print_list
-from .field import GroupWeightsField, WeightsField
+from ..utils import print_list, tolist
+from .field import FrozenWeightsField, GroupWeightsField, WeightsField
 from .normal_srmp import NormalSRMP
-from .weight import frozen_importance_relation_from_weights
 
 
-class SRMPParamEnum(StrEnum):
-    PROFILES = RMPParamEnum.PROFILES.value
-    WEIGHTS = "weights"
-    LEXICOGRAPHIC_ORDER = RMPParamEnum.LEXICOGRAPHIC_ORDER.value
+class SRMPParamFlag(ParamFlag):
+    PROFILES = auto()
+    WEIGHTS = auto()
+    LEXICOGRAPHIC_ORDER = auto()
 
 
 @dataclass
-class SRMPModel(  # type: ignore
+class SRMPModel(
     Model,
-    RandomDataclass,
     ProfilesField,
     WeightsField,
     LexicographicOrderField,
@@ -41,9 +40,9 @@ class SRMPModel(  # type: ignore
     def __str__(self) -> str:
         return "\t".join(
             [
-                print_list(self.weights.tolist()),
+                print_list(list(self.weights)),
                 print_list(self.profiles.data.to_numpy()[0]),
-                self.lexicographic_order.__str__(),
+                print_list(self.lexicographic_order),
             ]
         )
 
@@ -75,32 +74,23 @@ class SRMPModel(  # type: ignore
     @property
     def frozen(self):
         return FrozenSRMPModel(
-            tuple(
+            profiles=tuple(
                 tuple(cast(list[float], x))
-                for x in self.profiles.data.to_numpy().tolist()
+                for x in tolist(self.profiles.data.to_numpy())
             ),
-            self.weights,
-            tuple(self.lexicographic_order),
+            # weights=tuple(tolist(self.weights)),
+            weights=self.weights,
+            lexicographic_order=tuple(self.lexicographic_order),
         )
 
 
 @dataclass(frozen=True)
-class FrozenSRMPModel(FrozenModel[SRMPModel]):
-    profiles: tuple[tuple[float, ...], ...]
-    weights: np.ndarray = field(compare=False)
-    lexicographic_order: tuple[int, ...]
-    # weights_rounded: tuple[float, ...] = field(init=False)
-    importance_relation: tuple[float, ...] = field(init=False)
-
-    def __post_init__(self):
-        # weights_numpy = np.array(self.weights)
-        # object.__setattr__(self, "weights_rounded", tuple((np.round(weights_numpy / EPSILON) * EPSILON).tolist()))
-        object.__setattr__(
-            self,
-            "importance_relation",
-            frozen_importance_relation_from_weights(self.weights),
-        )
-
+class FrozenSRMPModel(
+    FrozenModel[SRMPModel],
+    FrozenProfilesField,
+    FrozenWeightsField,
+    FrozenLexicographicOrderField,
+):
     @property
     def model(self):
         return SRMPModel(
@@ -109,11 +99,14 @@ class FrozenSRMPModel(FrozenModel[SRMPModel]):
             lexicographic_order=list(self.lexicographic_order),
         )
 
+    def replace_weights(self, weights: npt.NDArray[np.float64]):
+        new = replace(self, weights=weights)
+        return new
+
 
 @dataclass
-class SRMPGroupModelWeightsProfilesLexicographic(  # type: ignore
+class SRMPGroupModelWeightsProfilesLexicographic(
     GroupModel[SRMPModel],
-    RandomDataclass,
     ProfilesField,
     WeightsField,
     LexicographicOrderField,
@@ -135,9 +128,8 @@ class SRMPGroupModelWeightsProfilesLexicographic(  # type: ignore
 
 
 @dataclass
-class SRMPGroupModelWeightsProfiles(  # type: ignore
+class SRMPGroupModelWeightsProfiles(
     GroupModel[SRMPModel],
-    RandomDataclass,
     ProfilesField,
     WeightsField,
     GroupLexicographicOrderField,
@@ -151,9 +143,8 @@ class SRMPGroupModelWeightsProfiles(  # type: ignore
 
 
 @dataclass
-class SRMPGroupModelWeightsLexicographic(  # type: ignore
+class SRMPGroupModelWeightsLexicographic(
     GroupModel[SRMPModel],
-    RandomDataclass,
     GroupProfilesField,
     WeightsField,
     LexicographicOrderField,
@@ -167,9 +158,8 @@ class SRMPGroupModelWeightsLexicographic(  # type: ignore
 
 
 @dataclass
-class SRMPGroupModelProfilesLexicographic(  # type: ignore
+class SRMPGroupModelProfilesLexicographic(
     GroupModel[SRMPModel],
-    RandomDataclass,
     ProfilesField,
     GroupWeightsField,
     LexicographicOrderField,
@@ -185,7 +175,6 @@ class SRMPGroupModelProfilesLexicographic(  # type: ignore
 @dataclass
 class SRMPGroupModelWeights(
     GroupModel[SRMPModel],
-    RandomDataclass,
     GroupProfilesField,
     WeightsField,
     GroupLexicographicOrderField,
@@ -201,7 +190,6 @@ class SRMPGroupModelWeights(
 @dataclass
 class SRMPGroupModelProfiles(
     GroupModel[SRMPModel],
-    RandomDataclass,
     ProfilesField,
     GroupWeightsField,
     GroupLexicographicOrderField,
@@ -217,7 +205,6 @@ class SRMPGroupModelProfiles(
 @dataclass
 class SRMPGroupModelLexicographic(
     GroupModel[SRMPModel],
-    RandomDataclass,
     GroupProfilesField,
     GroupWeightsField,
     LexicographicOrderField,
@@ -233,7 +220,6 @@ class SRMPGroupModelLexicographic(
 @dataclass
 class SRMPGroupModel(
     GroupModel[SRMPModel],
-    RandomDataclass,
     GroupProfilesField,
     GroupWeightsField,
     GroupLexicographicOrderField,
@@ -247,37 +233,34 @@ class SRMPGroupModel(
 
 
 def srmp_group_model(
-    shared_params: Container[SRMPParamEnum],
-) -> type[GroupModel[SRMPModel]]:
-    if SRMPParamEnum.PROFILES in shared_params:
-        if SRMPParamEnum.WEIGHTS in shared_params:
-            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+    shared_params: SRMPParamFlag,
+):
+    if SRMPParamFlag.PROFILES in shared_params:
+        if SRMPParamFlag.WEIGHTS in shared_params:
+            if SRMPParamFlag.LEXICOGRAPHIC_ORDER in shared_params:
                 return SRMPGroupModelWeightsProfilesLexicographic
             else:
                 return SRMPGroupModelWeightsProfiles
         else:
-            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+            if SRMPParamFlag.LEXICOGRAPHIC_ORDER in shared_params:
                 return SRMPGroupModelProfilesLexicographic
             else:
                 return SRMPGroupModelProfiles
     else:
-        if SRMPParamEnum.WEIGHTS in shared_params:
-            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+        if SRMPParamFlag.WEIGHTS in shared_params:
+            if SRMPParamFlag.LEXICOGRAPHIC_ORDER in shared_params:
                 return SRMPGroupModelWeightsLexicographic
             else:
                 return SRMPGroupModelWeights
         else:
-            if SRMPParamEnum.LEXICOGRAPHIC_ORDER in shared_params:
+            if SRMPParamFlag.LEXICOGRAPHIC_ORDER in shared_params:
                 return SRMPGroupModelLexicographic
             else:
                 return SRMPGroupModel
 
 
-def srmp_model(group_size: int, shared_params: Container[SRMPParamEnum] = set()):
-    if group_size == 1:
-        return SRMPModel
-    else:
-        return srmp_group_model(shared_params)
+def srmp_model(group_size: int, shared_params: SRMPParamFlag = SRMPParamFlag(0)):
+    return SRMPModel if group_size == 1 else srmp_group_model(shared_params)
 
 
 def srmp_model_from_name(name: str) -> type[Model]:

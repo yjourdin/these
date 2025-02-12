@@ -3,7 +3,7 @@ from sys import stdout
 
 from ..constants import DEFAULT_MAX_TIME, EPSILON
 from ..models import ModelEnum
-from ..srmp.model import SRMPParamEnum
+from ..srmp.model import SRMPParamFlag
 
 parser = argparse.ArgumentParser()
 parser.add_argument("model", type=ModelEnum, choices=ModelEnum, help="Model")
@@ -17,8 +17,8 @@ parser.add_argument(
     "--shared",
     nargs="*",
     default=[],
-    type=SRMPParamEnum,
-    choices=SRMPParamEnum,
+    type=SRMPParamFlag,
+    choices=SRMPParamFlag,
     help="Parameters shared between decision makers",
 )
 parser.add_argument(
@@ -29,6 +29,9 @@ parser.add_argument(
 )
 parser.add_argument(
     "--refused", nargs="+", type=argparse.FileType("r"), help="Refused preferences"
+)
+parser.add_argument(
+    "--accepted", type=argparse.FileType("r"), help="Accepted preferences"
 )
 parser.add_argument("--reference", type=argparse.FileType("r"), help="Reference model")
 parser.add_argument(

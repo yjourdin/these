@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 
-from ..enum_base import StrEnum
-
 from ..dataclass import Dataclass
 from ..default_max_jobs import DEFAULT_MAX_JOBS
 from .directory import RESULTS_DIR
+from ..enum import StrEnum
 
 
 class ExperimentEnum(StrEnum):

@@ -1,30 +1,49 @@
+from pathlib import Path
+
 from ....methods import MethodEnum
 from ....models import GroupModelEnum
 from ....utils import filename_csv, filename_json
-from ...csv_file import CSVFile
 from ...directory import Directory
 from ...experiments.elicitation.config import Config
-from .fieldnames import (
-    ConfigFieldnames,
-    TestFieldnames,
-    TrainFieldnames,
+from .csv_files import (
+    ConfigCSVFile,
+    TestCSVFile,
+    TrainCSVFile,
 )
 
 
 class DirectoryElicitation(Directory):
+    class Dirs(Directory.Dirs):
+        A_train: Path
+        A_test: Path
+        Mo: Path
+        D: Path
+        Me: Path
+
+    class CSVFiles(Directory.CSVFiles):
+        train: TrainCSVFile
+        test: TestCSVFile
+        configs: ConfigCSVFile
+
     def __init__(self, dir: str, name: str):
         super().__init__(dir, name)
-        self.dirs.update(
+
+        self.dirs = self.Dirs(
+            self.dirs,
             A_train=self.dirs["root"] / "A_train",
             A_test=self.dirs["root"] / "A_test",
             Mo=self.dirs["root"] / "Mo",
             D=self.dirs["root"] / "D",
             Me=self.dirs["root"] / "Me",
         )
-        self.csv_files.update(
-            train=CSVFile(self.dirs["root"] / "train_results.csv", TrainFieldnames),
-            test=CSVFile(self.dirs["root"] / "test_results.csv", TestFieldnames),
-            configs=CSVFile(self.dirs["root"] / "configs.csv", ConfigFieldnames),
+        
+        self.seeds = self.dirs["root"] / "seeds.json"
+
+        self.csv_files = self.CSVFiles(
+            self.csv_files,
+            train=TrainCSVFile(self.dirs["root"] / "train_results.csv"),
+            test=TestCSVFile(self.dirs["root"] / "test_results.csv"),
+            configs=ConfigCSVFile(self.dirs["root"] / "configs.csv"),
         )
 
     def A_train(self, m: int, n: int, id: int):

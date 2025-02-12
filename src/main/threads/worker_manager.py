@@ -50,7 +50,7 @@ def worker_manager(
         if (not stop) and working_connections:
             timeout = 1 if waiting_connections else None
 
-            for connection in wait(connections, timeout=timeout):  # type: ignore
+            for connection in wait(connections, timeout=timeout):
                 connection = cast(
                     ManagerWorkerConnection | ManagerStopConnection, connection
                 )

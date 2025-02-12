@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator, Mapping
 from enum import Enum
 from functools import partial, reduce
 from itertools import chain, count
@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Callable, NamedTuple
 
 import numpy as np
+import numpy.typing as npt
 from mcda import PerformanceTable
 
 from .constants import EPSILON
@@ -30,7 +31,7 @@ def midpoints(performance_table: PerformanceTable) -> PerformanceTable:
     return PerformanceTable(df, scales=performance_table.scales)
 
 
-def print_list(lst: list):
+def print_list(lst: Iterable[str | int]):
     result = ""
     for x in lst:
         if isinstance(x, str):
@@ -51,7 +52,11 @@ def to_str(o):
             return str(o).title().replace("_", "")
 
 
-def dict_values_to_str(dct: dict):
+def list_str(lst: Iterable):
+    return [str(x) for x in lst]
+
+
+def dict_str(dct: Mapping):
     return {str(k): str(v) for k, v in dct.items()}
 
 
@@ -105,6 +110,7 @@ def compose(*fs: Callable):
 
 def list_replace(a: list[Any], b: list[Any]):
     a[: len(b)] = b[: len(a)]
+    return a
 
 
 def add_filename_suffix(filename: Path, suffix: str):
@@ -113,3 +119,7 @@ def add_filename_suffix(filename: Path, suffix: str):
 
 def round_epsilon(x, epsilon: float = EPSILON):
     return np.round(x / EPSILON) * EPSILON
+
+
+def tolist(a: npt.NDArray[Any]) -> list[Any]:
+    return a.tolist() if a.ndim != 0 else [a.tolist()]

@@ -2,6 +2,7 @@ import numpy as np
 
 from ..julia.function import generate_weak_order_ext
 from ..random import seed
+from ..utils import tolist
 from ..weak_order import WeakOrder
 
 
@@ -15,7 +16,7 @@ class ImportanceRelation(WeakOrder[frozenset[int]]):
 
         for i, block in enumerate(weak_order_ext):
             for node in block:
-                dct[frozenset(labels[node].tolist())] = i
+                dct[frozenset(tolist(labels[node]))] = i
 
         we = cls()
         we.dict = dct

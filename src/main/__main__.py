@@ -18,6 +18,7 @@ from .threads.logger import logger_thread
 from .threads.stop import stopping_thread
 from .threads.worker_manager import TaskQueue, worker_manager
 from .worker import worker
+import traceback
 
 # Parse arguments
 args = parse_args()
@@ -70,7 +71,7 @@ logging_thread.start()
 
 
 # Start file threads
-for csv_file in dir.csv_files.values():
+for csv_file in dir.itercsv():
     csv_file.thread.start()
 
 
@@ -105,32 +106,35 @@ with ThreadPoolExecutor() as thread_pool:
     task_manager_thread.start()
 
     # Main
-    main(args, dir, thread_pool, task_queue)  # type: ignore
+    try:
+        main(args, dir, thread_pool, task_queue)  # type: ignore
+    except Exception:
+        traceback.print_exc()
 
 
-# Send stop signal
-task_queue.put(SENTINEL)
+    # Send stop signal
+    task_queue.put(SENTINEL)
 
 
-# Join task manager thread
-task_manager_thread.join()
+    # Join task manager thread
+    task_manager_thread.join()
 
 
-# Join stopping thread
-stop_thread.join()
+    # Join stopping thread
+    stop_thread.join()
 
 
-# Join workers
-for worker_process in workers:
-    if worker_process.is_alive():
-        worker_process.terminate()
-    worker_process.join()
+    # Join workers
+    for worker_process in workers:
+        if worker_process.is_alive():
+            worker_process.terminate()
+        worker_process.join()
 
 
-# Join threads
-logging_queue.put(SENTINEL)
-logging_thread.join()
+    # Join threads
+    logging_queue.put(SENTINEL)
+    logging_thread.join()
 
-for csv_file in dir.csv_files.values():
-    csv_file.queue.put(SENTINEL)
-    csv_file.thread.join()
+    for csv_file in dir.itercsv():
+        csv_file.queue.put(SENTINEL)
+        csv_file.thread.join()

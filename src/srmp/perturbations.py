@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import cast
 
 import numpy as np
+import numpy.typing as npt
 from drs import drs
 from numpy.random import Generator
 
@@ -15,7 +16,7 @@ from ..random import seed
 class PerturbWeight(Dataclass):
     amp: float
 
-    def __call__(self, weights: np.ndarray, rng: Generator):
+    def __call__(self, weights: npt.NDArray[np.float64], rng: Generator):
         random.seed(seed(rng))
 
         return np.array(

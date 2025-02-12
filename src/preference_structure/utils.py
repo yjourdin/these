@@ -1,3 +1,4 @@
+from collections import defaultdict
 from collections.abc import Iterable
 from typing import Any, cast, get_origin
 
@@ -11,17 +12,17 @@ OutrankingMatrixClass = cast(Any, get_origin(OutrankingMatrix))
 RankingClass = cast(Any, get_origin(Ranking))
 
 
-def outranking_numpy_from_outranking(outranking: OutrankingMatrix) -> np.ndarray:
+def outranking_numpy_from_outranking(outranking: OutrankingMatrix):
     return outranking.data.to_numpy().astype(bool, copy=False)
 
 
-def outranking_numpy_from_ranking(ranking: Ranking) -> np.ndarray:
+def outranking_numpy_from_ranking(ranking: Ranking):
     ranking_numpy = ranking.data.to_numpy()
 
     return np.less_equal.outer(ranking_numpy, ranking_numpy).astype(bool, copy=False)
 
 
-def outranking_numpy(o: OutrankingMatrix | Ranking) -> np.ndarray:
+def outranking_numpy(o: OutrankingMatrix | Ranking):
     if isinstance(o, OutrankingMatrixClass):
         o = cast(OutrankingMatrix, o)
         return outranking_numpy_from_outranking(o)
@@ -56,7 +57,7 @@ def divide_preferences(preferences: Iterable[Relation]):
 #     return result
 
 
-def preference_to_numeric(r: P | I):
+def preference_to_numeric(r: Relation):
     a, b = (r.a, r.b) if r.a < r.b else (r.b, r.a)
     if r == P(a, b):
         return 1
@@ -65,12 +66,26 @@ def preference_to_numeric(r: P | I):
     elif r == P(b, a):
         return -1
     else:
-        raise Exception()
+        raise Exception(f"Relation {r} not recognized")
 
 
-def complementary_preference(r: P | I) -> list[P | I]:
+def complementary_relation(r: P | I) -> list[P | I]:
     match r:
         case P(a=a, b=b):
             return [I(a, b), P(b, a)]
         case I(a=a, b=b):
             return [P(a, b), P(b, a)]
+
+
+def complementary_preference(preferences: Iterable[Relation]) -> list[P | I]:
+    relations: defaultdict[frozenset[Any], list[P | I]] = defaultdict(list)
+    for r in preferences:
+        relations[frozenset((r.a, r.b))].append(cast(P | I, r))
+
+    result: list[P | I] = []
+    for lst in relations.values():
+        result.extend(
+            list(set.intersection(*[set(complementary_relation(r)) for r in lst]))
+        )
+
+    return result

@@ -1,12 +1,24 @@
 import argparse
+from enum import Enum, member
 
-from ..enum_base import StrEnum
+from .function import generate_linext, generate_weak_order, generate_weak_order_ext
 
 
-class ScriptEnum(StrEnum):
-    LINEXT = "linext"
-    WEAK_ORDER = "weak_order"
-    WEAK_ORDER_EXT = "weak_order_ext"
+class ScriptEnum(Enum):
+    @member
+    def LINEXT(self, *args, **kwargs):
+        return generate_linext(*args, **kwargs)
+
+    @member
+    def WEAK_ORDER(self, *args, **kwargs):
+        return generate_weak_order(*args, **kwargs)
+
+    @member
+    def WEAK_ORDER_EXT(self, *args, **kwargs):
+        return generate_weak_order_ext(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        return self.value(self, *args, **kwargs)
 
 
 parser = argparse.ArgumentParser()
@@ -14,19 +26,19 @@ parser = argparse.ArgumentParser()
 subparsers = parser.add_subparsers(dest="script", required=True, help="Julia script")
 
 parser_linext = subparsers.add_parser(
-    ScriptEnum.LINEXT, help="Generate linear extension"
+    ScriptEnum.LINEXT.name, help="Generate linear extension"
 )
 parser_linext.add_argument("m", type=int, help="Number of criteria")
 parser_linext.add_argument("-s", "--seed", type=int, help="Random seed")
 
 parser_weak_order = subparsers.add_parser(
-    ScriptEnum.WEAK_ORDER, help="Generate weak order"
+    ScriptEnum.WEAK_ORDER.name, help="Generate weak order"
 )
 parser_weak_order.add_argument("m", type=int, help="Number of criteria")
 parser_weak_order.add_argument("-s", "--seed", type=int, help="Random seed")
 
 parser_weak_order_ext = subparsers.add_parser(
-    ScriptEnum.WEAK_ORDER_EXT, help="Generate weak order extension"
+    ScriptEnum.WEAK_ORDER_EXT.name, help="Generate weak order extension"
 )
 parser_weak_order_ext.add_argument("m", type=int, help="Number of criteria")
 parser_weak_order_ext.add_argument("-s", "--seed", type=int, help="Random seed")

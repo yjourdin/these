@@ -1,9 +1,8 @@
 from collections.abc import Container, Sequence
-from typing import cast
 
 import numpy as np
+import numpy.typing as npt
 from mcda import PerformanceTable
-from mcda.internal.core.relations import Relation
 from mcda.relations import PreferenceStructure
 
 from ..model import FrozenModel
@@ -21,13 +20,14 @@ def preference_path(
     pairs = start_preferences.elements_pairs_relations.keys()
 
     for model in path:
-        pref_struct = PreferenceStructure()
-        pref_struct._relations = cast(
-            list[Relation],
-            list(preference_relation_generator(model.model.rank(alternatives), pairs)),
+        result.append(
+            PreferenceStructure(
+                list(
+                    preference_relation_generator(model.model.rank(alternatives), pairs)
+                ),
+                validate=False,
+            )
         )
-
-        result.append(pref_struct)
 
     return result
 
@@ -45,7 +45,7 @@ def remove_refused(
 
 def remove_reverted_changes(preference_path: list[PreferenceStructure]):
     pairs = set(r.elements for r in preference_path[0]) if preference_path else set()
-    changes: list[np.ndarray] = []
+    changes: list[npt.NDArray[np.int_]] = []
     i = 1
     while i < len(preference_path):
         changes_i = np.array(

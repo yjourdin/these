@@ -1,7 +1,7 @@
 import argparse
 from sys import stdout
 
-from .model import SRMPParamEnum
+from .model import SRMPParamFlag
 
 parser = argparse.ArgumentParser()
 parser.add_argument("group_size", type=int, default=1, help="Group size")
@@ -11,8 +11,8 @@ parser.add_argument(
     "--shared",
     nargs="*",
     default=[],
-    type=SRMPParamEnum,  # type: ignore
-    choices=SRMPParamEnum,
+    type=SRMPParamFlag,
+    choices=SRMPParamFlag,
     help="Parameters shared between decision makers",
 )
 parser.add_argument(

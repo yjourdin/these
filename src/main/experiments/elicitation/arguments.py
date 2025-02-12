@@ -25,5 +25,6 @@ class ArgumentsElicitation(
     Ko: list[int] = field(default_factory=list)
     N_bc: list[int] = field(default_factory=list)
     same_alt: list[bool] = field(default_factory=lambda: [True])
+    fixed_lex_order: bool = False
     Ke: list[int] | None = None
     error: list[float] = field(default_factory=lambda: [0])

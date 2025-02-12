@@ -1,23 +1,26 @@
 import numpy as np
+import numpy.typing as npt
 from more_itertools import powerset
 from numpy.random import Generator
 from scipy.stats import rankdata
 
-
-def random_weights(nb_crit: int, rng: Generator) -> np.ndarray:
-    return rng.dirichlet(np.ones(nb_crit))
+from ..utils import tolist
 
 
-def normalize_weights(weights: np.ndarray):
+def random_weights(nb_crit: int, rng: Generator):
+    return np.diff(np.sort(np.pad(rng.random(nb_crit - 1), 1, constant_values=(0, 1))))
+
+
+def normalize_weights(weights: npt.NDArray[np.float64]):
     weights[-1] = 1 - weights[:-1].sum()
     return weights
 
 
-def frozen_importance_relation_from_weights(w: np.ndarray):
+def frozen_importance_relation_from_weights(w: npt.NDArray[np.float64]):
     power_sets = powerset(range(len(w)))
     result = []
 
     for set in power_sets:
         result.append(w[list(set)].sum())
 
-    return tuple(rankdata(result, "dense").tolist())
+    return tuple(tolist(rankdata(result, "dense")))

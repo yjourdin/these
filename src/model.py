@@ -9,6 +9,8 @@ from mcda.internal.core.values import Ranking
 from mcda.relations import PreferenceStructure
 from numpy.random import Generator
 
+from src.utils import list_replace
+
 from .aggregator import agg_float, agg_rank
 from .dataclass import RandomDataclass, RandomFrozenDataclass
 from .preference_structure.fitness import fitness_comparisons_ranking
@@ -34,8 +36,7 @@ class Model(RandomDataclass):
 class FrozenModel[M: Model](RandomFrozenDataclass):
     @property
     @abstractmethod
-    def model(self) -> M:
-        ...
+    def model(self) -> M: ...
 
 
 @dataclass
@@ -52,8 +53,7 @@ class GroupModel[M: Model](Model, Sequence[M]):
     dm_weights: list[float] = field(default_factory=list)
 
     def __post_init__(self):
-        lst = self.dm_weights[: self.group_size]
-        self.dm_weights = lst + [1] * (self.group_size - len(lst))
+        self.dm_weights = list_replace([1] * self.group_size, self.dm_weights)
 
     @property
     def collective_model(self) -> Model:

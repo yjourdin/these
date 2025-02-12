@@ -26,6 +26,7 @@ class ArgumentsGroupDecision(Arguments, GroupMIPConfigField, GroupGroupParameter
     M: list[int] = field(default_factory=list)
     Ko: list[int] = field(default_factory=list)
     N_bc: list[int] = field(default_factory=list)
+    fixed_lex_order: bool = False
+    Ke: list[int] | None = None
     same_alt: list[bool] = field(default_factory=lambda: [True])
     path: list[bool] = field(default_factory=lambda: [True])
-    fixed_lex_order: bool = False

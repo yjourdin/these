@@ -1,6 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
+import numpy.typing as npt
 from numpy.random import Generator
 
 from ..field import (
@@ -8,13 +9,14 @@ from ..field import (
     random_field,
     random_group_field,
 )
-from .weight import random_weights
+from ..utils import tolist
+from .weight import frozen_importance_relation_from_weights, random_weights
 
 
 @random_field("weights")
 @dataclass
 class WeightsField(RandomField):
-    weights: np.ndarray
+    weights: npt.NDArray[np.float64]
 
     @staticmethod
     def field_decode(o):
@@ -22,14 +24,39 @@ class WeightsField(RandomField):
 
     @staticmethod
     def field_encode(o):
-        return o.tolist()
+        return tolist(o)
 
     @staticmethod
     def field_random(nb_crit: int, rng: Generator, *args, **kwargs):
         return random_weights(nb_crit, rng)
 
 
+@random_field("weights")
+@dataclass(frozen=True)
+class FrozenWeightsField(RandomField):
+    weights: npt.NDArray[np.float64] = field(compare=False)
+    # weights: tuple[float, ...]
+    importance_relation: tuple[int, ...] = field(init=False)
+
+    def __post_init__(self):
+        object.__setattr__(
+            self,
+            "importance_relation",
+            frozen_importance_relation_from_weights(self.weights),
+        )
+
+
+
+    @staticmethod
+    def field_decode(o):
+        return np.array(o)
+
+    @staticmethod
+    def field_encode(o):
+        return list(o)
+
+
 @random_group_field(fieldname="weights", fieldclass=WeightsField)
 @dataclass
 class GroupWeightsField(RandomField):
-    weights: list[np.ndarray]
+    weights: list[npt.NDArray[np.float64]]
