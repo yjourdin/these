@@ -13,5 +13,5 @@ class CoolingSchedule(ABC):
 class GeometricSchedule(CoolingSchedule, Dataclass):
     alpha: float
 
-    def __call__(self, temp):
+    def __call__(self, temp: float):
         return temp * self.alpha

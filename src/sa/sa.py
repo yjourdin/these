@@ -1,7 +1,7 @@
 import csv
-from time import process_time
 from dataclasses import dataclass
 from math import exp
+from time import process_time
 from typing import TextIO
 
 from mcda.internal.core.interfaces import Learner
@@ -68,8 +68,8 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
 
         # Stopping criterion
         while (
-            ((self.Tf is None) or (temp > self.Tf))
-            and ((self.max_time is None) or (self.time < self.max_time))
+            (self.time < self.max_time)
+            and ((self.Tf is None) or (temp > self.Tf))
             and ((self.max_it is None) or (self.it < self.max_it))
             and (
                 (self.max_it_non_improving is None)
@@ -113,18 +113,16 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
                 self.time = process_time() - start_time
 
                 if self.log_file:
-                    log_writer.writerow(
-                        {
-                            "It": self.it,
-                            "Non-improving it": self.non_improving_it,
-                            "Time": self.time,
-                            "Temp": temp,
-                            "Neighbor sol": neighbor_sol,
-                            "Neighbor obj": neighbor_obj,
-                            "Current obj": current_obj,
-                            "Best obj": self.best_obj,
-                        }
-                    )
+                    log_writer.writerow({  # type: ignore
+                        "It": self.it,
+                        "Non-improving it": self.non_improving_it,
+                        "Time": self.time,
+                        "Temp": temp,
+                        "Neighbor sol": neighbor_sol,
+                        "Neighbor obj": neighbor_obj,
+                        "Current obj": current_obj,
+                        "Best obj": self.best_obj,
+                    })
 
             # Update temperature
             temp = self.cooling_schedule(temp)

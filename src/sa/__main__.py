@@ -35,6 +35,7 @@ best_model, best_fitness, time, it = learn_sa(
     args.alpha,
     rng_init,
     rng_sa,
+    None,
     args.T0,
     args.accept,
     args.L,
@@ -43,11 +44,10 @@ best_model, best_fitness, time, it = learn_sa(
     args.max_it,
     args.max_it_non_improving,
     args.log,
-    **({"amp": args.amp} if hasattr(args, "amp") else {}),
 )
 
 
 # Write results
-args.output.write(best_model.to_json())
+args.output.write(best_model.to_json() + "\n")
 writer = csv.writer(args.result, "unix")
 writer.writerow([best_fitness, time, it])

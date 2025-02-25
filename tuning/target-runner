@@ -36,9 +36,9 @@ CONFIG_PARAMS=$*
 # EDIT THIS: Path to your executable
 EXE="python -Wi -m src.sa"
 # EDIT THIS: Specify how parameters are given to your executable
-EXE_PARAMS="$INSTANCE --seed ${SEED} ${CONFIG_PARAMS} --max-it 20000"
+EXE_PARAMS="$INSTANCE -s ${SEED} ${CONFIG_PARAMS} --max-it 100"
 
-# if [ ! -x "$(command -v "${EXE}")" ]; then
+# if [ ! -x "$(command -v ${EXE})" ]; then
 #     error "${EXE}: not found or not executable (pwd: $(pwd))"
 # fi
 
@@ -57,7 +57,9 @@ STDERR=c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stderr
 # # If the command below fails, but you are not sure why, it may be useful to
 # # print it before executing using 'echo', as in:
 # echo "$EXE ${EXE_PARAMS} 1> ${STDOUT} 2> ${STDERR}"
-$EXE ${EXE_PARAMS} -r "${STDOUT}"
+
+# shellcheck disable=SC2086
+$EXE ${EXE_PARAMS} -o "${STDOUT}" -r "${STDOUT}"
 
 # # This may be used to introduce a delay if there are filesystem issues.
 # SLEEPTIME=1
@@ -73,7 +75,7 @@ fi
 # objective value is the first number in the first column of the last line of
 # the output.
 # COST=$(tail -n 1 ${STDOUT} | grep -e '^[[:space:]]*[+-]\?[0-9]' | cut -f1)
-COST=$(tail -n 1 "${STDOUT}" | cut -f1 -d" ")
+COST=$(tail -n 1 "${STDOUT}" | cut -f 1 -d "," | tr -d \")
 echo "-$COST"
 # Comment the following line if you wish to preserve temporary files
 rm -f "${STDOUT}" "${STDERR}"

@@ -1,9 +1,9 @@
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Iterable, Iterator, Mapping, Callable
 from enum import Enum
 from functools import partial, reduce
 from itertools import chain, count
 from pathlib import Path
-from typing import Any, Callable, NamedTuple
+from typing import Any, NamedTuple
 
 import numpy as np
 import numpy.typing as npt
@@ -12,7 +12,7 @@ from mcda import PerformanceTable
 from .constants import EPSILON
 
 
-def midpoints(performance_table: PerformanceTable) -> PerformanceTable:
+def midpoints(performance_table: PerformanceTable[Any]) -> PerformanceTable[Any]:
     # sort performance table
     df = performance_table.data.transform(np.sort)
 
@@ -42,21 +42,22 @@ def print_list(lst: Iterable[str | int]):
     return result
 
 
-def to_str(o):
+def to_str(o: Any):
     match o:
         case list():
-            return "[" + ", ".join([to_str(i) for i in o]) + "]"
+            o_str = [to_str(i) for i in o]
+            return "[" + ", ".join(o_str) + "]"
         case Enum():
             return str(o)
         case _:
             return str(o).title().replace("_", "")
 
 
-def list_str(lst: Iterable):
+def list_str(lst: Iterable[Any]):
     return [str(x) for x in lst]
 
 
-def dict_str(dct: Mapping):
+def dict_str(dct: Mapping[Any, Any]):
     return {str(k): str(v) for k, v in dct.items()}
 
 
@@ -66,7 +67,7 @@ class Cell(NamedTuple):
 
 
 def add_str_to_list(
-    o, index: Iterator[int] | None = None, prefix: list[str] = []
+    o: Any, index: Iterator[int] | None = None, prefix: list[str] = []
 ) -> list[Cell]:
     index = index or count()
     if np.ndim(o) > 0 and len(o) == 1:
@@ -96,14 +97,16 @@ filename_csv = partial(pathname, ext=".csv")
 filename_json = partial(pathname, ext=".json")
 
 
-def max_weight(n):
+def max_weight(n: int) -> int:
     # return 1 if n == 1 else (n - 1) * max_weight(n - 1) + 1
     return 2**n - 1
 
 
-def compose(*fs: Callable):
-    def compose2(f: Callable, g: Callable):
-        return lambda *a, **kw: g(f(*a, **kw))
+def compose(*fs: Callable[..., Any]):
+    def compose2(f: Callable[..., Any], g: Callable[..., Any]):
+        def func(*args: Any, **kwargs: Any):
+            return g(f(*args, **kwargs))
+        return func
 
     return reduce(compose2, fs)
 
@@ -117,7 +120,7 @@ def add_filename_suffix(filename: Path, suffix: str):
     return filename.parent / (filename.stem + suffix + filename.suffix)
 
 
-def round_epsilon(x, epsilon: float = EPSILON):
+def round_epsilon(x: float, epsilon: float = EPSILON) -> float:
     return np.round(x / EPSILON) * EPSILON
 
 

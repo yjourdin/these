@@ -23,4 +23,4 @@ def frozen_importance_relation_from_weights(w: npt.NDArray[np.float64]):
     for set in power_sets:
         result.append(w[list(set)].sum())
 
-    return tuple(tolist(rankdata(result, "dense")))
+    return tuple(tolist(rankdata(result, "dense"))) # type: ignore

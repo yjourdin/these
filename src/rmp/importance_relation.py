@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.random import Generator
 
 from ..julia.function import generate_weak_order_ext
 from ..random import seed
@@ -8,7 +9,7 @@ from ..weak_order import WeakOrder
 
 class ImportanceRelation(WeakOrder[frozenset[int]]):
     @classmethod
-    def random(cls, nb_crit, rng):
+    def random(cls, nb_crit: int, rng: Generator):
         weak_order_ext = generate_weak_order_ext(nb_crit, seed(rng))
 
         labels = np.arange(nb_crit)

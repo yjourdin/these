@@ -1,10 +1,11 @@
 from itertools import permutations, product
-from typing import NamedTuple, cast
+from typing import Any, NamedTuple, cast
 
 import numpy as np
+import numpy.typing as npt
 from mcda.relations import I, P, PreferenceStructure
 from numpy.random import Generator
-from pulp import value
+from pulp import value # type: ignore
 
 from ..constants import DEFAULT_MAX_TIME
 from ..model import Model
@@ -46,8 +47,8 @@ def learn_mip(
     profiles_amp: float = 1,
     weights_amp: float = 1,
     lexicographic_order_distance: int = 0,
-    *args,
-    **kwargs,
+    *args: Any,
+    **kwargs: Any,
 ):
     if model_type.model is not ModelEnum.SRMP:
         return MIPResult()
@@ -56,7 +57,7 @@ def learn_mip(
     DMS = range(NB_DM)
 
     alternatives = alternatives.subtable(
-        list(set.union(*map(set, (comparisons[dm].elements for dm in DMS))))
+        list(set.union(*[set(comparisons[dm].elements) for dm in DMS]))  # type: ignore
     )
 
     best_model = None
@@ -68,7 +69,7 @@ def learn_mip(
     indifference_relations_list: list[list[I]] = []
     for dm in DMS:
         preference_relations_dm, indifference_relations_dm = divide_preferences(
-            comparisons[dm]._relations
+            comparisons[dm].relations
         )
         preference_relations_list.append(preference_relations_dm)
         indifference_relations_list.append(indifference_relations_dm)
@@ -88,7 +89,7 @@ def learn_mip(
         indifference_relations = indifference_relations_list[0]
 
     if lex_order:
-        lexicographic_orders = np.array([lex_order])
+        lexicographic_orders: npt.NDArray[np.int_] = np.array([lex_order])
     elif lex_order_shared:
         if reference_model is None or lexicographic_order_distance == 0:
             lexicographic_orders = np.array(list(permutations(range(k))))
@@ -98,7 +99,7 @@ def learn_mip(
                     all_max_adjacent_distance(
                         reference_model.lexicographic_order,
                         lexicographic_order_distance,
-                    )
+                    )  # type: ignore
                 )
             )
     else:
@@ -110,10 +111,13 @@ def learn_mip(
 
     for lexicographic_order in lexicographic_orders:
         if time_left >= 1:
-            mip: MIP
+            mip: MIP[SRMPModel]
             if lex_order_shared:
                 lexicographic_order = cast(list[int], tolist(lexicographic_order))
                 if NB_DM == 1:
+                    preference_relations = cast(list[P], None)
+                    indifference_relations = cast(list[I], None)
+                    
                     if reference_model:
                         mip = MIPSRMPAccept(
                             alternatives,
@@ -152,7 +156,7 @@ def learn_mip(
                         )
                         preference_to_accept_list.append(preference_to_accept)
                         indifference_to_accept_list.append(indifference_to_accept)
-                    
+
                     comparisons_accepted = comparisons_accepted or PreferenceStructure()
                     preference_accepted_list, indifference_accepted_list = (
                         divide_preferences(comparisons_accepted)

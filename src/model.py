@@ -2,33 +2,32 @@ from abc import abstractmethod
 from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import ClassVar, Self, overload
+from typing import Any, ClassVar, Self, SupportsIndex, overload
 
-from mcda import PerformanceTable
 from mcda.internal.core.values import Ranking
 from mcda.relations import PreferenceStructure
 from numpy.random import Generator
 
-from src.utils import list_replace
-
 from .aggregator import agg_float, agg_rank
 from .dataclass import RandomDataclass, RandomFrozenDataclass
+from .performance_table.type import PerformanceTableType
 from .preference_structure.fitness import fitness_comparisons_ranking
 from .random import Random
+from .utils import list_replace
 
 
 @dataclass
 class Model(RandomDataclass):
     @abstractmethod
-    def rank(self, performance_table: PerformanceTable) -> Ranking: ...
+    def rank(self, performance_table: PerformanceTableType) -> Ranking: ...
 
     def fitness(
-        self, performance_table: PerformanceTable, comparisons: PreferenceStructure
+        self, performance_table: PerformanceTableType, comparisons: PreferenceStructure
     ):
         return fitness_comparisons_ranking(comparisons, self.rank(performance_table))
 
     @classmethod
-    def from_reference(cls, other: Self, rng: Generator, *args, **kwargs):
+    def from_reference(cls, other: Self, rng: Generator, *args: Any, **kwargs: Any):
         return deepcopy(other)
 
 
@@ -43,17 +42,21 @@ class FrozenModel[M: Model](RandomFrozenDataclass):
 class AggModel(Model):
     models: list[Model]
 
-    def rank(self, performance_table: PerformanceTable) -> Ranking:
+    def rank(self, performance_table: PerformanceTableType) -> Ranking:
         return agg_rank(model.rank(performance_table) for model in self.models)
 
 
 @dataclass
 class GroupModel[M: Model](Model, Sequence[M]):
-    group_size: int
+    _group_size: int
     dm_weights: list[float] = field(default_factory=list)
 
     def __post_init__(self):
         self.dm_weights = list_replace([1] * self.group_size, self.dm_weights)
+
+    @property
+    def group_size(self):
+        return self._group_size
 
     @property
     def collective_model(self) -> Model:
@@ -61,24 +64,24 @@ class GroupModel[M: Model](Model, Sequence[M]):
 
     @overload
     @abstractmethod
-    def __getitem__(self, i: int) -> M: ...
+    def __getitem__(self, i: SupportsIndex) -> M: ...
 
     @overload
     @abstractmethod
     def __getitem__(self, i: slice) -> Sequence[M]: ...
 
     @abstractmethod
-    def __getitem__(self, i) -> M | Sequence[M]: ...
+    def __getitem__(self, i: SupportsIndex | slice) -> M | Sequence[M]: ...
 
     def __len__(self):
         return self.group_size
 
-    def rank(self, performance_table):
+    def rank(self, performance_table: PerformanceTableType):
         return self.collective_model.rank(performance_table)
 
     def fitness(
         self,
-        performance_table: PerformanceTable,
+        performance_table: PerformanceTableType,
         comparisons: PreferenceStructure | list[PreferenceStructure],
     ):
         match comparisons:
@@ -93,11 +96,16 @@ class GroupModel[M: Model](Model, Sequence[M]):
                 )
 
 
-class Group[M: Model](list[M], GroupModel[M], Random):
+class Group[M: Model](list[M], GroupModel[M], Random):  # type: ignore
     model: ClassVar[type[M]]  # type: ignore
     dm_models: list[M]
 
-    def __getitem__(self, i):
+    @overload
+    def __getitem__(self, i: SupportsIndex) -> M: ...
+    @overload
+    def __getitem__(self, i: slice) -> list[M]: ...
+
+    def __getitem__(self, i: SupportsIndex | slice) -> M | list[M]:
         return self.dm_models[i]
 
     @property
@@ -108,9 +116,9 @@ class Group[M: Model](list[M], GroupModel[M], Random):
         return "[" + ", ".join([str(model) for model in self]) + "]"
 
     @classmethod
-    def random(cls, *args, **kwargs):
+    def random(cls, *args: Any, **kwargs: Any):
         return cls([cls.model.random(*args, **kwargs)])
 
     @classmethod
-    def from_reference(cls, other: M, rng: Generator, *args, **kwargs):
+    def from_reference(cls, other: M, rng: Generator, *args: Any, **kwargs: Any):
         return cls([cls.model.from_reference(other, rng, *args, **kwargs)])

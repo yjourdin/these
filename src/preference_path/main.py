@@ -1,11 +1,12 @@
 from collections.abc import Container, Sequence
 
-from mcda import PerformanceTable
 from mcda.relations import PreferenceStructure
 from numpy.random import Generator
 
+from ..performance_table.type import PerformanceTableType
+
 from ..constants import DEFAULT_MAX_TIME
-from ..model import FrozenModel
+from ..model import FrozenModel, Model
 from ..preference_structure.fitness import fitness_comparisons_ranking
 from ..random import rng
 from ..srmp.model import FrozenSRMPModel, SRMPModel
@@ -23,7 +24,7 @@ from .preference_path import preference_path, remove_refused, remove_reverted_ch
 def compute_model_path(
     start_model: SRMPModel,
     target_preferences: PreferenceStructure,
-    alternatives: PerformanceTable,
+    alternatives: PerformanceTableType,
     rng: Generator = rng(),
     max_time: int = DEFAULT_MAX_TIME,
     fixed_lex_order: bool = False,
@@ -32,7 +33,7 @@ def compute_model_path(
 
     neighborhoods: list[Neighborhood[FrozenSRMPModel]] = [
         NeighborhoodProfile(alternatives),
-        NeighborhoodWeight(len(alternatives.criteria)),
+        NeighborhoodWeight(len(alternatives.criteria)), # type: ignore
     ]
 
     if not fixed_lex_order:
@@ -52,9 +53,9 @@ def compute_model_path(
 
 
 def compute_preference_path(
-    model_path: Sequence[FrozenModel],
+    model_path: Sequence[FrozenModel[Model]],
     start_preferences: PreferenceStructure,
-    alternatives: PerformanceTable,
+    alternatives: PerformanceTableType,
     refused: Container[PreferenceStructure],
 ):
     path = preference_path(model_path, alternatives, start_preferences)

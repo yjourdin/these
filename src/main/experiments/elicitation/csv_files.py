@@ -1,4 +1,4 @@
-from typing import NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 from ....methods import MethodEnum
 from ....models import GroupModelEnum
@@ -10,7 +10,7 @@ from .config import Config
 class ConfigFields(TypedDict):
     Id: int
     Method: MethodEnum
-    Config: Config
+    Config: dict[str, Any]
 
 
 class ConfigCSVFile(CSVFile[ConfigFields]):

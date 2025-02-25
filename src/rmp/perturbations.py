@@ -39,13 +39,14 @@ class PerturbImportanceRelation(Dataclass):
             keys = list(importance_relation)
             min_score = max_score = 0
 
+            coalition: frozenset[int] = frozenset()
             while min_score >= max_score:
                 coalition = keys[rng.choice(len(importance_relation))]
                 min_score = importance_relation.min(coalition)
                 max_score = importance_relation.max(coalition)
 
             score = importance_relation[coalition]
-            available_score = []
+            available_score: list[int] = []
             if score > min_score:
                 available_score.append(score - 1)
             if score < max_score:

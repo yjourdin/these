@@ -3,6 +3,7 @@ from collections.abc import Iterable
 from typing import Any, cast, get_origin
 
 import numpy as np
+import numpy.typing as npt
 from mcda.internal.core.matrices import OutrankingMatrix
 from mcda.internal.core.relations import Relation
 from mcda.internal.core.values import Ranking
@@ -12,12 +13,14 @@ OutrankingMatrixClass = cast(Any, get_origin(OutrankingMatrix))
 RankingClass = cast(Any, get_origin(Ranking))
 
 
-def outranking_numpy_from_outranking(outranking: OutrankingMatrix):
+def outranking_numpy_from_outranking(
+    outranking: OutrankingMatrix,
+) -> npt.NDArray[np.bool_]:
     return outranking.data.to_numpy().astype(bool, copy=False)
 
 
 def outranking_numpy_from_ranking(ranking: Ranking):
-    ranking_numpy = ranking.data.to_numpy()
+    ranking_numpy: npt.NDArray[np.int_] = ranking.data.to_numpy()
 
     return np.less_equal.outer(ranking_numpy, ranking_numpy).astype(bool, copy=False)
 
@@ -42,6 +45,8 @@ def divide_preferences(preferences: Iterable[Relation]):
                 preference_relations.append(r)
             case I():
                 indifference_relations.append(r)
+            case _:
+                raise ValueError(f"{r} is not a preference relation")
     return preference_relations, indifference_relations
 
 
@@ -85,7 +90,7 @@ def complementary_preference(preferences: Iterable[Relation]) -> list[P | I]:
     result: list[P | I] = []
     for lst in relations.values():
         result.extend(
-            list(set.intersection(*[set(complementary_relation(r)) for r in lst]))
+            list(set.intersection(*[set(complementary_relation(r)) for r in lst]))  # type: ignore
         )
 
     return result

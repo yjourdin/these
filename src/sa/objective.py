@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from mcda import PerformanceTable
 from mcda.relations import PreferenceStructure
 
 from ..dataclass import Dataclass
 from ..model import Model
+from ..performance_table.type import PerformanceTableType
 
 
 class Objective[S](ABC):
@@ -19,10 +19,10 @@ class Objective[S](ABC):
 
 @dataclass
 class FitnessObjective(Objective[Model], Dataclass):
-    train_data: PerformanceTable
+    train_data: PerformanceTableType
     target: PreferenceStructure
 
-    def __call__(self, sol):
+    def __call__(self, sol: Model):
         return 1 - sol.fitness(self.train_data, self.target)
 
     @property

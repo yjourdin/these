@@ -1,9 +1,11 @@
 import logging.config
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Process, Queue
 from multiprocessing.connection import Connection
 from queue import LifoQueue
 from threading import Thread
+from typing import Any
 
 from ..constants import SENTINEL
 from .argument_parser import parse_args
@@ -18,7 +20,6 @@ from .threads.logger import logger_thread
 from .threads.stop import stopping_thread
 from .threads.worker_manager import TaskQueue, worker_manager
 from .worker import worker
-import traceback
 
 # Parse arguments
 args = parse_args()
@@ -48,7 +49,7 @@ if not args.extend:
 
 
 # Create logging queue
-logging_queue: Queue = Queue()
+logging_queue: "Queue[Any]" = Queue()
 
 
 # Start worker processes
@@ -111,25 +112,20 @@ with ThreadPoolExecutor() as thread_pool:
     except Exception:
         traceback.print_exc()
 
-
     # Send stop signal
     task_queue.put(SENTINEL)
-
 
     # Join task manager thread
     task_manager_thread.join()
 
-
     # Join stopping thread
     stop_thread.join()
-
 
     # Join workers
     for worker_process in workers:
         if worker_process.is_alive():
             worker_process.terminate()
         worker_process.join()
-
 
     # Join threads
     logging_queue.put(SENTINEL)

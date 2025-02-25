@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -19,15 +20,15 @@ class WeightsField(RandomField):
     weights: npt.NDArray[np.float64]
 
     @staticmethod
-    def field_decode(o):
+    def field_decode(o: Any):
         return np.array(o)
 
     @staticmethod
-    def field_encode(o):
+    def field_encode(o: Any):
         return tolist(o)
 
     @staticmethod
-    def field_random(nb_crit: int, rng: Generator, *args, **kwargs):
+    def field_random(nb_crit: int, rng: Generator, *args: Any, **kwargs: Any):
         return random_weights(nb_crit, rng)
 
 
@@ -45,14 +46,12 @@ class FrozenWeightsField(RandomField):
             frozen_importance_relation_from_weights(self.weights),
         )
 
-
-
     @staticmethod
-    def field_decode(o):
+    def field_decode(o: Any):
         return np.array(o)
 
     @staticmethod
-    def field_encode(o):
+    def field_encode(o: Any):
         return list(o)
 
 

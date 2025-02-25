@@ -7,9 +7,11 @@ Implementation and naming conventions are taken from
 
 from __future__ import annotations
 
-from typing import cast
+from collections.abc import Sequence
+from typing import Any, cast
 
 import numpy as np
+import numpy.typing as npt
 from mcda import PerformanceTable
 from mcda.internal.core.interfaces import Ranker
 from mcda.internal.core.matrices import OutrankingMatrix
@@ -29,9 +31,10 @@ from mcda.plot import (
 from mcda.scales import DiscreteQuantitativeScale, PreferenceDirection
 from mcda.transformers import ClosestTransformer
 from mcda.values import CommensurableValues, Values
-from pandas import DataFrame, Series, concat
+from pandas import DataFrame, Index, Series, concat
 from scipy.stats import rankdata
 
+from ..performance_table.type import PerformanceTableType
 from ..utils import tolist
 from .importance_relation import ImportanceRelation
 
@@ -51,33 +54,29 @@ class ProfileWiseOutranking(Ranker):
 
     def __init__(
         self,
-        performance_table: PerformanceTable,
+        performance_table: PerformanceTableType,
         importance_relation: ImportanceRelation,
-        profile: Values,
+        profile: Values[Any],
     ):
         self.performance_table = performance_table
         self.importance_relation = importance_relation
         self.profile = profile
 
-    def rank(self, **kwargs) -> OutrankingMatrix:
+    def rank(self, **kwargs: Any) -> OutrankingMatrix:
         """Construct an outranking matrix.
 
         :return:
         """
-        scores = Series(
-            {
-                a: self.importance_relation[
-                    frozenset(
-                        [
-                            c
-                            for c, s in av.scales.items()
-                            if s.is_better_or_equal(av[c], self.profile[c])
-                        ]
-                    )
-                ]
-                for a, av in self.performance_table.alternatives_values.items()
-            }
-        )
+        scores = Series({
+            a: self.importance_relation[
+                frozenset([
+                    c
+                    for c, s in av.scales.items()
+                    if s.is_better_or_equal(av[c], self.profile[c])
+                ])
+            ]
+            for a, av in self.performance_table.alternatives_values.items()
+        })
 
         return create_outranking_matrix(
             DataFrame(
@@ -118,19 +117,17 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
         self.importance_relation = importance_relation
         self.profile = profile
 
-    def rank(self, **kwargs):
+    def rank(self, **kwargs: Any):  # type: ignore
         """Construct an outranking matrix.
 
         :return:
         """
         comp_df = self.performance_table.data >= self.profile.data
 
-        scores = np.array(
-            [
-                self.importance_relation[frozenset(np.nonzero(a)[0])]
-                for a in comp_df.values
-            ]
-        )
+        scores = np.array([
+            self.importance_relation[frozenset(np.nonzero(a)[0])]
+            for a in comp_df.values
+        ])
 
         return np.greater_equal.outer(scores, scores)
 
@@ -146,9 +143,9 @@ class RMP(Ranker):
 
     def __init__(
         self,
-        performance_table: PerformanceTable,
+        performance_table: PerformanceTableType,
         importance_relation: ImportanceRelation,
-        profiles: PerformanceTable,
+        profiles: PerformanceTableType,
         lexicographic_order: list[int],
     ):
         self.performance_table = performance_table
@@ -157,7 +154,7 @@ class RMP(Ranker):
         self.lexicographic_order = lexicographic_order
 
     @property
-    def sub_rmp(self) -> list[ProfileWiseOutranking]:
+    def sub_rmp(self) -> Sequence[ProfileWiseOutranking]:
         """Return list of sub RMP problems (one per category profile).
 
         :return:
@@ -200,7 +197,7 @@ class RMP(Ranker):
         relations_ordered = [outranking_matrices[i] for i in lexicographic_order]
         n = len(relations_ordered)
         score = sum(
-            [relations_ordered[i].data * 2 ** (n - 1 - i) for i in range(n)],
+            [(relations_ordered[i].data * 2).pow(n - 1 - i) for i in range(n)],
             DataFrame(
                 0,
                 index=relations_ordered[0].vertices,
@@ -210,7 +207,7 @@ class RMP(Ranker):
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
         scores_ordered = sorted(set(scores.values), reverse=True)
-        ranks = cast(Series, scores.apply(lambda x: scores_ordered.index(x) + 1))
+        ranks: Series[int] = scores.apply(lambda x: scores_ordered.index(x) + 1)  # type: ignore
         return CommensurableValues(
             ranks,
             scale=DiscreteQuantitativeScale(
@@ -219,7 +216,7 @@ class RMP(Ranker):
             ),
         )
 
-    def rank(self, **kwargs) -> Ranking:
+    def rank(self, **kwargs: Any) -> Ranking:
         """Compute the RMP algorithm
 
         :return:
@@ -230,16 +227,16 @@ class RMP(Ranker):
     @classmethod
     def plot_input_data(
         cls,
-        performance_table: PerformanceTable,
+        performance_table: PerformanceTableType,
         rmp: RMP | None = None,
-        profiles: PerformanceTable | None = None,
+        profiles: PerformanceTableType | None = None,
         lexicographic_order: list[int] | None = None,
         annotations: bool = False,
         annotations_alpha: float = 0.5,
         scales_boundaries: bool = False,
         figsize: tuple[float, float] | None = None,
         xticklabels_tilted: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ):  # pragma: nocover
         """Visualize input data.
 
@@ -261,7 +258,7 @@ class RMP(Ranker):
             if ``True`` `xticklabels` are tilted to better fit
         """
         # Reorder scales
-        scales = {
+        scales: dict[Any, Any] = {
             crit: performance_table.scales[crit] for crit in performance_table.criteria
         }
 
@@ -275,7 +272,7 @@ class RMP(Ranker):
         else:
             df = performance_table.data.copy()
         table = PerformanceTable(df, scales=scales)
-        table = cast(PerformanceTable, table.to_numeric)
+        table = table.to_numeric
         if not scales_boundaries:
             _scales = table.scales
             table.scales = table.bounds
@@ -285,16 +282,16 @@ class RMP(Ranker):
         table = ClosestTransformer.normalize(table)
 
         # Create constants
-        nb_alt = len(performance_table.alternatives)
-        nb_profiles = len(profiles.alternatives) if profiles is not None else 0
+        nb_alt = len(performance_table.alternatives)  # type: ignore
+        nb_profiles = len(profiles.alternatives) if profiles is not None else 0  # type: ignore
 
         # Create figure and axis
         fig = Figure(figsize=figsize)
         ax = fig.create_add_axis()
 
         # Axis parameters
-        x = cast(list[float], range(len(performance_table.criteria)))
-        xticks = cast(list[float], (range(len(performance_table.criteria))))
+        x = cast(list[float], range(len(performance_table.criteria)))  # type: ignore
+        xticks = cast(list[float], (range(len(performance_table.criteria))))  # type: ignore
         xticklabels = [f"{crit}" for crit in performance_table.criteria]
 
         # Plotted annotations' coordinates
@@ -306,7 +303,7 @@ class RMP(Ranker):
                 ax.add_plot(
                     AreaPlot(
                         x,
-                        table.data.iloc[profile].to_list(),
+                        table.data.iloc[profile].to_list(),  # type: ignore
                         xticks=xticks,
                         yticks=[],
                         xticklabels=xticklabels,
@@ -382,12 +379,10 @@ class RMP(Ranker):
                                 annotations_alpha,
                             )
                             ax.add_plot(annotation)
-                            annotations_coord.append(
-                                (
-                                    cast(float, i),
-                                    cast(float, table.data.iloc[profile, i]),
-                                )
-                            )
+                            annotations_coord.append((
+                                cast(float, i),
+                                cast(float, table.data.iloc[profile, i]),
+                            ))
 
             for alt in range(nb_alt):
                 for i in x:
@@ -419,9 +414,10 @@ class RMP(Ranker):
                             annotations_alpha,
                         )
                         ax.add_plot(annotation)
-                        annotations_coord.append(
-                            (cast(float, i), cast(float, table.data.iloc[alt, i]))
-                        )
+                        annotations_coord.append((
+                            cast(float, i),
+                            cast(float, table.data.iloc[alt, i]),
+                        ))
 
         # Lexicographic order
         if lexicographic_order is not None:
@@ -429,9 +425,9 @@ class RMP(Ranker):
                 0,
                 1.2,
                 "Lexicographic order : $"
-                + r" \rightarrow ".join(
-                    [f"P^{profile}" for profile in lexicographic_order]
-                )
+                + r" \rightarrow ".join([
+                    f"P^{profile}" for profile in lexicographic_order
+                ])
                 + "$",
                 box=True,
             )
@@ -440,9 +436,9 @@ class RMP(Ranker):
 
     def plot_progressive_ranking(
         self,
-        performance_table: PerformanceTable,
+        performance_table: PerformanceTableType,
         figsize: tuple[float, float] | None = None,
-        **kwargs,
+        **kwargs: Any,
     ):  # pragma: nocover
         """Visualize ranking progressively according to the lexicographic order
 
@@ -450,25 +446,25 @@ class RMP(Ranker):
         :param figsize: figure size in inches as a tuple (`width`, `height`)
         """
         # Create constants
-        nb_alt = len(performance_table.alternatives)
+        nb_alt = len(performance_table.alternatives)  # type: ignore
         nb_profiles = len(self.lexicographic_order)
 
         # Compute rankings progressively
         relations = self.construct()
-        rankings = DataFrame(
-            [
-                self.exploit(relations, self.lexicographic_order[:stop]).data
-                for stop in range(1, nb_profiles + 1)
-            ]
-        )
+        rankings = DataFrame([
+            self.exploit(relations, self.lexicographic_order[:stop]).data
+            for stop in range(1, nb_profiles + 1)
+        ])
 
         # Compute ranks
-        final_values = rankings.iloc[nb_profiles - 1].drop_duplicates().sort_values()
+        final_values: Series[int] = (
+            rankings.iloc[nb_profiles - 1].drop_duplicates().sort_values()
+        )
         value_to_rank = {
             value: rank
             for value, rank in zip(final_values, range(1, len(final_values) + 1))
         }
-        ranks = rankings.map(lambda x: value_to_rank[x])
+        ranks = rankings.map(lambda x: value_to_rank[x])  # type: ignore
         nb_ranks = len(value_to_rank)
 
         # Create figure and axes
@@ -499,7 +495,7 @@ class RMP(Ranker):
             [
                 {
                     k: v
-                    for k, v in zip(*np.unique(ranks.loc[profile], return_counts=True))
+                    for k, v in zip(*np.unique(ranks.loc[profile], return_counts=True))  # type: ignore
                 }
                 for profile in ranks.index
             ],
@@ -510,17 +506,22 @@ class RMP(Ranker):
         # Offsets to apply to current alternative's ranks
         offsets = [0.5] * nb_profiles
         # Alternatives sorted according to the final ranking
-        final_ranking_sorted = rankings.iloc[-1].sort_values(ascending=False).index
+        final_ranking_sorted: Index[int] = (
+            rankings.iloc[-1].sort_values(ascending=False).index
+        )
         # Previous alternative's ranks
         previous_ranks = [0] * nb_profiles
 
         for alt in final_ranking_sorted:
             # Current alternative's ranks
-            current_ranks = ranks[alt]
+            current_ranks = cast(list[int], ranks[alt].to_list())
             # Update offsets (return to 0.5 if it's a new rank)
-            offsets = tolist(np.where(current_ranks == previous_ranks, offsets, 0.5))
+            offsets: list[float] = tolist(
+                np.where(current_ranks == previous_ranks, offsets, 0.5)  # type: ignore
+            )
             offsets = [
-                offsets[profile] - offsets_width.loc[profile, current_ranks[profile]]
+                offsets[profile]
+                - cast(float, offsets_width.loc[profile, current_ranks[profile]])
                 for profile in range(nb_profiles)
             ]
             x = cast(list[float], range(nb_profiles))
@@ -540,7 +541,7 @@ class RMP(Ranker):
             ax.add_plot(
                 Annotation(
                     nb_profiles - 1,
-                    current_ranks.iloc[-1] + offsets[-1],
+                    current_ranks[-1] + offsets[-1],
                     str(alt),
                     10,
                     0,
@@ -566,7 +567,7 @@ class NormalRMP(RMP):
         self.lexicographic_order = lexicographic_order
 
     @property
-    def sub_rmp(self):
+    def sub_rmp(self) -> Sequence[NormalProfileWiseOutranking]:
         """Return list of sub RMP problems (one per category profile).
 
         :return:
@@ -580,15 +581,15 @@ class NormalRMP(RMP):
             for profile in self.profiles.alternatives
         ]
 
-    def rank(self, **kwargs):
+    def rank(self, **kwargs: Any):
         """Compute the RMP algorithm
 
         :return:
             the outranking total order as a ranking
         """
-        profilewise_outranking_matrices = np.array(
-            [sub_rmp.rank() for sub_rmp in self.sub_rmp]
-        )
+        profilewise_outranking_matrices = np.array([
+            sub_rmp.rank() for sub_rmp in self.sub_rmp
+        ])
         relations_ordered = [
             profilewise_outranking_matrices[i] for i in self.lexicographic_order
         ]
@@ -597,7 +598,7 @@ class NormalRMP(RMP):
         score = np.sum(relations_ordered * power[:, None, None], 0)
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
-        ranks = rankdata(-scores, method="dense")
+        ranks = cast(npt.NDArray[np.int_], rankdata(-scores, method="dense"))
         return CommensurableValues(
             Series(ranks, self.performance_table.alternatives),
             scale=DiscreteQuantitativeScale(

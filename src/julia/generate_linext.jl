@@ -32,8 +32,8 @@ function main()
     println(generate_linext(BooleanLattice(Int(M))))
 end
 
-main()
+# main()
 
-# Base.ARGS = ["11"]
-# @time main()
+Base.ARGS = ["2"]
+@time main()
 # @profview main()

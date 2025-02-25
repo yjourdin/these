@@ -89,7 +89,7 @@ def model(
             return RandomModel
 
 
-def model_from_json(s) -> Model:
+def model_from_json(s: str) -> Model:
     dct = Dataclass.json_to_dict(s)
     if not dct:
         raise ValueError("Empty json")

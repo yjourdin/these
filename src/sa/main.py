@@ -1,4 +1,4 @@
-from typing import NamedTuple, TextIO
+from typing import Any, NamedTuple, TextIO
 
 from mcda.relations import PreferenceStructure
 from numpy.random import Generator
@@ -39,7 +39,7 @@ def learn_sa(
     rng_init: Generator,
     rng_sa: Generator,
     lex_order: list[int] | None = None,
-    T0: float | None = None,
+    t0: float | None = None,
     accept: float | None = None,
     L: int = 1,
     Tf: float | None = None,
@@ -47,13 +47,12 @@ def learn_sa(
     max_it: int | None = None,
     max_it_non_improving: int | None = None,
     log_file: TextIO | None = None,
-    **kwargs,
 ):
     alternatives = alternatives.subtable(comparisons.elements)
 
-    M = len(alternatives.criteria)
+    M = len(alternatives.criteria)  # type: ignore
 
-    match model:
+    match model.lower():
         case ModelEnum.RMP:
             init_sol = RMPModel.random(
                 nb_profiles=k,
@@ -68,25 +67,27 @@ def learn_sa(
                 rng=rng_init,
                 profiles_values=midpoints(alternatives),
             )
+        case _:
+            raise ValueError(f"{model} model not compatible")
     if lex_order:
         init_sol.lexicographic_order = lex_order
 
-    neighbors: list[Neighbor] = []
+    neighbors: list[Neighbor[Any]] = []
     prob: list[int] = []
 
     neighbors.append(NeighborProfileDiscretized(midpoints(alternatives)))
     prob.append(k * M)
 
-    match model:
+    match model.lower():
         case ModelEnum.RMP:
             neighbors.append(NeighborImportanceRelation(2**M - 1))
             prob.append(2**M)
         case ModelEnum.SRMP:
-            if "amp" in kwargs:
-                neighbors.append(NeighborWeight(M))
-            else:
-                raise ValueError("amp must be specified")
+            neighbors.append(NeighborWeight())
             prob.append(M)
+            pass
+        case _:
+            raise ValueError(f"{model} model not compatible")
 
     if (not lex_order) and (k >= 2):
         neighbors.append(NeighborLexOrder())
@@ -98,9 +99,9 @@ def learn_sa(
 
     cooling_schedule = GeometricSchedule(alpha)
 
-    if T0 is None:
+    if t0 is None:
         assert accept
-        T0 = initial_temperature(
+        t0 = initial_temperature(
             accept,
             neighbor,
             objective,
@@ -111,7 +112,7 @@ def learn_sa(
         )
 
     sa = SimulatedAnnealing(
-        T0,
+        t0,
         L,
         neighbor,
         objective,

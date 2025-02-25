@@ -1,9 +1,9 @@
 from collections.abc import Iterable
 from itertools import combinations
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
-from mcda import PerformanceTable
+from mcda.internal.core.relations import Relation
 from mcda.internal.core.values import Ranking
 from mcda.relations import I, P, PreferenceStructure
 from numpy.random import Generator
@@ -13,11 +13,12 @@ from ..performance_table.dominance_relation import (
     dominance_structure,
     is_subset,
 )
+from ..performance_table.type import PerformanceTableType
 from ..weak_order import WeakOrder
 
 
 def random_preference_relation(
-    performance_table: PerformanceTable, rng: Generator, delta: float = 0.01
+    performance_table: PerformanceTableType, rng: Generator, delta: float = 0.01
 ):
     dom_struct = dominance_structure(performance_table)
     pref_struct = dom_struct.copy()
@@ -33,11 +34,11 @@ def preference_relation_generator(
     pairs: Iterable[tuple[Any, Any]] | None = None,
     rng: Generator | None = None,
 ):
-    pairs = pairs if pairs is not None else combinations(ranking.labels, 2)
+    pairs = pairs if pairs is not None else combinations(ranking.labels, 2)  # type: ignore
     ranks = ranking.data.to_dict()
 
     if rng:
-        pairs = rng.permutation(np.array(list(pairs)))
+        pairs = rng.permutation(np.array(list(pairs)))  # type: ignore
 
     for a, b in pairs:
         if ranks[a] < ranks[b]:
@@ -49,7 +50,7 @@ def preference_relation_generator(
 
 
 def random_comparisons(
-    alternatives: PerformanceTable,
+    alternatives: PerformanceTableType,
     model: Model | None,
     nb: int | None = None,
     pairs: Iterable[tuple[Any, Any]] | None = None,
@@ -59,17 +60,19 @@ def random_comparisons(
     if remove_dominance:
         dom_struct = dominance_structure(alternatives)
     if model:
-        pref_struct = PreferenceStructure()
+        result: list[Relation] = []
         ranking = model.rank(alternatives)
         for r in preference_relation_generator(ranking, pairs, rng):
-            if (not remove_dominance) or (r not in dom_struct):
-                pref_struct._relations.append(r)
-            if len(pref_struct) == nb:
+            if (not remove_dominance) or (r not in dom_struct):  # type: ignore
+                result.append(r)
+            if len(result) == nb:
                 break
+        pref_struct = PreferenceStructure(result, validate=False)
     else:
         assert rng
         pref_struct = random_preference_relation(alternatives, rng)
         if remove_dominance:
+            dom_struct = cast(PreferenceStructure, None)
             pref_struct -= dom_struct
 
     return pref_struct
@@ -78,7 +81,6 @@ def random_comparisons(
 def noisy_comparisons(
     comparisons: PreferenceStructure, error_rate: float, rng: Generator
 ):
-    result = PreferenceStructure()
     relations = comparisons.relations
 
     selected_relations = rng.choice(
@@ -104,5 +106,6 @@ def noisy_comparisons(
         for r in selected_preferences
     ]
 
-    result._relations = relations + changed_indifferences + changed_preferences
-    return result
+    return PreferenceStructure(
+        relations + changed_indifferences + changed_preferences, validate=False
+    )

@@ -13,7 +13,7 @@ from .random_walk import RandomWalk
 def initial_temperature[S](
     acceptance_rate: float,
     neighbor: Neighbor[S],
-    objective: Objective,
+    objective: Objective[S],
     init_sol: S,
     rng: Generator,
     max_time: int | None = None,
@@ -25,7 +25,7 @@ def initial_temperature[S](
 
     results.seek(0)
 
-    energy = pd.read_csv(results, dialect="unix")["Obj"]
+    energy: pd.Series[float] = pd.read_csv(results, dialect="unix")["Obj"]
     transitions = np.diff(energy)
     positive_transitions = transitions[transitions >= 0]
     positive_transitions_mean = np.mean(positive_transitions)

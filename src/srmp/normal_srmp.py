@@ -1,3 +1,6 @@
+from collections.abc import Sequence
+from typing import Any, cast
+
 import numpy as np
 import numpy.typing as npt
 from mcda import PerformanceTable
@@ -34,12 +37,12 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
         self.criteria_weights = criteria_weights
         self.profile = profile
 
-    def rank(self, **kwargs):
+    def rank(self, **kwargs: Any):  # type: ignore
         """Construct an outranking matrix.
 
         :return:
         """
-        conditional_weighted_sum = np.dot(
+        conditional_weighted_sum: npt.NDArray[np.float64] = np.dot(
             self.performance_table.data.values >= self.profile.data.values,
             self.criteria_weights,
         )
@@ -71,7 +74,7 @@ class NormalSRMP(SRMP):
         self.lexicographic_order = lexicographic_order
 
     @property
-    def sub_srmp(self):
+    def sub_srmp(self) -> Sequence[NormalProfileWiseOutranking]:  # type: ignore
         """Return list of sub SRMP problems (one per category profile).
 
         :return:
@@ -85,15 +88,15 @@ class NormalSRMP(SRMP):
             for profile in self.profiles.alternatives
         ]
 
-    def rank(self, **kwargs):
+    def rank(self, **kwargs: Any):
         """Compute the SRMP algorithm
 
         :return:
             the outranking total order as a ranking
         """
-        profilewise_outranking_matrices = np.array(
-            [sub_srmp.rank() for sub_srmp in self.sub_srmp]
-        )
+        profilewise_outranking_matrices = np.array([
+            sub_srmp.rank() for sub_srmp in self.sub_srmp
+        ])
         relations_ordered = [
             profilewise_outranking_matrices[i] for i in self.lexicographic_order
         ]
@@ -102,7 +105,7 @@ class NormalSRMP(SRMP):
         score = np.sum(relations_ordered * power[:, None, None], 0)
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
-        ranks = rankdata(-scores, method="dense")
+        ranks = cast(npt.NDArray[np.int_], rankdata(-scores, method="dense"))
         return CommensurableValues(
             Series(ranks, self.performance_table.alternatives),
             scale=DiscreteQuantitativeScale(

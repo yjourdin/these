@@ -39,7 +39,7 @@ rng_lex, rng_mip = rng(args.seed).spawn(2)
 
 # Learn MIP
 best_model, best_fitness, time = learn_mip(
-    GroupModelEnum((args.model, reduce(lambda x, y: x | y, args.shared))),
+    GroupModelEnum((args.model, reduce(lambda x, y: x | y, args.shared))), # type: ignore
     args.k,
     A,
     D,

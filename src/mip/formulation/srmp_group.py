@@ -1,8 +1,16 @@
 from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 from mcda.relations import I, P
-from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
+from pulp import (  # type: ignore
+    LpBinary,
+    LpMaximize,
+    LpProblem,
+    LpVariable,
+    lpSum,
+    value,
+)
 
 from ...constants import EPSILON
 from ...performance_table.normal_performance_table import NormalPerformanceTable
@@ -35,8 +43,8 @@ class MIPSRMPGroup(
         gamma: float = EPSILON,
         inconsistencies: bool = True,
         best_fitness: float | None = None,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ):
         super().__init__(*args, **kwargs)
         self.alternatives = alternatives
@@ -149,23 +157,19 @@ class MIPSRMPGroup(
         self.prob = LpProblem("SRMP_Elicitation", LpMaximize)
 
         if self.inconsistencies:
-            self.prob += lpSum(
+            self.prob += lpSum([
                 [
-                    [
-                        self.var["s"][dm][index][0]
-                        for index in self.param["preference_relations_indices"][dm]
-                    ]
-                    for dm in self.param["DM"]
+                    self.var["s"][dm][index][0]
+                    for index in self.param["preference_relations_indices"][dm]
                 ]
-            ) + lpSum(
+                for dm in self.param["DM"]
+            ]) + lpSum([
                 [
-                    [
-                        self.var["s_star"][dm][index]
-                        for index in self.param["indifference_relations_indices"][dm]
-                    ]
-                    for dm in self.param["DM"]
+                    self.var["s_star"][dm][index]
+                    for index in self.param["indifference_relations_indices"][dm]
                 ]
-            )
+                for dm in self.param["DM"]
+            ])
 
             ###############
             # Constraints #
@@ -239,52 +243,40 @@ class MIPSRMPGroup(
             for dm in self.param["DM"]:
                 for index, relation in enumerate(self.preference_relations[dm]):
                     a, b = relation.a, relation.b
-                    self.prob += lpSum(
-                        [
-                            self.var["omega"][dm][a][self.param["sigma"][dm][h]][j]
+                    self.prob += lpSum([
+                        self.var["omega"][dm][a][self.param["sigma"][dm][h]][j]
+                        for j in self.param["M"]
+                    ]) >= (
+                        lpSum([
+                            self.var["omega"][dm][b][self.param["sigma"][dm][h]][j]
                             for j in self.param["M"]
-                        ]
-                    ) >= (
-                        lpSum(
-                            [
-                                self.var["omega"][dm][b][self.param["sigma"][dm][h]][j]
-                                for j in self.param["M"]
-                            ]
-                        )
+                        ])
                         + self.gamma
                         - self.var["s"][dm][index][self.param["sigma"][dm][h]]
                         * (1 + self.gamma)
                         - (1 - self.var["s"][dm][index][self.param["sigma"][dm][h - 1]])
                     )
 
-                    self.prob += lpSum(
-                        [
-                            self.var["omega"][dm][a][self.param["sigma"][dm][h]][j]
+                    self.prob += lpSum([
+                        self.var["omega"][dm][a][self.param["sigma"][dm][h]][j]
+                        for j in self.param["M"]
+                    ]) >= (
+                        lpSum([
+                            self.var["omega"][dm][b][self.param["sigma"][dm][h]][j]
                             for j in self.param["M"]
-                        ]
-                    ) >= (
-                        lpSum(
-                            [
-                                self.var["omega"][dm][b][self.param["sigma"][dm][h]][j]
-                                for j in self.param["M"]
-                            ]
-                        )
+                        ])
                         - (1 - self.var["s"][dm][index][self.param["sigma"][dm][h]])
                         - (1 - self.var["s"][dm][index][self.param["sigma"][dm][h - 1]])
                     )
 
-                    self.prob += lpSum(
-                        [
-                            self.var["omega"][dm][a][self.param["sigma"][dm][h]][j]
+                    self.prob += lpSum([
+                        self.var["omega"][dm][a][self.param["sigma"][dm][h]][j]
+                        for j in self.param["M"]
+                    ]) <= (
+                        lpSum([
+                            self.var["omega"][dm][b][self.param["sigma"][dm][h]][j]
                             for j in self.param["M"]
-                        ]
-                    ) <= (
-                        lpSum(
-                            [
-                                self.var["omega"][dm][b][self.param["sigma"][dm][h]][j]
-                                for j in self.param["M"]
-                            ]
-                        )
+                        ])
                         + (1 - self.var["s"][dm][index][self.param["sigma"][dm][h]])
                         + (1 - self.var["s"][dm][index][self.param["sigma"][dm][h - 1]])
                     )
@@ -293,49 +285,33 @@ class MIPSRMPGroup(
                 for index, relation in enumerate(self.indifference_relations[dm]):
                     a, b = relation.a, relation.b
                     if not self.inconsistencies:
-                        self.prob += lpSum(
-                            [
-                                self.var["omega"][dm][a][self.param["sigma"][dm][h]][j]
-                                for j in self.param["M"]
-                            ]
-                        ) == lpSum(
-                            [
+                        self.prob += lpSum([
+                            self.var["omega"][dm][a][self.param["sigma"][dm][h]][j]
+                            for j in self.param["M"]
+                        ]) == lpSum([
+                            self.var["omega"][dm][b][self.param["sigma"][dm][h]][j]
+                            for j in self.param["M"]
+                        ])
+                    else:
+                        self.prob += lpSum([
+                            self.var["omega"][dm][a][self.param["sigma"][dm][h]][j]
+                            for j in self.param["M"]
+                        ]) <= (
+                            lpSum([
                                 self.var["omega"][dm][b][self.param["sigma"][dm][h]][j]
                                 for j in self.param["M"]
-                            ]
-                        )
-                    else:
-                        self.prob += lpSum(
-                            [
-                                self.var["omega"][dm][a][self.param["sigma"][dm][h]][j]
-                                for j in self.param["M"]
-                            ]
-                        ) <= (
-                            lpSum(
-                                [
-                                    self.var["omega"][dm][b][
-                                        self.param["sigma"][dm][h]
-                                    ][j]
-                                    for j in self.param["M"]
-                                ]
-                            )
+                            ])
                             - (1 - self.var["s_star"][dm][index])
                         )
 
-                        self.prob += lpSum(
-                            [
-                                self.var["omega"][dm][b][self.param["sigma"][dm][h]][j]
+                        self.prob += lpSum([
+                            self.var["omega"][dm][b][self.param["sigma"][dm][h]][j]
+                            for j in self.param["M"]
+                        ]) <= (
+                            lpSum([
+                                self.var["omega"][dm][a][self.param["sigma"][dm][h]][j]
                                 for j in self.param["M"]
-                            ]
-                        ) <= (
-                            lpSum(
-                                [
-                                    self.var["omega"][dm][a][
-                                        self.param["sigma"][dm][h]
-                                    ][j]
-                                    for j in self.param["M"]
-                                ]
-                            )
+                            ])
                             - (1 - self.var["s_star"][dm][index])
                         )
 
@@ -353,26 +329,20 @@ class MIPSRMPGroup(
 
         if self.inconsistencies and (self.best_fitness is not None):
             self.prob += (
-                lpSum(
+                lpSum([
                     [
-                        [
-                            self.var["s"][dm][index][0]
-                            for index in self.param["preference_relations_indices"][dm]
-                        ]
-                        for dm in self.param["DM"]
+                        self.var["s"][dm][index][0]
+                        for index in self.param["preference_relations_indices"][dm]
                     ]
-                )
-                + lpSum(
+                    for dm in self.param["DM"]
+                ])
+                + lpSum([
                     [
-                        [
-                            self.var["s_star"][dm][index]
-                            for index in self.param["indifference_relations_indices"][
-                                dm
-                            ]
-                        ]
-                        for dm in self.param["DM"]
+                        self.var["s_star"][dm][index]
+                        for index in self.param["indifference_relations_indices"][dm]
                     ]
-                )
+                    for dm in self.param["DM"]
+                ])
                 >= self.best_fitness + self.gamma
             )
 
@@ -386,20 +356,16 @@ class MIPSRMPGroup(
             ]
         )
         profiles = (
-            NormalPerformanceTable(
-                [
-                    [value(self.var["p"][0][h][j]) for j in self.param["M"]]
-                    for h in self.param["profile_indices"]
-                ]
-            )
+            NormalPerformanceTable([
+                [value(self.var["p"][0][h][j]) for j in self.param["M"]]
+                for h in self.param["profile_indices"]
+            ])
             if self.param["profiles_shared"]
             else [
-                NormalPerformanceTable(
-                    [
-                        [value(self.var["p"][dm][h][j]) for j in self.param["M"]]
-                        for h in self.param["profile_indices"]
-                    ]
-                )
+                NormalPerformanceTable([
+                    [value(self.var["p"][dm][h][j]) for j in self.param["M"]]
+                    for h in self.param["profile_indices"]
+                ])
                 for dm in self.param["DM"]
             ]
         )

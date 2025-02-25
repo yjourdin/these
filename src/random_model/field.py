@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 from numpy.random import Generator
 
@@ -14,7 +15,7 @@ class SeedField(RandomField):
     @staticmethod
     def field_random(
         rng: Generator,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ):
         return seed(rng)

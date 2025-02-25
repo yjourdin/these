@@ -2,12 +2,13 @@ import ast
 from itertools import chain
 from pathlib import Path
 from subprocess import run
+from typing import Any
 
 from ..random import Seed
 from .file import S_file, WE_dir
 
 
-def run_julia(scriptname: str, *args, **kwargs):
+def run_julia(scriptname: str, *args: Any, **kwargs: Any):
     return run(
         ["julia", Path("src/julia") / scriptname]
         + [str(x) for x in args]
@@ -27,7 +28,7 @@ def generate_linext(m: int, seed: Seed | None = None) -> list[list[bool]]:
 
 
 def generate_partial_sum(m: int) -> None:
-    run_julia("generate_partial_sum.jl", m, output = S_file(m))
+    run_julia("generate_partial_sum.jl", m, output=S_file(m))
 
 
 def generate_weak_order(m: int, seed: Seed | None = None) -> list[int]:

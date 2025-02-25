@@ -1,6 +1,8 @@
 from collections.abc import MutableMapping, Sequence
 from itertools import combinations
+from typing import Any
 
+from mcda.internal.core.relations import Relation
 from mcda.relations import I, P, PreferenceStructure
 from numpy.random import Generator
 
@@ -32,18 +34,18 @@ class WeakOrder[Element](MutableMapping[Element, int], Random):
 
     @property
     def structure(self):
-        preference_structure = PreferenceStructure()
+        result: list[Relation] = []
         for a, b in combinations(self.dict, 2):
             diff = self.dict[a] - self.dict[b]
             if diff > 0:
-                preference_structure._relations.append(P(a, b))
+                result.append(P(a, b))
             elif diff < 0:
-                preference_structure._relations.append(P(b, a))
+                result.append(P(b, a))
             else:
-                preference_structure._relations.append(I(a, b))
-        return preference_structure
+                result.append(I(a, b))
+        return PreferenceStructure(result, validate=False)
 
     @classmethod
-    def random(cls, labels: list[Element], rng: Generator):
+    def random(cls, labels: list[Element], rng: Generator, *args: Any, **kwargs: Any):
         scores = generate_weak_order(len(labels), seed(rng))
         return cls(scores, labels)

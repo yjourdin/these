@@ -48,7 +48,7 @@ class Task(FrozenDataclass, AbstractTask):
     def __str__(self) -> str:
         return f"{self.name:10} ({', '.join(f'{field.name}: {str(getattr(self, field.name))}' for field in fields(self))})"
 
-    def __call__(self, dir: Directory, *args, **kwargs):
+    def __call__(self, dir: Directory, *args: Any, **kwargs: Any):
         tic = process_time()
         result = self.task(dir=dir, *args, **kwargs)
         toc = process_time()
@@ -60,13 +60,13 @@ class Task(FrozenDataclass, AbstractTask):
         return TaskResult(result, time)
 
     @abstractmethod
-    def task(self, dir: Directory, *args, **kwargs) -> Any: ...
+    def task(self, dir: Directory, *args: Any, **kwargs: Any) -> Any: ...
 
     @abstractmethod
-    def done(self, *args, **kwargs) -> bool:
+    def done(self, *args: Any, **kwargs: Any) -> bool:
         return False
 
-    def log(self, fields: type[TaskFields], time: float, *args, **kwargs):
+    def log(self, fields: type[TaskFields], time: float, *args: Any, **kwargs: Any):
         return fields(Task=self, Time=time, Seed=None)
 
 
@@ -75,6 +75,6 @@ class SeedTask(Task, SeedMixin):
     def seed(self, seed: Seed) -> Seed:
         return abs(hash((self, seed)))
 
-    def log(self, fields: type[TaskFields], time: float, *args, **kwargs):
+    def log(self, fields: type[TaskFields], time: float, *args: Any, **kwargs: Any):
         seed = self.seed(s) if ((s := kwargs.get("seed", None)) is not None) else None
         return fields(Task=self, Time=time, Seed=seed)

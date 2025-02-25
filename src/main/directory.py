@@ -1,6 +1,6 @@
 import csv
 from pathlib import Path
-from typing import TypedDict, cast
+from typing import Any, TypedDict, cast
 
 from .csv_file import CSVFile
 from .csv_files import TaskCSVFile
@@ -31,7 +31,7 @@ class Directory:
         return cast(dict[str, Path], self.dirs).values()
 
     def itercsv(self):
-        return cast(dict[str, CSVFile], self.csv_files).values()
+        return cast(dict[str, CSVFile[Any]], self.csv_files).values()
 
     def mkdir(self):
         for dir in self.iterdir():

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from itertools import count
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from ....constants import DEFAULT_MAX_TIME, EPSILON
 from ....dataclass import FrozenDataclass
@@ -31,20 +31,18 @@ class SAConfig(Config):
     max_it: int | None = None
 
 
-@dataclass(frozen=True)
-class SRMPSAConfig(SAConfig):
-    amp: float = 0.1
-
-
-def create_config(**kwargs) -> Config:
+def create_config(**kwargs: Any) -> Config:
     kwargs.pop("id", None)
-    method = kwargs.pop("method", None)
+    if kwargs.get("method"):
+        method = kwargs["method"]
+    else:
+        method = eval(Config.get_class_name(kwargs)).method
     if not isinstance(method, str):
         raise TypeError(f"Unknown method : {method}")
     match method.lower():
         case MethodEnum.MIP:
             return MIPConfig.from_dict(kwargs)
         case MethodEnum.SA:
-            return SRMPSAConfig.from_dict(kwargs)
+            return SAConfig.from_dict(kwargs)
         case _:
             raise TypeError(f"Unknown method : {method}")

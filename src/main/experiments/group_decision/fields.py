@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from itertools import count
+from typing import Any
 
 from ....dataclass import FrozenDataclass
 from ....field import Field, group_field
@@ -20,7 +21,7 @@ class GenField(Field):
     gen: SRMPParametersDeviation
 
     @staticmethod
-    def field_decode(o):
+    def field_decode(o: Any):
         return SRMPParametersDeviation.from_dict(o)
 
 
@@ -30,7 +31,7 @@ class AcceptField(Field):
     accept: SRMPParametersDeviation
 
     @staticmethod
-    def field_decode(o):
+    def field_decode(o: Any):
         return SRMPParametersDeviation.from_dict(o)
 
 
@@ -48,7 +49,7 @@ class GroupParametersField(Field):
     group: GroupParameters
 
     @staticmethod
-    def field_decode(o):
+    def field_decode(o: Any):
         return GroupParameters(**GroupParameters.decode(o))
 
 
@@ -64,7 +65,7 @@ class MIPConfigField(Field):
     config: MIPConfig
 
     @staticmethod
-    def field_decode(o):
+    def field_decode(o: Any):
         return create_config(**o)
 
 

@@ -9,7 +9,7 @@ from .directory import Directory
 from .task import Task
 
 
-def worker(connection: Connection, logging_queue: Queue, dir: Directory):
+def worker(connection: Connection, logging_queue: "Queue[Any]", dir: Directory):
     logging_qh = logging.handlers.QueueHandler(logging_queue)
     logging_root = logging.getLogger()
     logging_root.setLevel(logging.INFO)

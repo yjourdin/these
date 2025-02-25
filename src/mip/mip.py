@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Any
 
 from mcda.internal.core.interfaces import Learner
-from pulp import LpProblem, getSolver, listSolvers
+from pulp import LpProblem, getSolver, listSolvers  # type: ignore
 
 from ..constants import DEFAULT_MAX_TIME
 from ..random import rng
@@ -15,8 +15,8 @@ class MIP[T](Learner[T | None]):
         time_limit: int = DEFAULT_MAX_TIME,
         seed: int | None = None,
         verbose: bool = False,
-        *args,
-        **kw,
+        *args: Any,
+        **kw: Any,
     ):
         self.var: dict[str, Any] = {}
         self.param: dict[str, Any] = {}
@@ -28,16 +28,13 @@ class MIP[T](Learner[T | None]):
 
         if "GUROBI" in listSolvers(True):
             kwargs["solver"] = "GUROBI"
-            if seed is not None:
-                kwargs["seed"] = seed % 2_000_000_000
+            kwargs["seed"] = seed % 2_000_000_000
         elif "HiGHS" in listSolvers(True):
             kwargs["solver"] = "HiGHS"
-            if seed is not None:
-                kwargs["random_seed"] = seed % 2_000_000_000
+            kwargs["random_seed"] = seed % 2_000_000_000
         else:
             kwargs["solver"] = "PULP_CBC_CMD"
-            if seed is not None:
-                kwargs["options"] = [f"RandomS {seed % 2_000_000_000}"]
+            kwargs["options"] = [f"RandomS {seed % 2_000_000_000}"]
 
         self.solver = getSolver(**kwargs)
 
@@ -47,7 +44,7 @@ class MIP[T](Learner[T | None]):
         return self.create_solution() if self.prob.sol_status > 0 else None
 
     @abstractmethod
-    def create_problem(self, *args, **kwargs): ...
+    def create_problem(self, *args: Any, **kwargs: Any): ...
 
     @abstractmethod
     def create_solution(self) -> T: ...

@@ -1,0 +1,141 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.0.9 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="26.0.9" pages="2">
+  <diagram name="1 model" id="QlJd_DFaskWxVCzsnl1D">
+    <mxGraphModel dx="1728" dy="598" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="pAfMAO4HRushUd5KB1gN-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="pAfMAO4HRushUd5KB1gN-1" target="pAfMAO4HRushUd5KB1gN-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-1" value="Get preferences \(\mathcal{L}_i\quad \forall i\)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="520" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="pAfMAO4HRushUd5KB1gN-2" target="pAfMAO4HRushUd5KB1gN-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-2" value="Elicit collective model \(\mathcal{M}_c\) (and its preferences \(\mathcal{L}_c\))" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="640" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="pAfMAO4HRushUd5KB1gN-4" target="pAfMAO4HRushUd5KB1gN-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="pAfMAO4HRushUd5KB1gN-4" target="pAfMAO4HRushUd5KB1gN-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-4" value="If \(\exists \mathcal{L}_i \quad \mathcal{L}_c \setminus \mathcal{L}_i \neq \emptyset\) ?" style="rhombus;whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="120" y="760" width="160" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="pAfMAO4HRushUd5KB1gN-6" target="pAfMAO4HRushUd5KB1gN-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-6" value="Choose \(a \succsim b \in \mathcal{L}_c \setminus \mathcal{L}_i\)" style="whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="140" y="960" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="pAfMAO4HRushUd5KB1gN-8" target="pAfMAO4HRushUd5KB1gN-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="1160" />
+              <mxPoint x="400" y="680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="pAfMAO4HRushUd5KB1gN-22" target="pAfMAO4HRushUd5KB1gN-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="40" y="840" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-23" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="pAfMAO4HRushUd5KB1gN-8" target="pAfMAO4HRushUd5KB1gN-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-8" value="\(a \succsim b\) accepted&lt;div&gt;by all DMs ?&lt;/div&gt;" style="rhombus;whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="120" y="1080" width="160" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-10" value="End" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="820" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-15" value="Yes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="200" y="920" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-16" value="No" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="280" y="800" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-17" value="Yes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1120" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-18" value="No" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="280" y="1120" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="pAfMAO4HRushUd5KB1gN-20" target="pAfMAO4HRushUd5KB1gN-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-20" value="Start" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="180" y="440" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pAfMAO4HRushUd5KB1gN-22" value="\(a \succsim b \to \mathcal{L}_i\)" style="whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="1">
+          <mxGeometry y="1120" width="80" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Robust model" id="vknfZ4j9AUH4utL4lTkr">
+    <mxGraphModel dx="1185" dy="285" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
+      <root>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-0" />
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-1" parent="C2ObhvRLKz_z4-MvEQYC-0" />
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="C2ObhvRLKz_z4-MvEQYC-1" source="C2ObhvRLKz_z4-MvEQYC-3" target="C2ObhvRLKz_z4-MvEQYC-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-3" value="Get preferences \(\mathcal{L}\) accepted by all DMs" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="C2ObhvRLKz_z4-MvEQYC-1">
+          <mxGeometry x="160" y="520" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="C2ObhvRLKz_z4-MvEQYC-1" source="C2ObhvRLKz_z4-MvEQYC-5" target="C2ObhvRLKz_z4-MvEQYC-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-5" value="Elicit robust collective model \(\mathcal{M}_c\)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="C2ObhvRLKz_z4-MvEQYC-1">
+          <mxGeometry x="140" y="640" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="C2ObhvRLKz_z4-MvEQYC-1" source="C2ObhvRLKz_z4-MvEQYC-8" target="C2ObhvRLKz_z4-MvEQYC-10">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="360" y="820" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="C2ObhvRLKz_z4-MvEQYC-1" source="C2ObhvRLKz_z4-MvEQYC-8" target="C2ObhvRLKz_z4-MvEQYC-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-8" value="\(\mathcal{M}_c\) satisfactory ?" style="rhombus;whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="C2ObhvRLKz_z4-MvEQYC-1">
+          <mxGeometry x="140" y="760" width="120" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="C2ObhvRLKz_z4-MvEQYC-1" source="C2ObhvRLKz_z4-MvEQYC-10" target="C2ObhvRLKz_z4-MvEQYC-5">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="200" y="1080" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="360" y="680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-10" value="\(a \succsim b \to \mathcal{L}\)" style="whiteSpace=wrap;html=1;rounded=0;" vertex="1" parent="C2ObhvRLKz_z4-MvEQYC-1">
+          <mxGeometry x="320" y="720" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-15" value="End" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="C2ObhvRLKz_z4-MvEQYC-1">
+          <mxGeometry x="180" y="920" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-16" value="Yes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="C2ObhvRLKz_z4-MvEQYC-1">
+          <mxGeometry x="200" y="880" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-17" value="No" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="C2ObhvRLKz_z4-MvEQYC-1">
+          <mxGeometry x="260" y="780" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="C2ObhvRLKz_z4-MvEQYC-1" source="C2ObhvRLKz_z4-MvEQYC-21" target="C2ObhvRLKz_z4-MvEQYC-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="C2ObhvRLKz_z4-MvEQYC-21" value="Start" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="C2ObhvRLKz_z4-MvEQYC-1">
+          <mxGeometry x="180" y="440" width="40" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

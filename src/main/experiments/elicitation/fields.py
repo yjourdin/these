@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 from ....field import Field, group_field
 from ....field import field as custom_field
@@ -13,7 +14,7 @@ class MethodField(Field):
     method: MethodEnum
 
     @staticmethod
-    def field_decode(o):
+    def field_decode(o: Any):
         return MethodEnum(o)
 
 
@@ -28,7 +29,7 @@ class ModelField(Field):
     Mo: GroupModelEnum
 
     @staticmethod
-    def field_decode(o):
+    def field_decode(o: Any):
         return GroupModelEnum[o]
 
 
@@ -50,7 +51,7 @@ class ConfigField(Field):
     config: Config
 
     @staticmethod
-    def field_decode(o):
+    def field_decode(o: Any):
         return create_config(**o)
 
 

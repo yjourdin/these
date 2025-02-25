@@ -1,8 +1,16 @@
 from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
-from mcda.relations import P, I
-from pulp import LpBinary, LpMaximize, LpProblem, LpVariable, lpSum, value
+from mcda.relations import I, P
+from pulp import (  # type: ignore
+    LpBinary,
+    LpMaximize,
+    LpProblem,
+    LpVariable,
+    lpSum,
+    value,
+)
 
 from ...constants import EPSILON
 from ...performance_table.normal_performance_table import NormalPerformanceTable
@@ -20,8 +28,8 @@ class MIPSRMP(MIP[SRMPModel]):
         gamma: float = EPSILON,
         inconsistencies: bool = True,
         best_fitness: float | None = None,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ):
         super().__init__(*args, **kwargs)
         self.alternatives = alternatives
@@ -108,11 +116,11 @@ class MIPSRMP(MIP[SRMPModel]):
         self.prob = LpProblem("SRMP_Elicitation", LpMaximize)
 
         if self.inconsistencies:
-            self.prob += lpSum(
-                [self.var["s"][index][0] for index in preference_relations_indices]
-            ) + lpSum(
-                [self.var["s_star"][index] for index in indifference_relations_indices]
-            )
+            self.prob += lpSum([
+                self.var["s"][index][0] for index in preference_relations_indices
+            ]) + lpSum([
+                self.var["s_star"][index] for index in indifference_relations_indices
+            ])
 
         ###############
         # Constraints #
@@ -169,51 +177,39 @@ class MIPSRMP(MIP[SRMPModel]):
             for index, relation in enumerate(self.preference_relations):
                 a, b = relation.a, relation.b
 
-                self.prob += lpSum(
-                    [
-                        self.var["omega"][a][self.param["sigma"][h]][j]
+                self.prob += lpSum([
+                    self.var["omega"][a][self.param["sigma"][h]][j]
+                    for j in self.param["M"]
+                ]) >= (
+                    lpSum([
+                        self.var["omega"][b][self.param["sigma"][h]][j]
                         for j in self.param["M"]
-                    ]
-                ) >= (
-                    lpSum(
-                        [
-                            self.var["omega"][b][self.param["sigma"][h]][j]
-                            for j in self.param["M"]
-                        ]
-                    )
+                    ])
                     + self.gamma
                     - self.var["s"][index][self.param["sigma"][h]] * (1 + self.gamma)
                     - (1 - self.var["s"][index][self.param["sigma"][h - 1]])
                 )
 
-                self.prob += lpSum(
-                    [
-                        self.var["omega"][a][self.param["sigma"][h]][j]
+                self.prob += lpSum([
+                    self.var["omega"][a][self.param["sigma"][h]][j]
+                    for j in self.param["M"]
+                ]) >= (
+                    lpSum([
+                        self.var["omega"][b][self.param["sigma"][h]][j]
                         for j in self.param["M"]
-                    ]
-                ) >= (
-                    lpSum(
-                        [
-                            self.var["omega"][b][self.param["sigma"][h]][j]
-                            for j in self.param["M"]
-                        ]
-                    )
+                    ])
                     - (1 - self.var["s"][index][self.param["sigma"][h]])
                     - (1 - self.var["s"][index][self.param["sigma"][h - 1]])
                 )
 
-                self.prob += lpSum(
-                    [
-                        self.var["omega"][a][self.param["sigma"][h]][j]
+                self.prob += lpSum([
+                    self.var["omega"][a][self.param["sigma"][h]][j]
+                    for j in self.param["M"]
+                ]) <= (
+                    lpSum([
+                        self.var["omega"][b][self.param["sigma"][h]][j]
                         for j in self.param["M"]
-                    ]
-                ) <= (
-                    lpSum(
-                        [
-                            self.var["omega"][b][self.param["sigma"][h]][j]
-                            for j in self.param["M"]
-                        ]
-                    )
+                    ])
                     + (1 - self.var["s"][index][self.param["sigma"][h]])
                     + (1 - self.var["s"][index][self.param["sigma"][h - 1]])
                 )
@@ -222,63 +218,54 @@ class MIPSRMP(MIP[SRMPModel]):
             for index, relation in enumerate(self.indifference_relations):
                 a, b = relation.a, relation.b
                 if not self.inconsistencies:
-                    self.prob += lpSum(
-                        [
-                            self.var["omega"][a][self.param["sigma"][h]][j]
-                            for j in self.param["M"]
-                        ]
-                    ) == lpSum(
-                        [
+                    self.prob += lpSum([
+                        self.var["omega"][a][self.param["sigma"][h]][j]
+                        for j in self.param["M"]
+                    ]) == lpSum([
+                        self.var["omega"][b][self.param["sigma"][h]][j]
+                        for j in self.param["M"]
+                    ])
+                else:
+                    self.prob += lpSum([
+                        self.var["omega"][a][self.param["sigma"][h]][j]
+                        for j in self.param["M"]
+                    ]) <= (
+                        lpSum([
                             self.var["omega"][b][self.param["sigma"][h]][j]
                             for j in self.param["M"]
-                        ]
-                    )
-                else:
-                    self.prob += lpSum(
-                        [
-                            self.var["omega"][a][self.param["sigma"][h]][j]
-                            for j in self.param["M"]
-                        ]
-                    ) <= (
-                        lpSum(
-                            [
-                                self.var["omega"][b][self.param["sigma"][h]][j]
-                                for j in self.param["M"]
-                            ]
-                        )
+                        ])
                         - (1 - self.var["s_star"][index])
                     )
 
-                    self.prob += lpSum(
-                        [
-                            self.var["omega"][b][self.param["sigma"][h]][j]
+                    self.prob += lpSum([
+                        self.var["omega"][b][self.param["sigma"][h]][j]
+                        for j in self.param["M"]
+                    ]) <= (
+                        lpSum([
+                            self.var["omega"][a][self.param["sigma"][h]][j]
                             for j in self.param["M"]
-                        ]
-                    ) <= (
-                        lpSum(
-                            [
-                                self.var["omega"][a][self.param["sigma"][h]][j]
-                                for j in self.param["M"]
-                            ]
-                        )
+                        ])
                         - (1 - self.var["s_star"][index])
                     )
 
         if self.inconsistencies and (self.best_fitness is not None):
-            self.prob += lpSum(
-                [self.var["s"][index][0] for index in preference_relations_indices]
-            ) + lpSum(
-                [self.var["s_star"][index] for index in indifference_relations_indices]
-            ) >= self.best_fitness + self.gamma
+            self.prob += (
+                lpSum([
+                    self.var["s"][index][0] for index in preference_relations_indices
+                ])
+                + lpSum([
+                    self.var["s_star"][index]
+                    for index in indifference_relations_indices
+                ])
+                >= self.best_fitness + self.gamma
+            )
 
     def create_solution(self):
         weights = np.array([value(self.var["w"][j]) for j in self.param["M"]])
-        profiles = NormalPerformanceTable(
-            [
-                [value(self.var["p"][h][j]) for j in self.param["M"]]
-                for h in self.param["profile_indices"]
-            ]
-        )
+        profiles = NormalPerformanceTable([
+            [value(self.var["p"][h][j]) for j in self.param["M"]]
+            for h in self.param["profile_indices"]
+        ])
 
         return SRMPModel(
             profiles=profiles,

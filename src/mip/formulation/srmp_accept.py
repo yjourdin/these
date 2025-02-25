@@ -1,9 +1,10 @@
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 import numpy as np
-from mcda.relations import P, I
-from pulp import LpBinary, LpProblem, LpVariable, lpSum, value
+from mcda.relations import I, P
+from pulp import LpBinary, LpProblem, LpVariable, lpSum, value  # type: ignore
 
 from ...constants import EPSILON
 from ...performance_table.normal_performance_table import NormalPerformanceTable
@@ -22,8 +23,8 @@ class MIPSRMPAccept(MIP[SRMPModel]):
         profiles_amp: float,
         weights_amp: float,
         gamma: float = EPSILON,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ):
         super().__init__(*args, **kwargs)
         self.alternatives = alternatives
@@ -152,18 +153,14 @@ class MIPSRMPAccept(MIP[SRMPModel]):
             # Constraints on the preferences
             for index, relation in enumerate(self.preference_relations):
                 a, b = relation.a, relation.b
-                self.prob += lpSum(
-                    [
-                        self.var["omega"][a][self.param["sigma"][h]][j]
+                self.prob += lpSum([
+                    self.var["omega"][a][self.param["sigma"][h]][j]
+                    for j in self.param["M"]
+                ]) >= (
+                    lpSum([
+                        self.var["omega"][b][self.param["sigma"][h]][j]
                         for j in self.param["M"]
-                    ]
-                ) >= (
-                    lpSum(
-                        [
-                            self.var["omega"][b][self.param["sigma"][h]][j]
-                            for j in self.param["M"]
-                        ]
-                    )
+                    ])
                     + self.gamma
                     - (1 + self.gamma)
                     * (
@@ -173,34 +170,26 @@ class MIPSRMPAccept(MIP[SRMPModel]):
                     )
                 )
 
-                self.prob += lpSum(
-                    [
-                        self.var["omega"][a][self.param["sigma"][h]][j]
+                self.prob += lpSum([
+                    self.var["omega"][a][self.param["sigma"][h]][j]
+                    for j in self.param["M"]
+                ]) >= (
+                    lpSum([
+                        self.var["omega"][b][self.param["sigma"][h]][j]
                         for j in self.param["M"]
-                    ]
-                ) >= (
-                    lpSum(
-                        [
-                            self.var["omega"][b][self.param["sigma"][h]][j]
-                            for j in self.param["M"]
-                        ]
-                    )
+                    ])
                     - self.var["s"][index][self.param["sigma"][h]]
                     - self.var["s"][index][self.param["sigma"][h - 1]]
                 )
 
-                self.prob += lpSum(
-                    [
-                        self.var["omega"][a][self.param["sigma"][h]][j]
+                self.prob += lpSum([
+                    self.var["omega"][a][self.param["sigma"][h]][j]
+                    for j in self.param["M"]
+                ]) <= (
+                    lpSum([
+                        self.var["omega"][b][self.param["sigma"][h]][j]
                         for j in self.param["M"]
-                    ]
-                ) <= (
-                    lpSum(
-                        [
-                            self.var["omega"][b][self.param["sigma"][h]][j]
-                            for j in self.param["M"]
-                        ]
-                    )
+                    ])
                     + self.var["s"][index][self.param["sigma"][h]]
                     + self.var["s"][index][self.param["sigma"][h - 1]]
                 )
@@ -208,17 +197,13 @@ class MIPSRMPAccept(MIP[SRMPModel]):
             # Constraints on the indifferences
             for index, relation in enumerate(self.indifference_relations):
                 a, b = relation.a, relation.b
-                self.prob += lpSum(
-                    [
-                        self.var["omega"][a][self.param["sigma"][h]][j]
-                        for j in self.param["M"]
-                    ]
-                ) == lpSum(
-                    [
-                        self.var["omega"][b][self.param["sigma"][h]][j]
-                        for j in self.param["M"]
-                    ]
-                )
+                self.prob += lpSum([
+                    self.var["omega"][a][self.param["sigma"][h]][j]
+                    for j in self.param["M"]
+                ]) == lpSum([
+                    self.var["omega"][b][self.param["sigma"][h]][j]
+                    for j in self.param["M"]
+                ])
 
             # Constraints to accept
             for j in self.param["M"]:
@@ -232,24 +217,22 @@ class MIPSRMPAccept(MIP[SRMPModel]):
                 for h in self.param["profile_indices"]:
                     self.prob += (
                         self.var["p"][h][j]
-                        >= self.model.profiles.cell[h-1, j] - self.profiles_amp
+                        >= self.model.profiles.cell[h - 1, j] - self.profiles_amp
                     )
                     self.prob += (
                         self.var["p"][h][j]
-                        <= self.model.profiles.cell[h-1, j] + self.profiles_amp
+                        <= self.model.profiles.cell[h - 1, j] + self.profiles_amp
                     )
-            
+
             Path("lp.lp").unlink(missing_ok=True)
             self.prob.writeLP("lp.lp")
 
     def create_solution(self):
         weights = np.array([value(self.var["w"][j]) for j in self.param["M"]])
-        profiles = NormalPerformanceTable(
-            [
-                [value(self.var["p"][h][j]) for j in self.param["M"]]
-                for h in self.param["profile_indices"]
-            ]
-        )
+        profiles = NormalPerformanceTable([
+            [value(self.var["p"][h][j]) for j in self.param["M"]]
+            for h in self.param["profile_indices"]
+        ])
 
         return SRMPModel(
             profiles=profiles,

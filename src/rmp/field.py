@@ -1,5 +1,6 @@
 import ast
 from dataclasses import dataclass
+from typing import Any
 
 from numpy.random import Generator
 
@@ -20,11 +21,11 @@ class ProfilesField(RandomField):
     profiles: NormalPerformanceTable
 
     @staticmethod
-    def field_decode(o):
+    def field_decode(o: Any):
         return NormalPerformanceTable(o)
 
     @staticmethod
-    def field_encode(o):
+    def field_encode(o: Any):
         return tolist(o.data.values)
 
     @staticmethod
@@ -33,8 +34,8 @@ class ProfilesField(RandomField):
         nb_crit: int,
         rng: Generator,
         profiles_values: NormalPerformanceTable | None = None,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ):
         return random_profiles(
             nb_profiles,
@@ -50,7 +51,7 @@ class FrozenProfilesField(RandomField):
     profiles: tuple[tuple[float, ...], ...]
 
     @staticmethod
-    def field_decode(o):
+    def field_decode(o: Any):
         return tuple(tuple(profile) for profile in o)
 
 
@@ -66,18 +67,18 @@ class ImportanceRelationField(RandomField):
     importance_relation: ImportanceRelation
 
     @staticmethod
-    def field_decode(o):
+    def field_decode(o: Any):
         return ImportanceRelation(
             o.values(),
             [frozenset(ast.literal_eval(label)) for label in o.keys()],
         )
 
     @staticmethod
-    def field_encode(o):
+    def field_encode(o: Any):
         return {str(list(label)): score for label, score in o.items()}
 
     @staticmethod
-    def field_random(nb_crit: int, rng: Generator, *args, **kwargs):
+    def field_random(nb_crit: int, rng: Generator, *args: Any, **kwargs: Any):
         return ImportanceRelation.random(nb_crit, rng)
 
 
@@ -93,7 +94,7 @@ class LexicographicOrderField(RandomField):
     lexicographic_order: list[int]
 
     @staticmethod
-    def field_random(nb_profiles: int, rng: Generator, *args, **kwargs):
+    def field_random(nb_profiles: int, rng: Generator, *args: Any, **kwargs: Any):
         return tolist(rng.permutation(nb_profiles))
 
 
@@ -103,7 +104,7 @@ class FrozenLexicographicOrderField(RandomField):
     lexicographic_order: tuple[int, ...]
 
     @staticmethod
-    def field_decode(o):
+    def field_decode(o: Any):
         return tuple(o)
 
 

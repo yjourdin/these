@@ -62,7 +62,7 @@ class RandomWalk[S](Learner[S], Dataclass):
             obj = self.objective(sol)
 
             if self.log_file:
-                log_writer.writerow(
+                log_writer.writerow(  # type: ignore
                     {
                         "It": self.it,
                         "Non-improving it": self.non_improving_it,

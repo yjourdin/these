@@ -1,14 +1,15 @@
 from dataclasses import dataclass, replace
 from enum import auto
-from typing import Self, cast
+from typing import Self, SupportsIndex, cast
 
 import numpy as np
 import numpy.typing as npt
 from numpy.random import Generator
 
-from ..model import FrozenModel, GroupModel, Model
 from ..enum import ParamFlag
+from ..model import FrozenModel, GroupModel, Model
 from ..performance_table.normal_performance_table import NormalPerformanceTable
+from ..performance_table.type import PerformanceTableType
 from ..rmp.field import (
     FrozenLexicographicOrderField,
     FrozenProfilesField,
@@ -38,15 +39,13 @@ class SRMPModel(
     LexicographicOrderField,
 ):
     def __str__(self) -> str:
-        return "\t".join(
-            [
-                print_list(list(self.weights)),
-                print_list(self.profiles.data.to_numpy()[0]),
-                print_list(self.lexicographic_order),
-            ]
-        )
+        return "\t".join([
+            print_list(list(self.weights)),
+            print_list(self.profiles.data.to_numpy()[0]),
+            print_list(self.lexicographic_order),
+        ])
 
-    def rank(self, performance_table):
+    def rank(self, performance_table: PerformanceTableType):
         return NormalSRMP(
             performance_table,
             self.weights,
@@ -111,7 +110,7 @@ class SRMPGroupModelWeightsProfilesLexicographic(
     WeightsField,
     LexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return SRMPModel(
             profiles=self.profiles,
             weights=self.weights,
@@ -134,7 +133,7 @@ class SRMPGroupModelWeightsProfiles(
     WeightsField,
     GroupLexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return SRMPModel(
             profiles=self.profiles,
             weights=self.weights,
@@ -149,7 +148,7 @@ class SRMPGroupModelWeightsLexicographic(
     WeightsField,
     LexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return SRMPModel(
             profiles=self.profiles[i],
             weights=self.weights,
@@ -164,7 +163,7 @@ class SRMPGroupModelProfilesLexicographic(
     GroupWeightsField,
     LexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return SRMPModel(
             profiles=self.profiles,
             weights=self.weights[i],
@@ -179,7 +178,7 @@ class SRMPGroupModelWeights(
     WeightsField,
     GroupLexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return SRMPModel(
             profiles=self.profiles[i],
             weights=self.weights,
@@ -194,7 +193,7 @@ class SRMPGroupModelProfiles(
     GroupWeightsField,
     GroupLexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return SRMPModel(
             profiles=self.profiles,
             weights=self.weights[i],
@@ -209,7 +208,7 @@ class SRMPGroupModelLexicographic(
     GroupWeightsField,
     LexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return SRMPModel(
             profiles=self.profiles[i],
             weights=self.weights[i],
@@ -224,7 +223,7 @@ class SRMPGroupModel(
     GroupWeightsField,
     GroupLexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return SRMPModel(
             profiles=self.profiles[i],
             weights=self.weights[i],

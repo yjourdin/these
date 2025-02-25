@@ -1,16 +1,17 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from copy import deepcopy
-from dataclasses import InitVar, dataclass, field, replace
+from dataclasses import dataclass, replace
 from typing import cast
 
 import numpy as np
 import numpy.typing as npt
-from mcda import PerformanceTable
-from more_itertools import powerset
+from numba import njit  # type: ignore
 from numpy.random import Generator
 
 from ..dataclass import Dataclass
+from ..performance_table.type import PerformanceTableType
+from ..rmp.importance_relation import ImportanceRelation
 from ..rmp.model import RMPModel
 from ..rmp.permutation import swap
 from ..srmp.model import SRMPModel
@@ -34,16 +35,16 @@ class RandomNeighbor[S](Neighbor[S]):
         else:
             self.prob = None
 
-    def __call__(self, sol, rng):
+    def __call__(self, sol: S, rng: Generator):
         i = rng.choice(len(self.neighbors), p=self.prob)
         return self.neighbors[i](sol, rng)
 
 
 @dataclass
-class NeighborProfile(Neighbor[SRMPModel | RMPModel], Dataclass):
+class NeighborProfile[S: SRMPModel | RMPModel](Neighbor[S], Dataclass):
     amp: float = 1
 
-    def __call__(self, sol, rng):
+    def __call__(self, sol: S, rng: Generator):
         profiles = deepcopy(sol.profiles)
 
         crit_ind = rng.choice(len(profiles.criteria))
@@ -62,15 +63,18 @@ class NeighborProfile(Neighbor[SRMPModel | RMPModel], Dataclass):
 
 
 @dataclass
-class NeighborProfileDiscretized(Neighbor[SRMPModel | RMPModel], Dataclass):
-    values: PerformanceTable
+class NeighborProfileDiscretized[S: SRMPModel | RMPModel](Neighbor[S], Dataclass):
+    values: PerformanceTableType
     local: bool = False
 
-    def __call__(self, sol, rng):
+    def __call__(self, sol: S, rng: Generator):
         profiles = deepcopy(sol.profiles)
 
         crit_ind = rng.choice(len(profiles.criteria))
         crit_values = self.values.data.iloc[:, crit_ind]
+
+        profiles_values = sol.profiles.data.iloc[:, crit_ind].to_list()
+
         profile_ind = rng.choice(len(profiles.alternatives))
         profile_perf = cast(float, profiles.cell[profile_ind, crit_ind])
         profile_perf_ind = cast(int, crit_values[crit_values == profile_perf].index[0])
@@ -79,26 +83,30 @@ class NeighborProfileDiscretized(Neighbor[SRMPModel | RMPModel], Dataclass):
             available_ind = []
             if profile_perf_ind > 0:
                 available_ind.append(profile_perf_ind - 1)
-            if profile_perf_ind < (len(self.values.alternatives) - 1):
+            if profile_perf_ind < (len(self.values.alternatives) - 1):  # type: ignore
                 available_ind.append(profile_perf_ind + 1)
         else:
-            available_ind = range(len(self.values.alternatives))
+            available_ind = list(range(len(self.values.alternatives)))  # type: ignore
         profile_perf_ind = rng.choice(available_ind)
 
-        profiles.data.iloc[profile_ind, crit_ind] = crit_values[
-            crit_values.index[profile_perf_ind]
-        ]
+        profiles_values[profile_ind] = crit_values[crit_values.index[profile_perf_ind]]
 
-        profiles.data.iloc[:, crit_ind] = profiles.data.iloc[:, crit_ind].sort_values()
+        # profiles.data.iloc[profile_ind, crit_ind] = crit_values[
+        #     crit_values.index[profile_perf_ind]
+        # ]
+
+        profiles.data.iloc[:, crit_ind] = sorted(profiles_values)
+
+        # profiles.data.iloc[:, crit_ind] = profiles.data.iloc[:, crit_ind].sort_values()
 
         return replace(sol, profiles=profiles)
 
 
 @dataclass
-class NeighborWeightAmp(Neighbor[SRMPModel], Dataclass):
+class NeighborWeightAmp[S: SRMPModel](Neighbor[S], Dataclass):
     amp: float = 1
 
-    def __call__(self, sol, rng):
+    def __call__(self, sol: S, rng: Generator):
         weights = deepcopy(sol.weights)
 
         crit_ind = rng.choice(len(weights))
@@ -112,11 +120,11 @@ class NeighborWeightAmp(Neighbor[SRMPModel], Dataclass):
 
 
 @dataclass
-class NeighborWeightDiscretized(Neighbor[SRMPModel]):
+class NeighborWeightDiscretized[S: SRMPModel](Neighbor[S]):
     max: int
     local: bool = False
 
-    def __call__(self, sol, rng):
+    def __call__(self, sol: S, rng: Generator):
         weights = deepcopy(sol.weights)
 
         crit_ind = rng.choice(len(weights))
@@ -129,92 +137,124 @@ class NeighborWeightDiscretized(Neighbor[SRMPModel]):
             if weight < self.max:
                 available_ind.append(weight + 1)
         else:
-            available_ind = range(self.max + 1)
+            available_ind = list(range(self.max + 1))
         weight = rng.choice(available_ind)
 
         weights[crit_ind] = weight
 
         return replace(sol, weights=weights)
 
-
 def weights_local_change(
-    powersets: tuple[tuple[int, ...], ...],
     weights: npt.NDArray[np.float64],
     crit_ind: int,
     increase: bool = True,
 ):
-    weight: float = weights[crit_ind]
+    subset_sum = compute_subset_sum(np.delete(weights, crit_ind))
 
-    if weight == 1:
-        if not increase:
-            return np.full_like(weights, 1 / len(weights), float)
-    else:
-        with_crit = []
-        without_crit = []
-        for set in powersets:
-            weights_sum = weights[list(set)].sum()
-            if (len(set) == 0) or (len(set) == len(weights)) or (crit_ind not in set):
-                without_crit.append(weights_sum)
-            else:
-                with_crit.append(weights_sum)
-        with_crit_np = np.array(with_crit)
-        without_crit_np = np.array(without_crit)
+    weight = weights[crit_ind]
 
-        diff = np.subtract.outer(without_crit_np, with_crit_np)
+    alpha, eq1 = compute_alpha(subset_sum, weight, increase)
 
-        progress_factor = np.add.outer(
-            np.pad(without_crit_np[1:-1] / (1 - weight), 1),
-            1 - (with_crit_np - weight) / (1 - weight),
-        )
+    if eq1:
+        alpha = (1 + alpha) / 2
 
-        progress = diff[progress_factor != 0] / progress_factor[progress_factor != 0]
+    delta = (1 - weight) * (1 - alpha)
 
-        change: npt.NDArray[np.float64]
-        if increase:
-            change = progress[progress > 0].min(initial=np.inf)
-        else:
-            change = progress[progress < 0].max(initial=-np.inf)
+    new = alpha * weights
+    new[crit_ind] = weight + delta
+    return new
 
-        if 0 in progress:
-            change /= 2
 
-        if -weight < change < 1 - weight:
-            new = weights - change * (weights / (1 - weight))
-            new[crit_ind] = weights[crit_ind] + change
-            return new
+
+def compute_subset_sum(weights: npt.NDArray[np.float64]):
+    if len(weights) == 1:
+        return weights
+    weight = weights[-1]
+    subset_sums = compute_subset_sum(weights[:-1])
+    return np.concat((subset_sums, np.array([weight]), subset_sums + weight))
+
+
+@njit(fastmath=True)  # type: ignore
+def compute_alpha_increase(subset_sum: npt.NDArray[np.float64], weight: float):
+    N = len(subset_sum)
+    eq1 = False
+    best_denom = np.inf
+    for i in range(N):
+        w1 = subset_sum[i]
+        if w1 > 1e-10:
+            denom1 = 2 * w1
+            if denom1 < best_denom:
+                for j in range(N):
+                    if ((i + 1) & (j + 1)) == 0:
+                        denom2 = denom1 + subset_sum[j]
+                        eq1 |= denom2 == 1
+                        if 1 < denom2 < best_denom:
+                            best_denom = denom2
+    return 1 / best_denom, eq1
+
+
+@njit(fastmath=True)  # type: ignore
+def compute_alpha_decrease(subset_sum: npt.NDArray[np.float64], weight: float):
+    N = len(subset_sum)
+    eq1 = False
+    best_denom = 1 - weight
+    for i in range(N):
+        w1 = subset_sum[i]
+        if w1 > 1e-10:
+            denom1 = 2 * w1
+            if denom1 < 1:
+                for j in range(N):
+                    if ((i + 1) & (j + 1)) == 0:
+                        denom2 = denom1 + subset_sum[j]
+                        eq1 |= denom2 == 1
+                        if best_denom < denom2 < 1:
+                            best_denom = denom2
+    return 1 / best_denom, eq1
+
+
+def compute_alpha(subset_sum: npt.NDArray[np.float64], weight: float, increase: bool):
+    f = compute_alpha_increase if increase else compute_alpha_decrease
+    return f(subset_sum, weight)
 
 
 @dataclass
-class NeighborWeight(Neighbor[SRMPModel], Dataclass):
-    powersets: tuple[tuple[int, ...], ...] = field(init=False)
-    nb_crit: InitVar[int]
+class NeighborWeight[S: SRMPModel](Neighbor[S]):
+    def __call__(self, sol: S, rng: Generator):
+        crit_ind = rng.choice(len(sol.weights))
 
-    def __post_init__(self, nb_crit: int):
-        self.powersets = tuple(powerset(range(nb_crit)))[1:-1]
+        subset_sum = compute_subset_sum(np.delete(sol.weights, crit_ind))
 
-    def __call__(self, sol, rng):
-        weights = deepcopy(sol.weights)
+        if (weight := sol.weights[crit_ind]) == 0:
+            increase = True
+        elif weight == 1:
+            increase = False
+        else:
+            increase = bool(rng.choice(2))
 
-        while (
-            new_weights := weights_local_change(
-                self.powersets, weights, rng.choice(len(weights)), bool(rng.choice(2))
-            )
-        ) is None:
-            pass
+        alpha, eq1 = compute_alpha(subset_sum, weight, increase)
+
+        if eq1:
+            alpha = (1 + alpha) / 2
+
+        delta = (1 - weight) * (1 - alpha)
+
+        new_weights = alpha * sol.weights
+        new_weights[crit_ind] = weight + delta
 
         return replace(sol, weights=new_weights)
 
 
 @dataclass
-class NeighborImportanceRelation(Neighbor[RMPModel]):
+class NeighborImportanceRelation[S: RMPModel](Neighbor[S]):
     local: bool = False
 
-    def __call__(self, sol, rng):
-        importance_relation = deepcopy(sol.importance_relation)
+    def __call__(self, sol: S, rng: Generator):
+        importance_relation: ImportanceRelation = deepcopy(sol.importance_relation)
 
         keys = list(importance_relation)
         min_score = max_score = 0
 
+        coalition = cast(frozenset[int], None)
         while min_score >= max_score:
             coalition = keys[rng.choice(len(importance_relation))]
             min_score = importance_relation.min(coalition)
@@ -228,7 +268,7 @@ class NeighborImportanceRelation(Neighbor[RMPModel]):
             if score < max_score:
                 available_score.append(score + 1)
         else:
-            available_score = range(min_score, max_score + 1)
+            available_score = list(range(min_score, max_score + 1))
 
         score = rng.choice(available_score)
         importance_relation[coalition] = score
@@ -237,10 +277,10 @@ class NeighborImportanceRelation(Neighbor[RMPModel]):
 
 
 @dataclass
-class NeighborLexOrder(Neighbor[SRMPModel | RMPModel], Dataclass):
+class NeighborLexOrder[S: SRMPModel | RMPModel](Neighbor[S], Dataclass):
     local: bool = False
 
-    def __call__(self, sol, rng):
+    def __call__(self, sol: S, rng: Generator):
         lexicographic_order = deepcopy(sol.lexicographic_order)
 
         if self.local:

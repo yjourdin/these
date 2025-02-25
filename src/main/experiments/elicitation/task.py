@@ -1,10 +1,12 @@
 from dataclasses import dataclass, field, replace
+from typing import Any, cast
 
+from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
 from ....methods import MethodEnum
 from ....mip.main import learn_mip
-from ....model import GroupModel
+from ....model import GroupModel, Model
 from ....models import GroupModelEnum, model
 from ....performance_table.normal_performance_table import NormalPerformanceTable
 from ....preference_structure.generate import noisy_comparisons, random_comparisons
@@ -16,7 +18,7 @@ from ....test.main import test_consensus, test_distance
 from ....test.test import DistanceRankingEnum
 from ....utils import tolist
 from ...task import SeedTask
-from .config import Config, MIPConfig, SAConfig, SRMPSAConfig
+from .config import Config, MIPConfig, SAConfig
 from .directory import DirectoryElicitation
 
 
@@ -31,7 +33,7 @@ class ATrainTask(AbstractMTask):
     ntr: int
     Atr_id: int = field(hash=False)
 
-    def task(self, dir: DirectoryElicitation, seed: Seed):
+    def task(self, dir: DirectoryElicitation, seed: Seed, *args: Any, **kwargs: Any):
         A = NormalPerformanceTable.random(self.ntr, self.m, self.rng(seed))
 
         with self.A_train_file(dir).open("w") as f:
@@ -40,7 +42,7 @@ class ATrainTask(AbstractMTask):
     def A_train_file(self, dir: DirectoryElicitation):
         return dir.A_train(self.m, self.ntr, self.Atr_id)
 
-    def done(self, dir: DirectoryElicitation, *args, **kwargs):
+    def done(self, dir: DirectoryElicitation, *args: Any, **kwargs: Any):
         return self.A_train_file(dir).exists()
 
 
@@ -50,7 +52,7 @@ class ATestTask(AbstractMTask):
     nte: int
     Ate_id: int = field(hash=False)
 
-    def task(self, dir: DirectoryElicitation, seed: Seed):
+    def task(self, dir: DirectoryElicitation, seed: Seed, *args: Any, **kwargs: Any):
         A = NormalPerformanceTable.random(self.nte, self.m, self.rng(seed))
 
         with self.A_test_file(dir).open("w") as f:
@@ -59,7 +61,7 @@ class ATestTask(AbstractMTask):
     def A_test_file(self, dir: DirectoryElicitation):
         return dir.A_test(self.m, self.nte, self.Ate_id)
 
-    def done(self, dir: DirectoryElicitation, *args, **kwargs):
+    def done(self, dir: DirectoryElicitation, *args: Any, **kwargs: Any):
         return self.A_test_file(dir).exists()
 
 
@@ -72,7 +74,7 @@ class MoTask(AbstractMTask):
     fixed_lex_order: bool = field(hash=False)
     Mo_id: int = field(hash=False)
 
-    def task(self, dir: DirectoryElicitation, seed: Seed):
+    def task(self, dir: DirectoryElicitation, seed: Seed, *args: Any, **kwargs: Any):
         Mo = model(self.Mo, self.group_size).random(
             nb_profiles=self.ko,
             nb_crit=self.m,
@@ -94,7 +96,7 @@ class MoTask(AbstractMTask):
     def Mo_file(self, dir: DirectoryElicitation):
         return dir.Mo(self.m, self.Mo, self.ko, self.group_size, self.Mo_id)
 
-    def done(self, dir: DirectoryElicitation, *args, **kwargs):
+    def done(self, dir: DirectoryElicitation, *args: Any, **kwargs: Any):
         return self.Mo_file(dir).exists()
 
 
@@ -127,7 +129,7 @@ class DTask(AbstractDTask):
     name = "D"
     dm_id: int
 
-    def task(self, dir: DirectoryElicitation, seed: Seed):
+    def task(self, dir: DirectoryElicitation, seed: Seed, *args: Any, **kwargs: Any):
         with self.Mo_file(dir).open("r") as f:
             Mo = model(self.Mo, self.group_size).from_json(f.read())
 
@@ -138,20 +140,20 @@ class DTask(AbstractDTask):
         if self.same_alt:
             rng_shuffle = replace(self, dm_id=0).rng(seed)
 
-        D = random_comparisons(
+        d = random_comparisons(
             A,
-            Mo[self.dm_id] if isinstance(Mo, GroupModel) else Mo,
+            cast(Model, Mo[self.dm_id]) if isinstance(Mo, GroupModel) else Mo,
             self.nbc,
             rng=rng_shuffle,
         )
 
         if self.error:
-            D = noisy_comparisons(D, self.error, rng_error)
+            d = noisy_comparisons(d, self.error, rng_error)
 
         with self.D_file(dir, self.dm_id).open("w") as f:
-            to_csv(D, f)
+            to_csv(d, f)
 
-    def done(self, dir: DirectoryElicitation, *args, **kwargs):
+    def done(self, dir: DirectoryElicitation, *args: Any, **kwargs: Any):
         return self.D_file(dir, self.dm_id).exists()
 
 
@@ -183,7 +185,7 @@ class AbstractElicitationTask(AbstractDTask):
             self.Me_id,
         )
 
-    def done(self, dir: DirectoryElicitation, *args, **kwargs):
+    def done(self, dir: DirectoryElicitation, *args: Any, **kwargs: Any):
         return self.Me_file(dir).exists()
 
 
@@ -193,11 +195,11 @@ class MIPTask(AbstractElicitationTask):
     method: MethodEnum = field(default=MethodEnum.MIP, init=False)
     config: MIPConfig
 
-    def task(self, dir: DirectoryElicitation, seed: Seed):
+    def task(self, dir: DirectoryElicitation, seed: Seed, *args: Any, **kwargs: Any):
         with self.A_train_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
-        D = []
+        D: list[PreferenceStructure] = []
         for dm_id in range(self.group_size):
             with self.D_file(dir, dm_id).open("r") as f:
                 D.append(from_csv(f))
@@ -250,11 +252,11 @@ class SATask(AbstractElicitationTask):
     method: MethodEnum = field(default=MethodEnum.SA, init=False)
     config: SAConfig
 
-    def task(self, dir: DirectoryElicitation, seed: Seed):
+    def task(self, dir: DirectoryElicitation, seed: Seed, *args: Any, **kwargs: Any):
         with self.A_train_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
-        D = []
+        D: list[PreferenceStructure] = []
         for dm_id in range(self.group_size):
             with self.D_file(dir, dm_id).open("r") as f:
                 D.append(from_csv(f))
@@ -273,11 +275,6 @@ class SATask(AbstractElicitationTask):
             accept=self.config.accept,
             max_time=self.config.max_time,
             max_it=self.config.max_it,
-            **(
-                {"amp": self.config.amp}
-                if isinstance(self.config, SRMPSAConfig)
-                else {}  # type: ignore
-            ),
         )
 
         with self.Me_file(dir).open("w") as f:
@@ -313,7 +310,7 @@ class SATask(AbstractElicitationTask):
 class TestTask(ATestTask, AbstractElicitationTask):
     name = "Test"
 
-    def task(self, dir: DirectoryElicitation):
+    def task(self, dir: DirectoryElicitation, *args: Any, **kwargs: Any):
         with self.A_test_file(dir).open("r") as f:
             A_test = NormalPerformanceTable(read_csv(f, header=None))
 
@@ -327,7 +324,7 @@ class TestTask(ATestTask, AbstractElicitationTask):
             except ValueError:
                 Me = None
 
-        def put_in_queue(name, value):
+        def put_in_queue(name: str, value: float):
             csv_file = dir.csv_files["test"]
             csv_file.writerow(
                 csv_file.fields(
@@ -354,7 +351,7 @@ class TestTask(ATestTask, AbstractElicitationTask):
                 )
             )
 
-        def write_consensus(model: GroupModel, prefix: str = ""):
+        def write_consensus(model: GroupModel[Model], prefix: str = ""):
             for name, value in test_consensus(model, A_test, distance):
                 put_in_queue("_".join([prefix, str(distance), name]), value)
 
@@ -367,5 +364,5 @@ class TestTask(ATestTask, AbstractElicitationTask):
                 for name, value in test_distance(Mo, Me, A_test, distance):
                     put_in_queue(name, value)
 
-    def done(self, *args, **kwargs):
+    def done(self, *args: Any, **kwargs: Any):
         return False

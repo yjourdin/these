@@ -1,16 +1,16 @@
 {
-    "name": "test_new",
+    "name": "test_blah",
     "jobs": 10,
     "seed": 0,
     "nb_Atr": 10,
     "N_tr": [
-        50
+        100
     ],
     "N_te": [
-        50
+        100
     ],
     "M": [
-        7
+        15
     ],
     "Mo": [
         "SRMP"
@@ -25,15 +25,6 @@
         3
     ],
     "N_bc": [
-        10,
-        20,
-        30,
-        40,
-        50,
-        60,
-        70,
-        80,
-        90,
         100
     ],
     "method": [
@@ -43,11 +34,10 @@
         {
             "id": 0,
             "max_time": 60,
-	    "max_it": 100000,
-            "accept": 0.8,
+            "accept": 0.7,
             "alpha": 0.999,
-            "amp": 0.1,
-            "method": "SA"
+            "max_it": null,
+            "__class": "SAConfig"
         }
     ]
 }

@@ -4,12 +4,11 @@ from itertools import chain, product
 from typing import cast
 
 import numpy as np
-from mcda import PerformanceTable
-from more_itertools import powerset
 from numpy.random import Generator
 
 from ..constants import DECIMALS
 from ..dataclass import Dataclass
+from ..performance_table.type import PerformanceTableType
 from ..random import rng
 from ..rmp.permutation import adjacent_swap
 from ..sa.neighbor import weights_local_change
@@ -39,13 +38,13 @@ class NeighborhoodCombined[S](Neighborhood[S], Dataclass):
 
 @dataclass
 class NeighborhoodProfile(Neighborhood[FrozenSRMPModel], Dataclass):
-    midpoints: PerformanceTable = field(init=False)
-    alternatives: InitVar[PerformanceTable]
+    midpoints: PerformanceTableType = field(init=False)
+    alternatives: InitVar[PerformanceTableType]
 
-    def __post_init__(self, alternatives: PerformanceTable):
+    def __post_init__(self, alternatives: PerformanceTableType):
         self.midpoints = midpoints(alternatives)
 
-    def __call__(self, sol):
+    def __call__(self, sol: FrozenSRMPModel):
         result: list[FrozenSRMPModel] = []
 
         for profile_ind, profile in enumerate(sol.profiles):
@@ -87,21 +86,13 @@ class NeighborhoodProfile(Neighborhood[FrozenSRMPModel], Dataclass):
 
 
 @dataclass
-class NeighborhoodWeight(Neighborhood[FrozenSRMPModel], Dataclass):
-    powersets: tuple[tuple[int, ...], ...] = field(init=False)
-    nb_crit: InitVar[int]
-
-    def __post_init__(self, nb_crit: int):
-        self.powersets = tuple(powerset(range(nb_crit)))[1:-1]
-
-    def __call__(self, sol):
+class NeighborhoodWeight(Neighborhood[FrozenSRMPModel]):
+    def __call__(self, sol: FrozenSRMPModel):
         result: list[FrozenSRMPModel] = []
 
         for crit, increase in product(range(len(sol.weights)), [False, True]):
             if (
-                weights := weights_local_change(
-                    self.powersets, np.array(sol.weights), crit, increase
-                )
+                weights := weights_local_change(np.array(sol.weights), crit, increase)
             ) is not None:
                 if np.array_equal(weights := weights.round(DECIMALS), sol.weights):
                     result.append(replace(sol, weights=weights))
@@ -110,7 +101,7 @@ class NeighborhoodWeight(Neighborhood[FrozenSRMPModel], Dataclass):
 
 
 class NeighborhoodLexOrder(Neighborhood[FrozenSRMPModel]):
-    def __call__(self, sol):
+    def __call__(self, sol: FrozenSRMPModel):
         result: list[FrozenSRMPModel] = []
 
         for i in range(len(sol.lexicographic_order) - 1):

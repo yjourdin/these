@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from enum import auto
-from typing import Self
+from typing import Self, SupportsIndex
 
 from numpy.random import Generator
 
 from ..enum import ParamFlag
 from ..model import GroupModel, Model
+from ..performance_table.type import PerformanceTableType
 from ..utils import print_list
 from .field import (
     GroupImportanceRelationField,
@@ -39,7 +40,7 @@ class RMPModel(
             + self.lexicographic_order.__str__()
         )
 
-    def rank(self, performance_table):
+    def rank(self, performance_table: PerformanceTableType):
         return NormalRMP(
             performance_table,
             self.importance_relation,
@@ -74,7 +75,7 @@ class RMPGroupModelImportanceProfilesLexicographic(
     ImportanceRelationField,
     LexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return RMPModel(
             profiles=self.profiles,
             importance_relation=self.importance_relation,
@@ -97,7 +98,7 @@ class RMPGroupModelImportanceProfiles(
     ImportanceRelationField,
     GroupLexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return RMPModel(
             profiles=self.profiles,
             importance_relation=self.importance_relation,
@@ -112,7 +113,7 @@ class RMPGroupModelImportanceLexicographic(
     ImportanceRelationField,
     LexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return RMPModel(
             profiles=self.profiles[i],
             importance_relation=self.importance_relation,
@@ -127,7 +128,7 @@ class RMPGroupModelProfilesLexicographic(
     GroupImportanceRelationField,
     LexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return RMPModel(
             profiles=self.profiles,
             importance_relation=self.importance_relation[i],
@@ -142,7 +143,7 @@ class RMPGroupModelImportance(
     ImportanceRelationField,
     GroupLexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return RMPModel(
             profiles=self.profiles[i],
             importance_relation=self.importance_relation,
@@ -157,7 +158,7 @@ class RMPGroupModelProfiles(
     GroupImportanceRelationField,
     GroupLexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return RMPModel(
             profiles=self.profiles,
             importance_relation=self.importance_relation[i],
@@ -172,7 +173,7 @@ class RMPGroupModelLexicographic(
     GroupImportanceRelationField,
     LexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return RMPModel(
             profiles=self.profiles[i],
             importance_relation=self.importance_relation[i],
@@ -187,7 +188,7 @@ class RMPGroupModel(
     GroupImportanceRelationField,
     GroupLexicographicOrderField,
 ):
-    def __getitem__(self, i):
+    def __getitem__(self, i: SupportsIndex | slice):
         return RMPModel(
             profiles=self.profiles[i],
             importance_relation=self.importance_relation[i],

@@ -5,7 +5,7 @@ from typing import cast
 
 import numpy as np
 import numpy.typing as npt
-from drs import drs
+from drs import drs  # type: ignore
 from numpy.random import Generator
 
 from ..dataclass import Dataclass
