@@ -2,3 +2,4 @@ mcda
 more-itertools
 drs
 gurobipy
+numba
