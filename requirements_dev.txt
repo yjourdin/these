@@ -1,5 +1,6 @@
 mcda[all]
 more-itertools
+numba
 drs
 highspy
 ipykernel

@@ -1,5 +1,5 @@
 mcda
 more-itertools
+numba
 drs
 gurobipy
-numba
