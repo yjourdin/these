@@ -19,7 +19,7 @@ configurationsFile = "configurations.txt"
 
 ## File to save tuning results as an R dataset, either absolute path or
 ## relative to execDir.
-# logFile = "./results/SRMP/irace.Rdata"
+logFile = "./results/SRMP/irace.Rdata"
 
 ## Directory where training instances are located; either absolute path or
 ## relative to current directory. If no `trainInstancesFiles` is provided, all
