@@ -6,6 +6,12 @@ from ..constants import DEFAULT_MAX_TIME
 
 parser = argparse.ArgumentParser()
 
+
+# parser.add_argument("model", type=ModelEnum, choices=ModelEnum, help="Model")
+parser.add_argument("k", type=int, help="Number of profiles")
+parser.add_argument("A", type=argparse.FileType("r"), help="Alternatives")
+parser.add_argument("D", type=argparse.FileType("r"), help="Comparisons")
+
 subparsers = parser.add_subparsers(dest="model", required=True, help="Model")
 
 parser_RMP = subparsers.add_parser("RMP", help="RMP model")
@@ -14,11 +20,6 @@ parser_SRMP = subparsers.add_parser("SRMP", help="SRMP model")
 parser_SRMP.add_argument(
     "--amp", type=float, required=True, help="SRMP weight neighborhood amplitude"
 )
-
-# parser.add_argument("model", type=ModelEnum, choices=ModelEnum, help="Model")
-parser.add_argument("k", type=int, help="Number of profiles")
-parser.add_argument("A", type=argparse.FileType("r"), help="Alternatives")
-parser.add_argument("D", type=argparse.FileType("r"), help="Comparisons")
 
 init_group = parser.add_mutually_exclusive_group(required=True)
 init_group.add_argument("--T0", type=float, help="Initial temperature")
