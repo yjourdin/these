@@ -25,8 +25,8 @@ class DirectoryElicitation(Directory):
         test: TestCSVFile
         configs: ConfigCSVFile
 
-    def __init__(self, dir: str, name: str):
-        super().__init__(dir, name)
+    def __init__(self, name: str, dir: Path = Path.cwd()):
+        super().__init__(name, dir)
 
         self.dirs = self.Dirs(
             self.dirs,
@@ -36,7 +36,7 @@ class DirectoryElicitation(Directory):
             D=self.dirs["root"] / "D",
             Me=self.dirs["root"] / "Me",
         )
-        
+
         self.seeds = self.dirs["root"] / "seeds.json"
 
         self.csv_files = self.CSVFiles(

@@ -40,8 +40,8 @@ class DirectoryGroupDecision(Directory):
         group_parameters: GroupParametersCSVFile
         path: PathCSVFile
 
-    def __init__(self, dir: str, name: str):
-        super().__init__(dir, name)
+    def __init__(self, name: str, dir: Path = Path.cwd()):
+        super().__init__(name, dir)
 
         self.dirs = self.Dirs(
             self.dirs,

@@ -5,7 +5,7 @@ from typing import Any, TypedDict, cast
 from .csv_file import CSVFile
 from .csv_files import TaskCSVFile
 
-RESULTS_DIR = "results"
+RESULTS_DIR = Path("results")
 
 
 class Directory:
@@ -15,7 +15,7 @@ class Directory:
     class CSVFiles(TypedDict):
         tasks: TaskCSVFile
 
-    def __init__(self, dir: str, name: str):
+    def __init__(self, name: str, dir: Path = Path.cwd()):
         self.dirs = self.Dirs(root=Path(dir, name))
 
         self.args = self.dirs["root"] / "args.json"

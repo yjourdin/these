@@ -7,7 +7,7 @@
 ## value on the command line).
 
 ## Directory where the programs will be run.
-# execDir = "./"
+execDir = "./results/SRMP"
 
 ## File that contains the description of the parameters of the target
 ## algorithm.
@@ -29,7 +29,7 @@ trainInstancesDir = ""
 ## File that contains a list of training instances and optionally additional
 ## parameters for them. If `trainInstancesDir` is provided, `irace` will
 ## search for the files in this folder.
-trainInstancesFile = "instances-list.txt"
+trainInstancesFile = "instances-list_SRMP.txt"
 
 ## Randomly sample the training instances or use them in the order given.
 # sampleInstances = 1
@@ -40,7 +40,7 @@ testInstancesDir = ""
 
 ## File containing a list of test instances and optionally additional
 ## parameters for them.
-testInstancesFile = "instances-list_test.txt"
+testInstancesFile = "instances-list_SRMP_test.txt"
 
 ## Number of elite configurations returned by irace that will be tested if
 ## test instances are provided.
@@ -68,7 +68,7 @@ testType = "t-test"
 ## family) and the block size is the number of classes. The value of
 ## `blockSize` will multiply `firstTest`, `eachTest` and
 ## `elitistNewInstances`.
-blockSize = 4
+blockSize = 8
 
 ## Number of instances evaluated between elimination tests.
 # eachTest = 1
@@ -117,7 +117,7 @@ blockSize = 4
 
 ## Maximum number of runs (invocations of `targetRunner`) that will be
 ## performed. It determines the maximum budget of experiments for the tuning.
-maxExperiments = 1000
+maxExperiments = 9000
 
 ## Minimum number of runs (invocations of `targetRunner`) that will be
 ## performed. It determines the minimum budget of experiments for the tuning.
@@ -164,7 +164,7 @@ parallel = 10
 # debugLevel = 0
 
 ## Seed of the random number generator (by default, generate a random seed).
-# seed = NA
+seed = 0
 
 ## Enable/disable the soft restart strategy that avoids premature convergence
 ## of the probabilistic model.
@@ -178,7 +178,7 @@ parallel = 10
 
 ## Number of instances added to the execution list before previous instances
 ## in elitist irace.
-elitistNewInstances = 5
+# elitistNewInstances = 1
 
 ## In elitist irace, maximum number per race of elimination tests that do not
 ## eliminate a configuration. Use 0 for no limit.

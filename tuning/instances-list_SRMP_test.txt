@@ -1,0 +1,17 @@
+## This is an example of specifying a list of instances.
+
+# Each line is an instance relative to trainInstancesDir/testInstancesdir
+# unless set to "" (see scenario.txt.tmpl) and an optional sequence of
+# instance-specific parameters that will be passed to target-runner when
+# invoked on that instance.
+
+# Empty lines and comments are ignored.
+
+"SRMP 1 Instances/A_train/M_7_N_100_Id_10.csv Instances/D/M_7_Ntr_100_AtrId_10_Mo_SRMP_K_1_GroupSize_1_MoId_10_N_100_SameAlt_True_E_0_DmId_0_Id_10.csv"
+"SRMP 1 Instances/A_train/M_7_N_100_Id_10.csv Instances/D/M_7_Ntr_100_AtrId_10_Mo_SRMP_K_1_GroupSize_1_MoId_10_N_2000_SameAlt_True_E_0_DmId_0_Id_10.csv"
+"SRMP 4 Instances/A_train/M_7_N_100_Id_10.csv Instances/D/M_7_Ntr_100_AtrId_10_Mo_SRMP_K_4_GroupSize_1_MoId_10_N_100_SameAlt_True_E_0_DmId_0_Id_10.csv"
+"SRMP 4 Instances/A_train/M_7_N_100_Id_10.csv Instances/D/M_7_Ntr_100_AtrId_10_Mo_SRMP_K_4_GroupSize_1_MoId_10_N_2000_SameAlt_True_E_0_DmId_0_Id_10.csv"
+"SRMP 1 Instances/A_train/M_15_N_100_Id_10.csv Instances/D/M_15_Ntr_100_AtrId_10_Mo_SRMP_K_1_GroupSize_1_MoId_10_N_100_SameAlt_True_E_0_DmId_0_Id_10.csv"
+"SRMP 1 Instances/A_train/M_15_N_100_Id_10.csv Instances/D/M_15_Ntr_100_AtrId_10_Mo_SRMP_K_1_GroupSize_1_MoId_10_N_2000_SameAlt_True_E_0_DmId_0_Id_10.csv"
+"SRMP 4 Instances/A_train/M_15_N_100_Id_10.csv Instances/D/M_15_Ntr_100_AtrId_10_Mo_SRMP_K_4_GroupSize_1_MoId_10_N_100_SameAlt_True_E_0_DmId_0_Id_10.csv"
+"SRMP 4 Instances/A_train/M_15_N_100_Id_10.csv Instances/D/M_15_Ntr_100_AtrId_10_Mo_SRMP_K_4_GroupSize_1_MoId_10_N_2000_SameAlt_True_E_0_DmId_0_Id_10.csv"
