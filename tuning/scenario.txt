@@ -7,7 +7,7 @@
 ## value on the command line).
 
 ## Directory where the programs will be run.
-execDir = "./results/SRMP"
+# execDir = "./"
 
 ## File that contains the description of the parameters of the target
 ## algorithm.
@@ -19,7 +19,7 @@ configurationsFile = "configurations.txt"
 
 ## File to save tuning results as an R dataset, either absolute path or
 ## relative to execDir.
-# logFile = "./irace.Rdata"
+# logFile = "./results/SRMP/irace.Rdata"
 
 ## Directory where training instances are located; either absolute path or
 ## relative to current directory. If no `trainInstancesFiles` is provided, all
