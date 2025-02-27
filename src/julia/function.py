@@ -1,16 +1,15 @@
 import ast
 from itertools import chain
-from pathlib import Path
 from subprocess import run
 from typing import Any
 
 from ..random import Seed
-from .file import S_file, WE_dir
+from .file import PARENT_DIR, S_file, WE_dir
 
 
 def run_julia(scriptname: str, *args: Any, **kwargs: Any):
     return run(
-        ["julia", Path(__file__).parent / scriptname]
+        ["julia", PARENT_DIR / scriptname]
         + [str(x) for x in args]
         + list(chain.from_iterable((f"--{k}", str(v)) for k, v in kwargs.items())),
         capture_output=True,

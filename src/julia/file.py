@@ -1,7 +1,9 @@
 from pathlib import Path
 
-S_DIR = Path("src/julia/S")
-WE_DIR = Path("src/julia/WE")
+PARENT_DIR = Path(__file__).parent
+
+S_DIR = PARENT_DIR / "S"
+WE_DIR = PARENT_DIR / "WE"
 
 
 def S_file(m: int):
