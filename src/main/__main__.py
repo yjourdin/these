@@ -36,7 +36,7 @@ match args.experiment:
 
 
 # Initialise directory
-dir = directory_class(args.dir, args.name)
+dir = directory_class(args.name, args.dir)
 
 
 if not args.extend:

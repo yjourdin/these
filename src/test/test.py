@@ -4,12 +4,12 @@ from typing import Any, NamedTuple, cast
 
 import numpy as np
 import numpy.typing as npt
-from mcda.internal.core.values import Ranking
 from scipy.stats import kendalltau, spearmanr
 
 from ..model import GroupModel, Model
 from ..performance_table.type import PerformanceTableType
 from ..preference_structure.fitness import fitness_outranking
+from ..preference_structure.utils import RankingSeries
 
 
 class ConsensusResult(NamedTuple):
@@ -22,18 +22,18 @@ class ConsensusResult(NamedTuple):
 
 class DistanceRankingEnum(Enum):
     @member
-    def FITNESS(self, Ra: Ranking, Rb: Ranking) -> float:
+    def FITNESS(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
         return fitness_outranking(Ra, Rb)
 
     @member
-    def KENDALL(self, Ra: Ranking, Rb: Ranking) -> float:
-        return kendalltau(Ra.data, Rb.data).statistic  # type: ignore
+    def KENDALL(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
+        return kendalltau(Ra, Rb).statistic
 
     @member
-    def SPEARMAN(self, Ra: Ranking, Rb: Ranking) -> float:
-        return cast(float, spearmanr(Ra.data, Rb.data).statistic)  # type: ignore
+    def SPEARMAN(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
+        return cast(float, spearmanr(Ra, Rb).statistic)
 
-    def __call__(self, Ra: Ranking, Rb: Ranking) -> float:
+    def __call__(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
         return self.value(self, Ra, Rb)
 
     def __str__(self) -> str:
@@ -41,7 +41,7 @@ class DistanceRankingEnum(Enum):
 
 
 def rccd(distance: DistanceRankingEnum):
-    def func(ra: Ranking, rb: Ranking) -> float:
+    def func(ra: RankingSeries, rb: RankingSeries) -> float:
         return 0.5 * (1 + distance(ra, rb))
 
     return func if distance is not DistanceRankingEnum.FITNESS else distance
@@ -53,7 +53,9 @@ def distance_model(
     performance_table: PerformanceTableType,
     distance: DistanceRankingEnum,
 ) -> float:
-    return distance(Ma.rank(performance_table), Mb.rank(performance_table))
+    return distance(
+        Ma.rank_series(performance_table), Mb.rank_series(performance_table)
+    )
 
 
 def distance_group_model(
@@ -75,8 +77,8 @@ def consensus_group_model(
 ):
     DMS = range(len(model))
     NB_DM = len(DMS)
-    dm_rankings = [model[dm].rank(performance_table) for dm in DMS]
-    collective_ranking = model.collective_model.rank(performance_table)
+    dm_rankings = [model[dm].rank_series(performance_table) for dm in DMS]
+    collective_ranking = model.collective_model.rank_series(performance_table)
 
     between_individual = cast(
         npt.NDArray[np.float64],
