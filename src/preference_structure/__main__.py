@@ -1,12 +1,13 @@
 from pathlib import Path
 from sys import stdout
+from typing import cast
 
 from mcda.internal.core.values import Ranking
 from mcda.relations import PreferenceStructure
 from numpy.random import SeedSequence
 from pandas import read_csv
 
-from ..model import GroupModel
+from ..model import GroupModel, Model
 from ..models import model_from_json
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..random import rng
@@ -27,7 +28,7 @@ A = NormalPerformanceTable(read_csv(args.A, header=None))
 NB_DM = model.group_size if isinstance(model, GroupModel) else 1
 DMS = range(NB_DM)
 
-match args.type:
+match cast(TypeEnum, args.type):
     case TypeEnum.PREFERENCE_STRUCTURE:
         # Create random seeds
         seed_shuffle, seed_error = (
@@ -40,7 +41,9 @@ match args.type:
         D: list[PreferenceStructure] = []
         rng_shuffle = rng(seed_shuffle)
         for dm in DMS:
-            model_dm = model[dm] if isinstance(model, GroupModel) else model
+            model_dm = (
+                cast(Model, model[dm]) if isinstance(model, GroupModel) else model
+            )
             if args.same:
                 rng_shuffle = rng(seed_shuffle)
             D.append(random_comparisons(A, model_dm, args.n, rng=rng_shuffle))
@@ -57,7 +60,7 @@ match args.type:
 
 
 # Write results
-def filename(dm):
+def filename(dm: int):
     path = Path(args.output)
     if NB_DM == 1:
         return path
@@ -67,7 +70,8 @@ def filename(dm):
 
 for dm in DMS:
     with stdout if args.output == "stdout" else open(filename(dm), "w") as f:
-        if args.type == "PS":
-            to_csv(D[dm], f)
-        else:
-            R[dm].data.to_csv(f, header=False, index=False)
+        match cast(TypeEnum, args.type):
+            case TypeEnum.PREFERENCE_STRUCTURE:
+                to_csv(D[dm], f)  # type: ignore
+            case TypeEnum.RANKING:
+                R[dm].data.to_csv(f, header=False, index=False)  # type: ignore
