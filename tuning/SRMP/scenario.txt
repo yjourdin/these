@@ -11,15 +11,15 @@
 
 ## File that contains the description of the parameters of the target
 ## algorithm.
-# parameterFile = "./parameters.txt"
+parameterFile = "../parameters.txt"
 
 ## File that contains a table of initial configurations. If empty or `NULL`,
 ## all initial configurations are randomly generated.
-configurationsFile = "configurations.txt"
+configurationsFile = "../configurations.txt"
 
 ## File to save tuning results as an R dataset, either absolute path or
 ## relative to execDir.
-logFile = "./results/RMP/irace.Rdata"
+# logFile = "./irace.Rdata"
 
 ## Directory where training instances are located; either absolute path or
 ## relative to current directory. If no `trainInstancesFiles` is provided, all
@@ -29,7 +29,7 @@ trainInstancesDir = ""
 ## File that contains a list of training instances and optionally additional
 ## parameters for them. If `trainInstancesDir` is provided, `irace` will
 ## search for the files in this folder.
-trainInstancesFile = "instances-list_RMP.txt"
+trainInstancesFile = "instances-list.txt"
 
 ## Randomly sample the training instances or use them in the order given.
 # sampleInstances = 1
@@ -40,7 +40,7 @@ testInstancesDir = ""
 
 ## File containing a list of test instances and optionally additional
 ## parameters for them.
-testInstancesFile = "instances-list_RMP_test.txt"
+testInstancesFile = "instances-list_test.txt"
 
 ## Number of elite configurations returned by irace that will be tested if
 ## test instances are provided.
