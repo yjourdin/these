@@ -8,7 +8,7 @@ from ..utils import tolist
 
 
 def random_weights(nb_crit: int, rng: Generator):
-    return np.diff(np.sort(np.pad(rng.random(nb_crit - 1), 1, constant_values=(0, 1))))
+    return np.diff(np.pad(np.sort(rng.random(nb_crit - 1)), 1, constant_values=(0, 1)))
 
 
 def normalize_weights(weights: npt.NDArray[np.float64]):
