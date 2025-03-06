@@ -75,7 +75,7 @@ blockSize = 8
 
 ## Executable called for each configuration that executes the target algorithm
 ## to be tuned. See the templates and examples provided.
-# targetRunner = "./target-runner"
+targetRunner = "../target-runner"
 
 ## Executable that will be used to launch the target runner, when
 ## `targetRunner` cannot be executed directly (e.g., a Python script in
