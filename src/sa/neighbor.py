@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass, replace
+from functools import reduce
 from typing import cast
 
 import numpy as np
@@ -144,6 +145,7 @@ class NeighborWeightDiscretized[S: SRMPModel](Neighbor[S]):
 
         return replace(sol, weights=weights)
 
+
 def weights_local_change(
     weights: npt.NDArray[np.float64],
     crit_ind: int,
@@ -165,13 +167,20 @@ def weights_local_change(
     return new
 
 
+# def compute_subset_sum(weights: npt.NDArray[np.float64]):
+#     if len(weights) == 1:
+#         return weights
+#     weight = weights[-1]
+#     subset_sums = compute_subset_sum(weights[:-1])
+#     return np.concat((subset_sums, np.array([weight]), subset_sums + weight))
+
+
+def add_subset_sum(subset_sums: npt.NDArray[np.float64], weight: float):
+    return np.concat((subset_sums, np.array([weight]), subset_sums + weight))
+
 
 def compute_subset_sum(weights: npt.NDArray[np.float64]):
-    if len(weights) == 1:
-        return weights
-    weight = weights[-1]
-    subset_sums = compute_subset_sum(weights[:-1])
-    return np.concat((subset_sums, np.array([weight]), subset_sums + weight))
+    return np.concat((np.zeros(1), reduce(add_subset_sum, weights, np.empty(0))))
 
 
 @njit(fastmath=True)  # type: ignore
@@ -217,29 +226,79 @@ def compute_alpha(subset_sum: npt.NDArray[np.float64], weight: float, increase: 
     return f(subset_sum, weight)
 
 
+# @dataclass
+# class NeighborWeight[S: SRMPModel](Neighbor[S]):
+#     def __call__(self, sol: S, rng: Generator):
+#         crit_ind = rng.choice(len(sol.weights))
+
+#         subset_sum = compute_subset_sum(np.delete(sol.weights, crit_ind))
+
+#         if (weight := sol.weights[crit_ind]) == 0:
+#             increase = True
+#         elif weight == 1:
+#             increase = False
+#         else:
+#             increase = bool(rng.choice(2))
+
+#         alpha, eq1 = compute_alpha(subset_sum, weight, increase)
+
+#         if eq1:
+#             alpha = (1 + alpha) / 2
+
+#         delta = (1 - weight) * (1 - alpha)
+
+#         new_weights = alpha * sol.weights
+#         new_weights[crit_ind] = weight + delta
+
+#         return replace(sol, weights=new_weights)
+
+
 @dataclass
 class NeighborWeight[S: SRMPModel](Neighbor[S]):
     def __call__(self, sol: S, rng: Generator):
         crit_ind = rng.choice(len(sol.weights))
 
+        weight = sol.weights[crit_ind]
+
         subset_sum = compute_subset_sum(np.delete(sol.weights, crit_ind))
 
-        if (weight := sol.weights[crit_ind]) == 0:
-            increase = True
-        elif weight == 1:
-            increase = False
-        else:
-            increase = bool(rng.choice(2))
+        diffs = np.diff((np.sort(add_subset_sum(subset_sum, weight))))
 
-        alpha, eq1 = compute_alpha(subset_sum, weight, increase)
+        eps = np.min(diffs, initial=1, where=diffs != 0)
 
-        if eq1:
-            alpha = (1 + alpha) / 2
+        s = rng.integers(1, len(subset_sum))
+
+        i = rng.choice(len(subset_sum))
+
+        j1 = s & i
+
+        j2 = s & (~i)
+
+        s_min, s_max = (
+            (s1, s2) if (s1 := subset_sum[j1]) <= (s2 := subset_sum[j2]) else (s2, s1)
+        )
+
+        s_zero = 1 - weight - s_min - s_max
+
+        d = rng.choice([-1, 0, 1])
+
+        alpha = (1 + d * eps) / (2 * s_max + s_zero)
 
         delta = (1 - weight) * (1 - alpha)
 
         new_weights = alpha * sol.weights
         new_weights[crit_ind] = weight + delta
+        # if (weight := sol.weights[crit_ind]) == 0:
+        #     increase = True
+        # elif weight == 1:
+        #     increase = False
+        # else:
+        #     increase = bool(rng.choice(2))
+
+        # alpha, eq1 = compute_alpha(subset_sum, weight, increase)
+
+        # if eq1:
+        #     alpha = (1 + alpha) / 2
 
         return replace(sol, weights=new_weights)
 
