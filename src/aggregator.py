@@ -2,9 +2,9 @@ from collections.abc import Iterable
 from functools import partial
 from typing import Any
 
-from mcda.internal.core.values import Ranking
+import numpy as np
+import numpy.typing as npt
 from numpy import mean
-from pandas import DataFrame
 
 agg_float_func = min
 agg_rank_func = partial(mean, axis=0)
@@ -14,6 +14,7 @@ def agg_float(data: Iterable[float], **kwargs: Any) -> float:
     return agg_float_func((x for x in data), **kwargs)
 
 
-def agg_rank(data: Iterable[Ranking], **kwargs: Any) -> Ranking:
-    df = DataFrame([r.data for r in data])
-    return Ranking(agg_rank_func(df, **kwargs))
+def agg_rank(
+    data: Iterable[npt.NDArray[np.int_]], **kwargs: Any
+) -> npt.NDArray[np.int_]:
+    return agg_rank_func(np.stack(list(data)))

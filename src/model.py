@@ -4,9 +4,13 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any, ClassVar, Self, SupportsIndex, overload
 
-from mcda.internal.core.values import Ranking
+import numpy as np
+import numpy.typing as npt
+from mcda.internal.core.scales import DiscreteQuantitativeScale, PreferenceDirection
+from mcda.internal.core.values import CommensurableValues, Ranking
 from mcda.relations import PreferenceStructure
 from numpy.random import Generator
+from pandas import Series
 
 from .aggregator import agg_float, agg_rank
 from .dataclass import RandomDataclass, RandomFrozenDataclass
@@ -19,12 +23,33 @@ from .utils import list_replace
 @dataclass
 class Model(RandomDataclass):
     @abstractmethod
-    def rank(self, performance_table: PerformanceTableType) -> Ranking: ...
+    def rank_numpy(
+        self, performance_table: PerformanceTableType
+    ) -> npt.NDArray[np.int_]: ...
+
+    def rank_series(self, performance_table: PerformanceTableType):
+        return Series(
+            self.rank_numpy(performance_table),
+            performance_table.alternatives,
+            dtype=int,
+        )
+
+    def rank(self, performance_table: PerformanceTableType) -> Ranking:
+        ranking = self.rank_series(performance_table)
+        return CommensurableValues(
+            ranking,
+            scale=DiscreteQuantitativeScale(
+                ranking.unique(),  # type: ignore
+                PreferenceDirection.MIN,
+            ),
+        )
 
     def fitness(
         self, performance_table: PerformanceTableType, comparisons: PreferenceStructure
     ):
-        return fitness_comparisons_ranking(comparisons, self.rank(performance_table))
+        return fitness_comparisons_ranking(
+            comparisons, self.rank_series(performance_table)
+        )
 
     @classmethod
     def from_reference(cls, other: Self, rng: Generator, *args: Any, **kwargs: Any):
@@ -42,8 +67,8 @@ class FrozenModel[M: Model](RandomFrozenDataclass):
 class AggModel(Model):
     models: list[Model]
 
-    def rank(self, performance_table: PerformanceTableType) -> Ranking:
-        return agg_rank(model.rank(performance_table) for model in self.models)
+    def rank_numpy(self, performance_table: PerformanceTableType):
+        return agg_rank(model.rank_numpy(performance_table) for model in self.models)
 
 
 @dataclass
@@ -76,8 +101,8 @@ class GroupModel[M: Model](Model, Sequence[M]):
     def __len__(self):
         return self.group_size
 
-    def rank(self, performance_table: PerformanceTableType):
-        return self.collective_model.rank(performance_table)
+    def rank_numpy(self, performance_table: PerformanceTableType):
+        return self.collective_model.rank_numpy(performance_table)
 
     def fitness(
         self,

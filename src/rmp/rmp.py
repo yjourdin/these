@@ -11,7 +11,6 @@ from collections.abc import Sequence
 from typing import Any, cast
 
 import numpy as np
-import numpy.typing as npt
 from mcda import PerformanceTable
 from mcda.internal.core.interfaces import Ranker
 from mcda.internal.core.matrices import OutrankingMatrix
@@ -206,7 +205,7 @@ class RMP(Ranker):
         )
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
-        scores_ordered = sorted(set(scores.values), reverse=True)
+        scores_ordered = sorted(set(scores.values), reverse=True) # type: ignore
         ranks: Series[int] = scores.apply(lambda x: scores_ordered.index(x) + 1)  # type: ignore
         return CommensurableValues(
             ranks,
@@ -581,7 +580,7 @@ class NormalRMP(RMP):
             for profile in self.profiles.alternatives
         ]
 
-    def rank(self, **kwargs: Any):
+    def rank_numpy(self, **kwargs: Any):
         """Compute the RMP algorithm
 
         :return:
@@ -598,11 +597,4 @@ class NormalRMP(RMP):
         score = np.sum(relations_ordered * power[:, None, None], 0)
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
-        ranks = cast(npt.NDArray[np.int_], rankdata(-scores, method="dense"))
-        return CommensurableValues(
-            Series(ranks, self.performance_table.alternatives),
-            scale=DiscreteQuantitativeScale(
-                list(ranks),
-                PreferenceDirection.MIN,
-            ),
-        )
+        return rankdata(-scores, method="dense").astype(np.int_)

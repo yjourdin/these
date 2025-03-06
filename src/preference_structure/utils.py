@@ -6,11 +6,11 @@ import numpy as np
 import numpy.typing as npt
 from mcda.internal.core.matrices import OutrankingMatrix
 from mcda.internal.core.relations import Relation
-from mcda.internal.core.values import Ranking
 from mcda.relations import I, P
+from pandas import Series
 
 OutrankingMatrixClass = cast(Any, get_origin(OutrankingMatrix))
-RankingClass = cast(Any, get_origin(Ranking))
+type RankingSeries = Series[int]
 
 
 def outranking_numpy_from_outranking(
@@ -19,18 +19,17 @@ def outranking_numpy_from_outranking(
     return outranking.data.to_numpy().astype(bool, copy=False)
 
 
-def outranking_numpy_from_ranking(ranking: Ranking):
-    ranking_numpy: npt.NDArray[np.int_] = ranking.data.to_numpy()
+def outranking_numpy_from_ranking(ranking: RankingSeries):
+    ranking_numpy: npt.NDArray[np.int_] = ranking.to_numpy()
 
     return np.less_equal.outer(ranking_numpy, ranking_numpy).astype(bool, copy=False)
 
 
-def outranking_numpy(o: OutrankingMatrix | Ranking):
+def outranking_numpy(o: OutrankingMatrix | RankingSeries):
     if isinstance(o, OutrankingMatrixClass):
         o = cast(OutrankingMatrix, o)
         return outranking_numpy_from_outranking(o)
-    elif isinstance(o, RankingClass):
-        o = cast(Ranking, o)
+    elif isinstance(o, Series):
         return outranking_numpy_from_ranking(o)
     else:
         raise TypeError("must be OutrankingMatrix or Ranking")

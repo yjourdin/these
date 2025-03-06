@@ -40,13 +40,13 @@ class RMPModel(
             + self.lexicographic_order.__str__()
         )
 
-    def rank(self, performance_table: PerformanceTableType):
+    def rank_numpy(self, performance_table: PerformanceTableType):
         return NormalRMP(
             performance_table,
             self.importance_relation,
             self.profiles,
             self.lexicographic_order,
-        ).rank()
+        ).rank_numpy()
 
     @classmethod
     def from_reference(

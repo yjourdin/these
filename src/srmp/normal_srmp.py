@@ -1,14 +1,12 @@
 from collections.abc import Sequence
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 from mcda import PerformanceTable
 from mcda.internal.core.scales import NormalScale
 from mcda.outranking.srmp import SRMP, ProfileWiseOutranking
-from mcda.scales import DiscreteQuantitativeScale, PreferenceDirection
-from mcda.values import CommensurableValues, Values
-from pandas import Series
+from mcda.values import Values
 from scipy.stats import rankdata
 
 OutrankingMatrix = npt.NDArray[np.bool_]
@@ -88,12 +86,7 @@ class NormalSRMP(SRMP):
             for profile in self.profiles.alternatives
         ]
 
-    def rank(self, **kwargs: Any):
-        """Compute the SRMP algorithm
-
-        :return:
-            the outranking total order as a ranking
-        """
+    def rank_numpy(self):
         profilewise_outranking_matrices = np.array([
             sub_srmp.rank() for sub_srmp in self.sub_srmp
         ])
@@ -105,11 +98,4 @@ class NormalSRMP(SRMP):
         score = np.sum(relations_ordered * power[:, None, None], 0)
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
-        ranks = cast(npt.NDArray[np.int_], rankdata(-scores, method="dense"))
-        return CommensurableValues(
-            Series(ranks, self.performance_table.alternatives),
-            scale=DiscreteQuantitativeScale(
-                list(ranks),
-                PreferenceDirection.MIN,
-            ),
-        )
+        return rankdata(-scores, method="dense").astype(np.int_)

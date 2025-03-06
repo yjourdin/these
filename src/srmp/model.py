@@ -45,13 +45,13 @@ class SRMPModel(
             print_list(self.lexicographic_order),
         ])
 
-    def rank(self, performance_table: PerformanceTableType):
+    def rank_numpy(self, performance_table: PerformanceTableType):
         return NormalSRMP(
             performance_table,
             self.weights,
             self.profiles,
             self.lexicographic_order,
-        ).rank()
+        ).rank_numpy()
 
     @classmethod
     def from_reference(
