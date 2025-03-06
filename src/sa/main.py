@@ -16,7 +16,7 @@ from .neighbor import (
     NeighborImportanceRelation,
     NeighborLexOrder,
     NeighborProfileDiscretized,
-    NeighborWeightAmp,
+    NeighborWeight,
     RandomNeighbor,
 )
 from .objective import FitnessObjective
@@ -36,7 +36,6 @@ def learn_sa(
     alternatives: NormalPerformanceTable,
     comparisons: PreferenceStructure,
     alpha: float,
-    amp: float,
     rng_init: Generator,
     rng_sa: Generator,
     lex_order: list[int] | None = None,
@@ -84,7 +83,7 @@ def learn_sa(
             neighbors.append(NeighborImportanceRelation(2**M - 1))
             prob.append(2**M)
         case ModelEnum.SRMP:
-            neighbors.append(NeighborWeightAmp(amp))
+            neighbors.append(NeighborWeight())
             prob.append(M)
             pass
         case _:

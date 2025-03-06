@@ -33,7 +33,6 @@ best_model, best_fitness, time, it = learn_sa(
     A,
     D,
     args.alpha,
-    args.amp,
     rng_init,
     rng_sa,
     None,

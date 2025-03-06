@@ -20,7 +20,6 @@ init_group.add_argument(
 
 parser.add_argument("--alpha", type=float, required=True, help="Cooling coefficient")
 parser.add_argument("--L", default=1, type=int, help="Length of Markov chains")
-parser.add_argument("--amp", default=1, type=float, help="Weight amplitude")
 
 stop_group = parser.add_mutually_exclusive_group(required=True)
 stop_group.add_argument("--Tf", type=float, help="Final temperature")
