@@ -269,6 +269,7 @@ class SATask(AbstractElicitationTask):
             A,
             D[0],
             self.config.alpha,
+            self.config.amp,
             rng_init,
             rng_sa,
             self.lexicographic_order if self.fixed_lex_order else None,

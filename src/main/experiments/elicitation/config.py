@@ -26,8 +26,9 @@ class MIPConfig(Config):
 @dataclass(frozen=True)
 class SAConfig(Config):
     method = MethodEnum.SA
-    accept: float = 0.5
-    alpha: float = 0.99
+    accept: float = 0.9
+    alpha: float = 0.999
+    amp: float = 0.05
     max_it: int | None = None
     max_it_non_improving: int | None = None
 

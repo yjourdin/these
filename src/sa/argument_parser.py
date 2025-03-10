@@ -19,6 +19,9 @@ init_group.add_argument(
 )
 
 parser.add_argument("--alpha", type=float, required=True, help="Cooling coefficient")
+parser.add_argument(
+    "--amp", type=float, required=True, help="Weight neighborhood amplitude"
+)
 parser.add_argument("--L", default=1, type=int, help="Length of Markov chains")
 
 stop_group = parser.add_mutually_exclusive_group(required=True)
