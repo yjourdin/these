@@ -92,7 +92,7 @@ stop_thread = Thread(
 stop_thread.start()
 
 
-with ThreadPoolExecutor() as thread_pool:
+with ThreadPoolExecutor(1000) as thread_pool:
     # Start worker manager thread
     task_manager_thread = Thread(
         target=worker_manager,
