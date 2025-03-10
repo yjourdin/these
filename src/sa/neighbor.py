@@ -266,6 +266,8 @@ class NeighborWeight[S: SRMPModel](Neighbor[S]):
 
         eps = np.min(diffs, initial=1, where=diffs != 0)
 
+        d = rng.choice([-1, 0, 1])
+        
         s = rng.integers(1, len(subset_sum))
 
         i = rng.choice(len(subset_sum))
@@ -280,25 +282,12 @@ class NeighborWeight[S: SRMPModel](Neighbor[S]):
 
         s_zero = 1 - weight - s_min - s_max
 
-        d = rng.choice([-1, 0, 1])
-
         alpha = (1 + d * eps) / (2 * s_max + s_zero)
 
         delta = (1 - weight) * (1 - alpha)
 
         new_weights = alpha * sol.weights
         new_weights[crit_ind] = weight + delta
-        # if (weight := sol.weights[crit_ind]) == 0:
-        #     increase = True
-        # elif weight == 1:
-        #     increase = False
-        # else:
-        #     increase = bool(rng.choice(2))
-
-        # alpha, eq1 = compute_alpha(subset_sum, weight, increase)
-
-        # if eq1:
-        #     alpha = (1 + alpha) / 2
 
         return replace(sol, weights=new_weights)
 

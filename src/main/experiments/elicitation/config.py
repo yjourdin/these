@@ -29,6 +29,7 @@ class SAConfig(Config):
     accept: float = 0.5
     alpha: float = 0.99
     max_it: int | None = None
+    max_it_non_improving: int | None = None
 
 
 def create_config(**kwargs: Any) -> Config:

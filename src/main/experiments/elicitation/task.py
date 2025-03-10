@@ -275,6 +275,7 @@ class SATask(AbstractElicitationTask):
             accept=self.config.accept,
             max_time=self.config.max_time,
             max_it=self.config.max_it,
+            max_it_non_improving=self.config.max_it_non_improving,
         )
 
         with self.Me_file(dir).open("w") as f:

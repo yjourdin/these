@@ -2,12 +2,12 @@
     "name": "test_blah",
     "jobs": 10,
     "seed": 0,
-    "nb_Atr": 10,
+    "nb_Atr": 1,
     "N_tr": [
         100
     ],
     "N_te": [
-        100
+        5000
     ],
     "M": [
         15
@@ -33,10 +33,11 @@
     "config": [
         {
             "id": 0,
-            "max_time": 60,
-            "accept": 0.7,
+            "max_time": 3600,
+            "accept": 0.9,
             "alpha": 0.999,
             "max_it": null,
+            "max_it_non_improving": 100000,
             "__class": "SAConfig"
         }
     ]
