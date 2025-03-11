@@ -17,6 +17,7 @@ from .neighbor import (
     NeighborLexOrder,
     NeighborProfileDiscretized,
     NeighborWeightAmp,
+    NeighborWeight,
     RandomNeighbor,
 )
 from .objective import FitnessObjective
@@ -84,7 +85,10 @@ def learn_sa(
             neighbors.append(NeighborImportanceRelation(2**M - 1))
             prob.append(2**M)
         case ModelEnum.SRMP:
-            neighbors.append(NeighborWeightAmp(amp)) # type: ignore
+            if amp > 1:
+                neighbors.append(NeighborWeight()) # type: ignore
+            else:
+                neighbors.append(NeighborWeightAmp(amp)) # type: ignore
             prob.append(M)
             pass
         case _:
