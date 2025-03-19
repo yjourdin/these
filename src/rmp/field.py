@@ -69,13 +69,13 @@ class ImportanceRelationField(RandomField):
     @staticmethod
     def field_decode(o: Any):
         return ImportanceRelation(
-            o.values(),
+            [int(x) for x in o.values()],
             [frozenset(ast.literal_eval(label)) for label in o.keys()],
         )
 
     @staticmethod
     def field_encode(o: Any):
-        return {str(list(label)): score for label, score in o.items()}
+        return {str(list(label)): int(score) for label, score in o.items()}
 
     @staticmethod
     def field_random(nb_crit: int, rng: Generator, *args: Any, **kwargs: Any):
