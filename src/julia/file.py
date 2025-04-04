@@ -7,8 +7,8 @@ WE_DIR = PARENT_DIR / "WE"
 
 
 def S_file(m: int):
-    return S_DIR / f"{m}.bin"
+    return S_DIR / f"{m}.jld2"
 
 
-def WE_dir(m: int):
-    return WE_DIR / str(m)
+def WE_file(m: int):
+    return WE_DIR / f"{m}.jld2"

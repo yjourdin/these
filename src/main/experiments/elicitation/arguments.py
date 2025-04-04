@@ -2,13 +2,13 @@ from dataclasses import dataclass, field
 
 from ....random import Seed
 from ...arguments import Arguments, ExperimentEnum
-from .fields import GroupConfigField, GroupMeField, GroupMethodField, GroupMoField
-from .seeds import Seeds
+from .fields import GroupConfigField, GroupMeField, GroupMethodField, GroupMoField, SeedsField
+# from .seeds import Seeds
 
 
 @dataclass
 class ArgumentsElicitation(
-    Arguments, GroupMethodField, GroupMoField, GroupMeField, GroupConfigField
+    Arguments, GroupMethodField, GroupMoField, GroupMeField, GroupConfigField, SeedsField
 ):
     experiment: ExperimentEnum = field(default=ExperimentEnum.ELICITATION, init=False)
     seed: Seed | None = None
@@ -17,7 +17,7 @@ class ArgumentsElicitation(
     nb_Ate: int | None = None
     nb_D: int | None = None
     nb_Me: int | None = None
-    seeds: Seeds = field(default_factory=Seeds)
+    # seeds: Seeds = field(default_factory=Seeds)
     N_tr: list[int] = field(default_factory=list)
     N_te: list[int] | None = None
     group_size: list[int] = field(default_factory=lambda: [1])

@@ -26,6 +26,6 @@ match args.test:
     case TestEnum.CONSENSUS:
         model = model_from_json(args.model.read())
         assert isinstance(model, GroupModel)
-        writer.writerows(test_consensus(model, A, distance)) # type: ignore
+        writer.writerows(test_consensus(model, A, distance))  # type: ignore
     case _:
         raise ValueError(f"Unknown test {args.test}")

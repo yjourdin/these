@@ -2,70 +2,74 @@ using Random
 using SimplePosets
 using StatsBase
 
-
 # Isolated
 
-function is_isolated_top(P, x)
-    return isempty(above(P, x))
-end
+is_isolated_top(P, x) = isempty(above(P, x))
 
-function is_isolated_bottom(P, x)
-    return isempty(below(P, x))
-end
+is_isolated_bottom(P, x) = isempty(below(P, x))
 
-function isolated_top(P, A)
-    return filter(x -> is_isolated_top(P, x), A)
-end
+isolated_top(P, A) = filter(x -> is_isolated_top(P, x), A)
 
-function isolated_bottom(P, A)
-    return filter(x -> is_isolated_bottom(P, x), A)
-end
-
+isolated_bottom(P, A) = filter(x -> is_isolated_bottom(P, x), A)
 
 # Cardinality
 
-function cardinality(str)
-    return count_ones(parse(UInt, str, base=2))
-end
+cardinality(str) = count_ones(parse(UInt, str; base = 2))
 
-function top_cardinality(P)
-    return maximum(cardinality.(maximals(P)))
-end
+top_cardinality(P) = maximum(cardinality.(maximals(P)))
 
-function bottom_cardinality(P)
-    return minimum(cardinality.(minimals(P)))
-end
-
+bottom_cardinality(P) = minimum(cardinality.(minimals(P)))
 
 # Sub layers
 
-function layer(elements, card)
-    return filter(x -> cardinality(x) == card, elements)
-end
-
+layer(elements, card) = filter(x -> cardinality(x) == card, elements)
 
 # Probabilities
 
 function proba_upper_Th(h, k, I, II, III)
-    return (1 / h) * (prod([big(h - 1 + k - II + i) for i ∈ 1:II])) / (prod([big(h - 1 + k - II + i) for i ∈ 1:II]) + I * prod([big(h - 1 + k - II + i) for i in 1:III]) * prod([big(h + k - I + i) for i in 1:(I-1)]))
+    return (1 / h) * (prod([big(h - 1 + k - II + i) for i ∈ 1:II])) / (
+        prod([big(h - 1 + k - II + i) for i ∈ 1:II]) +
+        I *
+        prod([big(h - 1 + k - II + i) for i ∈ 1:III]) *
+        prod([big(h + k - I + i) for i ∈ 1:(I - 1)])
+    )
 end
 
 function proba_lower_Th(h, k, I, II, III)
-    return (prod([big(h - 1 + k - II + i) for i ∈ 1:III]) * prod([big(h + k - I + i) for i ∈ 1:(I-1)])) / (prod([big(h - 1 + k - II + i) for i in 1:II]) + I * prod([big(h - 1 + k - II + i) for i in 1:III]) * prod([big(h + k - I + i) for i in 1:(I-1)]))
+    return (
+        prod([big(h - 1 + k - II + i) for i ∈ 1:III]) * prod([big(h + k - I + i) for i ∈ 1:(I - 1)])
+    ) / (
+        prod([big(h - 1 + k - II + i) for i ∈ 1:II]) +
+        I *
+        prod([big(h - 1 + k - II + i) for i ∈ 1:III]) *
+        prod([big(h + k - I + i) for i ∈ 1:(I - 1)])
+    )
 end
 
 function proba_upper_Bh(h, k, I, II, III)
-    return (prod([big(h - II + k - 1 + i) for i ∈ 1:III]) * prod([big(h - I + k + i) for i ∈ 1:(I-1)])) / (prod([big(h - II + k - 1 + i) for i in 1:II]) + I * prod([big(h - II + k - 1 + i) for i in 1:III]) * prod([big(h - I + k + i) for i in 1:(I-1)]))
+    return (
+        prod([big(h - II + k - 1 + i) for i ∈ 1:III]) * prod([big(h - I + k + i) for i ∈ 1:(I - 1)])
+    ) / (
+        prod([big(h - II + k - 1 + i) for i ∈ 1:II]) +
+        I *
+        prod([big(h - II + k - 1 + i) for i ∈ 1:III]) *
+        prod([big(h - I + k + i) for i ∈ 1:(I - 1)])
+    )
 end
 
 function proba_lower_Bh(h, k, I, II, III)
-    return (1 / k) * (prod([big(h - II + k - 1 + i) for i ∈ 1:II])) / (prod([big(h - II + k - 1 + i) for i ∈ 1:II]) + I * prod([big(h - II + k - 1 + i) for i in 1:III]) * prod([big(h - I + k + i) for i in 1:(I-1)]))
+    return (1 / k) * (prod([big(h - II + k - 1 + i) for i ∈ 1:II])) / (
+        prod([big(h - II + k - 1 + i) for i ∈ 1:II]) +
+        I *
+        prod([big(h - II + k - 1 + i) for i ∈ 1:III]) *
+        prod([big(h - I + k + i) for i ∈ 1:(I - 1)])
+    )
 end
 
 function proba_Th(h, k, I, II, III)
     A = [big(h - 1 + k - II + i) for i ∈ 1:II]
     eu = prod(A)
-    el = prod(view(A, 1:III)) * prod([big(h + k - I + i) for i ∈ 1:(I-1)])
+    el = prod(view(A, 1:III)) * prod([big(h + k - I + i) for i ∈ 1:(I - 1)])
     denom = eu + I * el
     pu = eu / (h * denom)
     pl = el / denom
@@ -75,36 +79,42 @@ end
 function proba_Bh(h, k, I, II, III)
     A = [big(h - 1 + k - II + i) for i ∈ 1:II]
     el = prod(A)
-    eu = prod(view(A, 1:III)) * prod([big(h + k - I + i) for i ∈ 1:(I-1)])
+    eu = prod(view(A, 1:III)) * prod([big(h + k - I + i) for i ∈ 1:(I - 1)])
     denom = eu + I * el
     pl = el / (k * denom)
     pu = eu / denom
     return pl, pu
 end
 
-
 # Select extremal
 
-function select_M(P, ul, I, h, k, rng=Random.default_rng())
+function select_M(P, ul, I, h, k, rng = Random.default_rng())
     card_I = length(I)
     card_III = count(x -> length(above(P, x)) == 1, below(P, first(ul)))
     card_II = card_I + card_III
     pu, pl = proba_Th(h, k, card_I, card_II, card_III)
-    return sample(rng, [collect(ul); collect(I)], ProbabilityWeights([fill(pu, h); fill(pl, card_I)], 1))
+    return sample(
+        rng,
+        [collect(ul); collect(I)],
+        ProbabilityWeights([fill(pu, h); fill(pl, card_I)], 1),
+    )
 end
 
-function select_m(P, ll, I, h, k, rng=Random.default_rng())
+function select_m(P, ll, I, h, k, rng = Random.default_rng())
     card_I = length(I)
     card_III = count(x -> length(below(P, x)) == 1, above(P, first(ll)))
     card_II = card_I + card_III
     pl, pu = proba_Bh(h, k, card_I, card_II, card_III)
-    return sample(rng, [collect(ll); collect(I)], ProbabilityWeights([fill(pl, k); fill(pu, card_I)], 1))
+    return sample(
+        rng,
+        [collect(ll); collect(I)],
+        ProbabilityWeights([fill(pl, k); fill(pu, card_I)], 1),
+    )
 end
-
 
 # generate_linext
 
-function generate_linext(P, rng=Random.default_rng())
+function generate_linext(P, rng = Random.default_rng())
     H = deepcopy(P)
     lmin = String[]
     lmax = String[]
