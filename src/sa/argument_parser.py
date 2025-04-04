@@ -20,7 +20,7 @@ init_group.add_argument(
 
 parser.add_argument("--alpha", type=float, required=True, help="Cooling coefficient")
 parser.add_argument(
-    "--amp", type=float, required=True, help="Weight neighborhood amplitude"
+    "--amp", type=float, help="Weight neighborhood amplitude", default=2
 )
 parser.add_argument("--L", default=1, type=int, help="Length of Markov chains")
 

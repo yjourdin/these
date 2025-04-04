@@ -1,44 +1,51 @@
 {
-    "name": "test_blah",
-    "jobs": 10,
+    "name": "ITOR_V4_RMP",
+    "jobs": 35,
     "seed": 0,
-    "nb_Atr": 1,
+    "nb_Atr": 10,
     "N_tr": [
-        100
+        500
     ],
     "N_te": [
         5000
     ],
     "M": [
-        15
+        3, 4, 5, 6
     ],
     "Mo": [
-        "SRMP"
+        "RMP"
     ],
     "Ko": [
-        3
+        1,
+        2,
+        3,
+        4
     ],
     "Me": [
-        "SRMP"
-    ],
-    "Ke": [
-        3
+        "RMP"
     ],
     "N_bc": [
-        100
+        100,
+        300,
+        500,
+        1000,
+        2000
     ],
     "method": [
         "SA"
+    ],
+    "error": [
+        0
     ],
     "config": [
         {
             "id": 0,
             "max_time": 3600,
             "accept": 0.9,
-            "alpha": 0.999,
-            "amp": 0.05,
-            "max_it": null,
-            "max_it_non_improving": 100000,
+            "alpha": 0.99,
+            "amp": 2,
+            "max_it": 100000,
+            "max_it_non_improving": null,
             "__class": "SAConfig"
         }
     ]
