@@ -176,6 +176,7 @@ logs
 *.lp
 *.bkp
 *.bin
+*.jld2
 *.stdout
 nohup.out
 ruff.toml
