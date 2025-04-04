@@ -43,8 +43,6 @@ function main()
 
     jldsave(output; labels=labels, nb_paths=nb_paths)
 
-    save
-
     if logging isa String
         close(logging_io)
     end
