@@ -4,66 +4,40 @@ using Random
 using SimplePosets
 using StatsBase
 
-
 # Utility
 
-function get_index(A, x)
-    return findfirst(==(x), A)
-end
-
+get_index(A, x) = findfirst(==(x), A)
 
 # Conversion
 
-function set2digit(set, base)
-    return parse(UInt128, join(UInt8.(x ∈ set for x in base)), base=2)
-end
+set2digit(set, base) = parse(UInt128, join(UInt8.(x ∈ set for x ∈ base)); base = 2)
 
-function digit2set(digit, base)
-    return base[digits(Bool, digit, base=2, pad=length(base))]
-end
-
+digit2set(digit, base) = base[digits(Bool, digit; base = 2, pad = length(base))]
 
 # Bitwise operations
 
-function set_diff(a, b)
-    return a & ~b
-end
+set_diff(a, b) = a & ~b
 
-function is_subset(a, b)
-    return (a | b) == b
-end
-
+is_subset(a, b) = (a | b) == b
 
 # Triangular matrix
 
-function index(r, c, size)
-    return size * (r - 1) - r * (r - 1) ÷ 2 + c - r
-end
+index(r, c, size) = size * (r - 1) - r * (r - 1) ÷ 2 + c - r
 
 function slice(r, size)
     offset = size * (r - 1) - r * (r - 1) ÷ 2
-    return offset+1:offset+size-r
+    return (offset + 1):(offset + size - r)
 end
-
 
 # Poset basics
 
-function ideal(P, A)
-    return filter(y -> (y ∈ A) || (any(has(P, y, x) for x ∈ A)), elements(P))
-end
+ideal(P, A) = filter(y -> (y ∈ A) || (any(has(P, y, x) for x ∈ A)), elements(P))
 
-function cover(P, x, y)
-    return has(P, x, y) && isempty(interval(P, x, y))
-end
+cover(P, x, y) = has(P, x, y) && isempty(interval(P, x, y))
 
-function succ(P, x::String)
-    return filter(y -> cover(P, x, y), elements(P))
-end
+succ(P, x::String) = filter(y -> cover(P, x, y), elements(P))
 
-function succ(P, A::Vector{String})
-    return reduce(union, succ(P, x) for x ∈ A)
-end
-
+succ(P, A::Vector{String}) = reduce(union, succ(P, x) for x ∈ A)
 
 # AllWeak3
 
@@ -89,7 +63,6 @@ function AllWeak3!(labels, P, Y, A, base)
     return
 end
 
-
 # generate_WE
 
 function generate_WE(P::SimplePoset{T}) where {T}
@@ -99,25 +72,27 @@ function generate_WE(P::SimplePoset{T}) where {T}
 
     nb_paths = ones(UInt128, 1)
     NV = length(labels)
-    for (i, u) ∈ pairs(reverse(labels[begin:end-1]))
-        pushfirst!(nb_paths, sum(nb_paths[is_subset.(Ref(u), labels[NV - i + 1:end])]))
-        
+    for (i, u) ∈ pairs(reverse(labels[begin:(end - 1)]))
+        pushfirst!(
+            nb_paths,
+            sum(nb_paths[is_subset.(Ref(u), labels[(NV - i + 1):end])]),
+        )
+
         @debug "Vertices traversed : $(length(nb_paths)) / $NV"
     end
 
     return labels, nb_paths
 end
 
-
 # generate_weak_order_ext
 
-function generate_weak_order_ext(labels, nb_paths, base, rng=Random.default_rng())
+function generate_weak_order_ext(labels, nb_paths, base, rng = Random.default_rng())
     result = Vector{String}[]
     N = length(labels)
 
     u = 1
     while u != N
-        Nu = ((u+1):N)[is_subset.(Ref(labels[u]), labels[(u+1):N])]
+        Nu = ((u + 1):N)[is_subset.(Ref(labels[u]), labels[(u + 1):N])]
         v = sample(rng, Nu, FrequencyWeights(nb_paths[Nu], nb_paths[u]))
         push!(result, digit2set(set_diff(labels[v], labels[u]), base))
         u = v
@@ -126,3 +101,20 @@ function generate_weak_order_ext(labels, nb_paths, base, rng=Random.default_rng(
     return result
 end
 
+# number_of_arcs
+
+function number_of_arcs(labels)
+    n = big(0)
+    N = length(labels)
+
+    for i ∈ 1:N
+        @debug "$i / $N"
+        for j ∈ (i + 1):N
+            if is_subset(labels[i], labels[j])
+                n += 1
+            end
+        end
+    end
+
+    return n
+end

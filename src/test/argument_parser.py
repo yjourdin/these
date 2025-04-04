@@ -12,7 +12,12 @@ class TestEnum(StrEnum):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("A", type=argparse.FileType("r"), help="Alternatives")
-parser.add_argument("distance", type=DistanceRankingEnum, help="Distance to use")
+parser.add_argument(
+    "distance",
+    type=DistanceRankingEnum.__getitem__,
+    choices=DistanceRankingEnum,
+    help="Distance to use",
+)
 
 subparsers = parser.add_subparsers(dest="test", required=True, help="Test to compute")
 

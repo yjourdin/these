@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any
 
+from .seeds import Seeds
+
 from ....field import Field, group_field
 from ....field import field as custom_field
 from ....methods import MethodEnum
@@ -59,3 +61,13 @@ class ConfigField(Field):
 @dataclass
 class GroupConfigField(Field):
     config: list[Config] = field(default_factory=list)
+
+
+@custom_field("seeds")
+@dataclass
+class SeedsField(Field):
+    seeds: Seeds = field(default_factory=Seeds)
+
+    @staticmethod
+    def field_decode(o: Any):
+        return Seeds(**o)
