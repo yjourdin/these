@@ -1,9 +1,74 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.1.1 Chrome/132.0.6834.210 Electron/34.3.3 Safari/537.36" version="26.1.1">
-  <diagram name="Page-1" id="bET-3o8eQK3XpuHVRA0p">
-    <mxGraphModel dx="2074" dy="1198" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.2.2 Chrome/134.0.6998.178 Electron/35.1.2 Safari/537.36" version="26.2.2" pages="2">
+  <diagram name="Experiment" id="bET-3o8eQK3XpuHVRA0p">
+    <mxGraphModel dx="1582" dy="1487" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+        <mxCell id="MMZ7sj3sPOLtl48dKPMV-1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="_jXv4SMQiemczB4iCHMz-1" target="_jXv4SMQiemczB4iCHMz-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_jXv4SMQiemczB4iCHMz-1" value="&lt;div&gt;Train alternatives&lt;/div&gt;\(A_{tr}\)&lt;div&gt;\((N_{tr}, M)\)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-40" y="-320" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="MMZ7sj3sPOLtl48dKPMV-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="_jXv4SMQiemczB4iCHMz-2" target="_jXv4SMQiemczB4iCHMz-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MMZ7sj3sPOLtl48dKPMV-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="_jXv4SMQiemczB4iCHMz-2" target="_jXv4SMQiemczB4iCHMz-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_jXv4SMQiemczB4iCHMz-2" value="&lt;div&gt;Test alternatives&lt;/div&gt;\(A_{te}\)&lt;div&gt;\((N_{te}, M)\)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="-480" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="MMZ7sj3sPOLtl48dKPMV-2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="_jXv4SMQiemczB4iCHMz-3" target="_jXv4SMQiemczB4iCHMz-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="MMZ7sj3sPOLtl48dKPMV-12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="_jXv4SMQiemczB4iCHMz-3" target="MMZ7sj3sPOLtl48dKPMV-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_jXv4SMQiemczB4iCHMz-3" value="&lt;div&gt;Original model&lt;/div&gt;\(\mathcal{M}_o\)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="-320" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="MMZ7sj3sPOLtl48dKPMV-13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="_jXv4SMQiemczB4iCHMz-4" target="MMZ7sj3sPOLtl48dKPMV-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_jXv4SMQiemczB4iCHMz-4" value="&lt;div&gt;Elicited model&lt;/div&gt;\(\mathcal{M}_e\)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="-320" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="MMZ7sj3sPOLtl48dKPMV-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="_jXv4SMQiemczB4iCHMz-5" target="_jXv4SMQiemczB4iCHMz-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_jXv4SMQiemczB4iCHMz-5" value="&lt;div&gt;Pairwise comparisons&lt;/div&gt;\(\mathcal{D}_{train}\)&lt;div&gt;\((N_{bc})\)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="-320" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="MMZ7sj3sPOLtl48dKPMV-4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="_jXv4SMQiemczB4iCHMz-6" target="_jXv4SMQiemczB4iCHMz-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="_jXv4SMQiemczB4iCHMz-6" value="SA&lt;div&gt;(maxTime, \(\alpha\), \(\chi_0\))&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="-320" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="MMZ7sj3sPOLtl48dKPMV-10" value="Original ranking&lt;div&gt;\(R_o\)&lt;/div&gt;&lt;div&gt;\(\left(\frac{N_{te}(N_{te} - 1)}{2}\right)\)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="-200" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="MMZ7sj3sPOLtl48dKPMV-11" value="Elicited ranking&lt;div&gt;\(R_e\)&lt;/div&gt;&lt;div&gt;\(\left(\frac{N_{te}(N_{te} - 1)}{2}\right)\)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="-200" width="120" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="kf6eWLa3g8fwua2tO17Z" name="Generation">
+    <mxGraphModel dx="689" dy="1" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="1" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="iIpUZzGIwKNPujttlLH_-1" value="\(2^M\)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="560" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="iIpUZzGIwKNPujttlLH_-2" value="\(WE(2^M)\)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="560" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="iIpUZzGIwKNPujttlLH_-3" value="\(\trianglerighteq\)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="560" width="40" height="40" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
