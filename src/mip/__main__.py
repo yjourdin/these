@@ -8,7 +8,7 @@ from ..models import GroupModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..preference_structure.io import from_csv
 from ..random import rng, seed
-from ..srmp.model import SRMPModel
+from ..srmp.model import SRMPModel, SRMPParamFlag
 from .argument_parser import parse_args
 from .main import learn_mip
 
@@ -23,11 +23,15 @@ D: list[PreferenceStructure] = []
 for d in args.D:
     D.append(from_csv(d))
 
-Refused: list[PreferenceStructure] = []
-for r in args.refused:
-    Refused.append(from_csv(r))
+Refused: list[PreferenceStructure] | None = None
+if args.refused:
+    Refused = []
+    for r in args.refused:
+        Refused.append(from_csv(r))
 
-Accepted = from_csv(args.accepted)
+Accepted = None
+if args.accepted:
+    Accepted = from_csv(args.accepted)
 
 ref = None
 if args.reference:
@@ -39,7 +43,10 @@ rng_lex, rng_mip = rng(args.seed).spawn(2)
 
 # Learn MIP
 best_model, best_fitness, time = learn_mip(
-    GroupModelEnum((args.model, reduce(lambda x, y: x | y, args.shared))), # type: ignore
+    GroupModelEnum((
+        args.model,
+        reduce(lambda x, y: x | y, args.shared, SRMPParamFlag(0)),
+    )),
     args.k,
     A,
     D,

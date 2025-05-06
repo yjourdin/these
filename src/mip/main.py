@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 from mcda.relations import I, P, PreferenceStructure
 from numpy.random import Generator
-from pulp import value # type: ignore
+from pulp import value  # type: ignore
 
 from ..constants import DEFAULT_MAX_TIME
 from ..model import Model
@@ -19,6 +19,7 @@ from ..utils import tolist
 from .formulation.srmp import MIPSRMP
 from .formulation.srmp_accept import MIPSRMPAccept
 from .formulation.srmp_collective import MIPSRMPCollective
+from .formulation.srmp_collective_distance import MIPSRMPCollectiveDistance
 from .formulation.srmp_group import MIPSRMPGroup
 from .formulation.srmp_group_lexicographic import MIPSRMPGroupLexicographicOrder
 from .mip import MIP
@@ -84,6 +85,8 @@ def learn_mip(
 
     shared_params = SRMPParamFlag(model_type.shared_params)
 
+    preference_relations: list[P] = []
+    indifference_relations: list[I] = []
     if NB_DM == 1:
         preference_relations = preference_relations_list[0]
         indifference_relations = indifference_relations_list[0]
@@ -111,22 +114,19 @@ def learn_mip(
 
     for lexicographic_order in lexicographic_orders:
         if time_left >= 1:
-            mip: MIP[SRMPModel]
+            mip: MIP[SRMPModel, Any, Any]
             if lex_order_shared:
                 lexicographic_order = cast(list[int], tolist(lexicographic_order))
                 if NB_DM == 1:
-                    preference_relations = cast(list[P], None)
-                    indifference_relations = cast(list[I], None)
-                    
                     if reference_model:
                         mip = MIPSRMPAccept(
-                            alternatives,
-                            preference_relations,
-                            indifference_relations,
-                            lexicographic_order,
-                            reference_model,
-                            profiles_amp,
-                            weights_amp,
+                            alternatives=alternatives,
+                            preference_relations=preference_relations,
+                            indifference_relations=indifference_relations,
+                            lexicographic_order=lexicographic_order,
+                            model=reference_model,
+                            profiles_amp=profiles_amp,
+                            weights_amp=weights_amp,
                             time_limit=time_left,
                             seed=seed_mip,
                             *args,
@@ -134,10 +134,10 @@ def learn_mip(
                         )
                     else:
                         mip = MIPSRMP(
-                            alternatives,
-                            preference_relations,
-                            indifference_relations,
-                            lexicographic_order,
+                            alternatives=alternatives,
+                            preference_relations=preference_relations,
+                            indifference_relations=indifference_relations,
+                            lexicographic_order=lexicographic_order,
                             best_fitness=best_objective,
                             time_limit=time_left,
                             seed=seed_mip,
@@ -162,29 +162,50 @@ def learn_mip(
                         divide_preferences(comparisons_accepted)
                     )
 
-                    mip = MIPSRMPCollective(
-                        alternatives,
-                        preference_relations_list,
-                        indifference_relations_list,
-                        lexicographic_order,
-                        preferences_changes,
-                        preference_to_accept_list,
-                        indifference_to_accept_list,
-                        preference_accepted_list,
-                        indifference_accepted_list,
-                        best_objective=best_objective,
-                        time_limit=time_left,
-                        seed=seed_mip,
-                        *args,
-                        **kwargs,
-                    )
+                    if reference_model:
+                        mip = MIPSRMPCollectiveDistance(
+                            alternatives=alternatives,
+                            preference_relations=preference_relations_list,
+                            indifference_relations=indifference_relations_list,
+                            lexicographic_order=lexicographic_order,
+                            preferences_changed=preferences_changes,
+                            preference_to_accept=preference_to_accept_list,
+                            indifference_to_accept=indifference_to_accept_list,
+                            preference_accepted=preference_accepted_list,
+                            indifference_accepted=indifference_accepted_list,
+                            model=reference_model,
+                            profiles_amp=profiles_amp,
+                            weights_amp=weights_amp,
+                            best_objective=best_objective,
+                            time_limit=time_left,
+                            seed=seed_mip,
+                            *args,
+                            **kwargs,
+                        )
+                    else:
+                        mip = MIPSRMPCollective(
+                            alternatives=alternatives,
+                            preference_relations=preference_relations_list,
+                            indifference_relations=indifference_relations_list,
+                            lexicographic_order=lexicographic_order,
+                            preferences_changed=preferences_changes,
+                            preference_to_accept=preference_to_accept_list,
+                            indifference_to_accept=indifference_to_accept_list,
+                            preference_accepted=preference_accepted_list,
+                            indifference_accepted=indifference_accepted_list,
+                            best_objective=best_objective,
+                            time_limit=time_left,
+                            seed=seed_mip,
+                            *args,
+                            **kwargs,
+                        )
                 else:
                     mip = MIPSRMPGroupLexicographicOrder(
-                        alternatives,
-                        preference_relations_list,
-                        indifference_relations_list,
-                        lexicographic_order,
-                        shared_params,
+                        alternatives=alternatives,
+                        preference_relations=preference_relations_list,
+                        indifference_relations=indifference_relations_list,
+                        lexicographic_order=lexicographic_order,
+                        shared_params=shared_params,
                         best_fitness=best_objective,
                         time_limit=time_left,
                         *args,
@@ -193,11 +214,11 @@ def learn_mip(
             else:
                 lexicographic_order = cast(list[list[int]], tolist(lexicographic_order))
                 mip = MIPSRMPGroup(
-                    alternatives,
-                    preference_relations_list,
-                    indifference_relations_list,
-                    lexicographic_order,
-                    shared_params,
+                    alternatives=alternatives,
+                    preference_relations=preference_relations_list,
+                    indifference_relations=indifference_relations_list,
+                    lexicographic_order=lexicographic_order,
+                    shared_params=shared_params,
                     best_fitness=best_objective,
                     time_limit=time_left,
                     seed=seed_mip,

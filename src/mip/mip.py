@@ -1,25 +1,44 @@
 from abc import abstractmethod
-from typing import Any
+from dataclasses import InitVar, dataclass, field
+from typing import Any, TypedDict
 
 from mcda.internal.core.interfaces import Learner
-from pulp import LpProblem, getSolver, listSolvers  # type: ignore
+from pulp import LpProblem, LpSolver, LpVariable, getSolver, listSolvers  # type: ignore
 
 from ..constants import DEFAULT_MAX_TIME
+from ..dataclass import Dataclass
 from ..random import rng
 from ..random import seed as random_seed
 
+type D[T: LpVariable | D] = dict[Any, T] # type: ignore
 
-class MIP[T](Learner[T | None]):
-    def __init__(
+
+class MIPVars(TypedDict): ...
+
+
+@dataclass
+class MIPParams(Dataclass): ...
+
+
+@dataclass
+class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
+    vars: Vars = field(init=False)
+    params: Params = field(init=False)
+    prob: LpProblem = field(init=False)
+    objective: float | None = field(init=False)
+    solver: LpSolver = field(init=False)
+    time_limit: InitVar[float]
+    seed: InitVar[int | None]
+    verbose: InitVar[bool]
+
+    def __post_init__(
         self,
-        time_limit: int = DEFAULT_MAX_TIME,
+        time_limit: float = DEFAULT_MAX_TIME,
         seed: int | None = None,
         verbose: bool = False,
         *args: Any,
         **kw: Any,
     ):
-        self.var: dict[str, Any] = {}
-        self.param: dict[str, Any] = {}
         self.prob = LpProblem()
         self.objective = None
         seed = seed if seed is not None else random_seed(rng())

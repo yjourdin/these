@@ -21,7 +21,7 @@ from ...srmp.model import SRMPModel
 from ..mip import MIP, D, MIPParams, MIPVars
 
 
-class MIPSRMPCollectiveVars(MIPVars):
+class MIPSRMPCollectiveDistanceVars(MIPVars):
     w: D[LpVariable]
     p: D[D[LpVariable]]
     delta: D[D[D[LpVariable]]]
@@ -32,7 +32,7 @@ class MIPSRMPCollectiveVars(MIPVars):
 
 
 @dataclass
-class MIPSRMPCollectiveParams(MIPParams):
+class MIPSRMPCollectiveDistanceParams(MIPParams):
     A: list[Any]
     M: list[Any]
     DM: range
@@ -48,7 +48,9 @@ class MIPSRMPCollectiveParams(MIPParams):
 
 
 @dataclass
-class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveParams]):
+class MIPSRMPCollectiveDistance(
+    MIP[SRMPModel, MIPSRMPCollectiveDistanceVars, MIPSRMPCollectiveDistanceParams]
+):
     alternatives: NormalPerformanceTable
     preference_relations: list[list[P]]
     indifference_relations: list[list[I]]
@@ -58,6 +60,9 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
     indifference_to_accept: list[list[I]]
     preference_accepted: list[P]
     indifference_accepted: list[I]
+    model: SRMPModel
+    profiles_amp: float
+    weights_amp: float
     gamma: float = EPSILON
     best_objective: float | None = None
 
@@ -66,7 +71,7 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
         # Parameters #
         ##############
 
-        self.param = MIPSRMPCollectiveParams(
+        self.param = MIPSRMPCollectiveDistanceParams(
             A=self.alternatives.alternatives,  # type: ignore
             M=self.alternatives.criteria,  # type: ignore
             DM=range(len(self.preference_relations)),
@@ -107,7 +112,7 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
         # Variables #
         #############
 
-        self.vars = MIPSRMPCollectiveVars(
+        self.vars = MIPSRMPCollectiveDistanceVars(
             w=LpVariable.dicts("Weight", self.param.M, lowBound=0, upBound=1),  # type: ignore
             p=LpVariable.dicts(
                 "Profile",
@@ -305,6 +310,25 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
 
         if self.best_objective is not None:
             self.prob += self.vars["S"] <= self.best_objective - 1
+        
+        # Constraints to accept
+        for j in self.params.M:
+            self.prob += (
+                self.vars["w"][j] >= self.model.weights[j] - self.weights_amp
+            )
+            self.prob += (
+                self.vars["w"][j] <= self.model.weights[j] + self.weights_amp
+            )
+
+            for h in self.params.profile_indices:
+                self.prob += (
+                    self.vars["p"][h][j]
+                    >= self.model.profiles.cell[h - 1, j] - self.profiles_amp
+                )
+                self.prob += (
+                    self.vars["p"][h][j]
+                    <= self.model.profiles.cell[h - 1, j] + self.profiles_amp
+                )
 
     def create_solution(self):
         weights = np.array([

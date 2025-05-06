@@ -15,20 +15,17 @@ from pulp import (  # type: ignore
 
 from ...constants import EPSILON
 from ...performance_table.normal_performance_table import NormalPerformanceTable
-from ...srmp.model import (
-    SRMPGroupModelLexicographic,
-    SRMPGroupModelProfilesLexicographic,
-    SRMPGroupModelWeightsLexicographic,
-    SRMPGroupModelWeightsProfilesLexicographic,
-    SRMPParamFlag,
-    srmp_group_model,
-)
+from ...srmp.model import SRMPGroupModelLexicographic, SRMPModel
 from ..mip import MIP, D, MIPParams, MIPVars
 
 
-class MIPSRMPGroupLexicographicOrderVars(MIPVars):
+class MIPSRMPGroupCollectiveVars(MIPVars):
     w: D[D[LpVariable]]
+    wc: D[LpVariable]
+    w_amp: LpVariable
     p: D[D[D[LpVariable]]]
+    pc: D[D[LpVariable]]
+    p_amp: LpVariable
     delta: D[D[D[D[LpVariable]]]]
     omega: D[D[D[D[LpVariable]]]]
     s: D[D[D[LpVariable]]]
@@ -36,9 +33,7 @@ class MIPSRMPGroupLexicographicOrderVars(MIPVars):
 
 
 @dataclass
-class MIPSRMPGroupLexicographicOrderParams(MIPParams):
-    profiles_shared: bool
-    weights_shared: bool
+class MIPSRMPGroupCollectiveParams(MIPParams):
     A: list[Any]
     M: list[Any]
     DM: range
@@ -54,21 +49,17 @@ class MIPSRMPGroupLexicographicOrderParams(MIPParams):
 
 
 @dataclass
-class MIPSRMPGroupLexicographicOrder(
+class MIPSRMPGroupCollective(
     MIP[
-        SRMPGroupModelWeightsProfilesLexicographic
-        | SRMPGroupModelWeightsLexicographic
-        | SRMPGroupModelProfilesLexicographic
-        | SRMPGroupModelLexicographic,
-        MIPSRMPGroupLexicographicOrderVars,
-        MIPSRMPGroupLexicographicOrderParams,
+        tuple[SRMPModel, SRMPGroupModelLexicographic],
+        MIPSRMPGroupCollectiveVars,
+        MIPSRMPGroupCollectiveParams,
     ]
 ):
     alternatives: NormalPerformanceTable
     preference_relations: list[list[P]]
     indifference_relations: list[list[I]]
     lexicographic_order: Sequence[int]
-    shared_params: SRMPParamFlag = SRMPParamFlag(0)
     gamma: float = EPSILON
     inconsistencies: bool = True
     best_fitness: float | None = None
@@ -78,9 +69,7 @@ class MIPSRMPGroupLexicographicOrder(
         # Parameters #
         ##############
 
-        self.param = MIPSRMPGroupLexicographicOrderParams(
-            profiles_shared=SRMPParamFlag.PROFILES in self.shared_params,
-            weights_shared=SRMPParamFlag.WEIGHTS in self.shared_params,
+        self.params = MIPSRMPGroupCollectiveParams(
             A=self.alternatives.alternatives,  # type: ignore
             M=self.alternatives.criteria,  # type: ignore
             DM=range(len(self.preference_relations)),
@@ -99,16 +88,27 @@ class MIPSRMPGroupLexicographicOrder(
         # Variables #
         #############
 
-        self.vars = MIPSRMPGroupLexicographicOrderVars(
+        self.vars = MIPSRMPGroupCollectiveVars(
             w=LpVariable.dicts(
                 "Weight", (self.params.DM, self.params.M), lowBound=0, upBound=1
             ),  # type: ignore
+            wc=LpVariable.dicts(
+                "WeightCollective", self.params.M, lowBound=0, upBound=1
+            ),  # type: ignore
+            w_amp=LpVariable("WeightAmplitude", lowBound=0, upBound=1),
             p=LpVariable.dicts(
                 "Profile",
                 (self.params.DM, self.params.profile_indices, self.params.M),
                 lowBound=0,
                 upBound=1,
             ),  # type: ignore
+            pc=LpVariable.dicts(
+                "ProfileCollective",
+                (self.params.profile_indices, self.params.M),
+                lowBound=0,
+                upBound=1,
+            ),  # type: ignore
+            p_amp=LpVariable("ProfileAmplitude", lowBound=0, upBound=1),
             delta=LpVariable.dicts(
                 "LocalConcordance",
                 (
@@ -141,18 +141,14 @@ class MIPSRMPGroupLexicographicOrder(
                 )
                 for dm in self.params.DM
             },
-            s_star=(
-                {
-                    dm: LpVariable.dicts(
-                        f"IndifferenceRankingVariable_{dm}",
-                        indifference_relations_indices[dm],
-                        cat=LpBinary,
-                    )
-                    for dm in self.params.DM
-                }
-                if self.inconsistencies
-                else {}
-            ),
+            s_star={
+                dm: LpVariable.dicts(
+                    f"IndifferenceRankingVariable_{dm}",
+                    indifference_relations_indices[dm],
+                    cat=LpBinary,
+                )
+                for dm in self.params.DM
+            },
         )
 
         ##############
@@ -161,28 +157,32 @@ class MIPSRMPGroupLexicographicOrder(
 
         self.prob = LpProblem("SRMP_Elicitation", LpMaximize)
 
-        if self.inconsistencies:
-            self.prob += lpSum([
+        self.prob += (
+            lpSum([
                 [
                     self.vars["s"][dm][index][0]
                     for index in preference_relations_indices[dm]
                 ]
                 for dm in self.params.DM
-            ]) + lpSum([
+            ])
+            + lpSum([
                 [
                     self.vars["s_star"][dm][index]
                     for index in indifference_relations_indices[dm]
                 ]
                 for dm in self.params.DM
             ])
+            - self.vars["w_amp"] / 2
+            - self.vars["p_amp"] / 2
+        )
 
         ###############
         # Constraints #
         ###############
 
         # Normalized weights
-        # for dm in self.params.DM:
-        # self.prob += lpSum([self.vars["w"][dm][j] for j in self.params.M]) == 1
+        for dm in self.params.DM:
+            self.prob += lpSum([self.vars["w"][dm][j] for j in self.params.M]) == 1
 
         for j in self.params.M:
             # for dm in self.params.DM:
@@ -319,19 +319,7 @@ class MIPSRMPGroupLexicographicOrder(
                             - (1 - self.vars["s_star"][dm][index])
                         )
 
-        # Constraint on shared paramseters
-        if self.params.profiles_shared or self.params.weights_shared:
-            for j in self.params.M:
-                for dm in self.params.DM[:-1]:
-                    if self.params.weights_shared:
-                        self.prob += self.vars["w"][dm][j] == self.vars["w"][dm + 1][j]
-                    if self.params.profiles_shared:
-                        for h in self.params.profile_indices:
-                            self.prob += (
-                                self.vars["p"][dm][h][j] == self.vars["p"][dm + 1][h][j]
-                            )
-
-        if self.inconsistencies and (self.best_fitness is not None):
+        if self.best_fitness is not None:
             self.prob += (
                 lpSum([
                     [
@@ -350,35 +338,50 @@ class MIPSRMPGroupLexicographicOrder(
                 >= self.best_fitness + self.gamma
             )
 
+        # Constraints of distance
+        for j in self.params.M:
+            self.prob += self.vars["w"][j] >= self.vars["wc"] - self.vars["w_amp"]
+            self.prob += self.vars["w"][j] <= self.vars["wc"] + self.vars["w_amp"]
+
+            for h in self.params.profile_indices:
+                self.prob += (
+                    self.vars["p"][h][j] >= self.vars["pc"][h][j] - self.vars["p_amp"]
+                )
+                self.prob += (
+                    self.vars["p"][h][j] <= self.vars["pc"][h][j] + self.vars["p_amp"]
+                )
+
     def create_solution(self):
-        weights = (
-            np.array([cast(float, value(self.vars["w"][0][j])) for j in self.params.M])
-            if self.params.weights_shared
-            else [
-                np.array([
-                    cast(float, value(self.vars["w"][dm][j])) for j in self.params.M
-                ])
-                for dm in self.params.DM
-            ]
-        )
-        profiles = (
+        weights = [
+            np.array([cast(float, value(self.vars["w"][dm][j])) for j in self.params.M])
+            for dm in self.params.DM
+        ]
+        profiles = [
             NormalPerformanceTable([
-                [cast(float, value(self.vars["p"][0][h][j])) for j in self.params.M]
+                [value(self.vars["p"][dm][h][j]) for j in self.params.M]
                 for h in self.params.profile_indices
             ])
-            if self.params.profiles_shared
-            else [
-                NormalPerformanceTable([
-                    [value(self.vars["p"][dm][h][j]) for j in self.params.M]
-                    for h in self.params.profile_indices
-                ])
-                for dm in self.params.DM
-            ]
-        )
+            for dm in self.params.DM
+        ]
 
-        return srmp_group_model(self.shared_params)(
-            group_size=len(self.params.DM),
-            profiles=profiles,
-            weights=weights,
-            lexicographic_order=[p - 1 for p in self.params.sigma[1:]],
+        weights_collective = np.array([
+            cast(float, value(self.vars["wc"][j])) for j in self.params.M
+        ])
+        profiles_collective = NormalPerformanceTable([
+            [value(self.vars["pc"][h][j]) for j in self.params.M]
+            for h in self.params.profile_indices
+        ])
+
+        return (
+            SRMPModel(
+                profiles=profiles_collective,
+                weights=weights_collective,
+                lexicographic_order=[p - 1 for p in self.params.sigma[1:]],
+            ),
+            SRMPGroupModelLexicographic(
+                # group_size=len(self.params.DM),
+                profiles=profiles,
+                weights=weights,
+                lexicographic_order=[p - 1 for p in self.params.sigma[1:]],
+            ),
         )
