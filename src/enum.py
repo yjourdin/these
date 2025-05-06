@@ -1,8 +1,8 @@
-from enum import Flag, StrEnum  # type: ignore
+from enum import Flag, StrEnum
 from typing import Any
 
 
-class StrEnum(StrEnum):
+class StrEnumCustom(StrEnum):
     @classmethod
     def _missing_(cls, value: Any):
         if isinstance(value, str):

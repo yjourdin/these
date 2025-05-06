@@ -1,9 +1,9 @@
 import argparse
 
-from ..enum import StrEnum
+from ..enum import StrEnumCustom
 
 
-class TypeEnum(StrEnum):
+class TypeEnum(StrEnumCustom):
     PREFERENCE_STRUCTURE = "PS"
     RANKING = "R"
 

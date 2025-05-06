@@ -1,8 +1,8 @@
 from enum import auto
 
-from .enum import StrEnum
+from .enum import StrEnumCustom
 
 
-class MethodEnum(StrEnum):
+class MethodEnum(StrEnumCustom):
     MIP = auto()
     SA = auto()

@@ -1,11 +1,11 @@
 import argparse
 from sys import stdout
 
-from ..enum import StrEnum
+from ..enum import StrEnumCustom
 from .test import DistanceRankingEnum
 
 
-class TestEnum(StrEnum):
+class TestEnum(StrEnumCustom):
     DISTANCE = "D"
     CONSENSUS = "C"
 
