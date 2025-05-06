@@ -9,13 +9,7 @@ from ..elicitation.config import MIPConfig
 from .arguments import ArgumentsGroupDecision
 from .directory import DirectoryGroupDecision
 from .seeds import Seeds
-from .task import (
-    ATask,
-    DTask,
-    MIPTask,
-    MiTask,
-    MoTask,
-)
+from .task import ATask, DTask, MIPTask, MiTask, MoTask
 from .threads.collective import collective_thread
 
 
