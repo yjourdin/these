@@ -4,6 +4,11 @@ using ArgParse
 using JLD2
 using UnPack
 
+@kwdef struct Args
+    M      :: UInt
+    output :: Union{Nothing, String}
+end
+
 function parse_commandline()
     s = ArgParseSettings()
 
@@ -12,7 +17,7 @@ function parse_commandline()
         (["--output", "-o"]; help = "Output file")
     end
 
-    return parse_args(s)
+    return Args(; parse_args(s; as_symbols = true)...)
 end
 
 function main()
@@ -20,11 +25,7 @@ function main()
 
     S = generate_partial_sum(M)
 
-    if isnothing(output)
-        println(S)
-    else
-        save_object(output, S)
-    end
+    !isnothing(output) ? save_object(output, S) : println(S)
     return 0
 end
 

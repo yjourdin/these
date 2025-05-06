@@ -3,6 +3,11 @@ include("GenerateLinext.jl")
 using ArgParse
 using UnPack
 
+@kwdef struct Args
+    M    :: UInt
+    seed :: Union{Nothing, UInt}
+end
+
 function parse_commandline()
     s = ArgParseSettings()
 
@@ -11,7 +16,7 @@ function parse_commandline()
         (["--seed", "-s"]; arg_type = UInt; help = "Random seed")
     end
 
-    return parse_args(s)
+    return Args(; parse_args(s; as_symbols = true)...)
 end
 
 function main()
@@ -19,13 +24,13 @@ function main()
 
     Random.seed!(seed)
 
-    println(generate_linext(BooleanLattice(Int(M))))
+    println(generate_linext!(subset_lattice(M)))
     return 0
 end
 
 main()
 
-# Base.ARGS = ["2"]
+# Base.ARGS = ["11"]
 # @time main()
 # @profview main()
 # @code_warntype main()

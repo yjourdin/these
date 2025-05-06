@@ -7,10 +7,16 @@ using UnPack
 
 function fmt(level, _module, group, id, file, line)
     @nospecialize
-    color = Logging.default_logcolor(level)
-    prefix = string(level == Warn ? "Warning" : string(level), ':')
+    color          = Logging.default_logcolor(level)
+    prefix         = string(level == Warn ? "Warning" : string(level), ':')
     suffix::String = ""
     return color, prefix, suffix
+end
+
+@kwdef struct Args
+    M       :: UInt
+    output  :: String
+    logging :: Union{Nothing, Base.TTY, String}
 end
 
 function parse_commandline()
@@ -22,36 +28,28 @@ function parse_commandline()
         (["--logging", "-l"]; nargs = '?'; constant = stdout; help = "Logging file")
     end
 
-    return parse_args(s)
+    return Args(; parse_args(s; as_symbols = true)...)
 end
 
 function main()
     @unpack M, output, logging = parse_commandline()
 
-    if logging isa String
-        logging_io = open(logging, "w+")
-    else
-        logging_io = logging
-    end
+    logging isa String ? logging_io = open(logging, "w+") : logging_io = logging
 
-    if !isnothing(logging_io)
-        logger = ConsoleLogger(logging_io, Debug; meta_formatter = fmt)
-        global_logger(logger)
-    end
+    isnothing(logging_io) ||
+        global_logger(ConsoleLogger(logging_io, Debug; meta_formatter = fmt))
 
-    labels, nb_paths = generate_WE(BooleanLattice(Int(M)))
+    labels, nb_paths = generate_WE(subset_lattice(M))
 
-    jldsave(output; labels=labels, nb_paths=nb_paths)
+    jldsave(output; labels, nb_paths)
 
-    if logging isa String
-        close(logging_io)
-    end
+    logging isa String && close(logging_io)
     return 0
 end
 
 main()
 
-# Base.ARGS = ["4"]
+# Base.ARGS = ["5", "src/julia/WE/5.jld2"]
 # @time main()
 # @profview main()
 # @code_warntype main()
