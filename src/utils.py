@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Iterator, Mapping, Callable
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from enum import Enum
 from functools import partial, reduce
 from itertools import chain, count
@@ -106,6 +106,7 @@ def compose(*fs: Callable[..., Any]):
     def compose2(f: Callable[..., Any], g: Callable[..., Any]):
         def func(*args: Any, **kwargs: Any):
             return g(f(*args, **kwargs))
+
         return func
 
     return reduce(compose2, fs)
@@ -126,3 +127,7 @@ def round_epsilon(x: float, epsilon: float = EPSILON) -> float:
 
 def tolist(a: npt.NDArray[Any]) -> list[Any]:
     return a.tolist() if a.ndim != 0 else [a.tolist()]
+
+
+def int_to_ind_set(x: int):
+    return [i for i in range(x.bit_length()) if (x >> i) & 1]
