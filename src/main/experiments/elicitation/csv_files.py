@@ -1,13 +1,13 @@
-from typing import NotRequired, TypedDict
+from typing import NotRequired
 
 from ....methods import MethodEnum
 from ....models import GroupModelEnum
-from ...csv_file import CSVFile
+from ...csv_file import CSVFields, CSVFile
 from .config import Config
 
 
 # Config
-class ConfigFields(TypedDict):
+class ConfigFields(CSVFields):
     Id: int
     Method: MethodEnum
     Config: Config
@@ -18,7 +18,7 @@ class ConfigCSVFile(CSVFile[ConfigFields]):
 
 
 # Experiment
-class ExperimentFields(TypedDict):
+class ExperimentFields(CSVFields):
     M: int
     N_tr: int
     Atr_id: int
@@ -38,7 +38,7 @@ class ExperimentFields(TypedDict):
 
 
 # Train
-class TrainFields(ExperimentFields):
+class TrainFields(CSVFields):
     Time: float
     Fitness: float | None
     It: NotRequired[int]

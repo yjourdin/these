@@ -1,7 +1,7 @@
 import logging.config
 import traceback
 from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, set_start_method
 from multiprocessing.connection import Connection
 from queue import LifoQueue
 from threading import Thread
@@ -11,21 +11,28 @@ from ..constants import SENTINEL
 from .argument_parser import parse_args
 from .arguments import ExperimentEnum
 from .connection import StopPipe, WorkerPipe
+from .directory import Directory
 from .experiments.elicitation.directory import DirectoryElicitation
 from .experiments.elicitation.main import main as main_elicitation
 from .experiments.group_decision.directory import DirectoryGroupDecision
 from .experiments.group_decision.main import main as main_group_decision
 from .logging import create_logging_config_dict
+from .threads.csv_file import csv_file_thread
 from .threads.logger import logger_thread
 from .threads.stop import stopping_thread
 from .threads.worker_manager import TaskQueue, worker_manager
 from .worker import worker
+
+# Set process start method
+set_start_method("forkserver")
+
 
 # Parse arguments
 args = parse_args()
 
 
 # Set experiment
+directory_class = Directory
 match args.experiment:
     case ExperimentEnum.ELICITATION:
         directory_class = DirectoryElicitation
@@ -72,8 +79,11 @@ logging_thread.start()
 
 
 # Start file threads
+csv_threads: list[Thread] = []
 for csv_file in dir.itercsv():
-    csv_file.thread.start()
+    thread = Thread(target=csv_file_thread, args=(csv_file,))
+    csv_threads.append(thread)
+    thread.start()
 
 
 # Create task queue
@@ -133,4 +143,6 @@ with ThreadPoolExecutor(300) as thread_pool:
 
     for csv_file in dir.itercsv():
         csv_file.queue.put(SENTINEL)
-        csv_file.thread.join()
+
+    for csv_thread in csv_threads:
+        csv_thread.join()

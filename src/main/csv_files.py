@@ -1,12 +1,10 @@
-from typing import TypedDict
-
 from ..random import Seed
 from .abstract_task import AbstractTask
-from .csv_file import CSVFile
+from .csv_file import CSVFile, CSVFields
 
 
 # Task
-class TaskFields(TypedDict):
+class TaskFields(CSVFields):
     Task: AbstractTask
     Time: float
     Seed: Seed | None

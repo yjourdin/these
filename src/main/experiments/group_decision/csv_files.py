@@ -1,12 +1,10 @@
-from typing import TypedDict
-
-from ...csv_file import CSVFile
+from ...csv_file import CSVFields, CSVFile
 from ..elicitation.config import MIPConfig
 from .fields import GroupParameters, SRMPParametersDeviation
 
 
 # Group parameters
-class GroupParametersFields(TypedDict):
+class GroupParametersFields(CSVFields):
     Id: int
     Gen: SRMPParametersDeviation
     Accept: SRMPParametersDeviation
@@ -17,7 +15,7 @@ class GroupParametersCSVFile(CSVFile[GroupParametersFields]):
 
 
 # Experiment
-class ExperimentFields(TypedDict):
+class ExperimentFields(CSVFields):
     M: int
     N_tr: int
     Atr_id: int
