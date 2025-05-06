@@ -43,7 +43,7 @@ def compute_model_path(
 
     def heuristic(model: FrozenSRMPModel):
         return 1 - fitness_comparisons_ranking(
-            target_preferences, model.model.rank(alternatives)
+            target_preferences, model.model.rank_series(alternatives)
         )
 
     gbfs = GBFS(neighborhood, heuristic, max_time)
