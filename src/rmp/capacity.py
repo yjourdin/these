@@ -17,10 +17,7 @@ def random_capacity(nb_crit: int, rng: Generator) -> Capacity[float]:
     crits = np.arange(nb_crit)
     return dict(
         zip(
-            [
-                frozenset(tolist(crits[np.array([bool(int(x)) for x in node])]))
-                for node in linext
-            ],
+            [frozenset(tolist(crits[subset])) for subset in linext],
             np.sort(rng.random(2**nb_crit)),  # type: ignore
         )
     )
@@ -36,10 +33,7 @@ def random_capacity_int(nb_crit: int, rng: Generator) -> Capacity[int]:
     crits = np.arange(nb_crit)
     return dict(
         zip(
-            [
-                frozenset(crits[np.array([bool(int(x)) for x in node])])
-                for node in linext
-            ],
+            [frozenset(crits[subset]) for subset in linext],
             np.sort(rng.integers(2**nb_crit, size=2**nb_crit)),  # type: ignore
         )
     )

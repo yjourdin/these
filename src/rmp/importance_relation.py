@@ -16,8 +16,8 @@ class ImportanceRelation(WeakOrder[frozenset[int]]):
         dct: dict[frozenset[int], int] = {}
 
         for i, block in enumerate(weak_order_ext):
-            for node in block:
-                dct[frozenset(tolist(labels[node]))] = i
+            for subset in block:
+                dct[frozenset(tolist(labels[subset]))] = i
 
         we = cls()
         we.dict = dct

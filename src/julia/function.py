@@ -4,12 +4,13 @@ from subprocess import run
 from typing import Any
 
 from ..random import Seed
+from ..utils import int_to_ind_set
 from .file import PARENT_DIR, S_file, WE_file
 
 
 def run_julia(scriptname: str, *args: Any, **kwargs: Any):
     return run(
-        ["julia", PARENT_DIR / scriptname]
+        ["julia", "--project", PARENT_DIR / scriptname]
         + [str(x) for x in args]
         + list(
             chain.from_iterable(
@@ -21,13 +22,21 @@ def run_julia(scriptname: str, *args: Any, **kwargs: Any):
     ).stdout
 
 
-def generate_linext(m: int, seed: Seed | None = None) -> list[list[bool]]:
-    linext = ast.literal_eval(run_julia("generate_linext.jl", m, seed=seed))
-    return [[bool(int(x)) for x in node] for node in linext]
+def python_exec(s: str):
+    try:
+        return ast.literal_eval(s)
+    except Exception:
+        raise Exception(f"Julia output : {s}")
+
+
+def generate_linext(m: int, seed: Seed | None = None) -> list[list[int]]:
+    linext = python_exec(run_julia("generate_linext.jl", m, seed=seed))
+
+    return [int_to_ind_set(i) for i in linext]
 
 
 def generate_partial_sum(m: int) -> None:
-    return ast.literal_eval(run_julia("generate_partial_sum.jl", m, output=S_file(m)))
+    return python_exec(run_julia("generate_partial_sum.jl", m, output=S_file(m)))
 
 
 def generate_weak_order(m: int, seed: Seed | None = None) -> list[int]:
@@ -36,11 +45,11 @@ def generate_weak_order(m: int, seed: Seed | None = None) -> list[int]:
     if not file.exists():
         generate_partial_sum(m)
 
-    return ast.literal_eval(run_julia("generate_weak_order.jl", m, file, seed=seed))
+    return python_exec(run_julia("generate_weak_order.jl", file, seed=seed))
 
 
-def generate_weak_order_ext(m: int, seed: Seed | None = None) -> list[list[list[bool]]]:
-    weak_order = ast.literal_eval(
+def generate_weak_order_ext(m: int, seed: Seed | None = None) -> list[list[list[int]]]:
+    weak_order = python_exec(
         run_julia("generate_weak_order_ext.jl", m, WE_file(m), seed=seed)
     )
-    return [[[bool(int(x)) for x in node] for node in block] for block in weak_order]
+    return [[int_to_ind_set(i) for i in block] for block in weak_order]
