@@ -1,7 +1,8 @@
 import csv
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import Any
 
+from ..homotypeddict import HomoTypedDict
 from .csv_file import CSVFile
 from .csv_files import TaskCSVFile
 
@@ -9,10 +10,10 @@ RESULTS_DIR = Path("results")
 
 
 class Directory:
-    class Dirs(TypedDict):
+    class Dirs(HomoTypedDict[Path]):
         root: Path
 
-    class CSVFiles(TypedDict):
+    class CSVFiles(HomoTypedDict[CSVFile[Any]]):
         tasks: TaskCSVFile
 
     def __init__(self, name: str, dir: Path = Path.cwd()):
@@ -28,10 +29,10 @@ class Directory:
         )
 
     def iterdir(self):
-        return cast(dict[str, Path], self.dirs).values()
+        return self.dirs.values()
 
     def itercsv(self):
-        return cast(dict[str, CSVFile[Any]], self.csv_files).values()
+        return self.csv_files.values()
 
     def mkdir(self):
         for dir in self.iterdir():
