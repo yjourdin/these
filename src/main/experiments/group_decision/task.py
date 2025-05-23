@@ -297,9 +297,6 @@ class CollectiveTask(MieTask):
 
         Acc_set: set[Relation] = set.intersection(*[set(d) for d in D])
         ACC = PreferenceStructure(list(Acc_set), validate=False)
-        with open("ACC.csv", "w") as f:
-            to_csv(ACC, f)
-        # ACC = PreferenceStructure()
 
         for d in D:
             d -= ACC

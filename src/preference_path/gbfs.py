@@ -45,10 +45,10 @@ class GBFS[T](Dataclass):
             # Best node
             current = heapq.heappop(open_heap)
             # print(
-            #     current.heuristic,
-            #     current.item.profiles[0],
-            #     current.item.weights,
-            #     current.item.importance_relation,
+                # current.heuristic,
+                # current.item.weights,
+                # current.item.profiles[0],
+                # current.item.importance_relation,
             # )
             # print()
             # print("Cur", current.heuristic, current.item.weights)
