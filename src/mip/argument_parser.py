@@ -15,7 +15,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--shared",
-    nargs="*",
+    nargs="+",
     default=[],
     type=SRMPParamFlag,
     choices=SRMPParamFlag,
@@ -24,6 +24,7 @@ parser.add_argument(
 parser.add_argument(
     "-c", "--collective", action="store_true", help="Elicit collective model"
 )
+parser.add_argument("--group", action="store_true", help="Elicit group models")
 parser.add_argument(
     "--changes", nargs="+", type=int, help="Preferences previously changed"
 )
@@ -34,6 +35,9 @@ parser.add_argument(
     "--accepted", type=argparse.FileType("r"), help="Accepted preferences"
 )
 parser.add_argument("--reference", type=argparse.FileType("r"), help="Reference model")
+parser.add_argument(
+    "--references", nargs="+", type=argparse.FileType("r"), help="Reference models"
+)
 parser.add_argument(
     "--max-time", type=int, default=DEFAULT_MAX_TIME, help="Time limit (in seconds)"
 )

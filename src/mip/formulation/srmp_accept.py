@@ -202,12 +202,8 @@ class MIPSRMPAccept(MIP[SRMPModel, MIPSRMPAcceptVars, MIPSRMPAcceptParams]):
 
         # Constraints to accept
         for j in self.params.M:
-            self.prob += (
-                self.vars["w"][j] >= self.model.weights[j] - self.weights_amp
-            )
-            self.prob += (
-                self.vars["w"][j] <= self.model.weights[j] + self.weights_amp
-            )
+            self.prob += self.vars["w"][j] >= self.model.weights[j] - self.weights_amp
+            self.prob += self.vars["w"][j] <= self.model.weights[j] + self.weights_amp
 
             for h in self.params.profile_indices:
                 self.prob += (

@@ -66,7 +66,7 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
         # Parameters #
         ##############
 
-        self.param = MIPSRMPCollectiveParams(
+        self.params = MIPSRMPCollectiveParams(
             A=self.alternatives.alternatives,  # type: ignore
             M=self.alternatives.criteria,  # type: ignore
             DM=range(len(self.preference_relations)),
@@ -76,7 +76,7 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
         preference_relations_union = list(
             set(
                 itertools.chain.from_iterable(
-                    self.preference_relations[dm] for dm in self.param.DM
+                    self.preference_relations[dm] for dm in self.params.DM
                 )
             )
             | set(
@@ -91,7 +91,7 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
         indifference_relations_union = list(
             set(
                 itertools.chain.from_iterable(
-                    self.indifference_relations[dm] for dm in self.param.DM
+                    self.indifference_relations[dm] for dm in self.params.DM
                 )
             )
             | set(
@@ -108,27 +108,27 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
         #############
 
         self.vars = MIPSRMPCollectiveVars(
-            w=LpVariable.dicts("Weight", self.param.M, lowBound=0, upBound=1),  # type: ignore
+            w=LpVariable.dicts("Weight", self.params.M, lowBound=0, upBound=1),  # type: ignore
             p=LpVariable.dicts(
                 "Profile",
-                (self.param.profile_indices, self.param.M),
+                (self.params.profile_indices, self.params.M),
                 lowBound=0,
                 upBound=1,
             ),  # type: ignore
             delta=LpVariable.dicts(
                 "LocalConcordance",
-                (self.param.A, self.param.profile_indices, self.param.M),
+                (self.params.A, self.params.profile_indices, self.params.M),
                 cat=LpBinary,
             ),  # type: ignore
             omega=LpVariable.dicts(
                 "WeightedLocalConcordance",
-                (self.param.A, self.param.profile_indices, self.param.M),
+                (self.params.A, self.params.profile_indices, self.params.M),
                 lowBound=0,
                 upBound=1,
             ),  # type: ignore
             s=LpVariable.dicts(
                 "PreferenceRankingVariable",
-                (preference_relations_union_indices, [0] + self.param.profile_indices),
+                (preference_relations_union_indices, [0] + self.params.profile_indices),
                 cat=LpBinary,
             ),  # type: ignore
             s_star=LpVariable.dicts(
@@ -152,22 +152,22 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
         ###############
 
         # Normalized weights
-        self.prob += lpSum([self.vars["w"][j] for j in self.param.M]) == 1
+        self.prob += lpSum([self.vars["w"][j] for j in self.params.M]) == 1
 
-        for j in self.param.M:
+        for j in self.params.M:
             # Non-zero weights
             # self.prob += self.vars["w"][j] >= self.gamma
 
             # Constraints on the reference profiles
             # self.prob += self.vars["p"][1][j] >= 0
-            # self.prob += self.vars["p"][self.param.k][j] <= 1
+            # self.prob += self.vars["p"][self.params.k][j] <= 1
 
-            for h in self.param.profile_indices:
-                if h != self.param.k:
+            for h in self.params.profile_indices:
+                if h != self.params.k:
                     # Dominance between the reference profiles
                     self.prob += self.vars["p"][h + 1][j] >= self.vars["p"][h][j]
 
-                for a in self.param.A:
+                for a in self.params.A:
                     # Constraints on the local concordances
                     self.prob += (
                         self.alternatives.cell[a, j] - self.vars["p"][h][j]
@@ -193,48 +193,51 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
 
         # Constraints on the preference ranking variables
         for index in preference_relations_union_indices:
-            self.prob += self.vars["s"][index][self.param.sigma[self.param.k]] == 1
+            self.prob += self.vars["s"][index][self.params.sigma[self.params.k]] == 1
 
-        for h in self.param.profile_indices:
+        for h in self.params.profile_indices:
             # Constraints on the preferences
             for index, relation in enumerate(preference_relations_union):
                 a, b = relation.a, relation.b
                 self.prob += lpSum([
-                    self.vars["omega"][a][self.param.sigma[h]][j] for j in self.param.M
+                    self.vars["omega"][a][self.params.sigma[h]][j]
+                    for j in self.params.M
                 ]) >= (
                     lpSum([
-                        self.vars["omega"][b][self.param.sigma[h]][j]
-                        for j in self.param.M
+                        self.vars["omega"][b][self.params.sigma[h]][j]
+                        for j in self.params.M
                     ])
                     + self.gamma
                     - (1 + self.gamma)
                     * (
                         1
-                        - self.vars["s"][index][self.param.sigma[h]]
-                        + self.vars["s"][index][self.param.sigma[h - 1]]
+                        - self.vars["s"][index][self.params.sigma[h]]
+                        + self.vars["s"][index][self.params.sigma[h - 1]]
                     )
                 )
 
                 self.prob += lpSum([
-                    self.vars["omega"][a][self.param.sigma[h]][j] for j in self.param.M
+                    self.vars["omega"][a][self.params.sigma[h]][j]
+                    for j in self.params.M
                 ]) >= (
                     lpSum([
-                        self.vars["omega"][b][self.param.sigma[h]][j]
-                        for j in self.param.M
+                        self.vars["omega"][b][self.params.sigma[h]][j]
+                        for j in self.params.M
                     ])
-                    - self.vars["s"][index][self.param.sigma[h]]
-                    - self.vars["s"][index][self.param.sigma[h - 1]]
+                    - self.vars["s"][index][self.params.sigma[h]]
+                    - self.vars["s"][index][self.params.sigma[h - 1]]
                 )
 
                 self.prob += lpSum([
-                    self.vars["omega"][a][self.param.sigma[h]][j] for j in self.param.M
+                    self.vars["omega"][a][self.params.sigma[h]][j]
+                    for j in self.params.M
                 ]) <= (
                     lpSum([
-                        self.vars["omega"][b][self.param.sigma[h]][j]
-                        for j in self.param.M
+                        self.vars["omega"][b][self.params.sigma[h]][j]
+                        for j in self.params.M
                     ])
-                    + self.vars["s"][index][self.param.sigma[h]]
-                    + self.vars["s"][index][self.param.sigma[h - 1]]
+                    + self.vars["s"][index][self.params.sigma[h]]
+                    + self.vars["s"][index][self.params.sigma[h - 1]]
                 )
 
             # Constraints on the indifferences
@@ -242,24 +245,24 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                 a, b = relation.a, relation.b
                 self.prob += (
                     lpSum([
-                        self.vars["omega"][a][self.param.sigma[h]][j]
-                        for j in self.param.M
+                        self.vars["omega"][a][self.params.sigma[h]][j]
+                        for j in self.params.M
                     ])
                     - lpSum([
-                        self.vars["omega"][b][self.param.sigma[h]][j]
-                        for j in self.param.M
+                        self.vars["omega"][b][self.params.sigma[h]][j]
+                        for j in self.params.M
                     ])
                     <= self.vars["s_star"][index]
                 )
 
                 self.prob += (
                     lpSum([
-                        self.vars["omega"][b][self.param.sigma[h]][j]
-                        for j in self.param.M
+                        self.vars["omega"][b][self.params.sigma[h]][j]
+                        for j in self.params.M
                     ])
                     - lpSum([
-                        self.vars["omega"][a][self.param.sigma[h]][j]
-                        for j in self.param.M
+                        self.vars["omega"][a][self.params.sigma[h]][j]
+                        for j in self.params.M
                     ])
                     <= self.vars["s_star"][index]
                 )
@@ -294,7 +297,7 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
         )
 
         # Constraints on minimum number of preferences changes
-        for dm in self.param.DM:
+        for dm in self.params.DM:
             self.prob += self.vars["S"] >= self.preferences_changed[dm] + lpSum([
                 self.vars["s"][preference_relations_union.index(r)][0]
                 for r in self.preference_relations[dm]
@@ -308,15 +311,15 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
 
     def create_solution(self):
         weights = np.array([
-            cast(float, value(self.vars["w"][j])) for j in self.param.M
+            cast(float, value(self.vars["w"][j])) for j in self.params.M
         ])
         profiles = NormalPerformanceTable([
-            [value(self.vars["p"][h][j]) for j in self.param.M]
-            for h in self.param.profile_indices
+            [value(self.vars["p"][h][j]) for j in self.params.M]
+            for h in self.params.profile_indices
         ])
 
         return SRMPModel(
             profiles=profiles,
             weights=weights,
-            lexicographic_order=[p - 1 for p in self.param.sigma[1:]],
+            lexicographic_order=[p - 1 for p in self.params.sigma[1:]],
         )

@@ -6,7 +6,7 @@ import numpy as np
 from mcda.relations import I, P
 from pulp import (  # type: ignore
     LpBinary,
-    LpMaximize,
+    LpMinimize,
     LpProblem,
     LpVariable,
     lpSum,
@@ -15,17 +15,15 @@ from pulp import (  # type: ignore
 
 from ...constants import EPSILON
 from ...performance_table.normal_performance_table import NormalPerformanceTable
-from ...srmp.model import SRMPGroupModelLexicographic, SRMPModel
+from ...srmp.model import SRMPGroupModelLexicographic
 from ..mip import MIP, D, MIPParams, MIPVars
 
 
-class MIPSRMPGroupCollectiveVars(MIPVars):
+class MIPSRMPGroupCloseVars(MIPVars):
     w: D[D[LpVariable]]
-    wc: D[LpVariable]
-    w_amp: LpVariable
+    w_amp: D[LpVariable]
     p: D[D[D[LpVariable]]]
-    pc: D[D[LpVariable]]
-    p_amp: LpVariable
+    p_amp: D[D[LpVariable]]
     delta: D[D[D[D[LpVariable]]]]
     omega: D[D[D[D[LpVariable]]]]
     s: D[D[D[LpVariable]]]
@@ -33,7 +31,7 @@ class MIPSRMPGroupCollectiveVars(MIPVars):
 
 
 @dataclass
-class MIPSRMPGroupCollectiveParams(MIPParams):
+class MIPSRMPGroupCloseParams(MIPParams):
     A: list[Any]
     M: list[Any]
     DM: range
@@ -49,11 +47,11 @@ class MIPSRMPGroupCollectiveParams(MIPParams):
 
 
 @dataclass
-class MIPSRMPGroupCollective(
+class MIPSRMPGroupClose(
     MIP[
-        tuple[SRMPModel, SRMPGroupModelLexicographic],
-        MIPSRMPGroupCollectiveVars,
-        MIPSRMPGroupCollectiveParams,
+        SRMPGroupModelLexicographic,
+        MIPSRMPGroupCloseVars,
+        MIPSRMPGroupCloseParams,
     ]
 ):
     alternatives: NormalPerformanceTable
@@ -69,7 +67,7 @@ class MIPSRMPGroupCollective(
         # Parameters #
         ##############
 
-        self.params = MIPSRMPGroupCollectiveParams(
+        self.params = MIPSRMPGroupCloseParams(
             A=self.alternatives.alternatives,  # type: ignore
             M=self.alternatives.criteria,  # type: ignore
             DM=range(len(self.preference_relations)),
@@ -83,32 +81,32 @@ class MIPSRMPGroupCollective(
         indifference_relations_indices = [
             range(len(self.indifference_relations[dm])) for dm in self.params.DM
         ]
+        # Number of DMs
+        NB_DM = len(self.params.DM)
 
         #############
         # Variables #
         #############
 
-        self.vars = MIPSRMPGroupCollectiveVars(
+        self.vars = MIPSRMPGroupCloseVars(
             w=LpVariable.dicts(
                 "Weight", (self.params.DM, self.params.M), lowBound=0, upBound=1
             ),  # type: ignore
-            wc=LpVariable.dicts(
-                "WeightCollective", self.params.M, lowBound=0, upBound=1
+            w_amp=LpVariable.dicts(
+                "WeightAmplitude", self.params.M, lowBound=0, upBound=1
             ),  # type: ignore
-            w_amp=LpVariable("WeightAmplitude", lowBound=0, upBound=1),
             p=LpVariable.dicts(
                 "Profile",
                 (self.params.DM, self.params.profile_indices, self.params.M),
                 lowBound=0,
                 upBound=1,
             ),  # type: ignore
-            pc=LpVariable.dicts(
-                "ProfileCollective",
+            p_amp=LpVariable.dicts(
+                "ProfileAmplitude",
                 (self.params.profile_indices, self.params.M),
                 lowBound=0,
                 upBound=1,
             ),  # type: ignore
-            p_amp=LpVariable("ProfileAmplitude", lowBound=0, upBound=1),
             delta=LpVariable.dicts(
                 "LocalConcordance",
                 (
@@ -155,25 +153,30 @@ class MIPSRMPGroupCollective(
         # LP problem #
         ##############
 
-        self.prob = LpProblem("SRMP_Elicitation", LpMaximize)
+        self.prob = LpProblem("SRMP_Elicitation", LpMinimize)
 
         self.prob += (
             lpSum([
                 [
-                    self.vars["s"][dm][index][0]
+                    1 - self.vars["s"][dm][index][0]
                     for index in preference_relations_indices[dm]
                 ]
                 for dm in self.params.DM
             ])
             + lpSum([
                 [
-                    self.vars["s_star"][dm][index]
+                    1 - self.vars["s_star"][dm][index]
                     for index in indifference_relations_indices[dm]
                 ]
                 for dm in self.params.DM
             ])
-            - self.vars["w_amp"] / 2
-            - self.vars["p_amp"] / 2
+            + lpSum([self.vars["w_amp"][j] for j in self.params.M])
+            / (2 * len(self.params.M))
+            + lpSum([
+                [self.vars["p_amp"][h][j] for h in self.params.profile_indices]
+                for j in self.params.M
+            ])
+            / (2 * len(self.params.M) * self.params.k)
         )
 
         ###############
@@ -339,17 +342,22 @@ class MIPSRMPGroupCollective(
             )
 
         # Constraints of distance
-        for j in self.params.M:
-            self.prob += self.vars["w"][j] >= self.vars["wc"] - self.vars["w_amp"]
-            self.prob += self.vars["w"][j] <= self.vars["wc"] + self.vars["w_amp"]
+        for dm in self.params.DM:
+            for j in self.params.M:
+                self.prob += NB_DM * (
+                    self.vars["w"][dm][j] + self.vars["w_amp"]
+                ) >= lpSum([self.vars["w"][dm][j] for dm in self.params.DM])
+                self.prob += NB_DM * (
+                    self.vars["w"][dm][j] - self.vars["w_amp"]
+                ) <= lpSum([self.vars["w"][dm][j] for dm in self.params.DM])
 
-            for h in self.params.profile_indices:
-                self.prob += (
-                    self.vars["p"][h][j] >= self.vars["pc"][h][j] - self.vars["p_amp"]
-                )
-                self.prob += (
-                    self.vars["p"][h][j] <= self.vars["pc"][h][j] + self.vars["p_amp"]
-                )
+                for h in self.params.profile_indices:
+                    self.prob += NB_DM * (
+                        self.vars["p"][dm][h][j] + self.vars["p_amp"]
+                    ) >= lpSum([self.vars["p"][dm][h][j] for dm in self.params.DM])
+                    self.prob += NB_DM * (
+                        self.vars["p"][dm][h][j] - self.vars["p_amp"]
+                    ) <= lpSum([self.vars["p"][dm][h][j] for dm in self.params.DM])
 
     def create_solution(self):
         weights = [
@@ -358,30 +366,15 @@ class MIPSRMPGroupCollective(
         ]
         profiles = [
             NormalPerformanceTable([
-                [value(self.vars["p"][dm][h][j]) for j in self.params.M]
+                [cast(float, value(self.vars["p"][dm][h][j])) for j in self.params.M]
                 for h in self.params.profile_indices
             ])
             for dm in self.params.DM
         ]
 
-        weights_collective = np.array([
-            cast(float, value(self.vars["wc"][j])) for j in self.params.M
-        ])
-        profiles_collective = NormalPerformanceTable([
-            [value(self.vars["pc"][h][j]) for j in self.params.M]
-            for h in self.params.profile_indices
-        ])
-
-        return (
-            SRMPModel(
-                profiles=profiles_collective,
-                weights=weights_collective,
-                lexicographic_order=[p - 1 for p in self.params.sigma[1:]],
-            ),
-            SRMPGroupModelLexicographic(
-                # group_size=len(self.params.DM),
-                profiles=profiles,
-                weights=weights,
-                lexicographic_order=[p - 1 for p in self.params.sigma[1:]],
-            ),
+        return SRMPGroupModelLexicographic(
+            _group_size=len(self.params.DM),
+            profiles=profiles,
+            weights=weights,
+            lexicographic_order=[p - 1 for p in self.params.sigma[1:]],
         )

@@ -78,7 +78,7 @@ class MIPSRMPGroupLexicographicOrder(
         # Parameters #
         ##############
 
-        self.param = MIPSRMPGroupLexicographicOrderParams(
+        self.params = MIPSRMPGroupLexicographicOrderParams(
             profiles_shared=SRMPParamFlag.PROFILES in self.shared_params,
             weights_shared=SRMPParamFlag.WEIGHTS in self.shared_params,
             A=self.alternatives.alternatives,  # type: ignore

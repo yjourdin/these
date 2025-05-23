@@ -18,8 +18,10 @@ from ..utils import tolist
 from .formulation.srmp import MIPSRMP
 from .formulation.srmp_accept import MIPSRMPAccept
 from .formulation.srmp_collective import MIPSRMPCollective
+from .formulation.srmp_collective_bound import MIPSRMPCollectiveBound
 from .formulation.srmp_collective_distance import MIPSRMPCollectiveDistance
 from .formulation.srmp_group import MIPSRMPGroup
+from .formulation.srmp_group_close import MIPSRMPGroupClose
 from .formulation.srmp_group_lexicographic import MIPSRMPGroupLexicographicOrder
 from .mip import MIP
 
@@ -40,13 +42,16 @@ def learn_mip(
     max_time: int = DEFAULT_MAX_TIME,
     lex_order: list[int] | None = None,
     collective: bool = False,
+    close: bool = False,
     preferences_changes: list[int] | None = None,
     comparisons_refused: list[PreferenceStructure] | None = None,
     comparisons_accepted: PreferenceStructure | None = None,
     reference_model: SRMPModel | None = None,
     profiles_amp: float = 1,
     weights_amp: float = 1,
+    reference_models: list[SRMPModel] | None = None,
     lexicographic_order_distance: int = 0,
+    inconsistencies: bool = False,
     *args: Any,
     **kwargs: Any,
 ):
@@ -78,6 +83,7 @@ def learn_mip(
         (SRMPParamFlag.LEXICOGRAPHIC_ORDER in model_type.shared_params)
         or (NB_DM == 1)
         or collective
+        or lex_order
     )
 
     preferences_changes = preferences_changes or ([0] * NB_DM)
@@ -113,7 +119,7 @@ def learn_mip(
 
     for lexicographic_order in lexicographic_orders:
         if time_left >= 1:
-            mip: MIP[SRMPModel, Any, Any]
+            mip: MIP[Any, Any, Any]
             if lex_order_shared:
                 lexicographic_order = cast(list[int], tolist(lexicographic_order))
                 if NB_DM == 1:
@@ -137,6 +143,7 @@ def learn_mip(
                             preference_relations=preference_relations,
                             indifference_relations=indifference_relations,
                             lexicographic_order=lexicographic_order,
+                            inconsistencies=inconsistencies,
                             best_fitness=best_objective,
                             time_limit=time_left,
                             seed=seed_mip,
@@ -181,6 +188,24 @@ def learn_mip(
                             *args,
                             **kwargs,
                         )
+                    elif reference_models:
+                        mip = MIPSRMPCollectiveBound(
+                            alternatives=alternatives,
+                            preference_relations=preference_relations_list,
+                            indifference_relations=indifference_relations_list,
+                            lexicographic_order=lexicographic_order,
+                            preferences_changed=preferences_changes,
+                            preference_to_accept=preference_to_accept_list,
+                            indifference_to_accept=indifference_to_accept_list,
+                            preference_accepted=preference_accepted_list,
+                            indifference_accepted=indifference_accepted_list,
+                            models=reference_models,
+                            best_objective=best_objective,
+                            time_limit=time_left,
+                            seed=seed_mip,
+                            *args,
+                            **kwargs,
+                        )
                     else:
                         mip = MIPSRMPCollective(
                             alternatives=alternatives,
@@ -199,17 +224,31 @@ def learn_mip(
                             **kwargs,
                         )
                 else:
-                    mip = MIPSRMPGroupLexicographicOrder(
-                        alternatives=alternatives,
-                        preference_relations=preference_relations_list,
-                        indifference_relations=indifference_relations_list,
-                        lexicographic_order=lexicographic_order,
-                        shared_params=shared_params,
-                        best_fitness=best_objective,
-                        time_limit=time_left,
-                        *args,
-                        **kwargs,
-                    )
+                    if close:
+                        mip = MIPSRMPGroupClose(
+                            alternatives=alternatives,
+                            preference_relations=preference_relations_list,
+                            indifference_relations=indifference_relations_list,
+                            lexicographic_order=lexicographic_order,
+                            inconsistencies=inconsistencies,
+                            time_limit=time_left,
+                            seed=seed_mip,
+                            *args,
+                            **kwargs,
+                        )
+                    else:
+                        mip = MIPSRMPGroupLexicographicOrder(
+                            alternatives=alternatives,
+                            preference_relations=preference_relations_list,
+                            indifference_relations=indifference_relations_list,
+                            lexicographic_order=lexicographic_order,
+                            shared_params=shared_params,
+                            inconsistencies=inconsistencies,
+                            best_fitness=best_objective,
+                            time_limit=time_left,
+                            *args,
+                            **kwargs,
+                        )
             else:
                 lexicographic_order = cast(list[list[int]], tolist(lexicographic_order))
                 mip = MIPSRMPGroup(
@@ -218,6 +257,7 @@ def learn_mip(
                     indifference_relations=indifference_relations_list,
                     lexicographic_order=lexicographic_order,
                     shared_params=shared_params,
+                    inconsistencies=inconsistencies,
                     best_fitness=best_objective,
                     time_limit=time_left,
                     seed=seed_mip,

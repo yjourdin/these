@@ -21,7 +21,7 @@ from ...srmp.model import SRMPModel
 from ..mip import MIP, D, MIPParams, MIPVars
 
 
-class MIPSRMPCollectiveDistanceVars(MIPVars):
+class MIPSRMPCollectiveBoundVars(MIPVars):
     w: D[LpVariable]
     p: D[D[LpVariable]]
     delta: D[D[D[LpVariable]]]
@@ -32,7 +32,7 @@ class MIPSRMPCollectiveDistanceVars(MIPVars):
 
 
 @dataclass
-class MIPSRMPCollectiveDistanceParams(MIPParams):
+class MIPSRMPCollectiveBoundParams(MIPParams):
     A: list[Any]
     M: list[Any]
     DM: range
@@ -48,8 +48,8 @@ class MIPSRMPCollectiveDistanceParams(MIPParams):
 
 
 @dataclass
-class MIPSRMPCollectiveDistance(
-    MIP[SRMPModel, MIPSRMPCollectiveDistanceVars, MIPSRMPCollectiveDistanceParams]
+class MIPSRMPCollectiveBound(
+    MIP[SRMPModel, MIPSRMPCollectiveBoundVars, MIPSRMPCollectiveBoundParams]
 ):
     alternatives: NormalPerformanceTable
     preference_relations: list[list[P]]
@@ -60,9 +60,7 @@ class MIPSRMPCollectiveDistance(
     indifference_to_accept: list[list[I]]
     preference_accepted: list[P]
     indifference_accepted: list[I]
-    model: SRMPModel
-    profiles_amp: float
-    weights_amp: float
+    models: list[SRMPModel]
     gamma: float = EPSILON
     best_objective: float | None = None
 
@@ -71,7 +69,7 @@ class MIPSRMPCollectiveDistance(
         # Parameters #
         ##############
 
-        self.params = MIPSRMPCollectiveDistanceParams(
+        self.params = MIPSRMPCollectiveBoundParams(
             A=self.alternatives.alternatives,  # type: ignore
             M=self.alternatives.criteria,  # type: ignore
             DM=range(len(self.preference_relations)),
@@ -107,12 +105,20 @@ class MIPSRMPCollectiveDistance(
             | set(self.indifference_accepted)
         )
         indifference_relations_union_indices = range(len(indifference_relations_union))
+        # Parameters bound
+        profiles_np = np.array([model.profiles.data.values for model in self.models])
+        profiles_min = profiles_np.min(0)
+        profiles_max = profiles_np.max(0)
+
+        weights_np = np.array([model.weights for model in self.models])
+        weights_min = weights_np.min(0)
+        weights_max = weights_np.max(0)
 
         #############
         # Variables #
         #############
 
-        self.vars = MIPSRMPCollectiveDistanceVars(
+        self.vars = MIPSRMPCollectiveBoundVars(
             w=LpVariable.dicts("Weight", self.params.M, lowBound=0, upBound=1),  # type: ignore
             p=LpVariable.dicts(
                 "Profile",
@@ -314,20 +320,22 @@ class MIPSRMPCollectiveDistance(
         if self.best_objective is not None:
             self.prob += self.vars["S"] <= self.best_objective - 1
 
-        # Constraints to accept
+        # Constraints to bound
         for j in self.params.M:
-            self.prob += self.vars["w"][j] >= self.model.weights[j] - self.weights_amp
-            self.prob += self.vars["w"][j] <= self.model.weights[j] + self.weights_amp
+            if weights_min[j] > weights_max[j] - self.gamma / 2:
+                self.prob += self.vars["w"][j] == weights_min[j]
+            else:
+                self.prob += self.vars["w"][j] >= weights_min[j]
+                self.prob += self.vars["w"][j] <= weights_max[j]
 
             for h in self.params.profile_indices:
-                self.prob += (
-                    self.vars["p"][h][j]
-                    >= self.model.profiles.cell[h - 1, j] - self.profiles_amp
-                )
-                self.prob += (
-                    self.vars["p"][h][j]
-                    <= self.model.profiles.cell[h - 1, j] + self.profiles_amp
-                )
+                if profiles_min[h - 1, j] > profiles_max[h - 1, j] - self.gamma / 2:
+                    self.prob += self.vars["p"][h][j] == profiles_min[h - 1, j]
+                else:
+                    self.prob += self.vars["p"][h][j] >= profiles_min[h - 1, j]
+                    self.prob += self.vars["p"][h][j] <= profiles_max[h - 1, j]
+
+        self.prob.writeLP("lp.lp")
 
     def create_solution(self):
         weights = np.array([

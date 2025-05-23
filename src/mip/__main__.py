@@ -33,12 +33,18 @@ Accepted = None
 if args.accepted:
     Accepted = from_csv(args.accepted)
 
+refs = None  # type: ignore
+if args.references:
+    refs: list[SRMPModel] = []
+    for ref in args.references:
+        refs.append(SRMPModel.from_json(ref.read()))
+
 ref = None
 if args.reference:
     ref = SRMPModel.from_json(args.reference.read())
 
 # Create random seeds
-rng_lex, rng_mip = rng(args.seed).spawn(2)
+rng_lex, rng_mip = rng_(args.seed).spawn(2)
 
 
 # Learn MIP
@@ -55,10 +61,12 @@ best_model, best_fitness, time = learn_mip(
     args.max_time,
     args.lex_order,
     args.collective,
+    args.group,
     args.changes,
     Refused,
     Accepted,
-    ref,
+    reference_model=ref,
+    reference_models=refs,
     gamma=args.gamma,
     inconsistencies=not args.no_inconsistencies,
     verbose=args.verbose,
@@ -66,6 +74,6 @@ best_model, best_fitness, time = learn_mip(
 
 
 # Write results
-args.output.write(best_model.to_json() if best_model else best_model)
+args.output.write(best_model.to_json() if best_model else "")
 writer = csv.writer(args.result, "unix")
 writer.writerow([best_fitness, time])
