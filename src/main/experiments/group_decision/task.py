@@ -181,9 +181,99 @@ class DTask(AbstractDTask, MiTask):
 
 
 @dataclass(frozen=True)
-class MIPTask(AbstractDTask):
-    name = "MIP"
+class MieTask(AbstractDTask):
+    name = "Mie"
     config: MIPConfig
+    Mie_id: int = field(hash=False)
+
+    def task(
+        self,
+        dir: DirectoryGroupDecision,
+        seed: SeedLike,
+        max_time: int | None = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        with self.A_file(dir).open("r") as f:
+            A = NormalPerformanceTable(read_csv(f, header=None))
+
+        D: list[PreferenceStructure] = []
+        for dm_id in range(self.group_size):
+            with self.D_file(dir, dm_id).open("r") as f:
+                D.append(from_csv(f))
+
+        rng_lex, rng_mip = self.rng(seed).spawn(2)
+
+        best_model, best_fitness, time = learn_mip(
+            GroupModelEnum.SRMP,
+            self.ko,
+            A,
+            D,
+            rng_lex,
+            random_seed(rng_mip),
+            min(max_time, self.config.max_time)
+            if max_time is not None
+            else self.config.max_time,
+            self.lexicographic_order if self.fixed_lex_order else None,
+            False,
+            True,
+            gamma=self.config.gamma,
+        )
+
+        if best_model is not None:
+            for dm_id in range(self.group_size):
+                with self.Mie_file(dir, dm_id).open("w") as f:
+                    f.write(best_model[dm_id].to_json())
+
+        csv_file = dir.csv_files["mie"]
+        csv_file.writerow(
+            csv_file.fields(
+                M=self.m,
+                N_tr=self.ntr,
+                Atr_id=self.Atr_id,
+                Ko=self.ko,
+                Mo_id=self.Mo_id,
+                Group_size=self.group_size,
+                Group=self.group,
+                Mi_id=self.Mi_id,
+                N_bc=self.nbc,
+                Same_alt=self.same_alt,
+                D_id=self.D_id,
+                Config=self.config,
+                Mie_id=self.Mie_id,
+                Time=time,
+                Fitness=best_fitness,
+            )
+        )
+
+        return best_model is not None
+
+    def done(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any):
+        return self.Mie_file(dir, 0).exists()
+
+    def Mie_file(self, dir: DirectoryGroupDecision, dm_id: int):
+        return dir.Mie(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.group,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.config,
+            self.Mie_id,
+            dm_id,
+        )
+
+
+@dataclass(frozen=True)
+class CollectiveTask(MieTask):
+    name = "Collective"
+    # config: MIPConfig
     Mc_id: int = field(hash=False)
     path: bool = field(hash=False)
     P_id: int = field(hash=False)
@@ -231,6 +321,11 @@ class MIPTask(AbstractDTask):
                     with Dr_file.open("r") as f:
                         R.append(from_csv(f))
 
+        Mie: list[SRMPModel] = []
+        for dm_id in range(self.group_size):
+            with self.Mie_file(dir, dm_id).open("r") as f:
+                Mie.append(SRMPModel.from_json(f.read()))
+
         rng_lex, rng_mip = self.rng(seed).spawn(2)
 
         best_model, best_fitness, time = learn_mip(
@@ -245,9 +340,11 @@ class MIPTask(AbstractDTask):
             else self.config.max_time,
             self.lexicographic_order if self.fixed_lex_order else None,
             True,
+            False,
             C,
             R,
             ACC,
+            reference_models=Mie,
             gamma=self.config.gamma,
         )
 
@@ -263,7 +360,7 @@ class MIPTask(AbstractDTask):
                     f,
                 )
 
-        csv_file = dir.csv_files["mip"]
+        csv_file = dir.csv_files["collective"]
         csv_file.writerow(
             csv_file.fields(
                 M=self.m,
@@ -278,6 +375,7 @@ class MIPTask(AbstractDTask):
                 Same_alt=self.same_alt,
                 D_id=self.D_id,
                 Config=self.config,
+                Mie_id=self.Mie_id,
                 Mc_id=self.Mc_id,
                 Path=self.path,
                 P_id=self.P_id,
@@ -386,6 +484,7 @@ class MIPTask(AbstractDTask):
             self.same_alt,
             self.D_id,
             self.config,
+            self.Mie_id,
             self.Mc_id,
             self.path,
             self.P_id,
@@ -461,6 +560,7 @@ class AcceptMcTask(CollectiveTask, MiTask):
                 Same_alt=self.same_alt,
                 D_id=self.D_id,
                 Config=self.config,
+                Mie_id=self.Mie_id,
                 Mc_id=self.Mc_id,
                 Path=self.path,
                 P_id=self.P_id,
@@ -550,6 +650,7 @@ class PreferencePathTask(AcceptMcTask):
                     Same_alt=self.same_alt,
                     D_id=self.D_id,
                     Config=self.config,
+                    Mie_id=self.Mie_id,
                     Mc_id=self.Mc_id,
                     Path=self.path,
                     P_id=self.P_id,
@@ -638,6 +739,7 @@ class AcceptPTask(PreferencePathTask):
                 Same_alt=self.same_alt,
                 D_id=self.D_id,
                 Config=self.config,
+                Mie_id=self.Mie_id,
                 Mc_id=self.Mc_id,
                 Path=self.path,
                 P_id=self.P_id,
@@ -719,6 +821,7 @@ class CleanTask(PreferencePathTask):
                 Same_alt=self.same_alt,
                 D_id=self.D_id,
                 Config=self.config,
+                Mie_id=self.Mie_id,
                 Mc_id=self.Mc_id,
                 Path=self.path,
                 P_id=self.P_id,

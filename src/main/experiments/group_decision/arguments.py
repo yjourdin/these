@@ -17,6 +17,7 @@ class ArgumentsGroupDecision(Arguments, GroupMIPConfigField, GroupGroupParameter
     nb_Mo: int | None = None
     nb_Mi: int | None = None
     nb_D: int | None = None
+    nb_Mie: int | None = None
     nb_Mc: int | None = None
     nb_P: int | None = None
     seeds: Seeds = field(default_factory=Seeds)

@@ -8,9 +8,10 @@ from .csv_files import (
     AcceptCSVFile,
     ChangesCSVFile,
     CleanCSVFile,
+    CollectiveCSVFile,
     CompromiseCSVFile,
     GroupParametersCSVFile,
-    MIPCSVFile,
+    MieCSVFile,
     PathCSVFile,
 )
 from .fields import GroupParameters
@@ -23,6 +24,7 @@ class DirectoryGroupDecision(Directory):
         Mi: Path
         D: Path
         Di: Path
+        Mie: Path
         Mc: Path
         Dc: Path
         C: Path
@@ -34,7 +36,8 @@ class DirectoryGroupDecision(Directory):
         accept: AcceptCSVFile
         changes: ChangesCSVFile
         clean: CleanCSVFile
-        mip: MIPCSVFile
+        mie: MieCSVFile
+        collective: CollectiveCSVFile
         compromise: CompromiseCSVFile
         configs: ConfigCSVFile
         group_parameters: GroupParametersCSVFile
@@ -50,6 +53,7 @@ class DirectoryGroupDecision(Directory):
             Mi=self.dirs["root"] / "Mi",
             D=self.dirs["root"] / "D",
             Di=self.dirs["root"] / "Di",
+            Mie=self.dirs["root"] / "Mie",
             Mc=self.dirs["root"] / "Mc",
             Dc=self.dirs["root"] / "Dc",
             C=self.dirs["root"] / "C",
@@ -65,7 +69,8 @@ class DirectoryGroupDecision(Directory):
             accept=AcceptCSVFile(self.dirs["root"] / "accept_results.csv"),
             changes=ChangesCSVFile(self.dirs["root"] / "changes_results.csv"),
             clean=CleanCSVFile(self.dirs["root"] / "clean_results.csv"),
-            mip=MIPCSVFile(self.dirs["root"] / "mip_results.csv"),
+            mie=MieCSVFile(self.dirs["root"] / "mie_results.csv"),
+            collective=CollectiveCSVFile(self.dirs["root"] / "collective_results.csv"),
             compromise=CompromiseCSVFile(self.dirs["root"] / "compromise_results.csv"),
             configs=ConfigCSVFile(self.dirs["root"] / "configs.csv"),
             group_parameters=GroupParametersCSVFile(
@@ -129,7 +134,26 @@ class DirectoryGroupDecision(Directory):
         P_id: int,
         it: int,
     ):
-        return self.dirs["Di"] / filename_json(locals())
+        return self.dirs["Di"] / filename_csv(locals())
+
+    def Mie(
+        self,
+        m: int,
+        ntr: int,
+        Atr_id: int,
+        k: int,
+        Mo_id: int,
+        group_size: int,
+        group: GroupParameters,
+        Mi_id: int,
+        n: int,
+        same_alt: bool,
+        D_id: int,
+        config: MIPConfig,
+        id: int,
+        dm_id: int,
+    ):
+        return self.dirs["Mie"] / filename_json(locals())
 
     def Mc(
         self,
@@ -145,6 +169,7 @@ class DirectoryGroupDecision(Directory):
         same_alt: bool,
         D_id: int,
         config: MIPConfig,
+        Mie_id: int,
         id: int,
         path: bool,
         P_id: int,

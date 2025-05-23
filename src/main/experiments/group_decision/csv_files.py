@@ -28,9 +28,33 @@ class ExperimentFields(CSVFields):
     Same_alt: bool
     D_id: int
     Config: MIPConfig
-    Mc_id: int
     Path: bool
     P_id: int
+    Mie_id: int
+    Mc_id: int
+
+
+# MIE
+class MieFields(CSVFields):
+    M: int
+    N_tr: int
+    Atr_id: int
+    Ko: int
+    Mo_id: int
+    Group_size: int
+    Group: GroupParameters
+    Mi_id: int
+    N_bc: int
+    Same_alt: bool
+    D_id: int
+    Config: MIPConfig
+    Mie_id: int
+    Time: float
+    Fitness: float | None
+
+
+class MieCSVFile(CSVFile[MieFields]):
+    fields = MieFields
 
 
 # Iteration
@@ -44,13 +68,13 @@ class DMFields(IterationFields):
 
 
 # MIP
-class MIPFields(IterationFields):
+class CollectiveFields(IterationFields):
     Time: float
     Fitness: float | None
 
 
-class MIPCSVFile(CSVFile[MIPFields]):
-    fields = MIPFields
+class CollectiveCSVFile(CSVFile[CollectiveFields]):
+    fields = CollectiveFields
 
 
 # Path

@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from shutil import copy
 from typing import Any
 
+from mcda.internal.core.relations import Relation
 from mcda.relations import I, P, PreferenceStructure
 
 from .....constants import DEFAULT_MAX_TIME
@@ -16,7 +17,13 @@ from ....task import (
 from ....threads.task import task_thread
 from ....threads.worker_manager import TaskQueue
 from ..directory import DirectoryGroupDecision
-from ..task import AcceptMcTask, AcceptPTask, CleanTask, MIPTask, PreferencePathTask
+from ..task import (
+    AcceptMcTask,
+    AcceptPTask,
+    CleanTask,
+    CollectiveTask,
+    PreferencePathTask,
+)
 
 
 def collective_thread(
@@ -33,7 +40,7 @@ def collective_thread(
         it = 0
         changes: list[int] = [0] * args["group_size"]
 
-        task_Mc = MIPTask(
+        task_Mc = CollectiveTask(
             args["m"],
             args["n_tr"],
             args["Atr_id"],
@@ -47,6 +54,7 @@ def collective_thread(
             args["same_alt"],
             args["D_id"],
             args["config"],
+            args["Mie_id"],
             args["Mc_id"],
             args["path"],
             args["P_id"],
@@ -63,6 +71,7 @@ def collective_thread(
         time_left = max_time
         compromise_found = False
         while (not compromise_found) and (time_left >= 1):
+            print("Id: ", args["Atr_id"], ", It: ", it)
             future_Mc = thread_pool.submit(
                 task_thread,
                 task_Mc,
@@ -97,6 +106,7 @@ def collective_thread(
                             args["same_alt"],
                             args["D_id"],
                             args["config"],
+                            args["Mie_id"],
                             args["Mc_id"],
                             args["path"],
                             args["P_id"],
@@ -133,6 +143,7 @@ def collective_thread(
                             args["same_alt"],
                             args["D_id"],
                             args["config"],
+                            args["Mie_id"],
                             args["Mc_id"],
                             args["path"],
                             args["P_id"],
@@ -153,15 +164,74 @@ def collective_thread(
                             for dm_id, future in futures_accept.items()
                             if not future.result().result
                         ]
-                        compromise_found = not dms_refusing
 
-                        t = 0
+                    compromise_found = not dms_refusing
 
-                        if not compromise_found:
-                            tasks_P: dict[int, PreferencePathTask] = {}
-                            futures_P: dict[int, FutureTaskException] = {}
-                            for dm_id in DMS:
-                                tasks_P[dm_id] = PreferencePathTask(
+                    t = 0
+
+                    if not compromise_found:
+                        tasks_P: dict[int, PreferencePathTask] = {}
+                        futures_P: dict[int, FutureTaskException] = {}
+                        for dm_id in DMS:
+                            tasks_P[dm_id] = PreferencePathTask(
+                                args["m"],
+                                args["n_tr"],
+                                args["Atr_id"],
+                                args["ko"],
+                                args["fixed_lex_order"],
+                                args["Mo_id"],
+                                args["group_size"],
+                                args["group"],
+                                args["Mi_id"],
+                                dm_id,
+                                args["n_bc"],
+                                args["same_alt"],
+                                args["D_id"],
+                                args["config"],
+                                args["Mie_id"],
+                                args["Mc_id"],
+                                args["path"],
+                                args["P_id"],
+                                it,
+                            )
+                            futures_P[dm_id] = thread_pool.submit(
+                                task_thread,
+                                tasks_P[dm_id],
+                                {
+                                    "seed": args["seeds"].P[args["P_id"]],
+                                    "max_time": time_left,
+                                },
+                                task_queue,
+                                [],
+                                dir,
+                            )
+
+                        futures_P_values = futures_P.values()
+                        if wait_exception_iterable(futures_P_values):
+                            time_left -= max(
+                                future.result().time for future in futures_P_values
+                            )
+                            if time_left < 1:
+                                break
+                            if not all(
+                                future.result().result for future in futures_P_values
+                            ):
+                                break
+
+                        t = 1
+                        dms = range(args["group_size"])
+
+                        dms_refusing: list[int] = []
+
+                        while dms := [
+                            dm_id
+                            for dm_id in dms
+                            if tasks_P[dm_id].P_file(dir, t).exists()
+                        ]:
+                            futures_accept: dict[int, FutureTaskException] = {}
+
+                            for dm_id in dms:
+                                tasks_accept = AcceptPTask(
                                     args["m"],
                                     args["n_tr"],
                                     args["Atr_id"],
@@ -176,203 +246,153 @@ def collective_thread(
                                     args["same_alt"],
                                     args["D_id"],
                                     args["config"],
+                                    args["Mie_id"],
                                     args["Mc_id"],
                                     args["path"],
                                     args["P_id"],
                                     it,
+                                    t,
                                 )
-                                futures_P[dm_id] = thread_pool.submit(
+                                futures_accept[dm_id] = thread_pool.submit(
                                     task_thread,
-                                    tasks_P[dm_id],
-                                    {
-                                        "seed": args["seeds"].P[args["P_id"]],
-                                        "max_time": time_left,
-                                    },
+                                    tasks_accept,
+                                    {},
                                     task_queue,
-                                    [],
+                                    [futures_P[dm_id]],
                                     dir,
                                 )
 
-                            futures_P_values = futures_P.values()
-                            if wait_exception_iterable(futures_P_values):
-                                time_left -= max(
-                                    future.result().time for future in futures_P_values
-                                )
-                            if time_left < 1:
+                            if wait_exception_mapping(futures_accept):
+                                dms_refusing = [
+                                    dm_id
+                                    for dm_id, future in futures_accept.items()
+                                    if not future.result().result
+                                ]
+
+                            if dms_refusing:
                                 break
 
-                            t = 1
-                            dms = range(args["group_size"])
+                            t += 1
 
-                            dms_refusing: list[int] = []
+                        if not dms_refusing:
+                            compromise_found = True
 
-                            while dms := [
-                                dm_id
-                                for dm_id in dms
-                                if tasks_P[dm_id].P_file(dir, t).exists()
-                            ]:
-                                futures_accept: dict[int, FutureTaskException] = {}
+                    changes = []
+                    with task_Mc.C_file(dir).open("r", newline="") as f:
+                        C_reader = csv.reader(f, dialect="unix")
+                        for row in C_reader:
+                            changes.append(int(row[0]))
 
-                                for dm_id in dms:
-                                    tasks_accept = AcceptPTask(
-                                        args["m"],
-                                        args["n_tr"],
-                                        args["Atr_id"],
-                                        args["ko"],
-                                        args["fixed_lex_order"],
-                                        args["Mo_id"],
-                                        args["group_size"],
-                                        args["group"],
-                                        args["Mi_id"],
-                                        dm_id,
-                                        args["n_bc"],
-                                        args["same_alt"],
-                                        args["D_id"],
-                                        args["config"],
-                                        args["Mc_id"],
-                                        args["path"],
-                                        args["P_id"],
-                                        it,
-                                        t,
-                                    )
-                                    futures_accept[dm_id] = thread_pool.submit(
-                                        task_thread,
-                                        tasks_accept,
-                                        {},
-                                        task_queue,
-                                        [futures_P[dm_id]],
-                                        dir,
-                                    )
+                    if not compromise_found:
+                        new_it = it + 1
+                        new_task_Mc = CollectiveTask(
+                            args["m"],
+                            args["n_tr"],
+                            args["Atr_id"],
+                            args["ko"],
+                            args["fixed_lex_order"],
+                            args["Mo_id"],
+                            args["group_size"],
+                            args["group"],
+                            args["Mi_id"],
+                            args["n_bc"],
+                            args["same_alt"],
+                            args["D_id"],
+                            args["config"],
+                            args["Mie_id"],
+                            args["Mc_id"],
+                            args["path"],
+                            args["P_id"],
+                            new_it,
+                        )
 
-                                if wait_exception_mapping(futures_accept):
-                                    dms_refusing = [
-                                        dm_id
-                                        for dm_id, future in futures_accept.items()
-                                        if not future.result().result
-                                    ]
+                    for dm_id in DMS:
+                        with task_Mc.Di_file(dir, dm_id).open("r") as f:
+                            original_D = from_csv(f)
 
-                                if dms_refusing:
-                                    break
+                        temp = 0
+                        while (temp < t) and tasks_P[dm_id].P_file(dir, temp).exists():
+                            temp += 1
+                        accepted_t = temp - 1
 
-                                t += 1
-
-                            if not dms_refusing:
-                                compromise_found = True
-
-                        changes = []
-                        with task_Mc.C_file(dir).open("r", newline="") as f:
-                            C_reader = csv.reader(f, dialect="unix")
-                            for row in C_reader:
-                                changes.append(int(row[0]))
+                        with (
+                            task_Mc.Dc_file(dir).open("r")
+                            if accepted_t == -1
+                            else tasks_P[dm_id].P_file(dir, accepted_t).open("r")
+                        ) as f:
+                            accepted_D = from_csv(f)
 
                         if not compromise_found:
-                            new_it = it + 1
-                            new_task_Mc = MIPTask(
-                                args["m"],
-                                args["n_tr"],
-                                args["Atr_id"],
-                                args["ko"],
-                                args["fixed_lex_order"],
-                                args["Mo_id"],
-                                args["group_size"],
-                                args["group"],
-                                args["Mi_id"],
-                                args["n_bc"],
-                                args["same_alt"],
-                                args["D_id"],
-                                args["config"],
-                                args["Mc_id"],
-                                args["path"],
-                                args["P_id"],
-                                new_it,
+                            copy(
+                                tasks_P[dm_id].P_file(dir, accepted_t),
+                                new_task_Mc.Di_file(dir, dm_id),
                             )
 
-                        for dm_id in DMS:
-                            with task_Mc.Di_file(dir, dm_id).open("r") as f:
-                                original_D = from_csv(f)
+                        changes[dm_id] += len(accepted_D - original_D)
 
-                            temp = 0
-                            while (temp < t) and tasks_P[dm_id].P_file(dir, temp).exists():
-                                temp += 1
-                            accepted_t = temp - 1
+                        csv_file = dir.csv_files["changes"]
+                        csv_file.writerow(
+                            csv_file.fields(
+                                M=args["m"],
+                                N_tr=args["n_tr"],
+                                Atr_id=args["Atr_id"],
+                                Ko=args["ko"],
+                                Mo_id=args["Mo_id"],
+                                Group_size=args["group_size"],
+                                Group=args["group"],
+                                Mi_id=args["Mi_id"],
+                                N_bc=args["n_bc"],
+                                Same_alt=args["same_alt"],
+                                D_id=args["D_id"],
+                                Config=args["config"],
+                                Mie_id=args["Mie_id"],
+                                Path=args["path"],
+                                P_id=args["P_id"],
+                                Mc_id=args["Mc_id"],
+                                It=it,
+                                Dm_id=dm_id,
+                                T=accepted_t,
+                                Changes=changes[dm_id],
+                            )
+                        )
 
-                            with (
-                                task_Mc.Dc_file(dir).open("r")
-                                if accepted_t == -1
-                                else tasks_P[dm_id].P_file(dir, accepted_t).open("r")
-                            ) as f:
-                                accepted_D = from_csv(f)
+                        if not compromise_found:
+                            with new_task_Mc.C_file(dir).open("a", newline="") as f:
+                                C_writer = csv.writer(f, dialect="unix")
+                                C_writer.writerow([changes[dm_id]])
 
-                            if not compromise_found:
+                            if dm_id in dms_refusing:
                                 copy(
-                                    tasks_P[dm_id].P_file(dir, accepted_t),
-                                    new_task_Mc.Di_file(dir, dm_id),
+                                    tasks_P[dm_id].P_file(dir, accepted_t + 1),
+                                    new_task_Mc.Dr_file(dir, dm_id, it),
                                 )
 
-                            changes[dm_id] += len(accepted_D - original_D)
+                                with (
+                                    tasks_P[dm_id]
+                                    .P_file(dir, accepted_t + 1)
+                                    .open("r") as f
+                                ):
+                                    refused_D = from_csv(f)
 
-                            csv_file = dir.csv_files["changes"]
-                            csv_file.writerow(
-                                csv_file.fields(
-                                    M=args["m"],
-                                    N_tr=args["n_tr"],
-                                    Atr_id=args["Atr_id"],
-                                    Ko=args["ko"],
-                                    Mo_id=args["Mo_id"],
-                                    Group_size=args["group_size"],
-                                    Group=args["group"],
-                                    Mi_id=args["Mi_id"],
-                                    N_bc=args["n_bc"],
-                                    Same_alt=args["same_alt"],
-                                    D_id=args["D_id"],
-                                    Config=args["config"],
-                                    Mc_id=args["Mc_id"],
-                                    Path=args["path"],
-                                    P_id=args["P_id"],
-                                    It=it,
-                                    Dm_id=dm_id,
-                                    T=accepted_t,
-                                    Changes=changes[dm_id],
-                                )
-                            )
+                                Cr: list[Relation] = []
+                                for r in refused_D - accepted_D:
+                                    Cr.append(r)
+                                    if isinstance(r, I):
+                                        if (
+                                            accepted_r
+                                            := accepted_D.elements_pairs_relations[
+                                                r.a, r.b
+                                            ]
+                                        ):
+                                            Cr.append(P(accepted_r.b, accepted_r.a))
 
-                            if not compromise_found:
-                                with new_task_Mc.C_file(dir).open("a", newline="") as f:
-                                    C_writer = csv.writer(f, dialect="unix")
-                                    C_writer.writerow([changes[dm_id]])
-
-                                if dm_id in dms_refusing:
-                                    copy(
-                                        tasks_P[dm_id].P_file(dir, accepted_t + 1),
-                                        new_task_Mc.Dr_file(dir, dm_id, it),
-                                    )
-
-                                    with (
-                                        tasks_P[dm_id]
-                                        .P_file(dir, accepted_t + 1)
-                                        .open("r") as f
-                                    ):
-                                        refused_D = from_csv(f)
-
-                                    Cr = []
-                                    for r in refused_D - accepted_D:
-                                        Cr.append(r)
-                                        if isinstance(r, I):
-                                            if (
-                                                accepted_r
-                                                := accepted_D.elements_pairs_relations[
-                                                    r.a, r.b
-                                                ]
-                                            ):
-                                                Cr.append(P(accepted_r.b, accepted_r.a))
-
-                                    with (new_task_Mc.Cr_file(dir, dm_id, it)).open(
-                                        "w"
-                                    ) as f:
-                                        to_csv(PreferenceStructure(Cr, validate=False), f)
-                        if not compromise_found:
-                            it = new_it
-                            task_Mc = new_task_Mc
+                                with (new_task_Mc.Cr_file(dir, dm_id, it)).open(
+                                    "w"
+                                ) as f:
+                                    to_csv(PreferenceStructure(Cr, validate=False), f)
+                    if not compromise_found:
+                        it = new_it
+                        task_Mc = new_task_Mc
 
     csv_file = dir.csv_files["compromise"]
     csv_file.writerow(
@@ -389,9 +409,10 @@ def collective_thread(
             Same_alt=args["same_alt"],
             D_id=args["D_id"],
             Config=args["config"],
-            Mc_id=args["Mc_id"],
+            Mie_id=args["Mie_id"],
             Path=args["path"],
             P_id=args["P_id"],
+            Mc_id=args["Mc_id"],
             Compromise=compromise_found,
             Time=max_time - time_left,
             It=it + 1,
