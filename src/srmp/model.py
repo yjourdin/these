@@ -45,12 +45,15 @@ class SRMPModel(
         ])
 
     def rank_numpy(self, performance_table: PerformanceTableType):
-        return NormalSRMP(
-            performance_table,
-            self.weights,
-            self.profiles,
-            self.lexicographic_order,
-        ).rank_numpy()
+        if isinstance(performance_table, NormalPerformanceTable):
+            return NormalSRMP(
+                performance_table,
+                self.weights,
+                self.profiles,
+                self.lexicographic_order,
+            ).rank_numpy()
+        else:
+            raise TypeError("Performance table not normalized")
 
     @classmethod
     def from_reference(

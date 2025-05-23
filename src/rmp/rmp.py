@@ -8,7 +8,7 @@ Implementation and naming conventions are taken from
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 from mcda import PerformanceTable
@@ -33,6 +33,7 @@ from mcda.values import CommensurableValues, Values
 from pandas import DataFrame, Index, Series, concat
 from scipy.stats import rankdata
 
+from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..performance_table.type import PerformanceTableType
 from ..utils import tolist
 from .importance_relation import ImportanceRelation
@@ -108,7 +109,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
 
     def __init__(
         self,
-        performance_table: PerformanceTable[NormalScale],
+        performance_table: NormalPerformanceTable,
         importance_relation: ImportanceRelation,
         profile: Values[NormalScale],
     ):
@@ -205,7 +206,7 @@ class RMP(Ranker):
         )
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
-        scores_ordered = sorted(set(scores.values), reverse=True) # type: ignore
+        scores_ordered = sorted(set(scores.values), reverse=True)  # type: ignore
         ranks: Series[int] = scores.apply(lambda x: scores_ordered.index(x) + 1)  # type: ignore
         return CommensurableValues(
             ranks,
@@ -289,8 +290,8 @@ class RMP(Ranker):
         ax = fig.create_add_axis()
 
         # Axis parameters
-        x = cast(list[float], range(len(performance_table.criteria)))  # type: ignore
-        xticks = cast(list[float], (range(len(performance_table.criteria))))  # type: ignore
+        x = list(range(len(performance_table.criteria)))  # type: ignore
+        xticks = list(range(len(performance_table.criteria)))  # type: ignore
         xticklabels = [f"{crit}" for crit in performance_table.criteria]
 
         # Plotted annotations' coordinates
@@ -301,9 +302,9 @@ class RMP(Ranker):
             for profile in range(nb_alt, nb_alt + nb_profiles):
                 ax.add_plot(
                     AreaPlot(
-                        x,
+                        list(map(float, x)),
                         table.data.iloc[profile].to_list(),  # type: ignore
-                        xticks=xticks,
+                        xticks=list(map(float, xticks)),
                         yticks=[],
                         xticklabels=xticklabels,
                         xticklabels_tilted=xticklabels_tilted,
@@ -315,7 +316,7 @@ class RMP(Ranker):
                 ax.add_plot(
                     Annotation(
                         0,
-                        cast(float, table.data.iloc[profile, 0]),
+                        float(table.data.iloc[profile, 0]),  # type: ignore
                         f"$P^{profile - nb_alt}$",
                         -1,
                         0,
@@ -329,9 +330,9 @@ class RMP(Ranker):
         labels = table.data[:nb_alt].index
         ax.add_plot(
             ParallelCoordinatesPlot(
-                x,
+                list(map(float, x)),
                 values,
-                xticks=xticks,
+                xticks=list(map(float, xticks)),
                 yticks=[],
                 xticklabels=xticklabels,
                 xticklabels_tilted=xticklabels_tilted,
@@ -350,7 +351,6 @@ class RMP(Ranker):
             if profiles is not None:
                 for profile in range(nb_alt, nb_alt + nb_profiles):
                     for i in x:
-                        i = cast(int, i)
                         xy = (i, table.data.iloc[profile, i])
                         overlap = False
                         for xc, yc in annotations_coord:
@@ -369,8 +369,8 @@ class RMP(Ranker):
                         if not overlap:
                             annotation = Annotation(
                                 i,
-                                cast(float, table.data.iloc[profile, i]),
-                                cast(str, profiles.data.iloc[profile - nb_alt, i]),
+                                float(table.data.iloc[profile, i]),  # type: ignore
+                                str(profiles.data.iloc[profile - nb_alt, i]),  # type: ignore
                                 2,
                                 0,
                                 "left",
@@ -379,13 +379,12 @@ class RMP(Ranker):
                             )
                             ax.add_plot(annotation)
                             annotations_coord.append((
-                                cast(float, i),
-                                cast(float, table.data.iloc[profile, i]),
+                                i,
+                                float(table.data.iloc[profile, i]),  # type: ignore
                             ))
 
             for alt in range(nb_alt):
                 for i in x:
-                    i = cast(int, i)
                     xy = (i, table.data.iloc[alt, i])
                     overlap = False
                     for xc, yc in annotations_coord:
@@ -404,8 +403,8 @@ class RMP(Ranker):
                     if not overlap:
                         annotation = Annotation(
                             i,
-                            cast(float, table.data.iloc[alt, i]),
-                            cast(str, performance_table.data.iloc[alt, i]),
+                            float(table.data.iloc[alt, i]),  # type: ignore
+                            str(performance_table.data.iloc[alt, i]),  # type: ignore
                             2,
                             0,
                             "left",
@@ -414,8 +413,8 @@ class RMP(Ranker):
                         )
                         ax.add_plot(annotation)
                         annotations_coord.append((
-                            cast(float, i),
-                            cast(float, table.data.iloc[alt, i]),
+                            i,
+                            float(table.data.iloc[alt, i]),  # type: ignore
                         ))
 
         # Lexicographic order
@@ -472,12 +471,12 @@ class RMP(Ranker):
         fig.add_axis(ax)
 
         # Axis parameters
-        xticks = cast(list[float], range(nb_profiles))
+        xticks = list(map(float, range(nb_profiles)))
         xticklabels = [f"$P^{profile}$" for profile in self.lexicographic_order]
         ylim = (0.5, nb_ranks + 0.5)
-        yticks = cast(list[float], range(1, nb_ranks + 1))
+        yticks = list(map(float, range(1, nb_ranks + 1)))
         yminorticks = np.arange(1, nb_ranks + 2) - 0.5
-        yticklabels = cast(list[str], range(nb_ranks, 0, -1))
+        yticklabels = list(map(str, range(nb_ranks, 0, -1)))
 
         # Draw horizontal striped background
         ax.add_plot(
@@ -513,17 +512,17 @@ class RMP(Ranker):
 
         for alt in final_ranking_sorted:
             # Current alternative's ranks
-            current_ranks = cast(list[int], ranks[alt].to_list())
+            current_ranks: list[int] = ranks[alt].to_list()
             # Update offsets (return to 0.5 if it's a new rank)
             offsets: list[float] = tolist(
-                np.where(current_ranks == previous_ranks, offsets, 0.5)  # type: ignore
+                np.where(current_ranks == previous_ranks, offsets, 0.5)
             )
             offsets = [
                 offsets[profile]
-                - cast(float, offsets_width.loc[profile, current_ranks[profile]])
+                - float(offsets_width.loc[profile, current_ranks[profile]])  # type: ignore
                 for profile in range(nb_profiles)
             ]
-            x = cast(list[float], range(nb_profiles))
+            x = list(map(float, range(nb_profiles)))
             y = current_ranks + offsets
             ax.add_plot(
                 LinePlot(
@@ -555,9 +554,9 @@ class RMP(Ranker):
 class NormalRMP(RMP):
     def __init__(
         self,
-        performance_table: PerformanceTable[NormalScale],
+        performance_table: NormalPerformanceTable,
         importance_relation: ImportanceRelation,
-        profiles: PerformanceTable[NormalScale],
+        profiles: NormalPerformanceTable,
         lexicographic_order: list[int],
     ):
         self.performance_table = performance_table

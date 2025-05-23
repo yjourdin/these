@@ -1,11 +1,8 @@
-from typing import cast
-
 import numpy as np
 import numpy.typing as npt
 from mcda.internal.core.matrices import OutrankingMatrix
 from mcda.internal.core.relations import Relation
 from mcda.relations import I, P, PreferenceStructure
-from pandas import Series
 
 from .utils import OutrankingMatrixClass, RankingSeries, outranking_numpy
 
@@ -102,26 +99,16 @@ def fitness(
         if isinstance(e, PreferenceStructure):
             return fitness_comparisons(o, e)
         elif isinstance(e, OutrankingMatrixClass):
-            e = cast(OutrankingMatrix, e)
             return fitness_comparisons_outranking(o, e)
-        elif isinstance(e, Series):
-            return fitness_comparisons_ranking(o, e)
         else:
-            raise TypeError("must be PreferenceStructure, OutrankingMatrix or Ranking")
+            return fitness_comparisons_ranking(o, e)
     elif isinstance(o, OutrankingMatrixClass):
-        o = cast(OutrankingMatrix, o)
         if isinstance(e, PreferenceStructure):
             return fitness_outranking_comparisons(o, e)
-        elif isinstance(e, (OutrankingMatrixClass, Series)):
-            return fitness_outranking(o, e)
         else:
-            raise TypeError("must be PreferenceStructure, OutrankingMatrix or Ranking")
-    elif isinstance(o, Series):
+            return fitness_outranking(o, e)
+    else:
         if isinstance(e, PreferenceStructure):
             return fitness_ranking_comparisons(o, e)
-        elif isinstance(e, (OutrankingMatrixClass, Series)):
-            return fitness_outranking(o, e)
         else:
-            raise TypeError("must be PreferenceStructure, OutrankingMatrix or Ranking")
-    else:
-        raise TypeError("must be PreferenceStructure, OutrankingMatrix or Ranking")
+            return fitness_outranking(o, e)

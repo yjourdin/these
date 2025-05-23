@@ -2,17 +2,17 @@ from collections.abc import Container, Sequence
 
 import numpy as np
 import numpy.typing as npt
-from mcda import PerformanceTable
 from mcda.relations import PreferenceStructure
 
-from ..model import FrozenModel
+from ..model import FrozenModel, Model
+from ..performance_table.type import PerformanceTableType
 from ..preference_structure.generate import preference_relation_generator
 from ..preference_structure.utils import preference_to_numeric
 
 
 def preference_path(
-    path: Sequence[FrozenModel],
-    alternatives: PerformanceTable,
+    path: Sequence[FrozenModel[Model]],
+    alternatives: PerformanceTableType,
     start_preferences: PreferenceStructure,
 ):
     result: list[PreferenceStructure] = []
@@ -48,15 +48,13 @@ def remove_reverted_changes(preference_path: list[PreferenceStructure]):
     changes: list[npt.NDArray[np.int_]] = []
     i = 1
     while i < len(preference_path):
-        changes_i = np.array(
-            [
-                preference_to_numeric(preference_path[i].elements_pairs_relations[p])  # type: ignore
-                - preference_to_numeric(
-                    preference_path[i - 1].elements_pairs_relations[p]  # type: ignore
-                )
-                for p in pairs
-            ]
-        )
+        changes_i = np.array([
+            preference_to_numeric(preference_path[i].elements_pairs_relations[p])  # type: ignore
+            - preference_to_numeric(
+                preference_path[i - 1].elements_pairs_relations[p]  # type: ignore
+            )
+            for p in pairs
+        ])
 
         if (changes_i == 0).all():
             del preference_path[i]

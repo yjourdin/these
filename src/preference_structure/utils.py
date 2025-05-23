@@ -1,15 +1,15 @@
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Any, cast, get_origin
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-from mcda.internal.core.matrices import OutrankingMatrix
+from mcda.internal.core.matrices import AdjacencyValueMatrix, OutrankingMatrix
 from mcda.internal.core.relations import Relation
 from mcda.relations import I, P
 from pandas import Series
 
-OutrankingMatrixClass = cast(Any, get_origin(OutrankingMatrix))
+OutrankingMatrixClass = AdjacencyValueMatrix
 type RankingSeries = Series[int]
 
 
@@ -27,12 +27,9 @@ def outranking_numpy_from_ranking(ranking: RankingSeries):
 
 def outranking_numpy(o: OutrankingMatrix | RankingSeries):
     if isinstance(o, OutrankingMatrixClass):
-        o = cast(OutrankingMatrix, o)
         return outranking_numpy_from_outranking(o)
-    elif isinstance(o, Series):
-        return outranking_numpy_from_ranking(o)
     else:
-        raise TypeError("must be OutrankingMatrix or Ranking")
+        return outranking_numpy_from_ranking(o)
 
 
 def divide_preferences(preferences: Iterable[Relation]):
@@ -84,7 +81,8 @@ def complementary_relation(r: P | I) -> list[P | I]:
 def complementary_preference(preferences: Iterable[Relation]) -> list[P | I]:
     relations: defaultdict[frozenset[Any], list[P | I]] = defaultdict(list)
     for r in preferences:
-        relations[frozenset((r.a, r.b))].append(cast(P | I, r))
+        if isinstance(r, P | I):
+            relations[frozenset((r.a, r.b))].append(r)
 
     result: list[P | I] = []
     for lst in relations.values():

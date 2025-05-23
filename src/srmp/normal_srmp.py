@@ -3,11 +3,12 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-from mcda import PerformanceTable
 from mcda.internal.core.scales import NormalScale
 from mcda.outranking.srmp import SRMP, ProfileWiseOutranking
 from mcda.values import Values
 from scipy.stats import rankdata
+
+from ..performance_table.normal_performance_table import NormalPerformanceTable
 
 OutrankingMatrix = npt.NDArray[np.bool_]
 
@@ -27,7 +28,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
 
     def __init__(
         self,
-        performance_table: PerformanceTable[NormalScale],
+        performance_table: NormalPerformanceTable,
         criteria_weights: npt.NDArray[np.float64],
         profile: Values[NormalScale],
     ):
@@ -61,9 +62,9 @@ class NormalSRMP(SRMP):
 
     def __init__(
         self,
-        performance_table: PerformanceTable[NormalScale],
+        performance_table: NormalPerformanceTable,
         criteria_weights: npt.NDArray[np.float64],
-        profiles: PerformanceTable[NormalScale],
+        profiles: NormalPerformanceTable,
         lexicographic_order: list[int],
     ):
         self.performance_table = performance_table
