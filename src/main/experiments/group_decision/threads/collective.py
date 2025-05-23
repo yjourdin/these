@@ -71,7 +71,6 @@ def collective_thread(
         time_left = max_time
         compromise_found = False
         while (not compromise_found) and (time_left >= 1):
-            print("Id: ", args["Atr_id"], ", It: ", it)
             future_Mc = thread_pool.submit(
                 task_thread,
                 task_Mc,
