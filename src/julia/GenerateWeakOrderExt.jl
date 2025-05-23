@@ -51,7 +51,7 @@ function generate_WE(P::Poset{T}) where {T}
 
     NV       = length(labels)
     nb_paths = ones(UInt128, NV)
-    for (i, u) ∈ Iterators.drop(Iterators.reverse(pairs(labels)), 1)
+    for (i, u) ∈ labels |> pairs |> Iterators.reverse |> Base.Fix{2}(Iterators.drop, 1)
         nb_paths[i] = sum(nb_paths[j] for j ∈ (i + 1):NV if bit_issubset(u, labels[j]))
         @debug "Vertices traversed : $(length(nb_paths) - i + 1) / $(length(nb_paths))"
     end
