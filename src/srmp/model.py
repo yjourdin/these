@@ -1,15 +1,14 @@
 from dataclasses import dataclass, replace
 from enum import auto
-from typing import Self, SupportsIndex, cast
+from typing import Self, SupportsIndex
 
 import numpy as np
 import numpy.typing as npt
-from numpy.random import Generator
 
-from ..enum import ParamFlag
-from ..model import FrozenModel, GroupModel, Model
+from ..model import FrozenModel, GroupModel, Model, ParamFlag
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..performance_table.type import PerformanceTableType
+from ..random import RNGParam
 from ..rmp.field import (
     FrozenLexicographicOrderField,
     FrozenProfilesField,
@@ -60,7 +59,7 @@ class SRMPModel(
         amp_profiles: float,
         amp_weights: float,
         nb_lex_order: int,
-        rng: Generator,
+        rng: RNGParam = None,
     ):
         return cls(
             profiles=PerturbProfile(amp_profiles)(other.profiles, rng),
@@ -73,10 +72,7 @@ class SRMPModel(
     @property
     def frozen(self):
         return FrozenSRMPModel(
-            profiles=tuple(
-                tuple(cast(list[float], x))
-                for x in tolist(self.profiles.data.to_numpy())
-            ),
+            profiles=tuple(tuple(x) for x in tolist(self.profiles.data.to_numpy())),  # type: ignore
             # weights=tuple(tolist(self.weights)),
             weights=self.weights,
             lexicographic_order=tuple(self.lexicographic_order),

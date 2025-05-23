@@ -11,7 +11,7 @@ from ....models import GroupModelEnum, model
 from ....performance_table.normal_performance_table import NormalPerformanceTable
 from ....preference_structure.generate import noisy_comparisons, random_comparisons
 from ....preference_structure.io import from_csv, to_csv
-from ....random import Seed
+from ....random import SeedLike
 from ....random import seed as random_seed
 from ....sa.main import learn_sa
 from ....test.main import test_consensus, test_distance
@@ -33,7 +33,9 @@ class ATrainTask(AbstractMTask):
     ntr: int
     Atr_id: int = field(hash=False)
 
-    def task(self, dir: DirectoryElicitation, seed: Seed, *args: Any, **kwargs: Any):
+    def task(
+        self, dir: DirectoryElicitation, seed: SeedLike, *args: Any, **kwargs: Any
+    ):
         A = NormalPerformanceTable.random(self.ntr, self.m, self.rng(seed))
 
         with self.A_train_file(dir).open("w") as f:
@@ -52,7 +54,9 @@ class ATestTask(AbstractMTask):
     nte: int
     Ate_id: int = field(hash=False)
 
-    def task(self, dir: DirectoryElicitation, seed: Seed, *args: Any, **kwargs: Any):
+    def task(
+        self, dir: DirectoryElicitation, seed: SeedLike, *args: Any, **kwargs: Any
+    ):
         A = NormalPerformanceTable.random(self.nte, self.m, self.rng(seed))
 
         with self.A_test_file(dir).open("w") as f:
@@ -74,7 +78,9 @@ class MoTask(AbstractMTask):
     fixed_lex_order: bool = field(hash=False)
     Mo_id: int = field(hash=False)
 
-    def task(self, dir: DirectoryElicitation, seed: Seed, *args: Any, **kwargs: Any):
+    def task(
+        self, dir: DirectoryElicitation, seed: SeedLike, *args: Any, **kwargs: Any
+    ):
         Mo = model(self.Mo, self.group_size).random(
             nb_profiles=self.ko,
             nb_crit=self.m,
@@ -129,7 +135,9 @@ class DTask(AbstractDTask):
     name = "D"
     dm_id: int
 
-    def task(self, dir: DirectoryElicitation, seed: Seed, *args: Any, **kwargs: Any):
+    def task(
+        self, dir: DirectoryElicitation, seed: SeedLike, *args: Any, **kwargs: Any
+    ):
         with self.Mo_file(dir).open("r") as f:
             Mo = model(self.Mo, self.group_size).from_json(f.read())
 
@@ -195,7 +203,9 @@ class MIPTask(AbstractElicitationTask):
     method: MethodEnum = field(default=MethodEnum.MIP, init=False)
     config: MIPConfig
 
-    def task(self, dir: DirectoryElicitation, seed: Seed, *args: Any, **kwargs: Any):
+    def task(
+        self, dir: DirectoryElicitation, seed: SeedLike, *args: Any, **kwargs: Any
+    ):
         with self.A_train_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
@@ -252,7 +262,9 @@ class SATask(AbstractElicitationTask):
     method: MethodEnum = field(default=MethodEnum.SA, init=False)
     config: SAConfig
 
-    def task(self, dir: DirectoryElicitation, seed: Seed, *args: Any, **kwargs: Any):
+    def task(
+        self, dir: DirectoryElicitation, seed: SeedLike, *args: Any, **kwargs: Any
+    ):
         with self.A_train_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 

@@ -1,4 +1,3 @@
-from ..random import rng
 from .argument_parser import parse_args
 from .model import RMPModel, rmp_group_model
 
@@ -11,7 +10,7 @@ if args.group_size == 1:
     model = RMPModel.random(
         nb_profiles=args.k,
         nb_crit=args.m,
-        rng=rng(args.seed),
+        rng=args.seed,
         profiles_values=args.profiles_values,
     )
 else:
@@ -20,7 +19,7 @@ else:
         group_size=args.group_size,
         nb_profiles=args.k,
         nb_crit=args.m,
-        rng=rng(args.seed),
+        rng=args.seed,
         profiles_values=args.profiles_values,
     )
 

@@ -4,7 +4,6 @@ from typing import Any, NamedTuple, cast
 import numpy as np
 import numpy.typing as npt
 from mcda.relations import I, P, PreferenceStructure
-from numpy.random import Generator
 from pulp import value  # type: ignore
 
 from ..constants import DEFAULT_MAX_TIME
@@ -12,7 +11,7 @@ from ..model import Model
 from ..models import GroupModelEnum, ModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..preference_structure.utils import complementary_preference, divide_preferences
-from ..random import Seed
+from ..random import RNGParam, SeedLike, rng_, seed
 from ..rmp.permutation import all_max_adjacent_distance
 from ..srmp.model import SRMPModel, SRMPParamFlag
 from ..utils import tolist
@@ -36,8 +35,8 @@ def learn_mip(
     k: int,
     alternatives: NormalPerformanceTable,
     comparisons: list[PreferenceStructure],
-    rng_lexicographic_order: Generator,
-    seed_mip: Seed,
+    rng_lexicographic_order: RNGParam = None,
+    seed_mip: SeedLike = seed(),
     max_time: int = DEFAULT_MAX_TIME,
     lex_order: list[int] | None = None,
     collective: bool = False,
@@ -110,7 +109,7 @@ def learn_mip(
             list(product(permutations(range(k)), repeat=NB_DM))
         )
 
-    rng_lexicographic_order.shuffle(lexicographic_orders)
+    rng_(rng_lexicographic_order).shuffle(lexicographic_orders)
 
     for lexicographic_order in lexicographic_orders:
         if time_left >= 1:

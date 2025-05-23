@@ -3,8 +3,8 @@ from pathlib import Path
 
 from ..dataclass import Dataclass
 from ..default_max_jobs import DEFAULT_MAX_JOBS
+from ..strenum import StrEnumCustom
 from .directory import RESULTS_DIR
-from ..enum import StrEnumCustom
 
 
 class ExperimentEnum(StrEnumCustom):

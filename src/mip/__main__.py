@@ -7,7 +7,7 @@ from pandas import read_csv
 from ..models import GroupModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..preference_structure.io import from_csv
-from ..random import rng, seed
+from ..random import rng_, seed
 from ..srmp.model import SRMPModel, SRMPParamFlag
 from .argument_parser import parse_args
 from .main import learn_mip

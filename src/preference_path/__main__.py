@@ -5,7 +5,6 @@ from pandas import read_csv
 
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..preference_structure.io import from_csv, to_csv
-from ..random import rng
 from ..srmp.model import SRMPModel
 from ..utils import add_filename_suffix
 from .argument_parser import parse_args
@@ -25,12 +24,8 @@ D = from_csv(args.D)
 R = [from_csv(R_file) for R_file in args.R] if args.R is not None else []
 
 
-# Create random seeds
-rng = rng(args.seed)
-
-
 # Compute model path
-model_path, time = compute_model_path(Mc, D, A, rng, args.max_time)
+model_path, time = compute_model_path(Mc, D, A, args.seed, args.max_time)
 
 
 # Write model path

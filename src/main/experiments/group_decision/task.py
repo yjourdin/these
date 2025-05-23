@@ -12,7 +12,7 @@ from ....performance_table.normal_performance_table import NormalPerformanceTabl
 from ....preference_path.main import compute_model_path, compute_preference_path
 from ....preference_structure.generate import random_comparisons
 from ....preference_structure.io import from_csv, to_csv
-from ....random import Seed, rng
+from ....random import SeedLike, rng_
 from ....random import seed as random_seed
 from ....srmp.model import SRMPModel
 from ....utils import tolist
@@ -34,7 +34,7 @@ class ATask(AbstractMTask):
     Atr_id: int = field(hash=False)
 
     def task(
-        self, dir: DirectoryGroupDecision, seed: Seed, *args: Any, **kwargs: Any
+        self, dir: DirectoryGroupDecision, seed: SeedLike, *args: Any, **kwargs: Any
     ) -> Any:
         A = NormalPerformanceTable.random(self.ntr, self.m, self.rng(seed))
 
@@ -56,7 +56,7 @@ class MoTask(AbstractMTask):
     Mo_id: int = field(hash=False)
 
     def task(
-        self, dir: DirectoryGroupDecision, seed: Seed, *args: Any, **kwargs: Any
+        self, dir: DirectoryGroupDecision, seed: SeedLike, *args: Any, **kwargs: Any
     ) -> Any:
         Mo = SRMPModel.random(nb_profiles=self.ko, nb_crit=self.m, rng=self.rng(seed))
 
@@ -67,7 +67,7 @@ class MoTask(AbstractMTask):
             f.write(Mo.to_json())
 
     @property
-    def lexicographic_order(self) -> list[int]:
+    def lexicographic_order(self):
         return tolist(
             MoTask(self.m, self.ko, True, self.Mo_id)
             .rng(self.Mo_id)
@@ -105,7 +105,7 @@ class MiTask(AbstractMiTask):
     dm_id: int
 
     def task(
-        self, dir: DirectoryGroupDecision, seed: Seed, *args: Any, **kwargs: Any
+        self, dir: DirectoryGroupDecision, seed: SeedLike, *args: Any, **kwargs: Any
     ) -> Any:
         with self.Mo_file(dir).open("r") as f:
             Mo = SRMPModel.from_json(f.read())
@@ -153,7 +153,7 @@ class DTask(AbstractDTask, MiTask):
     name = "D"
 
     def task(
-        self, dir: DirectoryGroupDecision, seed: Seed, *args: Any, **kwargs: Any
+        self, dir: DirectoryGroupDecision, seed: SeedLike, *args: Any, **kwargs: Any
     ) -> Any:
         with self.A_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
@@ -192,7 +192,7 @@ class MIPTask(AbstractDTask):
     def task(
         self,
         dir: DirectoryGroupDecision,
-        seed: Seed,
+        seed: SeedLike,
         max_time: int | None = None,
         *args: Any,
         **kwargs: Any,
@@ -207,6 +207,9 @@ class MIPTask(AbstractDTask):
 
         Acc_set: set[Relation] = set.intersection(*[set(d) for d in D])
         ACC = PreferenceStructure(list(Acc_set), validate=False)
+        with open("ACC.csv", "w") as f:
+            to_csv(ACC, f)
+        # ACC = PreferenceStructure()
 
         for d in D:
             d -= ACC
@@ -286,7 +289,7 @@ class MIPTask(AbstractDTask):
 
         return best_model is not None
 
-    def Di_file(self, dir: DirectoryGroupDecision, dm_id: Seed):
+    def Di_file(self, dir: DirectoryGroupDecision, dm_id: int):
         return dir.Di(
             self.m,
             self.ntr,
@@ -414,7 +417,7 @@ class MIPTask(AbstractDTask):
 
 
 @dataclass(frozen=True)
-class AcceptMcTask(MIPTask, MiTask):
+class AcceptMcTask(CollectiveTask, MiTask):
     name = "AcceptMc"
 
     def task(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any) -> Any:
@@ -432,7 +435,7 @@ class AcceptMcTask(MIPTask, MiTask):
             self.ko,
             A,
             [Dc],
-            rng(0),
+            rng_(0),
             0,
             self.config.max_time,
             self.lexicographic_order,
@@ -487,7 +490,7 @@ class PreferencePathTask(AcceptMcTask):
     def task(
         self,
         dir: DirectoryGroupDecision,
-        seed: Seed,
+        seed: SeedLike,
         max_time: int | None = None,
         *args: Any,
         **kwargs: Any,
@@ -557,6 +560,8 @@ class PreferencePathTask(AcceptMcTask):
                     Model_Length=len(model_path),
                 )
             )
+        
+        return len(preference_path) != 0
 
     def P_file(self, dir: DirectoryGroupDecision, t: int):
         return dir.P(
@@ -607,7 +612,7 @@ class AcceptPTask(PreferencePathTask):
             self.ko,
             A,
             [D],
-            rng(0),
+            rng_(0),
             0,
             self.config.max_time,
             self.lexicographic_order,
@@ -665,7 +670,6 @@ class CleanTask(PreferencePathTask):
 
         count = 0
         total = 0
-        print("-----")
         for it in range(1, self.it + 1):
             if (Cr_file := self.Cr_file(dir, it)).exists():
                 with Cr_file.open("r") as f:
@@ -673,14 +677,13 @@ class CleanTask(PreferencePathTask):
 
                 removed: list[Relation] = []
                 for r in R:
-                    print(r)
                     total += 1
                     best_model, _best_fitness, _time = learn_mip(
                         GroupModelEnum.SRMP,
                         self.ko,
                         A,
                         [PreferenceStructure(r)],
-                        rng(0),
+                        rng_(0),
                         0,
                         self.config.max_time,
                         self.lexicographic_order,

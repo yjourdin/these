@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 
 from ....constants import DEFAULT_MAX_TIME
-from ....random import Seed
 from ...arguments import Arguments, ExperimentEnum
 from .fields import GroupGroupParametersField, GroupMIPConfigField
 from .seeds import Seeds
@@ -13,7 +12,7 @@ class ArgumentsGroupDecision(Arguments, GroupMIPConfigField, GroupGroupParameter
         default=ExperimentEnum.GROUP_DECISION, init=False
     )
     max_time: int = DEFAULT_MAX_TIME
-    seed: Seed | None = None
+    seed: int | None = None
     nb_Atr: int = 1
     nb_Mo: int | None = None
     nb_Mi: int | None = None

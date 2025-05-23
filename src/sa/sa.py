@@ -1,14 +1,14 @@
 import csv
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass
 from math import exp
 from time import process_time
 from typing import TextIO
 
 from mcda.internal.core.interfaces import Learner
-from numpy.random import Generator
 
 from ..constants import DEFAULT_MAX_TIME
 from ..dataclass import Dataclass
+from ..random import RNG, RNGParam, rng_
 from .cooling_schedule import CoolingSchedule
 from .neighbor import Neighbor
 from .objective import Objective
@@ -22,17 +22,20 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
     objective: Objective[S]
     cooling_schedule: CoolingSchedule
     init_sol: S
-    rng: Generator
+    rng: InitVar[RNGParam] = None
     Tf: float | None = None
     max_time: int = DEFAULT_MAX_TIME
     max_it: int | None = None
     max_it_non_improving: int | None = None
     log_file: TextIO | None = None
 
+    def __post_init__(self, rng: RNGParam):
+        self._rng = rng_(rng)
+
     def _learn(
         self,
         initial_sol: S,
-        rng: Generator,
+        rng: RNG,
     ):
         # Initialise
         temp = self.T0
@@ -129,4 +132,4 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
         return self.best_sol
 
     def learn(self):
-        return self._learn(self.init_sol, self.rng)
+        return self._learn(self.init_sol, self._rng)

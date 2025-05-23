@@ -6,7 +6,7 @@ from time import process_time
 from typing import Any, ClassVar, NamedTuple, TypeGuard
 
 from ..dataclass import FrozenDataclass
-from ..random import Seed, SeedMixin
+from ..random import SeedLike, SeedMixin
 from .abstract_task import AbstractTask
 from .csv_files import TaskFields
 from .directory import Directory
@@ -72,7 +72,7 @@ class Task(FrozenDataclass, AbstractTask):
 
 @dataclass(frozen=True)
 class SeedTask(Task, SeedMixin):
-    def seed(self, seed: Seed) -> Seed:
+    def seed(self, seed: SeedLike) -> SeedLike:
         return abs(hash((self, seed)))
 
     def log(self, fields: type[TaskFields], time: float, *args: Any, **kwargs: Any):

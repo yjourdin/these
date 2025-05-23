@@ -1,9 +1,11 @@
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
-from multiprocessing.connection import wait
+from multiprocessing.connection import Connection, wait
 from queue import Empty
 from typing import cast
+
+from typing_extensions import TypeIs
 
 from ...constants import SENTINEL
 from ..connection import (
@@ -22,6 +24,9 @@ def worker_manager(
     thread_pool: ThreadPoolExecutor,
     stop_error: bool,
 ):
+    def is_stop_connection(connection: Connection) -> TypeIs[ManagerStopConnection]:
+        return connection == stop_connection
+
     connections = set(worker_connections) | {stop_connection}
     waiting_connections: set[ManagerWorkerConnection] = set(worker_connections)
     working_connections: dict[ManagerWorkerConnection, ManagerTaskConnection] = {}
@@ -50,22 +55,21 @@ def worker_manager(
         if (not stop) and working_connections:
             timeout = 1 if waiting_connections else None
 
-            for connection in wait(connections, timeout=timeout):
-                connection = cast(
-                    ManagerWorkerConnection | ManagerStopConnection, connection
-                )
+            for connection in cast(
+                list[ManagerWorkerConnection | ManagerStopConnection],
+                wait(connections, timeout=timeout),
+            ):
                 try:
                     obj = connection.recv()
                 except EOFError:
                     connections.remove(connection)
                 else:
-                    if obj == SENTINEL and (
-                        (connection == stop_connection) or stop_error
+                    if is_stop_connection(connection) or (
+                        obj == SENTINEL and stop_error
                     ):
                         stop = True
                         break
                     else:
-                        connection = cast(ManagerWorkerConnection, connection)
                         working_connections[connection].send(obj)
                         del working_connections[connection]
                         waiting_connections.add(connection)

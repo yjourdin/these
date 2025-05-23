@@ -1,8 +1,7 @@
 from enum import Enum, auto
 
 from .dataclass import Dataclass
-from .enum import ParamFlag, StrEnumCustom
-from .model import Model
+from .model import Model, ParamFlag
 from .random_model.model import RandomGroup, RandomModel
 from .rmp.model import RMPParamFlag, rmp_group_model, rmp_model, rmp_model_from_name
 from .srmp.model import (
@@ -11,6 +10,7 @@ from .srmp.model import (
     srmp_model,
     srmp_model_from_name,
 )
+from .strenum import StrEnumCustom
 
 
 class ModelEnum(StrEnumCustom):

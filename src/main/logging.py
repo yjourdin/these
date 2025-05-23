@@ -1,4 +1,11 @@
+
+from multiprocessing import Queue
+from typing import Any
+
 from .directory import Directory
+
+
+type LoggingQueue = "Queue[Any]"
 
 
 def create_logging_config_dict(dir: Directory):

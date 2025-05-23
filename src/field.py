@@ -1,9 +1,7 @@
 from abc import ABC
 from typing import Any
 
-from numpy.random import Generator
-
-from .random import Random
+from .random import Random, RNGParam
 from .utils import compose
 
 
@@ -58,7 +56,7 @@ class RandomField(Random, Field):
     ) -> "RandomField": ...
 
     @staticmethod
-    def field_random(rng: Generator, *args: Any, **kwargs: Any) -> Any: ...
+    def field_random(rng: RNGParam = None, *args: Any, **kwargs: Any) -> Any: ...
 
 
 def random_field(fieldname: str):

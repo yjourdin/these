@@ -1,6 +1,6 @@
 from enum import auto
 
-from .enum import StrEnumCustom
+from .strenum import StrEnumCustom
 
 
 class MethodEnum(StrEnumCustom):

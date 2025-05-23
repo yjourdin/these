@@ -4,10 +4,9 @@ from typing import Any
 
 from mcda.internal.core.relations import Relation
 from mcda.relations import I, P, PreferenceStructure
-from numpy.random import Generator
 
 from .julia.function import generate_weak_order
-from .random import Random, seed
+from .random import Random, RNGParam, seed
 
 
 class WeakOrder[Element](MutableMapping[Element, int], Random):
@@ -46,6 +45,8 @@ class WeakOrder[Element](MutableMapping[Element, int], Random):
         return PreferenceStructure(result, validate=False)
 
     @classmethod
-    def random(cls, labels: list[Element], rng: Generator, *args: Any, **kwargs: Any):
+    def random(
+        cls, labels: list[Element], rng: RNGParam = None, *args: Any, **kwargs: Any
+    ):
         scores = generate_weak_order(len(labels), seed(rng))
         return cls(scores, labels)

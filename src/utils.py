@@ -3,7 +3,7 @@ from enum import Enum
 from functools import partial, reduce
 from itertools import chain, count
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -42,7 +42,7 @@ def print_list(lst: Iterable[str | int]):
     return result
 
 
-def to_str(o: Any):
+def to_str(o: Any) -> str:
     match o:
         case list():
             o_str = [to_str(i) for i in o]
@@ -123,6 +123,12 @@ def add_filename_suffix(filename: Path, suffix: str):
 
 def round_epsilon(x: float, epsilon: float = EPSILON) -> float:
     return np.round(x / EPSILON) * EPSILON
+
+
+@overload
+def tolist(a: npt.NDArray[np.float64]) -> list[float]: ...
+@overload
+def tolist(a: npt.NDArray[np.int_]) -> list[int]: ...
 
 
 def tolist(a: npt.NDArray[Any]) -> list[Any]:

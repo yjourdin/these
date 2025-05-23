@@ -1,4 +1,4 @@
-from ..random import Seed
+from ..random import SeedLike
 from .abstract_task import AbstractTask
 from .csv_file import CSVFile, CSVFields
 
@@ -7,7 +7,7 @@ from .csv_file import CSVFile, CSVFields
 class TaskFields(CSVFields):
     Task: AbstractTask
     Time: float
-    Seed: Seed | None
+    Seed: SeedLike | None
 
 
 class TaskCSVFile(CSVFile[TaskFields]):

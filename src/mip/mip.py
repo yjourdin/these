@@ -7,10 +7,10 @@ from pulp import LpProblem, LpSolver, LpVariable, getSolver, listSolvers  # type
 
 from ..constants import DEFAULT_MAX_TIME
 from ..dataclass import Dataclass
-from ..random import rng
+from ..random import SeedLike
 from ..random import seed as random_seed
 
-type D[T: LpVariable | D] = dict[Any, T] # type: ignore
+type D[T: LpVariable | D] = dict[Any, T]  # type: ignore
 
 
 class MIPVars(TypedDict): ...
@@ -20,28 +20,28 @@ class MIPVars(TypedDict): ...
 class MIPParams(Dataclass): ...
 
 
-@dataclass
+@dataclass(kw_only=True)
 class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
     vars: Vars = field(init=False)
     params: Params = field(init=False)
     prob: LpProblem = field(init=False)
     objective: float | None = field(init=False)
     solver: LpSolver = field(init=False)
-    time_limit: InitVar[float]
-    seed: InitVar[int | None]
-    verbose: InitVar[bool]
+    time_limit: InitVar[float] = DEFAULT_MAX_TIME
+    seed: InitVar[SeedLike | None] = None
+    verbose: InitVar[bool] = False
 
     def __post_init__(
         self,
-        time_limit: float = DEFAULT_MAX_TIME,
-        seed: int | None = None,
-        verbose: bool = False,
+        time_limit: float,
+        seed: int | None,
+        verbose: bool,
         *args: Any,
         **kw: Any,
     ):
         self.prob = LpProblem()
         self.objective = None
-        seed = seed if seed is not None else random_seed(rng())
+        seed = random_seed(seed)
 
         kwargs: dict[str, Any] = {"msg": verbose, "threads": 1, "timeLimit": time_limit}
 

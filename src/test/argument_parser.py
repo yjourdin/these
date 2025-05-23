@@ -1,7 +1,7 @@
 import argparse
 from sys import stdout
 
-from ..enum import StrEnumCustom
+from ..strenum import StrEnumCustom
 from .test import DistanceRankingEnum
 
 

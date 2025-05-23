@@ -5,7 +5,6 @@ from multiprocessing import Process, Queue, set_start_method
 from multiprocessing.connection import Connection
 from queue import LifoQueue
 from threading import Thread
-from typing import Any
 
 from ..constants import SENTINEL
 from .argument_parser import parse_args
@@ -16,7 +15,7 @@ from .experiments.elicitation.directory import DirectoryElicitation
 from .experiments.elicitation.main import main as main_elicitation
 from .experiments.group_decision.directory import DirectoryGroupDecision
 from .experiments.group_decision.main import main as main_group_decision
-from .logging import create_logging_config_dict
+from .logging import LoggingQueue, create_logging_config_dict
 from .threads.csv_file import csv_file_thread
 from .threads.logger import logger_thread
 from .threads.stop import stopping_thread
@@ -56,7 +55,7 @@ if not args.extend:
 
 
 # Create logging queue
-logging_queue: "Queue[Any]" = Queue()
+logging_queue: LoggingQueue = Queue()
 
 
 # Start worker processes
@@ -142,7 +141,7 @@ with ThreadPoolExecutor(300) as thread_pool:
     logging_thread.join()
 
     for csv_file in dir.itercsv():
-        csv_file.queue.put(SENTINEL)
+        csv_file.close()
 
     for csv_thread in csv_threads:
         csv_thread.join()

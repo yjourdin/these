@@ -4,7 +4,6 @@ from multiprocessing import Queue
 from pathlib import Path
 from typing import ClassVar, TypedDict
 
-from ..constants import SENTINEL_TYPE
 from ..dataclass import FrozenDataclass
 from ..utils import dict_str
 
@@ -16,7 +15,7 @@ class CSVFields(TypedDict): ...
 class CSVFile[Fields: CSVFields](FrozenDataclass):
     path: Path
     fields: ClassVar[type[Fields]]  # type: ignore
-    queue: "Queue[dict[str, str] | SENTINEL_TYPE]" = field(default_factory=Queue)
+    queue: "Queue[dict[str, str]]" = field(default_factory=Queue)
 
     @cached_property
     def fieldnames(self):
@@ -24,3 +23,6 @@ class CSVFile[Fields: CSVFields](FrozenDataclass):
 
     def writerow(self, fields: Fields):
         self.queue.put(dict_str(fields))
+
+    def close(self):
+        self.queue.put({})

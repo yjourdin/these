@@ -1,15 +1,15 @@
 import logging
 import logging.handlers
-from multiprocessing import Queue
-from multiprocessing.connection import Connection
-from typing import Any, cast
 
 from ..constants import SENTINEL
+from .connection import ProcessWorkerConnection
 from .directory import Directory
-from .task import Task
+from .logging import LoggingQueue
 
 
-def worker(connection: Connection, logging_queue: "Queue[Any]", dir: Directory):
+def worker(
+    connection: ProcessWorkerConnection, logging_queue: LoggingQueue, dir: Directory
+):
     logging_qh = logging.handlers.QueueHandler(logging_queue)
     logging_root = logging.getLogger()
     logging_root.setLevel(logging.INFO)
@@ -20,8 +20,6 @@ def worker(connection: Connection, logging_queue: "Queue[Any]", dir: Directory):
 
     for task, args in iter(connection.recv, SENTINEL):
         try:
-            task = cast(Task, task)
-            args = cast(dict[str, Any], args)
             logger.info("start " + str(task))
             connection.send(task(dir, **args))
             logger.info("end   " + str(task))

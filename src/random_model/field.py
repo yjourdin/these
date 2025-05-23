@@ -1,20 +1,18 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from numpy.random import Generator
-
 from ..field import RandomField, random_field
-from ..random import Seed, seed
+from ..random import RNGParam, seed
 
 
 @random_field("seed")
 @dataclass
 class SeedField(RandomField):
-    seed: Seed = field(default=seed())
+    seed: int = field(default=seed())
 
     @staticmethod
     def field_random(
-        rng: Generator,
+        rng: RNGParam = None,
         *args: Any,
         **kwargs: Any,
     ):

@@ -8,10 +8,10 @@ from typing import cast
 import numpy as np
 import numpy.typing as npt
 from numba import njit  # type: ignore
-from numpy.random import Generator
 
 from ..dataclass import Dataclass
 from ..performance_table.type import PerformanceTableType
+from ..random import RNGParam, rng_
 from ..rmp.importance_relation import ImportanceRelation
 from ..rmp.model import RMPModel
 from ..rmp.permutation import swap
@@ -20,7 +20,7 @@ from ..srmp.model import SRMPModel
 
 class Neighbor[S](ABC):
     @abstractmethod
-    def __call__(self, sol: S, rng: Generator) -> S: ...
+    def __call__(self, sol: S, rng: RNGParam = None) -> S: ...
 
 
 class RandomNeighbor[S](Neighbor[S]):
@@ -36,7 +36,8 @@ class RandomNeighbor[S](Neighbor[S]):
         else:
             self.prob = None
 
-    def __call__(self, sol: S, rng: Generator):
+    def __call__(self, sol: S, rng: RNGParam = None):
+        rng = rng_(rng)
         i = rng.choice(len(self.neighbors), p=self.prob)
         return self.neighbors[i](sol, rng)
 
@@ -45,7 +46,8 @@ class RandomNeighbor[S](Neighbor[S]):
 class NeighborProfile[S: SRMPModel | RMPModel](Neighbor[S], Dataclass):
     amp: float = 1
 
-    def __call__(self, sol: S, rng: Generator):
+    def __call__(self, sol: S, rng: RNGParam = None):
+        rng = rng_(rng)
         profiles = deepcopy(sol.profiles)
 
         crit_ind = rng.choice(len(profiles.criteria))
@@ -68,7 +70,8 @@ class NeighborProfileDiscretized[S: SRMPModel | RMPModel](Neighbor[S], Dataclass
     values: PerformanceTableType
     local: bool = False
 
-    def __call__(self, sol: S, rng: Generator):
+    def __call__(self, sol: S, rng: RNGParam = None):
+        rng = rng_(rng)
         profiles = deepcopy(sol.profiles)
 
         crit_ind = rng.choice(len(profiles.criteria))
@@ -107,7 +110,8 @@ class NeighborProfileDiscretized[S: SRMPModel | RMPModel](Neighbor[S], Dataclass
 class NeighborWeightAmp[S: SRMPModel](Neighbor[S], Dataclass):
     amp: float = 1
 
-    def __call__(self, sol: S, rng: Generator):
+    def __call__(self, sol: S, rng: RNGParam = None):
+        rng = rng_(rng)
         weights = deepcopy(sol.weights)
 
         crit_ind = rng.choice(len(weights))
@@ -125,7 +129,8 @@ class NeighborWeightDiscretized[S: SRMPModel](Neighbor[S]):
     max: int
     local: bool = False
 
-    def __call__(self, sol: S, rng: Generator):
+    def __call__(self, sol: S, rng: RNGParam = None):
+        rng = rng_(rng)
         weights = deepcopy(sol.weights)
 
         crit_ind = rng.choice(len(weights))
@@ -255,7 +260,9 @@ def compute_alpha(subset_sum: npt.NDArray[np.float64], weight: float, increase: 
 
 @dataclass
 class NeighborWeight[S: SRMPModel](Neighbor[S]):
-    def __call__(self, sol: S, rng: Generator):
+    def __call__(self, sol: S, rng: RNGParam = None):
+        rng = rng_(rng)
+
         crit_ind = rng.choice(len(sol.weights))
 
         weight = sol.weights[crit_ind]
@@ -267,7 +274,7 @@ class NeighborWeight[S: SRMPModel](Neighbor[S]):
         eps = np.min(diffs, initial=1, where=diffs != 0)
 
         d = rng.choice([-1, 0, 1])
-        
+
         s = rng.integers(1, len(subset_sum))
 
         i = rng.choice(len(subset_sum))
@@ -296,7 +303,8 @@ class NeighborWeight[S: SRMPModel](Neighbor[S]):
 class NeighborImportanceRelation[S: RMPModel](Neighbor[S]):
     local: bool = False
 
-    def __call__(self, sol: S, rng: Generator):
+    def __call__(self, sol: S, rng: RNGParam = None):
+        rng = rng_(rng)
         importance_relation: ImportanceRelation = deepcopy(sol.importance_relation)
 
         keys = list(importance_relation)
@@ -328,7 +336,8 @@ class NeighborImportanceRelation[S: RMPModel](Neighbor[S]):
 class NeighborLexOrder[S: SRMPModel | RMPModel](Neighbor[S], Dataclass):
     local: bool = False
 
-    def __call__(self, sol: S, rng: Generator):
+    def __call__(self, sol: S, rng: RNGParam = None):
+        rng = rng_(rng)
         lexicographic_order = deepcopy(sol.lexicographic_order)
 
         if self.local:

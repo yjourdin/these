@@ -4,12 +4,11 @@ from itertools import chain, product
 from typing import cast
 
 import numpy as np
-from numpy.random import Generator
+from pandas import Series
 
-from ..constants import DECIMALS
 from ..dataclass import Dataclass
 from ..performance_table.type import PerformanceTableType
-from ..random import rng
+from ..random import RNGParam, rng_
 from ..rmp.permutation import adjacent_swap
 from ..sa.neighbor import weights_local_change
 from ..srmp.model import FrozenSRMPModel
@@ -24,7 +23,10 @@ class Neighborhood[S](ABC):
 @dataclass
 class NeighborhoodCombined[S](Neighborhood[S], Dataclass):
     neighborhoods: list[Neighborhood[S]] = field(default_factory=list)
-    rng: Generator = rng()
+    rng: InitVar[RNGParam] = None
+
+    def __post_init__(self, rng: RNGParam = None):
+        self._rng = rng_(rng)
 
     def __call__(self, sol: S):
         neighbors = list(
@@ -32,7 +34,7 @@ class NeighborhoodCombined[S](Neighborhood[S], Dataclass):
                 neighborhood(sol) for neighborhood in self.neighborhoods
             )
         )
-        self.rng.shuffle(neighbors)  # type: ignore
+        self._rng.shuffle(neighbors)  # type: ignore
         return neighbors
 
 
@@ -49,10 +51,11 @@ class NeighborhoodProfile(Neighborhood[FrozenSRMPModel], Dataclass):
 
         for profile_ind, profile in enumerate(sol.profiles):
             for crit_ind, crit in self.midpoints.data.items():
+                crit = cast("Series[float]", crit)
                 crit_ind = cast(int, crit_ind)
-                indices = (
-                    np.searchsorted(crit.to_numpy(), profile[crit_ind], "left") - 1,
-                    np.searchsorted(crit.to_numpy(), profile[crit_ind], "right"),
+                indices: tuple[int, int] = (
+                    np.searchsorted(crit.to_numpy(), profile[crit_ind], "left") - 1,  # type: ignore
+                    np.searchsorted(crit.to_numpy(), profile[crit_ind], "right"),  # type: ignore
                 )
 
                 bounds: list[float] = [0, 1]
@@ -91,12 +94,19 @@ class NeighborhoodWeight(Neighborhood[FrozenSRMPModel]):
         result: list[FrozenSRMPModel] = []
 
         for crit, increase in product(range(len(sol.weights)), [False, True]):
-            if (
-                weights := weights_local_change(np.array(sol.weights), crit, increase)
-            ) is not None:
-                if np.array_equal(weights := weights.round(DECIMALS), sol.weights):
-                    result.append(replace(sol, weights=weights))
+            result.append(
+                replace(
+                    sol,
+                    weights=weights_local_change(np.array(sol.weights), crit, increase),
+                )
+            )
+            # if (
+            #     weights := weights_local_change(np.array(sol.weights), crit, increase)
+            # ) is not None:
+            #     if np.array_equal(weights := weights.round(DECIMALS), sol.weights):
+            #         result.append(replace(sol, weights=weights))
 
+        # print(result)
         return result
 
 

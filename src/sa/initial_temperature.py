@@ -3,8 +3,8 @@ from math import log
 
 import numpy as np
 import pandas as pd
-from numpy.random import Generator
 
+from ..random import RNGParam
 from .neighbor import Neighbor
 from .objective import Objective
 from .random_walk import RandomWalk
@@ -15,7 +15,7 @@ def initial_temperature[S](
     neighbor: Neighbor[S],
     objective: Objective[S],
     init_sol: S,
-    rng: Generator,
+    rng: RNGParam = None,
     max_time: int | None = None,
     max_it: int | None = None,
 ):

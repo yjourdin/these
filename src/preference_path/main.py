@@ -1,14 +1,12 @@
 from collections.abc import Container, Sequence
 
 from mcda.relations import PreferenceStructure
-from numpy.random import Generator
-
-from ..performance_table.type import PerformanceTableType
 
 from ..constants import DEFAULT_MAX_TIME
 from ..model import FrozenModel, Model
+from ..performance_table.type import PerformanceTableType
 from ..preference_structure.fitness import fitness_comparisons_ranking
-from ..random import rng
+from ..random import RNGParam
 from ..srmp.model import FrozenSRMPModel, SRMPModel
 from .gbfs import GBFS
 from .neighborhood import (
@@ -25,7 +23,7 @@ def compute_model_path(
     start_model: SRMPModel,
     target_preferences: PreferenceStructure,
     alternatives: PerformanceTableType,
-    rng: Generator = rng(),
+    rng: RNGParam = None,
     max_time: int = DEFAULT_MAX_TIME,
     fixed_lex_order: bool = False,
 ):
@@ -33,7 +31,7 @@ def compute_model_path(
 
     neighborhoods: list[Neighborhood[FrozenSRMPModel]] = [
         NeighborhoodProfile(alternatives),
-        NeighborhoodWeight(len(alternatives.criteria)), # type: ignore
+        NeighborhoodWeight(),
     ]
 
     if not fixed_lex_order:

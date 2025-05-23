@@ -47,7 +47,7 @@ def TaskPipe():
 
 # Worker connections
 
-type ProcessWorkerConnection = Connection[TaskResult, WorkerArguments]
+type ProcessWorkerConnection = Connection[TaskResult | SENTINEL_TYPE, WorkerArguments]
 type ManagerWorkerConnection = Connection[WorkerArguments | SENTINEL_TYPE, TaskResult]
 
 

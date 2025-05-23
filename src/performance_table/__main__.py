@@ -1,4 +1,3 @@
-from ..random import rng
 from .argument_parser import parse_args
 from .normal_performance_table import NormalPerformanceTable
 
@@ -7,7 +6,7 @@ args = parse_args()
 
 
 # Create performance table
-A = NormalPerformanceTable.random(args.n, args.m, rng(args.seed))
+A = NormalPerformanceTable.random(args.n, args.m, args.seed)
 
 
 # Write results

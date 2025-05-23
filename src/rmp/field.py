@@ -2,14 +2,13 @@ import ast
 from dataclasses import dataclass
 from typing import Any
 
-from numpy.random import Generator
-
 from ..field import (
     RandomField,
     random_field,
     random_group_field,
 )
 from ..performance_table.normal_performance_table import NormalPerformanceTable
+from ..random import RNGParam, rng_
 from ..utils import tolist
 from .importance_relation import ImportanceRelation
 from .profile import random_profiles
@@ -25,14 +24,14 @@ class ProfilesField(RandomField):
         return NormalPerformanceTable(o)
 
     @staticmethod
-    def field_encode(o: Any):
+    def field_encode(o: Any):  # type: ignore
         return tolist(o.data.values)
 
     @staticmethod
     def field_random(
         nb_profiles: int,
         nb_crit: int,
-        rng: Generator,
+        rng: RNGParam = None,
         profiles_values: NormalPerformanceTable | None = None,
         *args: Any,
         **kwargs: Any,
@@ -78,7 +77,7 @@ class ImportanceRelationField(RandomField):
         return {str(list(label)): int(score) for label, score in o.items()}
 
     @staticmethod
-    def field_random(nb_crit: int, rng: Generator, *args: Any, **kwargs: Any):
+    def field_random(nb_crit: int, rng: RNGParam = None, *args: Any, **kwargs: Any):
         return ImportanceRelation.random(nb_crit, rng)
 
 
@@ -94,8 +93,8 @@ class LexicographicOrderField(RandomField):
     lexicographic_order: list[int]
 
     @staticmethod
-    def field_random(nb_profiles: int, rng: Generator, *args: Any, **kwargs: Any):
-        return tolist(rng.permutation(nb_profiles))
+    def field_random(nb_profiles: int, rng: RNGParam = None, *args: Any, **kwargs: Any):
+        return tolist(rng_(rng).permutation(nb_profiles))
 
 
 @random_field("profiles")

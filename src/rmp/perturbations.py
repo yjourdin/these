@@ -2,10 +2,10 @@ from copy import deepcopy
 from dataclasses import InitVar, dataclass
 
 import numpy as np
-from numpy.random import Generator
 
 from ..dataclass import Dataclass
 from ..performance_table.normal_performance_table import NormalPerformanceTable
+from ..random import RNGParam, rng_
 from ..utils import tolist
 from .importance_relation import ImportanceRelation
 from .permutation import all_max_adjacent_distance
@@ -15,11 +15,11 @@ from .permutation import all_max_adjacent_distance
 class PerturbProfile(Dataclass):
     amp: float
 
-    def __call__(self, profiles: NormalPerformanceTable, rng: Generator):
+    def __call__(self, profiles: NormalPerformanceTable, rng: RNGParam = None):
         profiles_numpy = profiles.data.to_numpy()
         return NormalPerformanceTable(
             np.sort(
-                rng.uniform(
+                rng_(rng).uniform(
                     np.maximum(profiles_numpy - self.amp, 0),
                     np.minimum(profiles_numpy + self.amp, 1),
                 ),
@@ -32,7 +32,8 @@ class PerturbProfile(Dataclass):
 class PerturbImportanceRelation(Dataclass):
     nb: int
 
-    def __call__(self, importance_relation: ImportanceRelation, rng: Generator):
+    def __call__(self, importance_relation: ImportanceRelation, rng: RNGParam = None):
+        rng = rng_(rng)
         importance_relation = deepcopy(importance_relation)
 
         for _ in range(self.nb):
@@ -66,11 +67,11 @@ class PerturbLexOrder(Dataclass):
     def __post_init__(self, k: int, nb: int):
         self.all_permutations = all_max_adjacent_distance(list(range(k)), nb)
 
-    def __call__(self, lex_order: list[int], rng: Generator) -> list[int]:
+    def __call__(self, lex_order: list[int], rng: RNGParam = None) -> list[int]:
         lex_order_numpy = np.array(lex_order, dtype=np.int_)
 
         permutation = list(
-            tuple(self.all_permutations)[rng.choice(len(self.all_permutations))]
+            tuple(self.all_permutations)[rng_(rng).choice(len(self.all_permutations))]
         )
 
         return tolist(lex_order_numpy[permutation])

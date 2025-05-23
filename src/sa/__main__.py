@@ -4,7 +4,7 @@ from pandas import read_csv
 
 from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..preference_structure.io import from_csv
-from ..random import rng
+from ..random import rng_
 from .argument_parser import parse_args
 from .main import learn_sa
 
@@ -20,9 +20,9 @@ D = from_csv(args.D)
 
 # Create random seeds
 rng_init, rng_sa = (
-    (rng(args.seed_init), rng(args.seed_sa))
+    (args.seed_init, args.seed_sa)
     if (args.seed_init is not None) and (args.seed_sa is not None)
-    else rng(args.seed).spawn(2)
+    else rng_(args.seed).spawn(2)
 )
 
 

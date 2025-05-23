@@ -1,4 +1,4 @@
-from enum import Flag, StrEnum
+from enum import StrEnum
 from typing import Any
 
 
@@ -11,6 +11,3 @@ class StrEnumCustom(StrEnum):
                 if member.value == value:
                     return member
         return None
-
-
-class ParamFlag(Flag): ...

@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from time import process_time
 
 from mcda.internal.core.interfaces import Learner
-from numpy.random import Generator
 
 from ..dataclass import Dataclass
+from ..random import RNGParam, rng_
 from .neighbor import Neighbor
 from .objective import Objective
 
@@ -16,7 +16,7 @@ class RandomWalk[S](Learner[S], Dataclass):
     neighbor: Neighbor[S]
     objective: Objective[S]
     init_sol: S
-    rng: Generator
+    rng: RNGParam = None
     max_time: int | None = None
     max_it: int | None = None
     log_file: io.StringIO | None = None
@@ -24,8 +24,9 @@ class RandomWalk[S](Learner[S], Dataclass):
     def _learn(
         self,
         initial_sol: S,
-        rng: Generator,
+        rng: RNGParam = None,
     ):
+        rng = rng_(rng)
         # Initialise
         sol = initial_sol
         obj = self.objective(sol)

@@ -3,13 +3,13 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-from numpy.random import Generator
 
 from ..field import (
     RandomField,
     random_field,
     random_group_field,
 )
+from ..random import RNGParam
 from ..utils import tolist
 from .weight import frozen_importance_relation_from_weights, random_weights
 
@@ -24,11 +24,11 @@ class WeightsField(RandomField):
         return np.array(o)
 
     @staticmethod
-    def field_encode(o: Any):
+    def field_encode(o: Any):  # type: ignore
         return tolist(o)
 
     @staticmethod
-    def field_random(nb_crit: int, rng: Generator, *args: Any, **kwargs: Any):
+    def field_random(nb_crit: int, rng: RNGParam = None, *args: Any, **kwargs: Any):
         return random_weights(nb_crit, rng)
 
 

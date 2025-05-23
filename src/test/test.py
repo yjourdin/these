@@ -1,9 +1,8 @@
 from collections.abc import Collection
 from enum import Enum, member
-from typing import Any, NamedTuple, cast
+from typing import Any, NamedTuple
 
 import numpy as np
-import numpy.typing as npt
 from scipy.stats import kendalltau, spearmanr
 
 from ..model import GroupModel, Model
@@ -31,7 +30,7 @@ class DistanceRankingEnum(Enum):
 
     @member
     def SPEARMAN(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
-        return cast(float, spearmanr(Ra, Rb).statistic)
+        return float(spearmanr(Ra, Rb).statistic)
 
     def __call__(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
         return self.value(self, Ra, Rb)
@@ -80,25 +79,15 @@ def consensus_group_model(
     dm_rankings = [model[dm].rank_series(performance_table) for dm in DMS]
     collective_ranking = model.collective_model.rank_series(performance_table)
 
-    between_individual = cast(
-        npt.NDArray[np.float64],
-        np.array([
-            [
-                distance(dm_rankings[dm_a], dm_rankings[dm_b])
-                for dm_b in DMS
-                if dm_b != dm_a
-            ]
-            for dm_a in DMS
-        ]),
-    )
-    individual = cast(
-        npt.NDArray[np.float64], (between_individual.sum(1) / (NB_DM - 1))
-    )
-    among_dm = cast(float, individual.sum() / NB_DM)
-    between_individual_and_collective = cast(
-        npt.NDArray[np.float64],
-        np.array([distance(dm_rankings[dm_a], collective_ranking) for dm_a in DMS]),
-    )
+    between_individual = np.array([
+        [distance(dm_rankings[dm_a], dm_rankings[dm_b]) for dm_b in DMS if dm_b != dm_a]
+        for dm_a in DMS
+    ])
+    individual = between_individual.sum(1) / (NB_DM - 1)
+    among_dm = individual.sum() / NB_DM
+    between_individual_and_collective = np.array([
+        distance(dm_rankings[dm_a], collective_ranking) for dm_a in DMS
+    ])
     collective = between_individual_and_collective.sum() / NB_DM
 
     return ConsensusResult(

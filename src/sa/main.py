@@ -1,12 +1,12 @@
-from typing import Any, NamedTuple, TextIO
+from typing import NamedTuple, TextIO
 
 from mcda.relations import PreferenceStructure
-from numpy.random import Generator
 
 from ..constants import DEFAULT_MAX_TIME
 from ..model import Model
 from ..models import ModelEnum
 from ..performance_table.normal_performance_table import NormalPerformanceTable
+from ..random import RNGParam, rng_
 from ..rmp.model import RMPModel
 from ..srmp.model import SRMPModel
 from ..utils import midpoints
@@ -16,8 +16,8 @@ from .neighbor import (
     NeighborImportanceRelation,
     NeighborLexOrder,
     NeighborProfileDiscretized,
-    NeighborWeightAmp,
     NeighborWeight,
+    NeighborWeightAmp,
     RandomNeighbor,
 )
 from .objective import FitnessObjective
@@ -38,8 +38,8 @@ def learn_sa(
     comparisons: PreferenceStructure,
     alpha: float,
     amp: float,
-    rng_init: Generator,
-    rng_sa: Generator,
+    rng_init: RNGParam = None,
+    rng_sa: RNGParam = None,
     lex_order: list[int] | None = None,
     t0: float | None = None,
     accept: float | None = None,
@@ -74,7 +74,7 @@ def learn_sa(
     if lex_order:
         init_sol.lexicographic_order = lex_order
 
-    neighbors: list[Neighbor[Any]] = []
+    neighbors: list[Neighbor[SRMPModel | RMPModel]] = []
     prob: list[int] = []
 
     neighbors.append(NeighborProfileDiscretized(midpoints(alternatives)))
@@ -86,9 +86,9 @@ def learn_sa(
             prob.append(2**M)
         case ModelEnum.SRMP:
             if amp > 1:
-                neighbors.append(NeighborWeight()) # type: ignore
+                neighbors.append(NeighborWeight())  # type: ignore
             else:
-                neighbors.append(NeighborWeightAmp(amp)) # type: ignore
+                neighbors.append(NeighborWeightAmp(amp))  # type: ignore
             prob.append(M)
             pass
         case _:
@@ -103,6 +103,8 @@ def learn_sa(
     objective = FitnessObjective(alternatives, comparisons)
 
     cooling_schedule = GeometricSchedule(alpha)
+
+    rng_sa = rng_(rng_sa)
 
     if t0 is None:
         assert accept

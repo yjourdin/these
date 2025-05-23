@@ -2,6 +2,7 @@ from abc import abstractmethod
 from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass, field
+from enum import Flag
 from typing import Any, ClassVar, Self, SupportsIndex, overload
 
 import numpy as np
@@ -9,15 +10,17 @@ import numpy.typing as npt
 from mcda.internal.core.scales import DiscreteQuantitativeScale, PreferenceDirection
 from mcda.internal.core.values import CommensurableValues, Ranking
 from mcda.relations import PreferenceStructure
-from numpy.random import Generator
 from pandas import Series
 
 from .aggregator import agg_float, agg_rank
 from .dataclass import RandomDataclass, RandomFrozenDataclass
 from .performance_table.type import PerformanceTableType
 from .preference_structure.fitness import fitness_comparisons_ranking
-from .random import Random
+from .random import Random, RNGParam
 from .utils import list_replace
+
+
+class ParamFlag(Flag): ...
 
 
 @dataclass
@@ -52,7 +55,9 @@ class Model(RandomDataclass):
         )
 
     @classmethod
-    def from_reference(cls, other: Self, rng: Generator, *args: Any, **kwargs: Any):
+    def from_reference(
+        cls, other: Self, rng: RNGParam = None, *args: Any, **kwargs: Any
+    ):
         return deepcopy(other)
 
 
@@ -145,5 +150,5 @@ class Group[M: Model](list[M], GroupModel[M], Random):  # type: ignore
         return cls([cls.model.random(*args, **kwargs)])
 
     @classmethod
-    def from_reference(cls, other: M, rng: Generator, *args: Any, **kwargs: Any):
+    def from_reference(cls, other: M, rng: RNGParam = None, *args: Any, **kwargs: Any):
         return cls([cls.model.from_reference(other, rng, *args, **kwargs)])

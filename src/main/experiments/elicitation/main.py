@@ -49,7 +49,7 @@ def main(
     for config in args.config:
         csv_file = dir.csv_files["configs"]
         csv_file.writerow(
-            csv_file.fields(Id=config.id, Method=config.method, Config=config.to_dict())
+            csv_file.fields(Id=config.id, Method=config.method, Config=config)
         )
 
     # Task dict

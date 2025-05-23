@@ -2,11 +2,10 @@ from dataclasses import dataclass
 from enum import auto
 from typing import Self, SupportsIndex
 
-from numpy.random import Generator
-
-from ..enum import ParamFlag
-from ..model import GroupModel, Model
+from ..model import GroupModel, Model, ParamFlag
+from ..performance_table.normal_performance_table import NormalPerformanceTable
 from ..performance_table.type import PerformanceTableType
+from ..random import RNGParam
 from ..utils import print_list
 from .field import (
     GroupImportanceRelationField,
@@ -41,12 +40,15 @@ class RMPModel(
         )
 
     def rank_numpy(self, performance_table: PerformanceTableType):
-        return NormalRMP(
-            performance_table,
-            self.importance_relation,
-            self.profiles,
-            self.lexicographic_order,
-        ).rank_numpy()
+        if isinstance(performance_table, NormalPerformanceTable):
+            return NormalRMP(
+                performance_table,
+                self.importance_relation,
+                self.profiles,
+                self.lexicographic_order,
+            ).rank_numpy()
+        else:
+            raise TypeError("Performance table not normalized")
 
     @classmethod
     def from_reference(
@@ -55,7 +57,7 @@ class RMPModel(
         amp_profiles: float,
         nb_importance_relation: int,
         nb_lex_order: int,
-        rng: Generator,
+        rng: RNGParam = None,
     ):
         return cls(
             profiles=PerturbProfile(amp_profiles)(other.profiles, rng),

@@ -10,7 +10,7 @@ from pandas import read_csv
 from ..model import GroupModel, Model
 from ..models import model_from_json
 from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..random import rng
+from ..random import rng_
 from ..utils import add_filename_suffix
 from .argument_parser import TypeEnum, parse_args
 from .generate import noisy_comparisons, random_comparisons
@@ -39,17 +39,17 @@ match cast(TypeEnum, args.type):
 
         # Create preference structure
         D: list[PreferenceStructure] = []
-        rng_shuffle = rng(seed_shuffle)
+        rng_shuffle = rng_(seed_shuffle)
         for dm in DMS:
             model_dm = (
                 cast(Model, model[dm]) if isinstance(model, GroupModel) else model
             )
             if args.same:
-                rng_shuffle = rng(seed_shuffle)
+                rng_shuffle = seed_shuffle
             D.append(random_comparisons(A, model_dm, args.n, rng=rng_shuffle))
 
         # Add errors
-        rng_error = rng(seed_error)
+        rng_error = rng_(seed_error)
         if args.error:
             for dm in DMS:
                 D[dm] = noisy_comparisons(D[dm], args.error, rng_error)

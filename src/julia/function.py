@@ -3,7 +3,6 @@ from itertools import chain
 from subprocess import run
 from typing import Any
 
-from ..random import Seed
 from ..utils import int_to_ind_set
 from .file import PARENT_DIR, S_file, WE_file
 
@@ -29,7 +28,7 @@ def python_exec(s: str):
         raise Exception(f"Julia output : {s}")
 
 
-def generate_linext(m: int, seed: Seed | None = None) -> list[list[int]]:
+def generate_linext(m: int, seed: int | None = None) -> list[list[int]]:
     linext = python_exec(run_julia("generate_linext.jl", m, seed=seed))
 
     return [int_to_ind_set(i) for i in linext]
@@ -39,7 +38,7 @@ def generate_partial_sum(m: int) -> None:
     return python_exec(run_julia("generate_partial_sum.jl", m, output=S_file(m)))
 
 
-def generate_weak_order(m: int, seed: Seed | None = None) -> list[int]:
+def generate_weak_order(m: int, seed: int | None = None) -> list[int]:
     file = S_file(m)
 
     if not file.exists():
@@ -48,7 +47,7 @@ def generate_weak_order(m: int, seed: Seed | None = None) -> list[int]:
     return python_exec(run_julia("generate_weak_order.jl", file, seed=seed))
 
 
-def generate_weak_order_ext(m: int, seed: Seed | None = None) -> list[list[list[int]]]:
+def generate_weak_order_ext(m: int, seed: int | None = None) -> list[list[list[int]]]:
     weak_order = python_exec(
         run_julia("generate_weak_order_ext.jl", m, WE_file(m), seed=seed)
     )

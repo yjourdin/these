@@ -1,13 +1,12 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from .seeds import Seeds
-
 from ....field import Field, group_field
 from ....field import field as custom_field
 from ....methods import MethodEnum
 from ....models import GroupModelEnum
 from .config import Config, create_config
+from .seeds import Seeds
 
 
 @custom_field("method")
