@@ -3,7 +3,7 @@ from dataclasses import dataclass, field, replace
 from typing import Any
 
 from mcda.internal.core.relations import Relation
-from mcda.relations import PreferenceStructure
+from mcda.relations import I, P, PreferenceStructure
 from pandas import read_csv
 
 from ....mip.main import learn_mip
@@ -223,7 +223,7 @@ class MieTask(AbstractDTask):
         if best_model is not None:
             for dm_id in range(self.group_size):
                 with self.Mie_file(dir, dm_id).open("w") as f:
-                    f.write(best_model[dm_id].to_json())
+                    f.write(best_model[dm_id].to_json())  # type: ignore
 
         csv_file = dir.csv_files["mie"]
         csv_file.writerow(
@@ -291,14 +291,39 @@ class CollectiveTask(MieTask):
             A = NormalPerformanceTable(read_csv(f, header=None))
 
         D: list[PreferenceStructure] = []
+        D_closure: list[PreferenceStructure] = []
         for dm_id in range(self.group_size):
             with self.Di_file(dir, dm_id).open("r") as f:
-                D.append(from_csv(f))
+                d = from_csv(f)
+                D.append(d)
+
+            new_relations = True
+            while new_relations:
+                dP = d.typed_structures[P]
+                new_relations = set(
+                    P(r1.a, r2.b) for r1 in dP for r2 in dP if r1.b == r2.a
+                )
+                new_relations -= set(dP.relations)
+                d = PreferenceStructure(d.relations + list(new_relations))
+
+            new_relations = True
+            while new_relations:
+                dI = d.typed_structures[I]
+                new_relations = set(
+                    I(*((s1 | s2) - (s1 & s2)))
+                    for r1 in dI
+                    for r2 in dI
+                    if len((s1 := set(r1.elements)) & (s2 := set(r2.elements))) == 1
+                )
+                new_relations -= set(dI.relations)
+                d = PreferenceStructure(d.relations + list(new_relations))
+
+            D_closure.append(d)
 
         Acc_set: set[Relation] = set.intersection(*[set(d) for d in D])
         ACC = PreferenceStructure(list(Acc_set), validate=False)
 
-        for d in D:
+        for d in D_closure:
             d -= ACC
 
         C: list[int] = []
@@ -318,10 +343,14 @@ class CollectiveTask(MieTask):
                     with Dr_file.open("r") as f:
                         R.append(from_csv(f))
 
-        Mie: list[SRMPModel] = []
+        Mie: list[SRMPModel] | None = []
         for dm_id in range(self.group_size):
-            with self.Mie_file(dir, dm_id).open("r") as f:
-                Mie.append(SRMPModel.from_json(f.read()))
+            if (Mie_file := self.Mie_file(dir, dm_id)).exists():
+                with Mie_file.open("r") as f:
+                    Mie.append(SRMPModel.from_json(f.read()))
+            else:
+                Mie = None
+                break
 
         rng_lex, rng_mip = self.rng(seed).spawn(2)
 
@@ -329,7 +358,7 @@ class CollectiveTask(MieTask):
             GroupModelEnum.SRMP,
             self.ko,
             A,
-            D,
+            D_closure,
             rng_lex,
             random_seed(rng_mip),
             min(max_time, self.config.max_time)
@@ -352,7 +381,11 @@ class CollectiveTask(MieTask):
             with self.Dc_file(dir).open("w") as f:
                 to_csv(
                     random_comparisons(
-                        A, best_model, pairs=D[0].elements_pairs_relations
+                        A,
+                        best_model,
+                        pairs=set.union(
+                            *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
+                        ),
                     ),
                     f,
                 )
@@ -658,7 +691,7 @@ class PreferencePathTask(AcceptMcTask):
                     Model_Length=len(model_path),
                 )
             )
-        
+
         return len(preference_path) != 0
 
     def P_file(self, dir: DirectoryGroupDecision, t: int):

@@ -1,0 +1,15 @@
+/* @theme custom */
+
+@import 'default';
+
+.container {
+    display: flex;
+}
+
+.col {
+    flex: 1;
+}
+
+blockquote {
+    color: black;
+}

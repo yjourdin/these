@@ -9,6 +9,7 @@ import numpy as np
 import numpy.typing as npt
 from numba import njit  # type: ignore
 
+from ..constants import EPSILON
 from ..dataclass import Dataclass
 from ..performance_table.type import PerformanceTableType
 from ..random import RNGParam, rng_
@@ -160,6 +161,9 @@ def weights_local_change(
 
     weight = weights[crit_ind]
 
+    if weight == 1:
+        return np.full_like(weights, 1 / len(weights))
+
     alpha, eq1 = compute_alpha(subset_sum, weight, increase)
 
     if eq1:
@@ -169,6 +173,11 @@ def weights_local_change(
 
     new = alpha * weights
     new[crit_ind] = weight + delta
+
+    if new[crit_ind] < EPSILON:
+        new[crit_ind] = 0
+        new /= new.sum()
+
     return new
 
 
@@ -199,7 +208,7 @@ def compute_alpha_increase(subset_sum: npt.NDArray[np.float64], weight: float):
             denom1 = 2 * w1
             if denom1 < best_denom:
                 for j in range(N):
-                    if ((i + 1) & (j + 1)) == 0:
+                    if (i & j) == 0:
                         denom2 = denom1 + subset_sum[j]
                         eq1 |= denom2 == 1
                         if 1 < denom2 < best_denom:
@@ -218,7 +227,7 @@ def compute_alpha_decrease(subset_sum: npt.NDArray[np.float64], weight: float):
             denom1 = 2 * w1
             if denom1 < 1:
                 for j in range(N):
-                    if ((i + 1) & (j + 1)) == 0:
+                    if (i & j) == 0:
                         denom2 = denom1 + subset_sum[j]
                         eq1 |= denom2 == 1
                         if best_denom < denom2 < 1:

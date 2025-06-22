@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from itertools import product
 
 from ....utils import list_replace
@@ -30,12 +31,12 @@ def main(
 
     # Complete seeds
     seeds = Seeds.from_seed(NB_ATR, NB_MO, NB_MI, NB_D, NB_MIE, NB_MC, NB_P, args.seed)
-    list_replace(seeds.A_tr, args.seeds.A_tr)
-    list_replace(seeds.Mo, args.seeds.Mo)
-    list_replace(seeds.Mi, args.seeds.Mi)
-    list_replace(seeds.D, args.seeds.D)
-    list_replace(seeds.Mc, args.seeds.Mc)
-    list_replace(seeds.P, args.seeds.P)
+    replace(seeds, A_tr=list_replace(seeds.A_tr, args.seeds.A_tr))
+    replace(seeds, Mo=list_replace(seeds.Mo, args.seeds.Mo))
+    replace(seeds, Mi=list_replace(seeds.Mi, args.seeds.Mi))
+    replace(seeds, D=list_replace(seeds.D, args.seeds.D))
+    replace(seeds, Mc=list_replace(seeds.Mc, args.seeds.Mc))
+    replace(seeds, P=list_replace(seeds.P, args.seeds.P))
 
     # Write seeds
     with dir.seeds.open("w") as f:
@@ -167,29 +168,8 @@ def main(
                                 for Mie_id in (
                                     range(args.nb_Mie) if args.nb_Mie else [D_id]
                                 ):
-                                    task = MieTask(
-                                        m,
-                                        n_tr,
-                                        Atr_id,
-                                        ko,
-                                        args.fixed_lex_order,
-                                        Mo_id,
-                                        group_size,
-                                        group,
-                                        Mi_id,
-                                        n_bc,
-                                        same_alt,
-                                        D_id,
-                                        config,
-                                        Mie_id,
-                                    )
-
-                                    futures[task] = thread_pool.submit(
-                                        task_thread,
-                                        task,
-                                        {"seed": seeds.Mie[Mie_id]},
-                                        task_queue,
-                                        [
+                                    for Mie in args.Mie:
+                                        precede_futures = [
                                             futures[
                                                 DTask(
                                                     m,
@@ -208,87 +188,114 @@ def main(
                                                 )
                                             ]
                                             for dm_id in range(group_size)
-                                        ],
-                                        dir,
-                                    )
+                                        ]
+                                        if Mie:
+                                            task = MieTask(
+                                                m,
+                                                n_tr,
+                                                Atr_id,
+                                                ko,
+                                                args.fixed_lex_order,
+                                                Mo_id,
+                                                group_size,
+                                                group,
+                                                Mi_id,
+                                                n_bc,
+                                                same_alt,
+                                                D_id,
+                                                config,
+                                                Mie_id,
+                                            )
 
-                                    for path in args.path:
-                                        for Mc_id in (
-                                            range(args.nb_Mc)
-                                            if args.nb_Mc
-                                            else [Mie_id]
-                                        ):
-                                            for P_id in (
-                                                range(args.nb_P)
-                                                if args.nb_P
-                                                else [Mc_id]
+                                            futures[task] = thread_pool.submit(
+                                                task_thread,
+                                                task,
+                                                {"seed": seeds.Mie[Mie_id]},
+                                                task_queue,
+                                                precede_futures,
+                                                dir,
+                                            )
+
+                                            precede_futures = [
+                                                futures[
+                                                    MieTask(
+                                                        m,
+                                                        n_tr,
+                                                        Atr_id,
+                                                        ko,
+                                                        args.fixed_lex_order,
+                                                        Mo_id,
+                                                        group_size,
+                                                        group,
+                                                        Mi_id,
+                                                        n_bc,
+                                                        same_alt,
+                                                        D_id,
+                                                        config,
+                                                        Mie_id,
+                                                    )
+                                                ]
+                                            ]
+
+                                        for path in args.path:
+                                            for Mc_id in (
+                                                range(args.nb_Mc)
+                                                if args.nb_Mc
+                                                else [Mie_id]
                                             ):
-                                                task = CollectiveTask(
-                                                    m,
-                                                    n_tr,
-                                                    Atr_id,
-                                                    ko,
-                                                    args.fixed_lex_order,
-                                                    Mo_id,
-                                                    group_size,
-                                                    group,
-                                                    Mi_id,
-                                                    n_bc,
-                                                    same_alt,
-                                                    D_id,
-                                                    config,
-                                                    Mie_id,
-                                                    Mc_id,
-                                                    path,
-                                                    P_id,
-                                                    0,
-                                                )
-                                                futures[task] = thread_pool.submit(
-                                                    collective_thread,
-                                                    {
-                                                        "max_time": args.max_time,
-                                                        "m": m,
-                                                        "n_tr": n_tr,
-                                                        "ko": ko,
-                                                        "Atr_id": Atr_id,
-                                                        "Mo_id": Mo_id,
-                                                        "Mi_id": Mi_id,
-                                                        "Mie_id": Mie_id,
-                                                        "Mc_id": Mc_id,
-                                                        "P_id": P_id,
-                                                        "fixed_lex_order": args.fixed_lex_order,
-                                                        "group_size": group_size,
-                                                        "group": group,
-                                                        "n_bc": n_bc,
-                                                        "same_alt": same_alt,
-                                                        "D_id": D_id,
-                                                        "config": config,
-                                                        "path": path,
-                                                        "seeds": seeds,
-                                                    },
-                                                    task_queue,
-                                                    [
-                                                        futures[
-                                                            MieTask(
-                                                                m,
-                                                                n_tr,
-                                                                Atr_id,
-                                                                ko,
-                                                                args.fixed_lex_order,
-                                                                Mo_id,
-                                                                group_size,
-                                                                group,
-                                                                Mi_id,
-                                                                n_bc,
-                                                                same_alt,
-                                                                D_id,
-                                                                config,
-                                                                Mie_id,
-                                                            )
-                                                        ]
-                                                    ],
-                                                    dir,
-                                                    args.max_time,
-                                                )
+                                                for P_id in (
+                                                    range(args.nb_P)
+                                                    if args.nb_P
+                                                    else [Mc_id]
+                                                ):
+                                                    task = CollectiveTask(
+                                                        m,
+                                                        n_tr,
+                                                        Atr_id,
+                                                        ko,
+                                                        args.fixed_lex_order,
+                                                        Mo_id,
+                                                        group_size,
+                                                        group,
+                                                        Mi_id,
+                                                        n_bc,
+                                                        same_alt,
+                                                        D_id,
+                                                        config,
+                                                        Mie_id,
+                                                        Mc_id,
+                                                        path,
+                                                        P_id,
+                                                        0,
+                                                    )
+                                                    futures[task] = thread_pool.submit(
+                                                        collective_thread,
+                                                        {
+                                                            "max_time": args.max_time,
+                                                            "m": m,
+                                                            "n_tr": n_tr,
+                                                            "ko": ko,
+                                                            "Atr_id": Atr_id,
+                                                            "Mo_id": Mo_id,
+                                                            "Mi_id": Mi_id,
+                                                            "Mie_id": Mie_id,
+                                                            "Mc_id": Mc_id,
+                                                            "P_id": P_id,
+                                                            "fixed_lex_order": args.fixed_lex_order,
+                                                            "group_size": group_size,
+                                                            "group": group,
+                                                            "n_bc": n_bc,
+                                                            "same_alt": same_alt,
+                                                            "D_id": D_id,
+                                                            "config": config,
+                                                            "path": path,
+                                                            "Mie": Mie,
+                                                            "seeds": seeds,
+                                                        },
+                                                        task_queue,
+                                                        precede_futures,
+                                                        dir,
+                                                        args.max_time,
+                                                    )
 
     wait_exception_mapping(futures)

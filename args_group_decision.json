@@ -1,8 +1,8 @@
 {
-    "name": "group_new_test_2",
+    "name": "new_group_test",
     "jobs": 10,
     "seed": 0,
-    "max_time": 60,
+    "max_time": 300,
     "nb_Atr": 10,
     "group_size": [
         2
@@ -11,37 +11,40 @@
         100
     ],
     "M": [
-        3
+        5
     ],
     "Ko": [
         2
     ],
     "N_bc": [
-        30
+        100
     ],
     "config": [
         {
             "id": 0,
-            "max_time": 60,
+            "max_time": 300,
             "method": "MIP"
         }
     ],
     "group": [
         {
             "gen": {
-                "P": 0.1,
+                "P": 0.05,
                 "W": 0.1,
-                "L": 1
+                "L": 0
             },
             "accept": {
-                "P": 0.1,
+                "P": 0.05,
                 "W": 0.1,
-                "L": 1
+                "L": 0
             }
         }
     ],
     "path": [
-        true, false
+        true
     ],
-    "fixed_lex_order": false
+    "Mie": [
+        true
+    ],
+    "fixed_lex_order": true
 }

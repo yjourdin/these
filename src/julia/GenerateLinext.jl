@@ -94,7 +94,7 @@ end
 
 function select_M(P, ul, I, h, k, rng = Random.default_rng())
     card_I   = length(I)
-    card_III = ul |> first |> Base.Fix{1}(just_below, P) .|> Base.Fix{1}(above, P) .|> collect .|> length .|> ==(1) |> count
+    card_III = ul |> first |> Base.Fix1(just_below, P) .|> Base.Fix1(above, P) .|> collect .|> length .|> ==(1) |> count
     card_II  = card_I + card_III
     pu, pl   = proba_Th(h, k, card_I, card_II, card_III)
     return sample(rng, [ul; I], ProbabilityWeights([fill(pu, h); fill(pl, card_I)], 1))
@@ -102,7 +102,7 @@ end
 
 function select_m(P, ll, I, h, k, rng = Random.default_rng())
     card_I   = length(I)
-    card_III = ll |> first |> Base.Fix{1}(just_above, P) .|> Base.Fix{1}(below, P) .|> collect .|> length .|> ==(1) |> count
+    card_III = ll |> first |> Base.Fix1(just_above, P) .|> Base.Fix1(below, P) .|> collect .|> length .|> ==(1) |> count
     card_II  = card_I + card_III
     pl, pu   = proba_Bh(h, k, card_I, card_II, card_III)
     return sample(rng, [ll; I], ProbabilityWeights([fill(pl, k); fill(pu, card_I)], 1))

@@ -44,11 +44,12 @@ class GBFS[T](Dataclass):
         while (self.time < self.max_time) and open_heap:
             # Best node
             current = heapq.heappop(open_heap)
+
             # print(
-                # current.heuristic,
-                # current.item.weights,
-                # current.item.profiles[0],
-                # current.item.importance_relation,
+            #     current.heuristic,
+            #     current.item.profiles[0][3],
+            #     current.item.importance_relation,
+            #     current.item.weights,
             # )
             # print()
             # print("Cur", current.heuristic, current.item.weights)

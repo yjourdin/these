@@ -56,7 +56,7 @@ def random_comparisons(
     pairs: Iterable[tuple[Any, Any]] | None = None,
     rng: RNGParam = None,
     remove_dominance: bool = False,
-):
+) -> PreferenceStructure:
     dom_struct = (
         dominance_structure(alternatives) if remove_dominance else PreferenceStructure()
     )

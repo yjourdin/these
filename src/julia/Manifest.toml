@@ -2,7 +2,7 @@
 
 julia_version = "1.11.5"
 manifest_format = "2.0"
-project_hash = "55f7eaa170238b7623ba19dda613d70aacd1b3a0"
+project_hash = "9ef23021263a5c5b93d7220fbbb5b22a8cba3cf6"
 
 [[deps.AbstractLattices]]
 git-tree-sha1 = "763b6f3f6bfabd72c7e262cbb5ddfd43fd5c6398"
@@ -53,9 +53,9 @@ version = "1.0.9+0"
 
 [[deps.ChooseOptimizer]]
 deps = ["HiGHS", "JuMP"]
-git-tree-sha1 = "b1e44436d77031abcf850366d6b8cb82daa34aaa"
+git-tree-sha1 = "39b8a40d2909b2a20c9ac1828db32c42df90127c"
 uuid = "858a232f-1959-5553-8cfc-91e1fd5304e2"
-version = "0.3.1"
+version = "0.3.2"
 
 [[deps.CodecBzip2]]
 deps = ["Bzip2_jll", "TranscodingStreams"]
@@ -151,9 +151,9 @@ version = "0.25.120"
     Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [[deps.DocStringExtensions]]
-git-tree-sha1 = "e7b7e6f178525d17c720ab9c081e4ef04429f860"
+git-tree-sha1 = "7442a5dfe1ebb773c29cc2962a8980f47221d76c"
 uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
-version = "0.9.4"
+version = "0.9.5"
 
 [[deps.Downloads]]
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
@@ -204,22 +204,22 @@ uuid = "c27321d9-0574-5035-807b-f59d2c89b15c"
 version = "1.3.1"
 
 [[deps.Graphs]]
-deps = ["ArnoldiMethod", "Compat", "DataStructures", "Distributed", "Inflate", "LinearAlgebra", "Random", "SharedArrays", "SimpleTraits", "SparseArrays", "Statistics"]
-git-tree-sha1 = "3169fd3440a02f35e549728b0890904cfd4ae58a"
+deps = ["ArnoldiMethod", "DataStructures", "Distributed", "Inflate", "LinearAlgebra", "Random", "SharedArrays", "SimpleTraits", "SparseArrays", "Statistics"]
+git-tree-sha1 = "c5abfa0ae0aaee162a3fbb053c13ecda39be545b"
 uuid = "86223c79-3864-5bf0-83f7-82e725a168b6"
-version = "1.12.1"
+version = "1.13.0"
 
 [[deps.HiGHS]]
 deps = ["HiGHS_jll", "MathOptInterface", "PrecompileTools", "SparseArrays"]
-git-tree-sha1 = "ffc9974c62b3bb8a7965a122901361a011bfd766"
+git-tree-sha1 = "4072498280282c7d80a139b1fbf26091e6c338ca"
 uuid = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
-version = "1.17.0"
+version = "1.18.1"
 
 [[deps.HiGHS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Zlib_jll"]
-git-tree-sha1 = "72bceb63d4ae3683f091f812b6958a199c494a1b"
+git-tree-sha1 = "f56d423e3f583e26ceaef08a15a270b28723c89a"
 uuid = "8fd58aa0-07eb-5a78-9b36-339c94fd15ea"
-version = "1.10.0+0"
+version = "1.11.0+1"
 
 [[deps.Hungarian]]
 deps = ["LinearAlgebra", "SparseArrays"]
@@ -247,6 +247,11 @@ version = "1.11.0"
 git-tree-sha1 = "e2222959fbc6c19554dc15174c81bf7bf3aa691c"
 uuid = "92d709cd-6900-40b7-9082-c6be49f344b6"
 version = "0.2.4"
+
+[[deps.IterTools]]
+git-tree-sha1 = "42d5f897009e7ff2cf88db414a389e5ed1bdd023"
+uuid = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
+version = "1.10.0"
 
 [[deps.JLD2]]
 deps = ["FileIO", "MacroTools", "Mmap", "OrderedCollections", "PrecompileTools", "TranscodingStreams"]
@@ -371,9 +376,9 @@ version = "1.11.0"
 
 [[deps.MathOptInterface]]
 deps = ["BenchmarkTools", "CodecBzip2", "CodecZlib", "DataStructures", "ForwardDiff", "JSON3", "LinearAlgebra", "MutableArithmetics", "NaNMath", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays", "SpecialFunctions", "Test"]
-git-tree-sha1 = "d4eb6037ce33f974a58a2ea9ccba28beab2a93c1"
+git-tree-sha1 = "2f2c18c6acab9042557bdb0af8c3a14dd7b64413"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-version = "1.40.1"
+version = "1.41.0"
 
 [[deps.MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -609,9 +614,9 @@ weakdeps = ["SparseArrays"]
 
 [[deps.StatsAPI]]
 deps = ["LinearAlgebra"]
-git-tree-sha1 = "1ff449ad350c9c4cbc756624d6f8a8c3ef56d3ed"
+git-tree-sha1 = "9d72a13a3f4dd3795a195ac5a44d7d6ff5f552ff"
 uuid = "82ae8749-77ed-4fe6-ae5f-f523153014b0"
-version = "1.7.0"
+version = "1.7.1"
 
 [[deps.StatsBase]]
 deps = ["AliasTables", "DataAPI", "DataStructures", "LinearAlgebra", "LogExpFunctions", "Missings", "Printf", "Random", "SortingAlgorithms", "SparseArrays", "Statistics", "StatsAPI"]

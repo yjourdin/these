@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable, Iterator, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from enum import Enum
 from functools import partial, reduce
 from itertools import chain, count
@@ -112,9 +112,10 @@ def compose(*fs: Callable[..., Any]):
     return reduce(compose2, fs)
 
 
-def list_replace(a: list[Any], b: list[Any]):
-    a[: len(b)] = b[: len(a)]
-    return a
+def list_replace(a: Sequence[Any], b: Sequence[Any]):
+    result = list(a)
+    result[: len(b)] = b[: len(a)]
+    return result
 
 
 def add_filename_suffix(filename: Path, suffix: str):

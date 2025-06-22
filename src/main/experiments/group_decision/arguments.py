@@ -30,3 +30,4 @@ class ArgumentsGroupDecision(Arguments, GroupMIPConfigField, GroupGroupParameter
     Ke: list[int] | None = None
     same_alt: list[bool] = field(default_factory=lambda: [True])
     path: list[bool] = field(default_factory=lambda: [True])
+    Mie: list[bool] = field(default_factory=lambda: [True])

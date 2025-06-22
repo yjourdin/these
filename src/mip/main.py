@@ -54,7 +54,7 @@ def learn_mip(
     inconsistencies: bool = False,
     *args: Any,
     **kwargs: Any,
-):
+) -> MIPResult:
     if model_type.model is not ModelEnum.SRMP:
         return MIPResult()
 
@@ -62,7 +62,7 @@ def learn_mip(
     DMS = range(NB_DM)
 
     alternatives = alternatives.subtable(
-        list(set.union(*[set(comparisons[dm].elements) for dm in DMS]))  # type: ignore
+        list(set.union(*(set(comparisons[dm].elements) for dm in DMS)))  # type: ignore
     )
 
     best_model = None

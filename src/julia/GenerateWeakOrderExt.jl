@@ -1,4 +1,4 @@
-using Combinatorics
+using IterTools
 using Logging
 using Random
 using Posets
@@ -13,29 +13,32 @@ bit_issubset(a, b) = (a & b) == a
 
 # Poset basics
 
-ideal(P, A) = [y for y ∈ 1:nv(P) if any(P[y] <= P[x] for x ∈ A)]
-max(P, A)   = [x for x ∈ A if all(~(P[y] > P[x]) for y ∈ A)]
-min(P, A)   = [x for x ∈ A if all(~(P[y] < P[x]) for y ∈ A)]
+poset_ideal(P, A) = (y for y ∈ 1:nv(P) if any(P[y] <= P[x] for x ∈ A))
+poset_max(P, A)   = (x for x ∈ A if !any(P[x] < P[y] for y ∈ A))
+poset_min(P, A)   = (x for x ∈ A if !any(P[y] < P[x] for y ∈ A))
 
 # AllWeak3
 
-function AllWeak3!(labels, P::Poset{T}, Y, A) where {T}
+function AllWeak3!(labels, P, Y, A)
     isempty(Y) && return
 
-    ideal_A = ideal(P, A)
-    for B ∈ powerset(Y, 1)
-        AA_label = ideal_A ∪ B
-        AA       = max(P, AA_label)
+    ideal_A = BitSet(poset_ideal(P, A))
+    for B ∈ (Y |> subsets |> Base.Fix2(Iterators.drop, 1))
+        Bset = BitSet(B)
+        AA_label = ideal_A ∪ Bset
         AA_digit = subset_encode(AA_label)
         if !insorted(AA_digit, labels)
             insert!(labels, searchsortedfirst(labels, AA_digit), AA_digit)
 
             @debug "Vertices created : $(length(labels))"
 
-            YY = min(
-                P,
-                setdiff(Y, B) ∪ reduce(union, (collect(just_above(P, x)) for x ∈ B)),
-            )
+            YB = setdiff!(BitSet(Y), Bset)
+            SuccB = union!(BitSet(), Iterators.flatmap(Base.Fix1(just_above, P), B))
+            YY = collect(poset_min(P, union!(YB, SuccB)))
+
+            # AA = poset_max(P, AA_label)
+            AA = AA_label
+
             AllWeak3!(labels, P, YY, AA)
         end
     end
@@ -44,15 +47,18 @@ end
 
 # generate_WE
 
-function generate_WE(P::Poset{T}) where {T}
+function generate_WE(P)
     labels = zeros(UInt128, 1)
 
-    AllWeak3!(labels, P, collect(minimals(P)), T[])
+    AllWeak3!(labels, P, collect(minimals(P)), BitSet())
 
     NV       = length(labels)
     nb_paths = ones(UInt128, NV)
-    for (i, u) ∈ labels |> pairs |> Iterators.reverse |> Base.Fix{2}(Iterators.drop, 1)
-        nb_paths[i] = sum(nb_paths[j] for j ∈ (i + 1):NV if bit_issubset(u, labels[j]))
+    for (i, u) ∈ labels |> pairs |> Iterators.reverse |> Base.Fix2(Iterators.drop, 1)
+        nb_paths[i] = sum(
+            nb_paths[i + j] for
+            (j, v) ∈ pairs(view(labels, (i + 1):NV)) if bit_issubset(u, v)
+        )
         @debug "Vertices traversed : $(length(nb_paths) - i + 1) / $(length(nb_paths))"
     end
 

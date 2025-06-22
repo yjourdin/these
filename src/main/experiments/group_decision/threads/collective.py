@@ -4,10 +4,11 @@ from shutil import copy
 from typing import Any
 
 from mcda.internal.core.relations import Relation
-from mcda.relations import I, P, PreferenceStructure
+from mcda.relations import I, P, PreferenceStructure, R
 
 from .....constants import DEFAULT_MAX_TIME
 from .....preference_structure.io import from_csv, to_csv
+from .....utils import dict_str
 from ....task import (
     FutureTaskException,
     wait_exception,
@@ -70,7 +71,11 @@ def collective_thread(
 
         time_left = max_time
         compromise_found = False
-        while (not compromise_found) and (time_left >= 1):
+        while (
+            (not compromise_found)
+            and (time_left >= 1)
+            and ((not args["Mie"]) or (task_Mc.Mie_file(dir, 0).exists()))
+        ):
             future_Mc = thread_pool.submit(
                 task_thread,
                 task_Mc,
@@ -88,42 +93,44 @@ def collective_thread(
                     break
 
                 if not result:
-                    futures_clean: list[FutureTaskException] = []
-                    for dm_id in DMS:
-                        task_clean = CleanTask(
-                            args["m"],
-                            args["n_tr"],
-                            args["Atr_id"],
-                            args["ko"],
-                            args["fixed_lex_order"],
-                            args["Mo_id"],
-                            args["group_size"],
-                            args["group"],
-                            args["Mi_id"],
-                            dm_id,
-                            args["n_bc"],
-                            args["same_alt"],
-                            args["D_id"],
-                            args["config"],
-                            args["Mie_id"],
-                            args["Mc_id"],
-                            args["path"],
-                            args["P_id"],
-                            it,
-                        )
+                    print(dict_str(args))
+                    return None
+                    # futures_clean: list[FutureTaskException] = []
+                    # for dm_id in DMS:
+                    #     task_clean = CleanTask(
+                    #         args["m"],
+                    #         args["n_tr"],
+                    #         args["Atr_id"],
+                    #         args["ko"],
+                    #         args["fixed_lex_order"],
+                    #         args["Mo_id"],
+                    #         args["group_size"],
+                    #         args["group"],
+                    #         args["Mi_id"],
+                    #         dm_id,
+                    #         args["n_bc"],
+                    #         args["same_alt"],
+                    #         args["D_id"],
+                    #         args["config"],
+                    #         args["Mie_id"],
+                    #         args["Mc_id"],
+                    #         args["path"],
+                    #         args["P_id"],
+                    #         it,
+                    #     )
 
-                        futures_clean.append(
-                            thread_pool.submit(
-                                task_thread,
-                                task_clean,
-                                {},
-                                task_queue,
-                                [],
-                                dir,
-                            )
-                        )
+                    #     futures_clean.append(
+                    #         thread_pool.submit(
+                    #             task_thread,
+                    #             task_clean,
+                    #             {},
+                    #             task_queue,
+                    #             [],
+                    #             dir,
+                    #         )
+                    #     )
 
-                    wait_exception_iterable(futures_clean)
+                    # wait_exception_iterable(futures_clean)
                 else:
                     futures_accept: dict[int, FutureTaskException] = {}
                     for dm_id in DMS:
@@ -157,6 +164,7 @@ def collective_thread(
                             dir,
                         )
 
+                    dms_refusing = []
                     if wait_exception_mapping(futures_accept):
                         dms_refusing = [
                             dm_id

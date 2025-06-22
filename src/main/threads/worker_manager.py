@@ -85,7 +85,7 @@ def worker_manager(
     try:
         while True:
             if (obj := task_queue.get(timeout=1)) != SENTINEL:
-                task, args, thread_connection = obj
+                _, _, thread_connection = obj
                 thread_connection.send(SENTINEL)
     except Empty:
         pass
