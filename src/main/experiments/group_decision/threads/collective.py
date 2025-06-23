@@ -94,7 +94,7 @@ def collective_thread(
 
                 if not result:
                     print(dict_str(args))
-                    return None
+                    return 0
                     # futures_clean: list[FutureTaskException] = []
                     # for dm_id in DMS:
                     #     task_clean = CleanTask(

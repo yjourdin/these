@@ -320,7 +320,7 @@ class CollectiveTask(MieTask):
 
             D_closure.append(d)
 
-        Acc_set: set[Relation] = set.intersection(*[set(d) for d in D])
+        Acc_set: set[Relation] = set.intersection(*[set(d) for d in D_closure])
         ACC = PreferenceStructure(list(Acc_set), validate=False)
 
         for d in D_closure:
