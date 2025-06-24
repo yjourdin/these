@@ -335,18 +335,7 @@ class MIPSRMPCollectiveBound(
                     self.prob += self.vars["p"][h][j] >= profiles_min[h - 1, j]
                     self.prob += self.vars["p"][h][j] <= profiles_max[h - 1, j]
 
-        if P(36, 34) in self.preference_accepted and (I(36, 34) not in indifference_relations_union):
-            print(preference_relations_union.index(P(36, 34)))
-            self.prob.writeLP("test/lp.lp")
-
     def create_solution(self):
-        if P(36, 34) in self.preference_accepted:
-            print("s", value(self.vars["s"][24][0]))
-            # print("36", value(self.vars["delta"][36][1][0]))
-            # print("34", value(self.vars["delta"][34][1][2]))
-            # print("p1", value(self.vars["p"][1][0]))
-            # print("p3", value(self.vars["p"][1][2]))
-
         weights = np.array([
             cast(float, value(self.vars["w"][j])) for j in self.params.M
         ])
