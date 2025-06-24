@@ -1,8 +1,8 @@
 {
     "name": "new_group_test",
-    "jobs": 10,
+    "jobs": 75,
     "seed": 0,
-    "max_time": 300,
+    "max_time": 3600,
     "nb_Atr": 10,
     "group_size": [
         2
@@ -11,18 +11,18 @@
         100
     ],
     "M": [
-        3
+        3, 5, 7
     ],
     "Ko": [
-        2
+        2, 3, 4
     ],
     "N_bc": [
-        60
+        20, 40, 60, 80, 100
     ],
     "config": [
         {
             "id": 0,
-            "max_time": 300,
+            "max_time": 3600,
             "method": "MIP"
         }
     ],
