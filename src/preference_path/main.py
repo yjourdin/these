@@ -5,7 +5,9 @@ from mcda.relations import PreferenceStructure
 from ..constants import DEFAULT_MAX_TIME
 from ..model import FrozenModel, Model
 from ..performance_table.type import PerformanceTableType
-from ..preference_structure.fitness import fitness_comparisons_ranking
+from ..preference_structure.fitness import (
+    fitness_comparisons_ranking,
+)
 from ..random import RNGParam
 from ..srmp.model import FrozenSRMPModel, SRMPModel
 from .gbfs import GBFS
@@ -30,7 +32,7 @@ def compute_model_path(
     alternatives = alternatives.subtable(target_preferences.elements)
 
     neighborhoods: list[Neighborhood[FrozenSRMPModel]] = [
-        NeighborhoodProfile(alternatives),
+        NeighborhoodProfile(alternatives, target_preferences),
         NeighborhoodWeight(),
     ]
 

@@ -35,6 +35,8 @@ parser.add_argument(
     "--accepted", type=argparse.FileType("r"), help="Accepted preferences"
 )
 parser.add_argument("--reference", type=argparse.FileType("r"), help="Reference model")
+parser.add_argument("--profile-amp", type=float, help="Profiles amplitude")
+parser.add_argument("--weight-amp", type=float, help="Weights amplitude")
 parser.add_argument(
     "--references", nargs="+", type=argparse.FileType("r"), help="Reference models"
 )

@@ -4,11 +4,10 @@ from shutil import copy
 from typing import Any
 
 from mcda.internal.core.relations import Relation
-from mcda.relations import I, P, PreferenceStructure, R
+from mcda.relations import I, P, PreferenceStructure
 
 from .....constants import DEFAULT_MAX_TIME
 from .....preference_structure.io import from_csv, to_csv
-from .....utils import dict_str
 from ....task import (
     FutureTaskException,
     wait_exception,
@@ -35,6 +34,8 @@ def collective_thread(
     max_time: int = DEFAULT_MAX_TIME,
 ):
     wait_exception_iterable(precede_futures)
+    future = precede_futures[0]
+    time_passed = future.result().time if wait_exception(future) else 0
 
     with ThreadPoolExecutor() as thread_pool:
         DMS = range(args["group_size"])
@@ -69,7 +70,7 @@ def collective_thread(
             C_writer = csv.writer(f, dialect="unix")
             C_writer.writerows([[0]] * args["group_size"])
 
-        time_left = max_time
+        time_left = max_time - time_passed
         compromise_found = False
         while (
             (not compromise_found)
@@ -93,44 +94,44 @@ def collective_thread(
                     break
 
                 if not result:
-                    print(dict_str(args))
-                    return 0
-                    # futures_clean: list[FutureTaskException] = []
-                    # for dm_id in DMS:
-                    #     task_clean = CleanTask(
-                    #         args["m"],
-                    #         args["n_tr"],
-                    #         args["Atr_id"],
-                    #         args["ko"],
-                    #         args["fixed_lex_order"],
-                    #         args["Mo_id"],
-                    #         args["group_size"],
-                    #         args["group"],
-                    #         args["Mi_id"],
-                    #         dm_id,
-                    #         args["n_bc"],
-                    #         args["same_alt"],
-                    #         args["D_id"],
-                    #         args["config"],
-                    #         args["Mie_id"],
-                    #         args["Mc_id"],
-                    #         args["path"],
-                    #         args["P_id"],
-                    #         it,
-                    #     )
+                    # print(dict_str(args))
+                    # return 0
+                    futures_clean: list[FutureTaskException] = []
+                    for dm_id in DMS:
+                        task_clean = CleanTask(
+                            args["m"],
+                            args["n_tr"],
+                            args["Atr_id"],
+                            args["ko"],
+                            args["fixed_lex_order"],
+                            args["Mo_id"],
+                            args["group_size"],
+                            args["group"],
+                            args["Mi_id"],
+                            dm_id,
+                            args["n_bc"],
+                            args["same_alt"],
+                            args["D_id"],
+                            args["config"],
+                            args["Mie_id"],
+                            args["Mc_id"],
+                            args["path"],
+                            args["P_id"],
+                            it,
+                        )
 
-                    #     futures_clean.append(
-                    #         thread_pool.submit(
-                    #             task_thread,
-                    #             task_clean,
-                    #             {},
-                    #             task_queue,
-                    #             [],
-                    #             dir,
-                    #         )
-                    #     )
+                        futures_clean.append(
+                            thread_pool.submit(
+                                task_thread,
+                                task_clean,
+                                {},
+                                task_queue,
+                                [],
+                                dir,
+                            )
+                        )
 
-                    # wait_exception_iterable(futures_clean)
+                    wait_exception_iterable(futures_clean)
                 else:
                     futures_accept: dict[int, FutureTaskException] = {}
                     for dm_id in DMS:
@@ -335,7 +336,7 @@ def collective_thread(
                                 new_task_Mc.Di_file(dir, dm_id),
                             )
 
-                        changes[dm_id] += len(accepted_D - original_D)
+                        changes[dm_id] += len(original_D - accepted_D)
 
                         csv_file = dir.csv_files["changes"]
                         csv_file.writerow(

@@ -6,11 +6,25 @@ import numpy as np
 import numpy.typing as npt
 from mcda.internal.core.matrices import AdjacencyValueMatrix, OutrankingMatrix
 from mcda.internal.core.relations import Relation
-from mcda.relations import I, P
+from mcda.relations import I, P, PreferenceStructure
 from pandas import Series
 
 OutrankingMatrixClass = AdjacencyValueMatrix
 type RankingSeries = Series[int]
+
+
+def preference_structure_from_outranking(outranking: OutrankingMatrix):
+    relations: list[Relation] = list()
+    for ii, i in enumerate(outranking.vertices):  # type: ignore
+        for j in outranking.vertices[ii + 1 :]:
+            if outranking.data.at[i, j]:
+                if outranking.data.at[j, i]:
+                    relations.append(I(i, j))
+                else:
+                    relations.append(P(i, j))
+            elif outranking.data.at[j, i]:
+                relations.append(P(j, i))
+    return PreferenceStructure(relations, validate=False)
 
 
 def outranking_numpy_from_outranking(

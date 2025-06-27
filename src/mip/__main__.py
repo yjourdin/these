@@ -66,6 +66,8 @@ best_model, best_fitness, time = learn_mip(
     Refused,
     Accepted,
     reference_model=ref,
+    profiles_amp=args.profile_amp,
+    weights_amp=args.weight_amp,
     reference_models=refs,
     gamma=args.gamma,
     inconsistencies=not args.no_inconsistencies,

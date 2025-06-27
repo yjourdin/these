@@ -84,6 +84,7 @@ def learn_mip(
         or (NB_DM == 1)
         or collective
         or lex_order
+        or close
     )
 
     preferences_changes = preferences_changes or ([0] * NB_DM)

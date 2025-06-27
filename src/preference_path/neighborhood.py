@@ -4,10 +4,13 @@ from itertools import chain, product
 from typing import cast
 
 import numpy as np
+import numpy.typing as npt
+from mcda.relations import PreferenceStructure
 from pandas import Series
 
 from ..dataclass import Dataclass
 from ..performance_table.type import PerformanceTableType
+from ..preference_structure.fitness import comparisons_ranking
 from ..random import RNGParam, rng_
 from ..rmp.permutation import adjacent_swap
 from ..sa.neighbor import weights_local_change
@@ -41,33 +44,78 @@ class NeighborhoodCombined[S](Neighborhood[S], Dataclass):
 @dataclass
 class NeighborhoodProfile(Neighborhood[FrozenSRMPModel], Dataclass):
     midpoints: PerformanceTableType = field(init=False)
-    alternatives: InitVar[PerformanceTableType]
+    alternatives: PerformanceTableType
+    target_preferences: PreferenceStructure
 
-    def __post_init__(self, alternatives: PerformanceTableType):
-        self.midpoints = midpoints(alternatives)
+    def __post_init__(self):
+        self.midpoints = midpoints(self.alternatives)
 
     def __call__(self, sol: FrozenSRMPModel):
         result: list[FrozenSRMPModel] = []
 
+        relevant_values = np.sort(
+            cast(
+                npt.NDArray[np.float64],
+                self.alternatives.subtable(
+                    PreferenceStructure(
+                        comparisons_ranking(
+                            self.target_preferences,
+                            sol.model.rank_series(self.alternatives).to_dict(),
+                        )
+                    ).elements
+                ).data.to_numpy(),
+            ),
+            0,
+        )
+        # if any(
+        #     np.any(
+        #         np.equal.outer(
+        #             self.midpoints.data.to_numpy()[:, i], relevant_values[:, i]
+        #         )
+        #     )
+        #     for i in range(3)
+        # ):
+        #     print((self.midpoints.data.to_numpy(), relevant_values))
+
         for profile_ind, profile in enumerate(sol.profiles):
+            profile = cast(tuple[float, ...], profile)
             for crit_ind, crit in self.midpoints.data.items():
                 crit = cast("Series[float]", crit)
                 crit_ind = cast(int, crit_ind)
-                indices: tuple[int, int] = (
-                    np.searchsorted(crit.to_numpy(), profile[crit_ind], "left") - 1,  # type: ignore
-                    np.searchsorted(crit.to_numpy(), profile[crit_ind], "right"),  # type: ignore
+                crit_numpy: npt.NDArray[np.float64] = crit.to_numpy()
+
+                relevant_bounds = (
+                    np.max(
+                        relevant_values[:, crit_ind][
+                            relevant_values[:, crit_ind] < profile[crit_ind]
+                        ],
+                        initial=0,
+                    ),
+                    np.min(
+                        relevant_values[:, crit_ind][
+                            relevant_values[:, crit_ind] > profile[crit_ind]
+                        ],
+                        initial=1,
+                    ),
                 )
 
-                bounds: list[float] = [0, 1]
-                if profile_ind > 0:
-                    bounds[0] = sol.profiles[profile_ind - 1][crit_ind]
-                if profile_ind < len(sol.profiles) - 1:
-                    bounds[1] = sol.profiles[profile_ind + 1][crit_ind]
+                new_values = (
+                    np.max(crit_numpy[crit_numpy <= relevant_bounds[0]], initial=-1),
+                    np.min(crit_numpy[crit_numpy >= relevant_bounds[1]], initial=2),
+                )
 
-                for ind in indices:
-                    if (0 <= ind < len(crit)) and (
-                        bounds[0] <= (new_value := crit.iloc[ind]) <= bounds[1]
-                    ):
+                profile_bounds = (
+                    sol.profiles[profile_ind - 1][crit_ind] if profile_ind > 0 else 0,
+                    sol.profiles[profile_ind + 1][crit_ind]
+                    if profile_ind < len(sol.profiles) - 1
+                    else 1,
+                )
+
+                # if profile_ind == 0 and crit_ind == 0:
+                #     print(profile[crit_ind], relevant_bounds, new_values)
+
+                for new_value in new_values:
+                    if profile_bounds[0] <= new_value <= profile_bounds[1]:
                         result.append(
                             replace(
                                 sol,
@@ -85,6 +133,17 @@ class NeighborhoodProfile(Neighborhood[FrozenSRMPModel], Dataclass):
                             )
                         )
 
+        # print(
+        #     PreferenceStructure(
+        #         comparisons_ranking(
+        #             self.target_preferences,
+        #             sol.model.rank_series(self.alternatives).to_dict(),
+        #         )
+        #     ),
+        #     sol.profiles[-1][-1],
+        #     relevant_bounds,
+        #     new_values,
+        # )
         return result
 
 
@@ -100,13 +159,7 @@ class NeighborhoodWeight(Neighborhood[FrozenSRMPModel]):
                     weights=weights_local_change(np.array(sol.weights), crit, increase),
                 )
             )
-            # if (
-            #     weights := weights_local_change(np.array(sol.weights), crit, increase)
-            # ) is not None:
-            #     if np.array_equal(weights := weights.round(DECIMALS), sol.weights):
-            #         result.append(replace(sol, weights=weights))
 
-        # print(result)
         return result
 
 

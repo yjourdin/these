@@ -3,7 +3,7 @@ from dataclasses import dataclass, field, replace
 from typing import Any
 
 from mcda.internal.core.relations import Relation
-from mcda.relations import I, P, PreferenceStructure
+from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
 from ....mip.main import learn_mip
@@ -12,6 +12,7 @@ from ....performance_table.normal_performance_table import NormalPerformanceTabl
 from ....preference_path.main import compute_model_path, compute_preference_path
 from ....preference_structure.generate import random_comparisons
 from ....preference_structure.io import from_csv, to_csv
+from ....preference_structure.utils import preference_structure_from_outranking
 from ....random import SeedLike, rng_
 from ....random import seed as random_seed
 from ....srmp.model import SRMPModel
@@ -291,39 +292,45 @@ class CollectiveTask(MieTask):
             A = NormalPerformanceTable(read_csv(f, header=None))
 
         D: list[PreferenceStructure] = []
-        D_closure: list[PreferenceStructure] = []
+        # D_closure: list[PreferenceStructure] = []
         for dm_id in range(self.group_size):
             with self.Di_file(dir, dm_id).open("r") as f:
                 d = from_csv(f)
-                D.append(d)
 
-            new_relations = True
-            while new_relations:
-                dP = d.typed_structures[P]
-                new_relations = set(
-                    P(r1.a, r2.b) for r1 in dP for r2 in dP if r1.b == r2.a
+                D.append(
+                    preference_structure_from_outranking(
+                        d.outranking_matrix.transitive_closure
+                    )
                 )
-                new_relations -= set(dP.relations)
-                d = PreferenceStructure(d.relations + list(new_relations))
 
-            new_relations = True
-            while new_relations:
-                dI = d.typed_structures[I]
-                new_relations = set(
-                    I(*((s1 | s2) - (s1 & s2)))
-                    for r1 in dI
-                    for r2 in dI
-                    if len((s1 := set(r1.elements)) & (s2 := set(r2.elements))) == 1
-                )
-                new_relations -= set(dI.relations)
-                d = PreferenceStructure(d.relations + list(new_relations))
+            # new_relations = True
+            # while new_relations:
+            #     dP = d.typed_structures[P]
+            #     new_relations = set(
+            #         P(r1.a, r2.b) for r1 in dP for r2 in dP if r1.b == r2.a
+            #     )
+            #     new_relations -= set(dP.relations)
+            #     d = PreferenceStructure(d.relations + list(new_relations))
 
-            D_closure.append(d)
+            # new_relations = True
+            # while new_relations:
+            #     dI = d.typed_structures[I]
+            #     new_relations = set(
+            #         I(*((s1 | s2) - (s1 & s2)))
+            #         for r1 in dI
+            #         for r2 in dI
+            #         if len((s1 := set(r1.elements)) & (s2 := set(r2.elements))) == 1
+            #     )
+            #     new_relations -= set(dI.relations)
+            #     d = PreferenceStructure(d.relations + list(new_relations))
 
-        Acc_set: set[Relation] = set.intersection(*[set(d) for d in D_closure])
-        ACC = PreferenceStructure(list(Acc_set), validate=False)
+            # D_closure.append(d)
 
-        for d in D_closure:
+        # Acc_set: set[Relation] = set.intersection(*[set(d) for d in D])
+        # ACC = PreferenceStructure(list(Acc_set), validate=False)
+        ACC = PreferenceStructure()
+
+        for d in D:
             d -= ACC
 
         C: list[int] = []
@@ -358,7 +365,7 @@ class CollectiveTask(MieTask):
             GroupModelEnum.SRMP,
             self.ko,
             A,
-            D_closure,
+            D,
             rng_lex,
             random_seed(rng_mip),
             min(max_time, self.config.max_time)
@@ -802,38 +809,38 @@ class CleanTask(PreferencePathTask):
 
         count = 0
         total = 0
-        for it in range(1, self.it + 1):
+        for it in range(self.it + 1):
             if (Cr_file := self.Cr_file(dir, it)).exists():
-                with Cr_file.open("r") as f:
-                    R = from_csv(f)
+                # with Cr_file.open("r") as f:
+                #     R = from_csv(f)
 
-                removed: list[Relation] = []
-                for r in R:
-                    total += 1
-                    best_model, _best_fitness, _time = learn_mip(
-                        GroupModelEnum.SRMP,
-                        self.ko,
-                        A,
-                        [PreferenceStructure(r)],
-                        rng_(0),
-                        0,
-                        self.config.max_time,
-                        self.lexicographic_order,
-                        reference_model=Mi,
-                        gamma=self.config.gamma,
-                        profiles_amp=self.group.accept.P,
-                        weights_amp=self.group.accept.W,
-                        lexicographic_order_distance=self.group.accept.L,
-                    )
+                # removed: list[Relation] = []
+                # for r in R:
+                #     total += 1
+                #     best_model, _best_fitness, _time = learn_mip(
+                #         GroupModelEnum.SRMP,
+                #         self.ko,
+                #         A,
+                #         [PreferenceStructure(r)],
+                #         rng_(0),
+                #         0,
+                #         self.config.max_time,
+                #         self.lexicographic_order,
+                #         reference_model=Mi,
+                #         gamma=self.config.gamma,
+                #         profiles_amp=self.group.accept.P,
+                #         weights_amp=self.group.accept.W,
+                #         lexicographic_order_distance=self.group.accept.L,
+                #     )
 
-                    if best_model is not None:
-                        removed.append(r)
-                        count += 1
+                #     if best_model is not None:
+                #         removed.append(r)
+                #         count += 1
 
-                if R_final := R - PreferenceStructure(removed, validate=False):
-                    with Cr_file.open("w") as f:
-                        to_csv(R_final, f)
-                else:
+                # if R_final := R - PreferenceStructure(removed, validate=False):
+                #     with Cr_file.open("w") as f:
+                #         to_csv(R_final, f)
+                # else:
                     Cr_file.unlink()
 
         csv_file = dir.csv_files["clean"]
