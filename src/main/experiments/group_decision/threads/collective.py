@@ -216,7 +216,7 @@ def collective_thread(
 
                         futures_P_values = futures_P.values()
                         if wait_exception_iterable(futures_P_values):
-                            if future.result():
+                            if all(future.result() for future in futures_P_values):
                                 time_left -= max(
                                     future.result().time for future in futures_P_values
                                 )
