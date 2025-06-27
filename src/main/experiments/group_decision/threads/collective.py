@@ -216,15 +216,17 @@ def collective_thread(
 
                         futures_P_values = futures_P.values()
                         if wait_exception_iterable(futures_P_values):
-                            time_left -= max(
-                                future.result().time for future in futures_P_values
-                            )
-                            if time_left < 1:
-                                break
-                            if not all(
-                                future.result().result for future in futures_P_values
-                            ):
-                                break
+                            if future.result():
+                                time_left -= max(
+                                    future.result().time for future in futures_P_values
+                                )
+                                if time_left < 1:
+                                    break
+                                if not all(
+                                    future.result().result
+                                    for future in futures_P_values
+                                ):
+                                    break
 
                         t = 1
                         dms = range(args["group_size"])
