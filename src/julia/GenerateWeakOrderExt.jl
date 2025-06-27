@@ -1,4 +1,4 @@
-using IterTools
+using Combinatorics
 using Logging
 using Random
 using Posets
@@ -22,24 +22,26 @@ poset_min(P, A)   = (x for x ∈ A if !any(P[y] < P[x] for y ∈ A))
 function AllWeak3!(labels, P, Y, A)
     isempty(Y) && return
 
-    ideal_A = BitSet(poset_ideal(P, A))
-    for B ∈ (Y |> subsets |> Base.Fix2(Iterators.drop, 1))
-        Bset = BitSet(B)
-        AA_label = ideal_A ∪ Bset
-        AA_digit = subset_encode(AA_label)
-        if !insorted(AA_digit, labels)
-            insert!(labels, searchsortedfirst(labels, AA_digit), AA_digit)
+    ideal_A = poset_ideal(P, A)
+    ideal_A_digit = subset_encode(ideal_A)
+
+    Yset = BitSet(Y)
+    for B ∈ powerset(Y, 1)
+        B_digit = subset_encode(B)
+
+        A′_digit = ideal_A_digit | B_digit
+        if !insorted(A′_digit, labels)
+            insert!(labels, searchsortedfirst(labels, A′_digit), A′_digit)
 
             @debug "Vertices created : $(length(labels))"
 
-            YB = setdiff!(BitSet(Y), Bset)
-            SuccB = union!(BitSet(), Iterators.flatmap(Base.Fix1(just_above, P), B))
-            YY = collect(poset_min(P, union!(YB, SuccB)))
+            YB    = setdiff(Yset, B)
+            SuccB = Iterators.flatmap(Base.Fix1(just_above, P), B)
+            Y′    = collect(poset_min(P, union!(YB, SuccB)))
 
-            # AA = poset_max(P, AA_label)
-            AA = AA_label
+            A′ = subset_decode(A′_digit)
 
-            AllWeak3!(labels, P, YY, AA)
+            AllWeak3!(labels, P, Y′, A′)
         end
     end
     return
@@ -50,7 +52,7 @@ end
 function generate_WE(P)
     labels = zeros(UInt128, 1)
 
-    AllWeak3!(labels, P, collect(minimals(P)), BitSet())
+    AllWeak3!(labels, P, collect(minimals(P)), eltype(P)[])
 
     NV       = length(labels)
     nb_paths = ones(UInt128, NV)
