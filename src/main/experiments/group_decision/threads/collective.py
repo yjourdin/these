@@ -34,8 +34,9 @@ def collective_thread(
     max_time: int = DEFAULT_MAX_TIME,
 ):
     wait_exception_iterable(precede_futures)
-    future = precede_futures[0]
-    time_passed = future.result().time if wait_exception(future) else 0
+    if len(precede_futures) == 1:
+        future = precede_futures[0]
+        time_passed = future.result().time if wait_exception(future) else 0
 
     with ThreadPoolExecutor() as thread_pool:
         DMS = range(args["group_size"])
