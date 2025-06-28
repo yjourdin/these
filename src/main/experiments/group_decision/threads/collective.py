@@ -34,6 +34,7 @@ def collective_thread(
     max_time: int = DEFAULT_MAX_TIME,
 ):
     wait_exception_iterable(precede_futures)
+    time_passed = 0
     if len(precede_futures) == 1:
         future = precede_futures[0]
         time_passed = future.result().time if wait_exception(future) else 0
