@@ -21,6 +21,8 @@ def task_thread(
         task_queue.put(TaskQueueElement(task, args, manager_connection))
 
         result = thread_connection.recv()
+        if result is None:
+            print(task)
         if result == SENTINEL:
             raise Exception("Task error")
         return result
