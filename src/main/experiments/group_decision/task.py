@@ -699,8 +699,6 @@ class PreferencePathTask(AcceptMcTask):
                 )
             )
 
-        if not self.path:
-            print("222 NNOO PPAATTHH")
         return len(preference_path) != 0
 
     def P_file(self, dir: DirectoryGroupDecision, t: int):
