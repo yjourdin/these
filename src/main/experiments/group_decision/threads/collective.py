@@ -33,7 +33,7 @@ def collective_thread(
     dir: DirectoryGroupDecision,
     max_time: int = DEFAULT_MAX_TIME,
 ):
-    print(precede_futures, args)
+    # print(precede_futures, args)
     wait_exception_iterable(precede_futures)
     time_passed = 0
     if len(precede_futures) == 1:

@@ -70,6 +70,8 @@ def worker_manager(
                         stop = True
                         break
                     else:
+                        if obj is None:
+                            print("PROBLEM", connection)
                         working_connections[connection].send(obj)
                         del working_connections[connection]
                         waiting_connections.add(connection)
