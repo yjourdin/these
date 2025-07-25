@@ -26,4 +26,4 @@ def task_thread(
             raise Exception("Task error")
         return result
     else:
-        print("AAAAHHHHHAAHHAHAHAH")
+        print(task, args)
