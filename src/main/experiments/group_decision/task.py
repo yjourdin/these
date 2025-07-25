@@ -659,14 +659,12 @@ class PreferencePathTask(AcceptMcTask):
             )
             preference_path = compute_preference_path(model_path, D, A, R)
         else:
-            print("NNOO PPAATTHH")
             model_path = []
             time = 0
             preference_path = [
                 D,
                 random_comparisons(A, Mc, pairs=D.elements_pairs_relations),
             ]
-            print("222 NNOO PPAATTHH")
 
         t = None
         for t, preferences in enumerate(preference_path):
@@ -701,6 +699,8 @@ class PreferencePathTask(AcceptMcTask):
                 )
             )
 
+        if not self.path:
+            print("222 NNOO PPAATTHH")
         return len(preference_path) != 0
 
     def P_file(self, dir: DirectoryGroupDecision, t: int):
