@@ -3,7 +3,6 @@ from itertools import chain
 from subprocess import run
 from typing import Any
 
-from ..utils import int_to_ind_set
 from .file import PARENT_DIR, S_file, WE_file
 
 
@@ -22,6 +21,7 @@ def run_julia(scriptname: str, *args: Any, **kwargs: Any):
 
 
 def python_exec(s: str):
+    s = s.replace("Int64", "")
     try:
         return ast.literal_eval(s)
     except Exception:
@@ -29,9 +29,7 @@ def python_exec(s: str):
 
 
 def generate_linext(m: int, seed: int | None = None) -> list[list[int]]:
-    linext = python_exec(run_julia("generate_linext.jl", m, seed=seed))
-
-    return [int_to_ind_set(i) for i in linext]
+    return python_exec(run_julia("generate_linext.jl", m, seed=seed))
 
 
 def generate_partial_sum(m: int) -> None:
@@ -48,7 +46,4 @@ def generate_weak_order(m: int, seed: int | None = None) -> list[int]:
 
 
 def generate_weak_order_ext(m: int, seed: int | None = None) -> list[list[list[int]]]:
-    weak_order = python_exec(
-        run_julia("generate_weak_order_ext.jl", m, WE_file(m), seed=seed)
-    )
-    return [[int_to_ind_set(i) for i in block] for block in weak_order]
+    return python_exec(run_julia("generate_weak_order_ext.jl", WE_file(m), seed=seed))

@@ -5,8 +5,8 @@ using JLD2
 using UnPack
 
 @kwdef struct Args
-    file :: String
-    seed :: Union{Nothing, UInt}
+    file::String
+    seed::Union{Nothing, UInt}
 end
 
 function parse_commandline()
@@ -25,7 +25,7 @@ function main()
 
     Random.seed!(seed)
 
-    @unpack labels, nb_paths = GraphFile(load(file))
+    @unpack labels, nb_paths = file |> load |> WE
 
     println(generate_weak_order_ext(labels, nb_paths))
     return 0

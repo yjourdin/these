@@ -4,9 +4,9 @@ using ArgParse
 using DataStructures
 using Distributions
 using JLD2
+using UnPack
 
 @kwdef struct Args
-    M    :: UInt128
     file :: String
     N    :: UInt128
     seed :: Union{Nothing, UInt}
@@ -16,7 +16,6 @@ function parse_commandline()
     s = ArgParseSettings()
 
     @add_arg_table! s begin
-        ("M"; arg_type = UInt128; required = true; help = "Number of criteria")
         ("file"; required = true; help = "Input file")
         ("N"; arg_type = UInt128; required = true; help = "Number of samples")
         (["--seed", "-s"]; arg_type = UInt; help = "Random seed")
@@ -26,13 +25,13 @@ function parse_commandline()
 end
 
 function main()
-    @unpack M, file, N, seed = parse_commandline()
+    @unpack file, N, seed = parse_commandline()
 
     Random.seed!(seed)
 
-    result = DefaultDict{Vector{Vector{Int}}, Int}(0)
+    result = DefaultDict{Vector{Vector{Vector{Int}}}, Int}(0)
 
-    @unpack labels, nb_paths = GraphFile(load(file))
+    @unpack labels, nb_paths = file |> load |> WE
 
     K = nb_paths[1]
     @info "Nb paths : $K"

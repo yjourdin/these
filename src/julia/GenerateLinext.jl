@@ -2,19 +2,12 @@ using Random
 using Posets
 using StatsBase
 
-# Poset
-
-function remove_vertex!(P, labels, v)
-    rem_vertex!(P, v)
-
-    labels[v], labels[end] = labels[end], labels[v]
-    return pop!(labels)
-end
+include("Posets.jl")
 
 # Isolated
 
-is_isolated_top(P, x)    = isempty(above(P, x))
-is_isolated_bottom(P, x) = isempty(below(P, x))
+is_isolated_top(P, x)    = !any(P[x] < P[y] for y ∈ 1:nv(P))
+is_isolated_bottom(P, x) = !any(P[y] < P[x] for y ∈ 1:nv(P))
 isolated_top(P, A)       = [x for x ∈ A if is_isolated_top(P, x)]
 isolated_bottom(P, A)    = [x for x ∈ A if is_isolated_bottom(P, x)]
 
@@ -117,10 +110,10 @@ function generate_linext!(P, rng = Random.default_rng())
     top_card    = top_cardinality(labels)
     bottom_card = bottom_cardinality(labels)
 
-    while (length(labels) >= 2) && (top_card - bottom_card > 1)
+    while (length(labels) ≥ 2) && (top_card - bottom_card > 1)
         max = maximals(P)
         M, _ = iterate(max)
-        if ~isempty(max)
+        if !isempty(max)
             ul = layer(labels, top_card)
             ll = layer(labels, top_card - 1)
             h  = length(ul)
@@ -131,11 +124,11 @@ function generate_linext!(P, rng = Random.default_rng())
         label = labels[M]
         pushfirst!(lmax, label)
         remove_vertex!(P, labels, M)
-        (cardinality(label) != top_card) || (top_card = top_cardinality(labels))
+        (cardinality(label) ≠ top_card) || (top_card = top_cardinality(labels))
 
         min = minimals(P)
         m, _ = iterate(min)
-        if ~isempty(min)
+        if !isempty(min)
             ul = layer(labels, bottom_card + 1)
             ll = layer(labels, bottom_card)
             h  = length(ul)
@@ -146,42 +139,41 @@ function generate_linext!(P, rng = Random.default_rng())
         label = labels[m]
         push!(lmin, label)
         remove_vertex!(P, labels, m)
-        (cardinality(label) != bottom_card) ||
-            (bottom_card = bottom_cardinality(labels))
+        (cardinality(label) ≠ bottom_card) || (bottom_card = bottom_cardinality(labels))
     end
 
-    while (length(labels) >= 2) && (top_card - bottom_card == 1)
+    while (length(labels) ≥ 2) && (top_card - bottom_card == 1)
         ul = layer(labels, top_card)
         ll = layer(labels, bottom_card)
         h  = length(ul)
         k  = length(ll)
-        if h <= k
+        if h ≤ k
             max = maximals(P)
             M, _ = iterate(max)
-            if ~isempty(max)
+            if !isempty(max)
                 I = isolated_top(P, ll)
                 M = select_M(P, ul, I, h, k, rng)
             end
             label = labels[M]
             pushfirst!(lmax, label)
             remove_vertex!(P, labels, M)
-            (cardinality(label) != top_card) || (top_card = top_cardinality(labels))
+            (cardinality(label) ≠ top_card) || (top_card = top_cardinality(labels))
         else
             min = minimals(P)
             m, _ = iterate(min)
-            if ~isempty(min)
+            if !isempty(min)
                 I = isolated_bottom(P, ul)
                 m = select_m(P, ll, I, h, k, rng)
             end
             label = labels[m]
             push!(lmin, label)
             remove_vertex!(P, labels, m)
-            (cardinality(label) != bottom_card) ||
+            (cardinality(label) ≠ bottom_card) ||
                 (bottom_card = bottom_cardinality(labels))
         end
     end
 
     append!(lmin, shuffle!(labels))
 
-    return [lmin; lmax]
+    return subset_decode.([lmin; lmax])
 end

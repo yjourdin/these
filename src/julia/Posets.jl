@@ -1,16 +1,14 @@
 using Posets: Posets
 
-function subset_decode(c)
-    bits = digits(Bool, c; base = 2)
-    return findall(bits)
+function remove_vertex!(P, labels, v)
+    rem_vertex!(P, v)
+
+    labels[v], labels[end] = labels[end], labels[v]
+    return pop!(labels)
 end
+
+subset_decode(c) = findall(digits(Bool, c; base = 2))
 Posets.subset_decode(c::Integer) = subset_decode(c - 1)
 
-function subset_encode(A)
-    s = UInt128(0)
-    for k ∈ A
-        s += UInt128(1) << (k - 1)
-    end
-    return s
-end
+subset_encode(A) = sum(x -> 2^(x - 1), A; init = UInt128(0))
 Posets.subset_encode(A::Set{T}) where {T <: Integer} = subset_encode(A) + 1
