@@ -659,6 +659,7 @@ class PreferencePathTask(AcceptMcTask):
             )
             preference_path = compute_preference_path(model_path, D, A, R)
         else:
+            print("NNOO PPAATTHH")
             model_path = []
             time = 0
             preference_path = [
