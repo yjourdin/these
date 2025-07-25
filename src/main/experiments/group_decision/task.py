@@ -666,6 +666,7 @@ class PreferencePathTask(AcceptMcTask):
                 D,
                 random_comparisons(A, Mc, pairs=D.elements_pairs_relations),
             ]
+            print("222 NNOO PPAATTHH")
 
         t = None
         for t, preferences in enumerate(preference_path):
