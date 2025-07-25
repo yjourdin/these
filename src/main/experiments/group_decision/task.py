@@ -2,7 +2,6 @@ import csv
 from dataclasses import dataclass, field, replace
 from typing import Any
 
-from mcda.internal.core.relations import Relation
 from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
@@ -275,6 +274,7 @@ class MieTask(AbstractDTask):
 class CollectiveTask(MieTask):
     name = "Collective"
     # config: MIPConfig
+    Mie: bool = field(hash=False)
     Mc_id: int = field(hash=False)
     path: bool = field(hash=False)
     P_id: int = field(hash=False)
@@ -440,6 +440,7 @@ class CollectiveTask(MieTask):
             self.D_id,
             self.config,
             self.Mc_id,
+            self.Mie,
             self.path,
             self.P_id,
             self.it,
@@ -460,6 +461,7 @@ class CollectiveTask(MieTask):
             self.D_id,
             self.config,
             self.Mc_id,
+            self.Mie,
             self.path,
             self.P_id,
             self.it,
@@ -481,6 +483,7 @@ class CollectiveTask(MieTask):
             self.D_id,
             self.config,
             self.Mc_id,
+            self.Mie,
             self.path,
             self.P_id,
             it,
@@ -502,6 +505,7 @@ class CollectiveTask(MieTask):
             self.D_id,
             self.config,
             self.Mc_id,
+            self.Mie,
             self.path,
             self.P_id,
             it,
@@ -521,6 +525,7 @@ class CollectiveTask(MieTask):
             self.same_alt,
             self.D_id,
             self.config,
+            self.Mie,
             self.Mie_id,
             self.Mc_id,
             self.path,
@@ -543,6 +548,7 @@ class CollectiveTask(MieTask):
             self.D_id,
             self.config,
             self.Mc_id,
+            self.Mie,
             self.path,
             self.P_id,
             self.it,
@@ -717,6 +723,7 @@ class PreferencePathTask(AcceptMcTask):
             self.D_id,
             self.config,
             self.Mc_id,
+            self.Mie,
             self.path,
             self.P_id,
             self.it,
