@@ -24,6 +24,6 @@ def task_thread(
 
         if result == SENTINEL:
             raise Exception("Task error")
-        if result is None:
-            print(task)
         return result
+    else:
+        print("AAAAHHHHHAAHHAHAHAH")
