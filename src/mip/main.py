@@ -190,6 +190,7 @@ def learn_mip(
                             **kwargs,
                         )
                     elif reference_models:
+                        print("Yeah")
                         mip = MIPSRMPCollectiveBound(
                             alternatives=alternatives,
                             preference_relations=preference_relations_list,
