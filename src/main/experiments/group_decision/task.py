@@ -412,6 +412,7 @@ class CollectiveTask(MieTask):
                 Same_alt=self.same_alt,
                 D_id=self.D_id,
                 Config=self.config,
+                Mie=self.Mie,
                 Mie_id=self.Mie_id,
                 Mc_id=self.Mc_id,
                 Path=self.path,
@@ -603,6 +604,7 @@ class AcceptMcTask(CollectiveTask, MiTask):
                 Same_alt=self.same_alt,
                 D_id=self.D_id,
                 Config=self.config,
+                Mie=self.Mie,
                 Mie_id=self.Mie_id,
                 Mc_id=self.Mc_id,
                 Path=self.path,
@@ -693,6 +695,7 @@ class PreferencePathTask(AcceptMcTask):
                     Same_alt=self.same_alt,
                     D_id=self.D_id,
                     Config=self.config,
+                    Mie=self.Mie,
                     Mie_id=self.Mie_id,
                     Mc_id=self.Mc_id,
                     Path=self.path,
@@ -783,6 +786,7 @@ class AcceptPTask(PreferencePathTask):
                 Same_alt=self.same_alt,
                 D_id=self.D_id,
                 Config=self.config,
+                Mie=self.Mie,
                 Mie_id=self.Mie_id,
                 Mc_id=self.Mc_id,
                 Path=self.path,
@@ -848,9 +852,10 @@ class CleanTask(PreferencePathTask):
                 #     with Cr_file.open("w") as f:
                 #         to_csv(R_final, f)
                 # else:
-                    Cr_file.unlink()
+                Cr_file.unlink()
 
         csv_file = dir.csv_files["clean"]
+
         csv_file.writerow(
             csv_file.fields(
                 M=self.m,
@@ -865,6 +870,7 @@ class CleanTask(PreferencePathTask):
                 Same_alt=self.same_alt,
                 D_id=self.D_id,
                 Config=self.config,
+                Mie=self.Mie,
                 Mie_id=self.Mie_id,
                 Mc_id=self.Mc_id,
                 Path=self.path,

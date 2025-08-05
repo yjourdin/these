@@ -98,8 +98,9 @@ def collective_thread(
                     break
 
                 if not result:
-                    # print(dict_str(args))
-                    # return 0
+                    if args["Mie"] and it == 0:
+                        break
+
                     futures_clean: list[FutureTaskException] = []
                     for dm_id in DMS:
                         task_clean = CleanTask(
@@ -232,8 +233,7 @@ def collective_thread(
                             if time_left < 1:
                                 break
                             if not all(
-                                future.result().result
-                                for future in futures_P_values
+                                future.result().result for future in futures_P_values
                             ):
                                 break
 
@@ -366,6 +366,7 @@ def collective_thread(
                                 Same_alt=args["same_alt"],
                                 D_id=args["D_id"],
                                 Config=args["config"],
+                                Mie=args["Mie"],
                                 Mie_id=args["Mie_id"],
                                 Path=args["path"],
                                 P_id=args["P_id"],
@@ -430,6 +431,7 @@ def collective_thread(
             Same_alt=args["same_alt"],
             D_id=args["D_id"],
             Config=args["config"],
+            Mie=args["Mie"],
             Mie_id=args["Mie_id"],
             Path=args["path"],
             P_id=args["P_id"],

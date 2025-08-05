@@ -29,6 +29,7 @@ class ExperimentFields(CSVFields):
     D_id: int
     Config: MIPConfig
     Path: bool
+    Mie: bool
     P_id: int
     Mie_id: int
     Mc_id: int
