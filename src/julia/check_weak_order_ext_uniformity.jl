@@ -29,20 +29,14 @@ function main()
 
     Random.seed!(seed)
 
-    result = DefaultDict{Vector{Vector{Vector{Int}}}, Int}(0)
-
     @unpack labels, nb_paths = file |> load |> WE
 
     K = nb_paths[1]
     @info "Nb paths : $K"
 
-    for i ∈ 1:N
-        @debug i
-        we = generate_weak_order_ext(labels, nb_paths)
-        result[we] += 1
-    end
+    c = counter(generate_weak_order_ext(labels, nb_paths) for _ ∈ 1:N)
 
-    T = (K / N) * sum(values(result) .^ 2) - N
+    T = (K / N) * sum(x^2 for x ∈ values(c)) - N
 
     println("Uniform : ", T < quantile(Chisq(K - 1), 0.95))
     println("P-value : ", ccdf(Chisq(K - 1), T))

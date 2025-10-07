@@ -1,51 +1,49 @@
+include("Posets.jl")
+
 using Chain
-using IterTools
 using Logging
-using Posets
 using Random
 using StatsBase
 
-include("Posets.jl")
-
-# Bitwise operations
-
-bit_setdiff(a, b)  = a & ~b
-bit_issubset(a, b) = (a & b) == a
-bit_subsets(a)     = Iterators.takewhile(>(0), iterated(x -> (x - 1) & a, a))
-
 # Poset basics
 
-poset_ideal(A, P)      = (y for y ∈ 1:nv(P) if any(P[y] ≤ P[x] for x ∈ A))
-poset_max(A, P)        = (x for x ∈ A if !any(P[x] < P[y] for y ∈ A))
-poset_min(A, P)        = (x for x ∈ A if !any(P[y] < P[x] for y ∈ A))
-poset_just_above(a, P) = just_above(P, a)
+poset_ideal(A, P)  = (y for y ∈ 1:nv(P) if any(P[y] ≤ P[x] for x ∈ A))
+poset_filter(A, P) = (y for y ∈ 1:nv(P) if any(P[x] ≤ P[y] for x ∈ A))
+poset_max(A, P)    = (x for x ∈ A if !any(P[x] < P[y] for y ∈ A))
+poset_min(A, P)    = (x for x ∈ A if !any(P[y] < P[x] for y ∈ A))
+
+# Bit poset
+
+struct BitPoset
+    in  :: Vector{UInt128}
+    out :: Vector{UInt128}
+end
+BitPoset(P) = BitPoset(encode.(P.d.badjlist), encode.(P.d.fadjlist))
+
+bit_poset_ideal(a, P)  = Bit.union(P.in[x] for x ∈ decode(a); init = a)
+bit_poset_filter(a, P) = Bit.union(P.out[x] for x ∈ decode(a); init = a)
+bit_poset_max(a, P)    = encode(x for x ∈ decode(a) if Bit.isdisjoint(P.out[x], a))
+bit_poset_min(a, P)    = encode(x for x ∈ decode(a) if Bit.isdisjoint(P.in[x], a))
 
 # AllWeak3
 
 function AllWeak3!(labels, P, Y, A)
-    Y == 0 && return
+    Bit.isempty(Y) && return
 
-    ideal_A = @chain A begin
-        subset_decode
-        poset_ideal(P)
-        subset_encode
-    end
+    ideal_A = bit_poset_ideal(A, P)
 
-    for B ∈ bit_subsets(Y)
-        A′ = ideal_A | B
+    for B ∈ Bit.subsets(Y)
+        A′ = Bit.union(ideal_A, B)
         i = searchsortedfirst(labels, A′)
         get(labels, i, nothing) ≠ A′ || continue
 
         insert!(labels, i, A′)
-        @debug "Vertices created : $(length(labels))"
+        # @debug "Vertices created : $(length(labels))"
         Y′ = @chain B begin
-            subset_decode
-            poset_just_above.(Ref(P))
-            @. subset_encode
-            reduce(|, _; init = bit_setdiff(Y, B))
-            subset_decode
-            poset_min(P)
-            subset_encode
+            bit_poset_filter(P)
+            Bit.union(Y)
+            Bit.setdiff(B)
+            bit_poset_min(P)
         end
         AllWeak3!(labels, P, Y′, A′)
     end
@@ -56,24 +54,24 @@ end
 # successors
 
 function successors(labels, i)
-    u = labels[i]
-    S_labels = @view labels[(i + 1):end]
-    S_indices = S_labels.indices[1]
-    return (S_indices[j] for (j, v) ∈ pairs(S_labels) if bit_issubset(u, v))
+    u    = labels[i]
+    succ = (i + 1):length(labels)
+    u ≤ 1 && return succ
+    return (j for j ∈ succ if Bit.issubset(u, labels[j]))
 end
 
 # generate_WE
 
 function generate_WE(P)
-    labels = zeros(UInt128, 1)
+    labels = [Bit.empty]
 
-    AllWeak3!(labels, P, subset_encode(minimals(P)), 0)
+    AllWeak3!(labels, BitPoset(P), encode(Posets.minimals(P)), Bit.empty)
 
     NV       = length(labels)
     nb_paths = ones(UInt128, NV)
-    for i ∈ (NV - 1):-1:1
-        nb_paths[i] = sum(x -> nb_paths[x], successors(labels, i))
-        @debug "Vertices traversed : $(length(nb_paths) - i + 1) / $(length(nb_paths))"
+    for i ∈ (NV - 2):-1:1
+        nb_paths[i] = sum(x -> nb_paths[x], successors(labels, i); init = UInt128(0))
+        # @debug "Vertices traversed : $(length(nb_paths) - i + 1) / $(length(nb_paths))"
     end
 
     return labels, nb_paths
@@ -86,12 +84,14 @@ function generate_weak_order_ext(labels, nb_paths, rng = Random.default_rng())
     N      = length(labels)
     i      = 1
     while i ≠ N
-        Ni = collect(successors(labels, i))
-        j  = sample(rng, Ni, FrequencyWeights(view(nb_paths, Ni), nb_paths[i]))
+        Ni       = collect(successors(labels, i))
+        @views j = sample(rng, Ni, FrequencyWeights(nb_paths[Ni], nb_paths[i]))
         @chain labels begin
-            bit_setdiff(_[j], _[i])
-            subset_decode
+            Bit.setdiff(_[j], _[i])
+            decode
+            collect
             @. Posets.subset_decode
+            @. collect
             push!(result, _)
         end
         i = j
@@ -102,13 +102,12 @@ end
 # number_of_arcs
 
 function number_of_arcs(labels)
-    n = big(0)
-    N = length(labels)
+    n = 0
 
-    for i ∈ 1:N
-        @debug "$i / $N"
-        for j ∈ (i + 1):N
-            bit_issubset(labels[i], labels[j]) && (n += 1)
+    for i ∈ eachindex(labels)
+        # @debug "$i / $(length(labels))"
+        for _ ∈ successors(labels, i)
+            n += 1
         end
     end
 
@@ -121,5 +120,4 @@ end
     labels   :: Vector{UInt128}
     nb_paths :: Vector{UInt128}
 end
-
 WE(d) = WE(d["labels"], d["nb_paths"])

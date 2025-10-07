@@ -1,13 +1,13 @@
+using Chain
 using Random
-using Posets
 using StatsBase
 
 include("Posets.jl")
 
 # Isolated
 
-is_isolated_top(P, x)    = !any(P[x] < P[y] for y ∈ 1:nv(P))
-is_isolated_bottom(P, x) = !any(P[y] < P[x] for y ∈ 1:nv(P))
+is_isolated_top(P, x)    = !any(P[x] < P[y] for y ∈ 1:Posets.nv(P))
+is_isolated_bottom(P, x) = !any(P[y] < P[x] for y ∈ 1:Posets.nv(P))
 isolated_top(P, A)       = [x for x ∈ A if is_isolated_top(P, x)]
 isolated_bottom(P, A)    = [x for x ∈ A if is_isolated_bottom(P, x)]
 
@@ -87,7 +87,14 @@ end
 
 function select_M(P, ul, I, h, k, rng = Random.default_rng())
     card_I   = length(I)
-    card_III = ul |> first |> Base.Fix1(just_below, P) .|> Base.Fix1(above, P) .|> collect .|> length .|> ==(1) |> count
+    card_III = @chain ul begin
+        first
+        just_below(P)
+        (above(x, P) for x ∈ _)
+        (collect(x) for x ∈ _)
+        (length(x) == 1 for x ∈ _)
+        count
+    end
     card_II  = card_I + card_III
     pu, pl   = proba_Th(h, k, card_I, card_II, card_III)
     return sample(rng, [ul; I], ProbabilityWeights([fill(pu, h); fill(pl, card_I)], 1))
@@ -95,7 +102,14 @@ end
 
 function select_m(P, ll, I, h, k, rng = Random.default_rng())
     card_I   = length(I)
-    card_III = ll |> first |> Base.Fix1(just_above, P) .|> Base.Fix1(below, P) .|> collect .|> length .|> ==(1) |> count
+    card_III = @chain ll begin
+        first
+        just_above(P)
+        (below(x, P) for x ∈ _)
+        (collect(x) for x ∈ _)
+        (length(x) == 1 for x ∈ _)
+        count
+    end
     card_II  = card_I + card_III
     pl, pu   = proba_Bh(h, k, card_I, card_II, card_III)
     return sample(rng, [ll; I], ProbabilityWeights([fill(pl, k); fill(pu, card_I)], 1))
@@ -106,12 +120,12 @@ end
 function generate_linext!(P, rng = Random.default_rng())
     lmin        = Int[]
     lmax        = Int[]
-    labels      = collect(0:(nv(P) - 1))
+    labels      = collect(0:(Posets.nv(P) - 1))
     top_card    = top_cardinality(labels)
     bottom_card = bottom_cardinality(labels)
 
     while (length(labels) ≥ 2) && (top_card - bottom_card > 1)
-        max = maximals(P)
+        max = Posets.maximals(P)
         M, _ = iterate(max)
         if !isempty(max)
             ul = layer(labels, top_card)
@@ -126,7 +140,7 @@ function generate_linext!(P, rng = Random.default_rng())
         remove_vertex!(P, labels, M)
         (cardinality(label) ≠ top_card) || (top_card = top_cardinality(labels))
 
-        min = minimals(P)
+        min = Posets.minimals(P)
         m, _ = iterate(min)
         if !isempty(min)
             ul = layer(labels, bottom_card + 1)
@@ -148,7 +162,7 @@ function generate_linext!(P, rng = Random.default_rng())
         h  = length(ul)
         k  = length(ll)
         if h ≤ k
-            max = maximals(P)
+            max = Posets.maximals(P)
             M, _ = iterate(max)
             if !isempty(max)
                 I = isolated_top(P, ll)
@@ -159,7 +173,7 @@ function generate_linext!(P, rng = Random.default_rng())
             remove_vertex!(P, labels, M)
             (cardinality(label) ≠ top_card) || (top_card = top_cardinality(labels))
         else
-            min = minimals(P)
+            min = Posets.minimals(P)
             m, _ = iterate(min)
             if !isempty(min)
                 I = isolated_bottom(P, ul)
@@ -175,5 +189,5 @@ function generate_linext!(P, rng = Random.default_rng())
 
     append!(lmin, shuffle!(labels))
 
-    return subset_decode.([lmin; lmax])
+    return [lmin; lmax] .|> bit_decode .|> collect
 end

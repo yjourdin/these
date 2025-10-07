@@ -1,11 +1,11 @@
 {
-    "name": "new_group_test",
+    "name": "test",
     "jobs": 10,
     "seed": 0,
     "max_time": 300,
-    "nb_Atr": 10,
+    "nb_Atr": 2,
     "group_size": [
-        3
+        2
     ],
     "N_tr": [
         100
@@ -17,7 +17,7 @@
         2
     ],
     "N_bc": [
-        40
+        20
     ],
     "config": [
         {
@@ -41,10 +41,12 @@
         }
     ],
     "path": [
-        true
+        true,
+	false
     ],
     "Mie": [
-        true
+        true,
+	false
     ],
-    "fixed_lex_order": true
+    "fixed_lex_order": false
 }

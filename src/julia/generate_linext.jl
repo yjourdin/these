@@ -24,7 +24,7 @@ function main()
 
     Random.seed!(seed)
 
-    M |> subset_lattice |> generate_linext! |> println
+    M |> Posets.subset_lattice |> generate_linext! |> println
     return 0
 end
 

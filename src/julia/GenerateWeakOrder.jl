@@ -13,7 +13,7 @@ W(m) = sum(w(m, k) for k ∈ 1:m)
 function generate_partial_sum(m, delta = 0.01)
     Wm = W(m)
     k  = 0
-    S  = zeros(BigFloat, 1)
+    S  = BigFloat[0]
 
     while (Wm - last(S) > delta) && ((length(S) < 2) || S[end] > S[end - 1])
         k += 1
@@ -29,7 +29,7 @@ function random_nb_blocks(S, rng = Random.default_rng())
     Wm = last(S)
     Y  = Wm * rand(rng)
 
-    return searchsortedfirst(S, Y) - 1
+    return searchsortedlast(S, Y)
 end
 
 function random_ranking_from_blocks(m, k, rng = Random.default_rng())

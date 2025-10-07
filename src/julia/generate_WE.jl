@@ -2,7 +2,6 @@ include("GenerateWeakOrderExt.jl")
 
 using ArgParse
 using JLD2
-using Logging
 using UnPack
 
 function fmt(level, _module, group, id, file, line)
@@ -39,7 +38,7 @@ function main()
     isnothing(logging_io) ||
         global_logger(ConsoleLogger(logging_io, Debug; meta_formatter = fmt))
 
-    labels, nb_paths = M |> subset_lattice |> generate_WE
+    labels, nb_paths = M |> Posets.subset_lattice |> generate_WE
 
     jldsave(output; labels, nb_paths)
 
