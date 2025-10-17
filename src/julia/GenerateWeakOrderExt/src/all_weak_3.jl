@@ -9,7 +9,7 @@ function AllWeak3!(labels, P, Y, A)
         get(labels, i, nothing) ≠ A′ || continue
 
         insert!(labels, i, A′)
-        # println("Vertices created : $(length(labels))")
+        # @debug "Vertices created : $(length(labels))"
         Y′ = @chain B begin
             filter(P)
             Bit.union(Y)
