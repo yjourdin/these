@@ -8,7 +8,7 @@ function generate_WE(P)
     nb_paths = ones(UInt128, NV)
     for i ∈ (NV - 2):-1:1
         nb_paths[i] = sum(x -> nb_paths[x], successors(labels, i); init = UInt128(0))
-        # @debug "Vertices traversed : $(length(nb_paths) - i + 1) / $(length(nb_paths))"
+        # @info "Vertices traversed : $(length(nb_paths) - i + 1) / $(length(nb_paths))"
     end
 
     return WE(labels, nb_paths)
