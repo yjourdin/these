@@ -29,4 +29,4 @@ encode(x::Integer) = one(UInt128) << (x - 1)
 encode(A) = sum(encode, A; init = empty)
 decode(c) = filter(in(c), 1:length(c))
 
-end
+end # module Bit

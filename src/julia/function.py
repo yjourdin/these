@@ -3,12 +3,10 @@ from itertools import chain
 from subprocess import run
 from typing import Any
 
-from .file import PARENT_DIR, S_file, WE_file
-
 
 def run_julia(scriptname: str, *args: Any, **kwargs: Any):
     return run(
-        ["julia", "--project", PARENT_DIR / scriptname]
+        [scriptname]
         + [str(x) for x in args]
         + list(
             chain.from_iterable(
@@ -29,21 +27,12 @@ def python_exec(s: str):
 
 
 def generate_linext(m: int, seed: int | None = None) -> list[list[int]]:
-    return python_exec(run_julia("generate_linext.jl", m, seed=seed))
-
-
-def generate_partial_sum(m: int) -> None:
-    return python_exec(run_julia("generate_partial_sum.jl", m, output=S_file(m)))
+    return python_exec(run_julia("generate_linext", m, seed=seed))
 
 
 def generate_weak_order(m: int, seed: int | None = None) -> list[int]:
-    file = S_file(m)
-
-    if not file.exists():
-        generate_partial_sum(m)
-
-    return python_exec(run_julia("generate_weak_order.jl", file, seed=seed))
+    return python_exec(run_julia("generate_weak_order", m, seed=seed))
 
 
 def generate_weak_order_ext(m: int, seed: int | None = None) -> list[list[list[int]]]:
-    return python_exec(run_julia("generate_weak_order_ext.jl", WE_file(m), seed=seed))
+    return python_exec(run_julia("generate_weak_order_ext", m, seed=seed))

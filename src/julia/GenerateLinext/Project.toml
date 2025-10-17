@@ -1,0 +1,15 @@
+name = "GenerateLinext"
+uuid = "081fb742-35d0-49ae-b9a8-cafc5ab37347"
+version = "0.1.0"
+authors = ["Yann Jourdin <yann.jourdin@imt-atlantique.fr>"]
+
+[deps]
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+Chain = "8be319e6-bccf-4806-a6f7-6fae938471bc"
+IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
+Posets = "9a158a65-591e-4f68-ac4f-9ffef2fc51f2"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
+
+[apps.generate_linext]

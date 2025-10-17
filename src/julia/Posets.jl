@@ -1,19 +1,24 @@
-include("Bit.jl")
+module Posets
 
-using .Bit
-using Posets: Posets
+include("Bit.jl")
+using .Bit: decode, encode
+
+using Posets
+import Posets: above, below, just_above, just_below
 
 function remove_vertex!(P, labels, v)
-    Posets.rem_vertex!(P, v)
+    rem_vertex!(P, v)
 
     labels[v], labels[end] = labels[end], labels[v]
     return pop!(labels)
 end
 
-Posets.subset_decode(c::Integer)::Set{Int} = Set{Int}(collect(decode(c - 1)))
-Posets.subset_encode(A::Set{T} where {T <: Integer})::Int = Int(encode(A)) + 1
+subset_decode(c) = decode(c - 1)
+subset_encode(A) = encode(A) + 1
 
-above(a, P) = Posets.above(P, a)
-below(a, P) = Posets.below(P, a)
-just_above(a, P) = Posets.just_above(P, a)
-just_below(a, P) = Posets.just_below(P, a)
+above(a, P) = above(P, a)
+below(a, P) = below(P, a)
+just_above(a, P) = just_above(P, a)
+just_below(a, P) = just_below(P, a)
+
+end # module Posets

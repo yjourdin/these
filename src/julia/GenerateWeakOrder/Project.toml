@@ -1,0 +1,14 @@
+name = "GenerateWeakOrder"
+uuid = "639c15a6-05b4-47cf-8da9-d93ddb447dfc"
+version = "0.1.0"
+authors = ["Yann Jourdin <yann.jourdin@imt-atlantique.fr>"]
+
+[deps]
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+Memoization = "6fafb56a-5788-4b4e-91ca-c0cea6611c73"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
+
+[apps.generate_weak_order]
