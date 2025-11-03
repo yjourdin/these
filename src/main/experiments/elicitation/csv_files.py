@@ -38,7 +38,7 @@ class ExperimentFields(CSVFields):
 
 
 # Train
-class TrainFields(CSVFields):
+class TrainFields(ExperimentFields):
     Time: float
     Fitness: float | None
     It: NotRequired[int]
