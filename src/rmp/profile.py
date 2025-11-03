@@ -13,7 +13,7 @@ def random_profiles(
 ):
     rng = rng_(rng)
     if profiles_values:
-        idx = np.sort(rng.choice(len(profiles_values.data), (nb, nb_crit)))
+        idx = np.sort(rng.choice(len(profiles_values.data), (nb, nb_crit)), 0)
         return NormalPerformanceTable(
             DataFrame({
                 i: profiles_values.data.iloc[idx[:, i], i].to_list()

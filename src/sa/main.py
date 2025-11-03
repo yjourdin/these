@@ -77,7 +77,7 @@ def learn_sa(
     neighbors: list[Neighbor[SRMPModel | RMPModel]] = []
     prob: list[int] = []
 
-    neighbors.append(NeighborProfileDiscretized(midpoints(alternatives)))
+    neighbors.append(NeighborProfileDiscretized(NormalPerformanceTable(midpoints(alternatives))))
     prob.append(k * M)
 
     match model.lower():
