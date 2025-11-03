@@ -27,7 +27,11 @@ def python_exec(s: str):
 
 
 def generate_linext(m: int, seed: int | None = None) -> list[list[int]]:
-    return python_exec(run_julia("generate_linext", m, seed=seed))
+    linext = python_exec(run_julia("generate_linext", m, seed=seed))
+    for l in linext:
+        for i in range(len(l)):
+            l[i] -= 1
+    return linext
 
 
 def generate_weak_order(m: int, seed: int | None = None) -> list[int]:
@@ -35,4 +39,9 @@ def generate_weak_order(m: int, seed: int | None = None) -> list[int]:
 
 
 def generate_weak_order_ext(m: int, seed: int | None = None) -> list[list[list[int]]]:
-    return python_exec(run_julia("generate_weak_order_ext", m, seed=seed))
+    weak_order = python_exec(run_julia("generate_weak_order_ext", m, seed=seed))
+    for l in weak_order:
+        for ll in l:
+            for i in range(len(ll)):
+                ll[i] -= 1
+    return weak_order
