@@ -82,20 +82,20 @@ def learn_sa(
 
     match model.lower():
         case ModelEnum.RMP:
-            neighbors.append(NeighborImportanceRelation(2**M - 1))
+            neighbors.append(NeighborImportanceRelation(False))
             prob.append(2**M)
         case ModelEnum.SRMP:
             if amp > 1:
-                neighbors.append(NeighborWeight())  # type: ignore
+                neighbors.append(NeighborWeight())
             else:
-                neighbors.append(NeighborWeightAmp(amp))  # type: ignore
+                neighbors.append(NeighborWeightAmp(amp))
             prob.append(M)
             pass
         case _:
             raise ValueError(f"{model} model not compatible")
 
     if (not lex_order) and (k >= 2):
-        neighbors.append(NeighborLexOrder())
+        neighbors.append(NeighborLexOrder(False))
         prob.append(k)
 
     neighbor = RandomNeighbor(neighbors, prob)
