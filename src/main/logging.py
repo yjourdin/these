@@ -1,9 +1,7 @@
-
 from multiprocessing import Queue
 from typing import Any
 
 from .directory import Directory
-
 
 type LoggingQueue = "Queue[Any]"
 

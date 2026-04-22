@@ -4,19 +4,19 @@ from typing import Any, cast
 from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
-from ....methods import MethodEnum
-from ....mip.main import learn_mip
-from ....model import GroupModel, Model
-from ....models import GroupModelEnum, model
-from ....performance_table.normal_performance_table import NormalPerformanceTable
-from ....preference_structure.generate import noisy_comparisons, random_comparisons
-from ....preference_structure.io import from_csv, to_csv
-from ....random import SeedLike
-from ....random import seed as random_seed
-from ....sa.main import learn_sa
-from ....test.main import test_consensus, test_distance
-from ....test.test import DistanceRankingEnum
-from ....utils import tolist
+from src.methods import MethodEnum
+from src.mip.main import learn_mip
+from src.model import GroupModel, Model
+from src.models import GroupModelEnum, model
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.preference_structure.generate import noisy_comparisons, random_comparisons
+from src.preference_structure.io import from_csv, to_csv
+from src.random import SeedLike
+from src.sa.main import learn_sa
+from src.test.main import test_consensus, test_distance
+from src.test.test import DistanceRankingEnum
+from src.utils import tolist
+
 from ...task import SeedTask
 from .config import Config, MIPConfig, SAConfig
 from .directory import DirectoryElicitation
@@ -214,15 +214,15 @@ class MIPTask(AbstractElicitationTask):
             with self.D_file(dir, dm_id).open("r") as f:
                 D.append(from_csv(f))
 
-        rng_lex, rng_mip = self.rng(seed).spawn(2)
+        seed_lex, seed_mip = self.seed(seed).spawn(2)
 
         best_model, best_fitness, time = learn_mip(
             self.Me,
             self.ke,
             A,
             D,
-            rng_lex,
-            random_seed(rng_mip),
+            seed_lex,
+            seed_mip,
             self.config.max_time,
             self.lexicographic_order if self.fixed_lex_order else None,
             gamma=self.config.gamma,
@@ -275,20 +275,20 @@ class SATask(AbstractElicitationTask):
 
         rng_init, rng_sa = self.rng(seed).spawn(2)
 
-        best_model, best_fitness, time, it = learn_sa(
+        best_model, best_objective, time, it = learn_sa(
             self.Me.value[0],
             self.ke,
             A,
-            D[0],
+            D,
             self.config.alpha,
             self.config.amp,
-            rng_init,
-            rng_sa,
             self.lexicographic_order if self.fixed_lex_order else None,
             accept=self.config.accept,
             max_time=self.config.max_time,
             max_it=self.config.max_it,
             max_it_non_improving=self.config.max_it_non_improving,
+            rng_init=rng_init,
+            rng_sa=rng_sa,
         )
 
         with self.Me_file(dir).open("w") as f:
@@ -315,7 +315,7 @@ class SATask(AbstractElicitationTask):
                 Me_id=self.Me_id,
                 Time=time,
                 It=it,
-                Fitness=best_fitness,
+                Fitness=1 - best_objective,
             )
         )
 

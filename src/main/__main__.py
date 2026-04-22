@@ -1,15 +1,16 @@
 import logging.config
 import traceback
 from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import Process, Queue, set_start_method
+from multiprocessing import Event, Process, Queue, set_start_method
 from multiprocessing.connection import Connection
 from queue import LifoQueue
 from threading import Thread
 
-from ..constants import SENTINEL
+from src.constants import SENTINEL
+
 from .argument_parser import parse_args
 from .arguments import ExperimentEnum
-from .connection import StopPipe, WorkerPipe
+from .connection import WorkerPipe
 from .directory import Directory
 from .experiments.elicitation.directory import DirectoryElicitation
 from .experiments.elicitation.main import main as main_elicitation
@@ -93,10 +94,10 @@ task_queue: TaskQueue = LifoQueue()
 dir.run.touch()
 
 
-# Start stopping thread
-stop_connection, manager_connection = StopPipe()
+# Start stop event
+stop = Event()
 stop_thread = Thread(
-    target=stopping_thread, args=(dir.run, stop_connection, task_queue)
+    target=stopping_thread, args=(stop, dir.run)
 )
 stop_thread.start()
 
@@ -108,7 +109,7 @@ with ThreadPoolExecutor(300) as thread_pool:
         args=(
             connections,
             task_queue,
-            manager_connection,
+            stop,
             thread_pool,
             args.stop_error,
         ),
@@ -118,11 +119,11 @@ with ThreadPoolExecutor(300) as thread_pool:
     # Main
     try:
         main(args, dir, thread_pool, task_queue)  # type: ignore
-    except Exception:
+    except Exception:  # noqa: BLE001
         traceback.print_exc()
 
     # Send stop signal
-    task_queue.put(SENTINEL)
+    stop.set()
 
     # Join task manager thread
     task_manager_thread.join()

@@ -1,13 +1,15 @@
 import csv
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from shutil import copy
 from typing import Any
 
 from mcda.internal.core.relations import Relation
 from mcda.relations import I, P, PreferenceStructure
 
-from .....constants import DEFAULT_MAX_TIME
-from .....preference_structure.io import from_csv, to_csv
+from src.methods import MethodEnum
+from src.preference_structure.io import from_csv, to_csv
+
 from ....task import (
     FutureTaskException,
     wait_exception,
@@ -21,7 +23,8 @@ from ..task import (
     AcceptMcTask,
     AcceptPTask,
     CleanTask,
-    CollectiveTask,
+    CollectiveMIPTask,
+    CollectiveSATask,
     PreferencePathTask,
 )
 
@@ -31,7 +34,6 @@ def collective_thread(
     task_queue: TaskQueue,
     precede_futures: list[FutureTaskException],
     dir: DirectoryGroupDecision,
-    max_time: int = DEFAULT_MAX_TIME,
 ):
     # print(precede_futures, args)
     wait_exception_iterable(precede_futures)
@@ -45,27 +47,54 @@ def collective_thread(
         it = 0
         changes: list[int] = [0] * args["group_size"]
 
-        task_Mc = CollectiveTask(
-            args["m"],
-            args["n_tr"],
-            args["Atr_id"],
-            args["ko"],
-            args["fixed_lex_order"],
-            args["Mo_id"],
-            args["group_size"],
-            args["group"],
-            args["Mi_id"],
-            args["n_bc"],
-            args["same_alt"],
-            args["D_id"],
-            args["config"],
-            args["Mie_id"],
-            args["Mie"],
-            args["Mc_id"],
-            args["path"],
-            args["P_id"],
-            it,
-        )
+        if args["method"] is MethodEnum.MIP:
+            task_Mc = CollectiveMIPTask(
+                args["m"],
+                args["n_tr"],
+                args["Atr_id"],
+                args["ko"],
+                args["fixed_lex_order"],
+                args["Mo_id"],
+                args["group_size"],
+                args["group"],
+                args["Mi_id"],
+                args["n_bc"],
+                args["same_alt"],
+                args["D_id"],
+                args["Mie"],
+                args["Mie_config"],
+                args["Mie_id"],
+                args["config"],
+                args["nb_Mcp"],
+                args["Mc_id"],
+                args["path"],
+                args["P_id"],
+                it,
+            )
+        elif args["method"] is MethodEnum.SA:
+            task_Mc = CollectiveSATask(
+                args["m"],
+                args["n_tr"],
+                args["Atr_id"],
+                args["ko"],
+                args["fixed_lex_order"],
+                args["Mo_id"],
+                args["group_size"],
+                args["group"],
+                args["Mi_id"],
+                args["n_bc"],
+                args["same_alt"],
+                args["D_id"],
+                args["Mie_id"],
+                args["config"],
+                args["nb_Mcp"],
+                args["Mc_id"],
+                args["path"],
+                args["P_id"],
+                it,
+            )
+        else:
+            raise TypeError(f"Unknown method : {args['method']}")
 
         for dm_id in DMS:
             copy(task_Mc.D_file(dir, dm_id), task_Mc.Di_file(dir, dm_id))
@@ -74,12 +103,18 @@ def collective_thread(
             C_writer = csv.writer(f, dialect="unix")
             C_writer.writerows([[0]] * args["group_size"])
 
-        time_left = max_time - time_passed
+        time_left = args["max_time"] - time_passed
         compromise_found = False
         while (
             (not compromise_found)
             and (time_left >= 1)
-            and ((not args["Mie"]) or (task_Mc.Mie_file(dir, 0).exists()))
+            and (
+                (not args["Mie"])
+                or (
+                    isinstance(task_Mc, CollectiveMIPTask)
+                    and task_Mc.Mie_file(dir, 0).exists()
+                )
+            )
         ):
             future_Mc = thread_pool.submit(
                 task_thread,
@@ -117,9 +152,12 @@ def collective_thread(
                             args["n_bc"],
                             args["same_alt"],
                             args["D_id"],
-                            args["config"],
-                            args["Mie_id"],
                             args["Mie"],
+                            args["Mie_config"],
+                            args["Mie_id"],
+                            args["method"],
+                            args["config"],
+                            args["nb_Mcp"],
                             args["Mc_id"],
                             args["path"],
                             args["P_id"],
@@ -155,9 +193,12 @@ def collective_thread(
                             args["n_bc"],
                             args["same_alt"],
                             args["D_id"],
-                            args["config"],
-                            args["Mie_id"],
                             args["Mie"],
+                            args["Mie_config"],
+                            args["Mie_id"],
+                            args["method"],
+                            args["config"],
+                            args["nb_Mcp"],
                             args["Mc_id"],
                             args["path"],
                             args["P_id"],
@@ -184,8 +225,8 @@ def collective_thread(
 
                     t = 0
 
+                    tasks_P: dict[int, PreferencePathTask] = {}
                     if not compromise_found:
-                        tasks_P: dict[int, PreferencePathTask] = {}
                         futures_P: dict[int, FutureTaskException] = {}
                         for dm_id in DMS:
                             tasks_P[dm_id] = PreferencePathTask(
@@ -202,9 +243,12 @@ def collective_thread(
                                 args["n_bc"],
                                 args["same_alt"],
                                 args["D_id"],
-                                args["config"],
-                                args["Mie_id"],
                                 args["Mie"],
+                                args["Mie_config"],
+                                args["Mie_id"],
+                                args["method"],
+                                args["config"],
+                                args["nb_Mcp"],
                                 args["Mc_id"],
                                 args["path"],
                                 args["P_id"],
@@ -264,9 +308,12 @@ def collective_thread(
                                     args["n_bc"],
                                     args["same_alt"],
                                     args["D_id"],
-                                    args["config"],
-                                    args["Mie_id"],
                                     args["Mie"],
+                                    args["Mie_config"],
+                                    args["Mie_id"],
+                                    args["method"],
+                                    args["config"],
+                                    args["nb_Mcp"],
                                     args["Mc_id"],
                                     args["path"],
                                     args["P_id"],
@@ -303,29 +350,8 @@ def collective_thread(
                         for row in C_reader:
                             changes.append(int(row[0]))
 
-                    if not compromise_found:
-                        new_it = it + 1
-                        new_task_Mc = CollectiveTask(
-                            args["m"],
-                            args["n_tr"],
-                            args["Atr_id"],
-                            args["ko"],
-                            args["fixed_lex_order"],
-                            args["Mo_id"],
-                            args["group_size"],
-                            args["group"],
-                            args["Mi_id"],
-                            args["n_bc"],
-                            args["same_alt"],
-                            args["D_id"],
-                            args["config"],
-                            args["Mie_id"],
-                            args["Mie"],
-                            args["Mc_id"],
-                            args["path"],
-                            args["P_id"],
-                            new_it,
-                        )
+                    new_it = it + 1 if not compromise_found else it
+                    new_task_Mc = replace(task_Mc, it=new_it)
 
                     for dm_id in DMS:
                         with task_Mc.Di_file(dir, dm_id).open("r") as f:
@@ -365,12 +391,15 @@ def collective_thread(
                                 N_bc=args["n_bc"],
                                 Same_alt=args["same_alt"],
                                 D_id=args["D_id"],
+                                Method=args["method"],
                                 Config=args["config"],
                                 Mie=args["Mie"],
+                                Mie_config=args["Mie_config"],
                                 Mie_id=args["Mie_id"],
                                 Path=args["path"],
                                 P_id=args["P_id"],
                                 Mc_id=args["Mc_id"],
+                                Nb_Mcp=args["nb_Mcp"],
                                 It=it,
                                 Dm_id=dm_id,
                                 T=accepted_t,
@@ -399,14 +428,11 @@ def collective_thread(
                                 Cr: list[Relation] = []
                                 for r in refused_D - accepted_D:
                                     Cr.append(r)
-                                    if isinstance(r, I):
-                                        if (
-                                            accepted_r
-                                            := accepted_D.elements_pairs_relations[
-                                                r.a, r.b
-                                            ]
-                                        ):
-                                            Cr.append(P(accepted_r.b, accepted_r.a))
+                                    if isinstance(r, I) and (
+                                        accepted_r
+                                        := accepted_D.elements_pairs_relations[r.a, r.b]
+                                    ):
+                                        Cr.append(P(accepted_r.b, accepted_r.a))
 
                                 with (new_task_Mc.Cr_file(dir, dm_id, it)).open(
                                     "w"
@@ -430,14 +456,17 @@ def collective_thread(
             N_bc=args["n_bc"],
             Same_alt=args["same_alt"],
             D_id=args["D_id"],
+            Method=args["method"],
             Config=args["config"],
             Mie=args["Mie"],
+            Mie_config=args["Mie_config"],
             Mie_id=args["Mie_id"],
             Path=args["path"],
             P_id=args["P_id"],
             Mc_id=args["Mc_id"],
+            Nb_Mcp=args["nb_Mcp"],
             Compromise=compromise_found,
-            Time=max_time - time_left,
+            Time=args["max_time"] - time_left,
             It=it + 1,
             Changes=sum(changes),
         )

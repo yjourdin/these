@@ -1,6 +1,8 @@
 from typing import Any
 
-from ...constants import SENTINEL
+from src.constants import SENTINEL
+from src.utils import CustomException
+
 from ..connection import TaskPipe, TaskQueueElement
 from ..directory import Directory
 from ..task import FutureTaskException, Task, wait_exception_iterable
@@ -18,12 +20,14 @@ def task_thread(
         wait_exception_iterable(precede_futures)
 
         thread_connection, manager_connection = TaskPipe()
-        task_queue.put(TaskQueueElement(task, args, manager_connection))
+        task_queue.put(
+            TaskQueueElement(task, args.pop("nb_cpus", 1), args, manager_connection)
+        )
 
         result = thread_connection.recv()
 
         if result == SENTINEL:
-            raise Exception("Task error")
+            raise CustomException("Task error")
         return result
     else:
         print(task, args)

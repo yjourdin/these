@@ -1,6 +1,7 @@
-from ..random import SeedLike
+from src.random import SeedLike
+
 from .abstract_task import AbstractTask
-from .csv_file import CSVFile, CSVFields
+from .csv_file import CSVFields, CSVFile
 
 
 # Task

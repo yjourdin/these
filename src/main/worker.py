@@ -1,15 +1,19 @@
 import logging
 import logging.handlers
 
-from ..constants import SENTINEL
-from .connection import ProcessWorkerConnection
+from src.constants import SENTINEL
+
+from .connection import ProcessEndWorkerConnection, WorkerResult
 from .directory import Directory
 from .logging import LoggingQueue
 
 
 def worker(
-    connection: ProcessWorkerConnection, logging_queue: LoggingQueue, dir: Directory
+    connection: ProcessEndWorkerConnection,
+    logging_queue: LoggingQueue,
+    dir: Directory,
 ):
+    # Logging setup
     logging_qh = logging.handlers.QueueHandler(logging_queue)
     logging_root = logging.getLogger()
     logging_root.setLevel(logging.INFO)
@@ -20,11 +24,11 @@ def worker(
 
     for task, args in iter(connection.recv, SENTINEL):
         try:
-            logger.info("start " + str(task))
-            connection.send(task(dir, **args))
-            logger.info("end   " + str(task))
-        except Exception as e:
-            logger.error(e, exc_info=True)
+            logger.info(f"{'start':5} {task!s}")
+            connection.send(WorkerResult(task, task(dir, **args)))
+            logger.info(f"{'end':5} {task!s}")
+        except Exception:
+            logger.exception("Task error")
             connection.send(SENTINEL)
 
     logger.info("Kill")

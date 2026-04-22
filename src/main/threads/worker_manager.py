@@ -1,91 +1,95 @@
-from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
-from itertools import chain
-from multiprocessing.connection import Connection, wait
+from multiprocessing.connection import wait
 from queue import Empty
-from typing import cast
+from typing import NamedTuple, cast
 
-from typing_extensions import TypeIs
+from src.constants import SENTINEL
 
-from ...constants import SENTINEL
 from ..connection import (
-    ManagerStopConnection,
-    ManagerTaskConnection,
-    ManagerWorkerConnection,
+    ManagerEndTaskConnection,
+    ManagerEndWorkerConnection,
+    StopEvent,
     TaskQueue,
+    TaskQueueElement,
     WorkerArguments,
 )
+from ..task import Task
+
+
+class WorkingTask(NamedTuple):
+    connection: ManagerEndTaskConnection
+    workers: set[int]
 
 
 def worker_manager(
-    worker_connections: Iterable[ManagerWorkerConnection],
+    worker_connections: list[ManagerEndWorkerConnection],
     task_queue: TaskQueue,
-    stop_connection: ManagerStopConnection,
+    stop: StopEvent,
     thread_pool: ThreadPoolExecutor,
-    stop_error: bool,
+    stop_on_error: bool,
 ):
-    def is_stop_connection(connection: Connection) -> TypeIs[ManagerStopConnection]:
-        return connection == stop_connection
+    waiting: set[int] = set(range(len(worker_connections)))
+    working_tasks: dict[Task, WorkingTask] = {}
 
-    connections = set(worker_connections) | {stop_connection}
-    waiting_connections: set[ManagerWorkerConnection] = set(worker_connections)
-    working_connections: dict[ManagerWorkerConnection, ManagerTaskConnection] = {}
+    to_do: TaskQueueElement | None = None
 
-    stop = False
-    while (not stop) and connections:
+    while (not stop.is_set()) and worker_connections:
         # Get a task from the task queue and assign it to a waiting worker
-        empty = False
-        while (not stop) and waiting_connections and (not empty):
-            timeout = 1 if working_connections else None
+        while (
+            (not stop.is_set())
+            and waiting
+        ):
+            if (not to_do) or (len(worker_connections) < to_do.nb_cpus):
+                try:
+                    to_do = task_queue.get(timeout=1)
+                except Empty:
+                    to_do = None
+                    break
 
-            try:
-                obj = task_queue.get(timeout=timeout)
-            except Empty:
-                empty = True
-            else:
-                if obj == SENTINEL:
-                    stop = True
-                else:
-                    task, args, thread_connection = obj
-                    connection = waiting_connections.pop()
-                    working_connections[connection] = thread_connection
-                    connection.send(WorkerArguments(task, args))
+            if to_do and (to_do.nb_cpus <= len(waiting)):
+                task, nb_cpus, args, connection = to_do
+
+                workers = {waiting.pop() for _ in range(nb_cpus)}
+                working_tasks[task] = WorkingTask(connection, workers)
+                worker_connections[next(iter(workers))].send(WorkerArguments(task, args))
+
+                to_do = None
 
         # Wait a worker to finish a task
-        if (not stop) and working_connections:
-            timeout = 1 if waiting_connections else None
-
+        if (not stop.is_set()) and working_tasks:
             for connection in cast(
-                list[ManagerWorkerConnection | ManagerStopConnection],
-                wait(connections, timeout=timeout),
+                list[ManagerEndWorkerConnection], wait(worker_connections, timeout=1)
             ):
                 try:
                     obj = connection.recv()
                 except EOFError:
-                    connections.remove(connection)
+                    worker_connections.remove(connection)
                 else:
-                    if is_stop_connection(connection) or (
-                        obj == SENTINEL and stop_error
-                    ):
-                        stop = True
+                    if obj == SENTINEL and stop_on_error:
+                        stop.set()
                         break
                     else:
-                        working_connections[connection].send(obj)
-                        del working_connections[connection]
-                        waiting_connections.add(connection)
+                        task, result = obj
+                        connection, workers = working_tasks.pop(task)
+
+                        connection.send(result)
+                        waiting |= workers
 
     # Shutdown threadpool
     thread_pool.shutdown(False, cancel_futures=True)
 
-    # Stop all workers connections and working threads
-    for connection in chain(connections, working_connections.values()):
+    # Stop all workers
+    for connection in worker_connections:
         connection.send(SENTINEL)
 
-    # Stop waiting threads
-    try:
-        while True:
+    # Stop working tasks threads
+    for connection, _ in working_tasks.values():
+        connection.send(SENTINEL)
+
+    # Stop waiting tasks threads
+    while not task_queue.empty():
+        try:
             if (obj := task_queue.get(timeout=1)) != SENTINEL:
-                _, _, thread_connection = obj
-                thread_connection.send(SENTINEL)
-    except Empty:
-        pass
+                obj.connection.send(SENTINEL)
+        except Empty:
+            continue

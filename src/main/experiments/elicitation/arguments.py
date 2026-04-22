@@ -27,7 +27,6 @@ class ArgumentsElicitation(
     nb_Ate: int | None = None
     nb_D: int | None = None
     nb_Me: int | None = None
-    # seeds: Seeds = field(default_factory=Seeds)
     N_tr: list[int] = field(default_factory=list)
     N_te: list[int] | None = None
     group_size: list[int] = field(default_factory=lambda: [1])

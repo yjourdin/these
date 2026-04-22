@@ -2,10 +2,12 @@ from dataclasses import dataclass, field
 from itertools import count
 from typing import Any
 
-from ....dataclass import FrozenDataclass
-from ....field import Field, group_field
-from ....field import field as custom_field
+from src.dataclass import FrozenDataclass
+from src.field import Field, group_field
+from src.field import field as custom_field
+
 from ..elicitation.config import MIPConfig, create_config
+from .seeds import Seeds
 
 
 @dataclass(frozen=True)
@@ -59,17 +61,27 @@ class GroupGroupParametersField(Field):
     group: list[GroupParameters] = field(default_factory=list)
 
 
-@custom_field("config")
+@custom_field("Mie_config")
 @dataclass
-class MIPConfigField(Field):
-    config: MIPConfig
+class MieConfigField(Field):
+    Mie_config: MIPConfig
 
     @staticmethod
     def field_decode(o: Any):
         return create_config(**o)
 
 
-@group_field(fieldname="config", fieldclass=MIPConfigField)
+@group_field(fieldname="Mie_config", fieldclass=MieConfigField)
 @dataclass
-class GroupMIPConfigField(Field):
-    config: list[MIPConfig] = field(default_factory=list)
+class GroupMieConfigField(Field):
+    Mie_config: list[MIPConfig] = field(default_factory=list)
+
+
+@custom_field("seeds")
+@dataclass
+class SeedsField(Field):
+    seeds: Seeds = field(default_factory=Seeds)
+
+    @staticmethod
+    def field_decode(o: Any):
+        return Seeds(**o)

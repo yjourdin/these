@@ -1,10 +1,12 @@
 from collections.abc import Mapping
 from multiprocessing import Pipe
 from multiprocessing.connection import Connection
+from multiprocessing.synchronize import Event
 from queue import LifoQueue
 from typing import Any, NamedTuple
 
-from ..constants import SENTINEL_TYPE
+from src.constants import SENTINEL_TYPE
+
 from .task import Task, TaskResult
 
 type Args = Mapping[str, Any]
@@ -15,15 +17,20 @@ class WorkerArguments(NamedTuple):
     args: Args
 
 
+class WorkerResult(NamedTuple):
+    task: Task
+    result: TaskResult
+
+
 # Stop connections
 
-type StopStopConnection = Connection[SENTINEL_TYPE, SENTINEL_TYPE]
-type ManagerStopConnection = Connection[SENTINEL_TYPE, SENTINEL_TYPE]
+type StopEndStopConnection = Connection[SENTINEL_TYPE, SENTINEL_TYPE]
+type ManagerEndStopConnection = Connection[SENTINEL_TYPE, SENTINEL_TYPE]
 
 
 class StopConnections(NamedTuple):
-    stop: StopStopConnection
-    manager: ManagerStopConnection
+    stop_end: StopEndStopConnection
+    manager_end: ManagerEndStopConnection
 
 
 def StopPipe():
@@ -32,13 +39,13 @@ def StopPipe():
 
 # Task connections
 
-type ThreadTaskConnection = Connection[None, TaskResult]
-type ManagerTaskConnection = Connection[TaskResult | SENTINEL_TYPE, None]
+type ThreadEndTaskConnection = Connection[None, TaskResult]
+type ManagerEndTaskConnection = Connection[TaskResult | SENTINEL_TYPE, None]
 
 
 class TaskConnections(NamedTuple):
-    thread: ThreadTaskConnection
-    manager: ManagerTaskConnection
+    thread_end: ThreadEndTaskConnection
+    manager_end: ManagerEndTaskConnection
 
 
 def TaskPipe():
@@ -47,13 +54,17 @@ def TaskPipe():
 
 # Worker connections
 
-type ProcessWorkerConnection = Connection[TaskResult | SENTINEL_TYPE, WorkerArguments]
-type ManagerWorkerConnection = Connection[WorkerArguments | SENTINEL_TYPE, TaskResult]
+type ProcessEndWorkerConnection = Connection[
+    WorkerResult | SENTINEL_TYPE, WorkerArguments
+]
+type ManagerEndWorkerConnection = Connection[
+    WorkerArguments | SENTINEL_TYPE, WorkerResult
+]
 
 
 class WorkerConnections(NamedTuple):
-    thread: ThreadTaskConnection
-    manager: ManagerTaskConnection
+    thread_end: ProcessEndWorkerConnection
+    manager_end: ManagerEndWorkerConnection
 
 
 def WorkerPipe():
@@ -65,8 +76,13 @@ def WorkerPipe():
 
 class TaskQueueElement(NamedTuple):
     task: Task
+    nb_cpus: int
     args: Args
-    connection: ManagerTaskConnection
+    connection: ManagerEndTaskConnection
 
 
-type TaskQueue = LifoQueue[TaskQueueElement | SENTINEL_TYPE]
+type TaskQueue = LifoQueue[TaskQueueElement]
+
+
+# Stop event
+type StopEvent = Event

@@ -1,9 +1,9 @@
-from dataclasses import dataclass
 from pathlib import Path
 
-from ..dataclass import Dataclass
-from ..default_max_jobs import DEFAULT_MAX_JOBS
-from ..strenum import StrEnumCustom
+from src.dataclass import Dataclass, dataclass
+from src.default_max_jobs import DEFAULT_MAX_JOBS
+from src.strenum import StrEnumCustom
+
 from .directory import RESULTS_DIR
 
 

@@ -5,8 +5,9 @@ from dataclasses import dataclass, fields
 from time import process_time
 from typing import Any, ClassVar, NamedTuple, TypeGuard
 
-from ..dataclass import FrozenDataclass
-from ..random import SeedLike, SeedMixin
+from src.dataclass import FrozenDataclass
+from src.random import SeedLike, SeedMixin, int_, seed_
+
 from .abstract_task import AbstractTask
 from .csv_files import TaskFields
 from .directory import Directory
@@ -46,11 +47,11 @@ class Task(FrozenDataclass, AbstractTask):
     name: ClassVar[str]
 
     def __str__(self) -> str:
-        return f"{self.name:10} ({', '.join(f'{field.name}: {str(getattr(self, field.name))}' for field in fields(self))})"
+        return f"{self.name:13} ({', '.join(f'{field.name}: {getattr(self, field.name)!s}' for field in fields(self))})"
 
     def __call__(self, dir: Directory, *args: Any, **kwargs: Any):
         tic = process_time()
-        result = self.task(dir=dir, *args, **kwargs)
+        result = self.task(*args, dir=dir, **kwargs)
         toc = process_time()
 
         time = toc - tic
@@ -72,9 +73,9 @@ class Task(FrozenDataclass, AbstractTask):
 
 @dataclass(frozen=True)
 class SeedTask(Task, SeedMixin):
-    def seed(self, seed: SeedLike) -> SeedLike:
-        return abs(hash((self, seed)))
+    def seed(self, seed: SeedLike):
+        return seed_(abs(hash(seed)))
 
     def log(self, fields: type[TaskFields], time: float, *args: Any, **kwargs: Any):
-        seed = self.seed(s) if ((s := kwargs.get("seed", None)) is not None) else None
+        seed = int_(self.seed(s)) if ((s := kwargs.get("seed", None)) is not None) else None
         return fields(Task=self, Time=time, Seed=seed)

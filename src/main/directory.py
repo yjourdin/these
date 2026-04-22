@@ -2,7 +2,8 @@ import csv
 from pathlib import Path
 from typing import Any
 
-from ..homotypeddict import HomoTypedDict
+from src.homotypeddict import HomoTypedDict
+
 from .csv_file import CSVFile
 from .csv_files import TaskCSVFile
 
@@ -16,8 +17,8 @@ class Directory:
     class CSVFiles(HomoTypedDict[CSVFile[Any]]):
         tasks: TaskCSVFile
 
-    def __init__(self, name: str, dir: Path = Path.cwd()):
-        self.dirs = self.Dirs(root=Path(dir, name))
+    def __init__(self, name: str, dir: Path | None = None):
+        self.dirs = self.Dirs(root=(dir or Path.cwd()) / name)
 
         self.args = self.dirs["root"] / "args.json"
         self.log = self.dirs["root"] / "log.log"

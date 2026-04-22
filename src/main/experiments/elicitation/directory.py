@@ -1,8 +1,9 @@
 from pathlib import Path
 
-from ....methods import MethodEnum
-from ....models import GroupModelEnum
-from ....utils import filename_csv, filename_json
+from src.methods import MethodEnum
+from src.models import GroupModelEnum
+from src.utils import filename_csv, filename_json
+
 from ...directory import Directory
 from ...experiments.elicitation.config import Config
 from .csv_files import (
@@ -25,7 +26,7 @@ class DirectoryElicitation(Directory):
         test: TestCSVFile
         configs: ConfigCSVFile
 
-    def __init__(self, name: str, dir: Path = Path.cwd()):
+    def __init__(self, name: str, dir: Path | None = None):
         super().__init__(name, dir)
 
         self.dirs = self.Dirs(

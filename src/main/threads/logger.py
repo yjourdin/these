@@ -1,6 +1,7 @@
 import logging
 
-from ...constants import SENTINEL
+from src.constants import SENTINEL
+
 from ..logging import LoggingQueue
 
 

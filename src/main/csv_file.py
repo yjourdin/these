@@ -4,8 +4,8 @@ from multiprocessing import Queue
 from pathlib import Path
 from typing import ClassVar, TypedDict
 
-from ..dataclass import FrozenDataclass
-from ..utils import dict_str
+from src.dataclass import FrozenDataclass
+from src.utils import dict_str
 
 
 class CSVFields(TypedDict): ...

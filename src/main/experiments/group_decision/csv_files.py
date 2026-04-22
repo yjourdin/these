@@ -1,5 +1,7 @@
+from src.methods import MethodEnum
+
 from ...csv_file import CSVFields, CSVFile
-from ..elicitation.config import MIPConfig
+from ..elicitation.config import Config, MIPConfig
 from .fields import GroupParameters, SRMPParametersDeviation
 
 
@@ -27,12 +29,15 @@ class ExperimentFields(CSVFields):
     N_bc: int
     Same_alt: bool
     D_id: int
-    Config: MIPConfig
-    Path: bool
+    Method: MethodEnum
+    Config: Config
     Mie: bool
-    P_id: int
+    Mie_config: MIPConfig | None
     Mie_id: int
     Mc_id: int
+    Nb_Mcp: int
+    Path: bool
+    P_id: int
 
 
 # MIE
@@ -71,7 +76,7 @@ class DMFields(IterationFields):
 # MIP
 class CollectiveFields(IterationFields):
     Time: float
-    Fitness: float | None
+    Objective: float | None
 
 
 class CollectiveCSVFile(CSVFile[CollectiveFields]):

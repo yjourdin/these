@@ -1,17 +1,16 @@
 from collections.abc import Sequence
-from dataclasses import dataclass, field
 
-from ....dataclass import Dataclass
-from ....random import SeedLike, rng_, seeds
+from src.dataclass import Dataclass, dataclass, field
+from src.random import Seed, SeedLike, rng_, seed_
 
 
 @dataclass
 class Seeds(Dataclass):
-    A_tr: Sequence[SeedLike] = field(default_factory=list)
-    A_te: Sequence[SeedLike] = field(default_factory=list)
-    Mo: Sequence[SeedLike] = field(default_factory=list)
-    D: Sequence[SeedLike] = field(default_factory=list)
-    Me: Sequence[SeedLike] = field(default_factory=list)
+    A_tr: Sequence[Seed] = field(default_factory=list)
+    A_te: Sequence[Seed] = field(default_factory=list)
+    Mo: Sequence[Seed] = field(default_factory=list)
+    D: Sequence[Seed] = field(default_factory=list)
+    Me: Sequence[Seed] = field(default_factory=list)
 
     @classmethod
     def from_seed(
@@ -26,9 +25,9 @@ class Seeds(Dataclass):
         rng = rng_(seed)
 
         return cls(
-            seeds(rng, nb_Atr),
-            seeds(rng, nb_Ate),
-            seeds(rng, nb_Mo),
-            seeds(rng, nb_D),
-            seeds(rng, nb_Me),
+            seed_(rng).spawn(nb_Atr),
+            seed_(rng).spawn(nb_Ate),
+            seed_(rng).spawn(nb_Mo),
+            seed_(rng).spawn(nb_D),
+            seed_(rng).spawn(nb_Me),
         )

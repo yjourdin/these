@@ -2,12 +2,19 @@ from dataclasses import dataclass, field
 
 from ....constants import DEFAULT_MAX_TIME
 from ...arguments import Arguments, ExperimentEnum
-from .fields import GroupGroupParametersField, GroupMIPConfigField
-from .seeds import Seeds
+from ..elicitation.fields import GroupConfigField, GroupMethodField
+from .fields import GroupGroupParametersField, GroupMieConfigField, SeedsField
 
 
 @dataclass
-class ArgumentsGroupDecision(Arguments, GroupMIPConfigField, GroupGroupParametersField):
+class ArgumentsGroupDecision(
+    Arguments,
+    GroupMethodField,
+    GroupConfigField,
+    GroupMieConfigField,
+    GroupGroupParametersField,
+    SeedsField
+):
     experiment: ExperimentEnum = field(
         default=ExperimentEnum.GROUP_DECISION, init=False
     )
@@ -20,7 +27,6 @@ class ArgumentsGroupDecision(Arguments, GroupMIPConfigField, GroupGroupParameter
     nb_Mie: int | None = None
     nb_Mc: int | None = None
     nb_P: int | None = None
-    seeds: Seeds = field(default_factory=Seeds)
     group_size: list[int] = field(default_factory=list)
     N_tr: list[int] = field(default_factory=list)
     M: list[int] = field(default_factory=list)
@@ -31,3 +37,4 @@ class ArgumentsGroupDecision(Arguments, GroupMIPConfigField, GroupGroupParameter
     same_alt: list[bool] = field(default_factory=lambda: [True])
     path: list[bool] = field(default_factory=lambda: [True])
     Mie: list[bool] = field(default_factory=lambda: [True])
+    nb_Mcp: list[int] = field(default_factory=list)

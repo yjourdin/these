@@ -1,8 +1,10 @@
 from pathlib import Path
 
-from ....utils import filename_csv, filename_json
+from src.methods import MethodEnum
+from src.utils import filename_csv, filename_json
+
 from ...directory import Directory
-from ..elicitation.config import MIPConfig
+from ..elicitation.config import Config, MIPConfig
 from ..elicitation.csv_files import ConfigCSVFile
 from .csv_files import (
     AcceptCSVFile,
@@ -31,6 +33,7 @@ class DirectoryGroupDecision(Directory):
         Dr: Path
         Cr: Path
         P: Path
+        Mcp: Path
 
     class CSVFiles(Directory.CSVFiles):
         accept: AcceptCSVFile
@@ -43,7 +46,7 @@ class DirectoryGroupDecision(Directory):
         group_parameters: GroupParametersCSVFile
         path: PathCSVFile
 
-    def __init__(self, name: str, dir: Path = Path.cwd()):
+    def __init__(self, name: str, dir: Path | None = None):
         super().__init__(name, dir)
 
         self.dirs = self.Dirs(
@@ -60,6 +63,7 @@ class DirectoryGroupDecision(Directory):
             Dr=self.dirs["root"] / "Dr",
             Cr=self.dirs["root"] / "Cr",
             P=self.dirs["root"] / "P",
+            Mcp=self.dirs["root"] / "Mcp",
         )
 
         self.seeds = self.dirs["root"] / "seeds.json"
@@ -128,9 +132,12 @@ class DirectoryGroupDecision(Directory):
         n: int,
         same_alt: bool,
         D_id: int,
-        config: MIPConfig,
+        method: MethodEnum,
+        config: Config,
         id: int,
         Mie: bool,
+        Mie_config: MIPConfig | None,
+        Mie_id: int,
         path: bool,
         P_id: int,
         it: int,
@@ -156,6 +163,32 @@ class DirectoryGroupDecision(Directory):
     ):
         return self.dirs["Mie"] / filename_json(locals())
 
+    def Mcp(
+        self,
+        m: int,
+        ntr: int,
+        Atr_id: int,
+        k: int,
+        Mo_id: int,
+        group_size: int,
+        group: GroupParameters,
+        Mi_id: int,
+        n: int,
+        same_alt: bool,
+        D_id: int,
+        method: MethodEnum,
+        config: Config,
+        Mie: bool,
+        Mie_config: MIPConfig | None,
+        Mie_id: int,
+        Mc_id: int,
+        id: int,
+        path: bool,
+        P_id: int,
+        it: int,
+    ):
+        return self.dirs["Mcp"] / filename_json(locals())
+
     def Mc(
         self,
         m: int,
@@ -169,8 +202,10 @@ class DirectoryGroupDecision(Directory):
         n: int,
         same_alt: bool,
         D_id: int,
-        config: MIPConfig,
+        method: MethodEnum,
+        config: Config,
         Mie: bool,
+        Mie_config: MIPConfig | None,
         Mie_id: int,
         id: int,
         path: bool,
@@ -192,9 +227,12 @@ class DirectoryGroupDecision(Directory):
         n: int,
         same_alt: bool,
         D_id: int,
-        config: MIPConfig,
+        method: MethodEnum,
+        config: Config,
         id: int,
         Mie: bool,
+        Mie_config: MIPConfig | None,
+        Mie_id: int,
         path: bool,
         P_id: int,
         it: int,
@@ -214,9 +252,12 @@ class DirectoryGroupDecision(Directory):
         n: int,
         same_alt: bool,
         D_id: int,
-        config: MIPConfig,
+        method: MethodEnum,
+        config: Config,
         Mc_id: int,
         Mie: bool,
+        Mie_config: MIPConfig | None,
+        Mie_id: int,
         path: bool,
         P_id: int,
         it: int,
@@ -237,9 +278,12 @@ class DirectoryGroupDecision(Directory):
         n: int,
         same_alt: bool,
         D_id: int,
-        config: MIPConfig,
+        method: MethodEnum,
+        config: Config,
         Mc_id: int,
         Mie: bool,
+        Mie_config: MIPConfig | None,
+        Mie_id: int,
         path: bool,
         P_id: int,
         it: int,
@@ -260,9 +304,12 @@ class DirectoryGroupDecision(Directory):
         n: int,
         same_alt: bool,
         D_id: int,
-        config: MIPConfig,
+        method: MethodEnum,
+        config: Config,
         Mc_id: int,
         Mie: bool,
+        Mie_config: MIPConfig | None,
+        Mie_id: int,
         path: bool,
         P_id: int,
         it: int,
@@ -283,9 +330,12 @@ class DirectoryGroupDecision(Directory):
         n: int,
         same_alt: bool,
         D_id: int,
-        config: MIPConfig,
+        method: MethodEnum,
+        config: Config,
         Mc_id: int,
         Mie: bool,
+        Mie_config: MIPConfig | None,
+        Mie_id: int,
         path: bool,
         id: int,
         it: int,

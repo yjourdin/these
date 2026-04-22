@@ -1,7 +1,8 @@
-from typing import NotRequired
+from typing import Any, NotRequired
 
-from ....methods import MethodEnum
-from ....models import GroupModelEnum
+from src.methods import MethodEnum
+from src.models import GroupModelEnum
+
 from ...csv_file import CSVFields, CSVFile
 from .config import Config
 
@@ -10,7 +11,7 @@ from .config import Config
 class ConfigFields(CSVFields):
     Id: int
     Method: MethodEnum
-    Config: Config
+    Config: dict[str, Any]
 
 
 class ConfigCSVFile(CSVFile[ConfigFields]):

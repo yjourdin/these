@@ -2,9 +2,10 @@ from concurrent.futures import ThreadPoolExecutor
 from itertools import product
 from typing import cast
 
-from ....methods import MethodEnum
-from ....models import ModelEnum
-from ....utils import list_replace
+from src.methods import MethodEnum
+from src.models import ModelEnum
+from src.utils import list_replace
+
 from ...task import FutureTaskException, Task, wait_exception_mapping
 from ...threads.task import task_thread
 from ...threads.worker_manager import TaskQueue
@@ -49,7 +50,7 @@ def main(
     for config in args.config:
         csv_file = dir.csv_files["configs"]
         csv_file.writerow(
-            csv_file.fields(Id=config.id, Method=config.method, Config=config)
+            csv_file.fields(Id=config.id, Method=config.method, Config=config.to_dict())
         )
 
     # Task dict
