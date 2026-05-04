@@ -19,6 +19,7 @@ class ArgumentsGroupDecision(
         default=ExperimentEnum.GROUP_DECISION, init=False
     )
     max_time: int = DEFAULT_MAX_TIME
+    time_per_it: int = DEFAULT_MAX_TIME
     seed: int | None = None
     nb_Atr: int = 1
     nb_Mo: int | None = None
@@ -37,4 +38,4 @@ class ArgumentsGroupDecision(
     same_alt: list[bool] = field(default_factory=lambda: [True])
     path: list[bool] = field(default_factory=lambda: [True])
     Mie: list[bool] = field(default_factory=lambda: [True])
-    nb_Mcp: list[int] = field(default_factory=list)
+    nb_Mcp: list[int] = field(default_factory=lambda: [1])

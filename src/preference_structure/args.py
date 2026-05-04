@@ -1,9 +1,9 @@
 import argparse
 
-from ..strenum import StrEnumCustom
+from src.case_insensitive_str_enum import CaseInsensitiveStrEnum
 
 
-class TypeEnum(StrEnumCustom):
+class TypeEnum(CaseInsensitiveStrEnum):
     PREFERENCE_STRUCTURE = "PS"
     RANKING = "R"
 
@@ -34,5 +34,4 @@ parser.add_argument(
 )
 
 
-def parse_args():
-    return parser.parse_args()
+ARGS = parser.parse_args()

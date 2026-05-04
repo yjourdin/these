@@ -4,37 +4,44 @@ from typing import Any
 
 import numpy as np
 
-from .utils import tolist
-
-type SeedLike = int | np.integer[Any] | Sequence[int] | np.random.SeedSequence
+type Seed = np.random.SeedSequence
+type SeedLike = Seed | int | np.integer[Any] | Sequence[int]
 type RNG = np.random.Generator
-type RNGLike = RNG | np.random.BitGenerator
-type RNGParam = RNGLike | SeedLike | None
+type RNGParam = RNG | SeedLike | None
 
 
 def rng_(rng: RNGParam = None) -> RNG:
     return np.random.default_rng(rng)
 
 
-def seed(rng: RNGParam = None, max: int = 2**63):
-    if isinstance(rng, (int, np.integer)):
-        return int(rng)
-    else:
-        return int(rng_(rng).integers(max))
+def seed_(rng: RNGParam = None, max: int = 2**63) -> Seed:
+    return (
+        rng
+        if isinstance(rng, np.random.SeedSequence)
+        else np.random.SeedSequence(int_(rng, max))
+    )
 
 
-def seeds(rng: RNGParam = None, nb: int = 1, max: int = 2**63):
-    return tolist(rng_(rng).integers(max, size=nb))
+def int_(rng: RNGParam = None, max: int = 2**63) -> int:
+    match rng:
+        case int() | np.integer():
+            return int(rng)
+        case np.random.Generator():
+            return int(rng.integers(max))
+        case np.random.SeedSequence():
+            return int_(rng.entropy)
+        case _:
+            return int_(rng_(rng))
 
 
 class Random(ABC):
     @classmethod
-    def random(cls, rng: RNG = rng_(), *args: Any, **kwargs: Any) -> Any: ...
+    def random(cls, rng: RNGParam = None, *args: Any, **kwargs: Any) -> Any: ...
 
 
 class SeedMixin:
-    def seed(self, *args: Any, **kwargs: Any) -> SeedLike:
-        return getattr(self, "seed")
+    def seed(self, *args: Any, **kwargs: Any):
+        return seed_(getattr(self, "seed"))  # noqa: B009
 
     def rng(self, *args: Any, **kwargs: Any):
         return rng_(self.seed(*args, **kwargs))

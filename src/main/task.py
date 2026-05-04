@@ -1,9 +1,8 @@
 from abc import abstractmethod
-from collections.abc import Iterable, Mapping
-from concurrent.futures import Future, as_completed
+from concurrent.futures import Future
 from dataclasses import dataclass, fields
 from time import process_time
-from typing import Any, ClassVar, NamedTuple, TypeGuard
+from typing import Any, ClassVar, NamedTuple
 
 from src.dataclass import FrozenDataclass
 from src.random import SeedLike, SeedMixin, int_, seed_
@@ -14,32 +13,27 @@ from .directory import Directory
 
 
 class TaskResult(NamedTuple):
-    result: Any
+    res: Any
     time: float
 
 
+class TaskException(Exception):
+    pass
+
+
 type FutureTask = Future[TaskResult]
-type FutureTaskException = Future[TaskResult | None]
 
 
-def wait_exception(future: FutureTaskException) -> TypeGuard[FutureTask]:
-    if (err := future.exception()) is not None:
-        raise err
-    return True
+def result_list(
+    futures: list[FutureTask],
+) -> list[TaskResult]:
+    return [future.result() for future in futures]
 
 
-def wait_exception_iterable(
-    futures: Iterable[FutureTaskException],
-) -> TypeGuard[Iterable[FutureTask]]:
-    for future in as_completed(futures):
-        wait_exception(future)
-    return True
-
-
-def wait_exception_mapping(
-    futures: Mapping[Any, FutureTaskException],
-) -> TypeGuard[Mapping[Any, FutureTask]]:
-    return wait_exception_iterable(futures.values())
+def result_dict[T](
+    futures: dict[T, FutureTask],
+) -> dict[T, TaskResult]:
+    return {k: future.result() for k, future in futures.items()}
 
 
 @dataclass(frozen=True)
@@ -77,5 +71,9 @@ class SeedTask(Task, SeedMixin):
         return seed_(abs(hash(seed)))
 
     def log(self, fields: type[TaskFields], time: float, *args: Any, **kwargs: Any):
-        seed = int_(self.seed(s)) if ((s := kwargs.get("seed", None)) is not None) else None
+        seed = (
+            int_(self.seed(s))
+            if ((s := kwargs.get("seed", None)) is not None)
+            else None
+        )
         return fields(Task=self, Time=time, Seed=seed)

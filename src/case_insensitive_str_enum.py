@@ -2,7 +2,7 @@ from enum import StrEnum
 from typing import Any
 
 
-class StrEnumCustom(StrEnum):
+class CaseInsensitiveStrEnum(StrEnum):
     @classmethod
     def _missing_(cls, value: Any):
         if isinstance(value, str):

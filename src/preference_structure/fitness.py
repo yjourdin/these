@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from typing import Any
 
 import numpy as np
@@ -9,7 +10,7 @@ from mcda.relations import I, P, PreferenceStructure
 from .utils import OutrankingMatrixClass, RankingSeries, outranking_numpy
 
 
-def comparisons_ranking(C: PreferenceStructure, R: dict[Any, int]):
+def comparisons_ranking(C: PreferenceStructure, R: Mapping[Any, int | float]):
     result: list[Relation] = []
     for r in C:
         a, b = r.elements
@@ -31,7 +32,7 @@ def comparisons_outranking(C: PreferenceStructure, O: OutrankingMatrix):
         a, b = r.elements
         match r:
             case P():
-                return O.cell[a, b] * (1 - O.cell[b, a])
+                cond = O.cell[a, b] * (1 - O.cell[b, a])
             case I():
                 cond = O.cell[a, b] * O.cell[b, a]
             case _:
@@ -68,7 +69,7 @@ def fitness_outranking_comparisons(Oo: OutrankingMatrix, Ce: PreferenceStructure
     return 1 - (len(comparisons_outranking(Ce, Oo)) / (n * (n - 1) / 2))
 
 
-def fitness_outranking_numpy(Oo: npt.NDArray[np.bool_], Oe: npt.NDArray[np.bool_]):
+def fitness_outranking_numpy(Oo: npt.NDArray[np.bool], Oe: npt.NDArray[np.bool]):
     ind = np.triu_indices(Oo.shape[0], 1)
 
     Or = np.logical_not(np.logical_xor(Oo, Oe))

@@ -1,8 +1,6 @@
-module Posets
+module Poset
 
-include("Bit.jl")
-using .Bit: decode, encode
-
+using Bit
 using Posets
 import Posets: above, below, just_above, just_below
 
@@ -21,4 +19,4 @@ below(a, P) = below(P, a)
 just_above(a, P) = just_above(P, a)
 just_below(a, P) = just_below(P, a)
 
-end # module Posets
+end # module Poset

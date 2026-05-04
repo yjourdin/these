@@ -2,19 +2,19 @@ from itertools import permutations, product
 from typing import Any, NamedTuple, cast
 
 import numpy as np
-import numpy.typing as npt
 from mcda.relations import I, P, PreferenceStructure
 from pulp import value  # type: ignore
 
-from ..constants import DEFAULT_MAX_TIME
-from ..model import Model
-from ..models import GroupModelEnum, ModelEnum
-from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..preference_structure.utils import complementary_preference, divide_preferences
-from ..random import RNGParam, SeedLike, rng_, seed
-from ..rmp.permutation import all_max_adjacent_distance
-from ..srmp.model import SRMPModel, SRMPParamFlag
-from ..utils import tolist
+from src.constants import DEFAULT_MAX_TIME
+from src.model import Model
+from src.models import GroupModelEnum, ModelEnum
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.preference_structure.utils import complementary_preference, divide_preferences
+from src.random import RNGParam, SeedLike, rng_
+from src.rmp.permutation import all_max_adjacent_distance
+from src.srmp.model import SRMPModel, SRMPParamFlag
+from src.utils import tolist
+
 from .formulation.srmp import MIPSRMP
 from .formulation.srmp_accept import MIPSRMPAccept
 from .formulation.srmp_collective import MIPSRMPCollective
@@ -28,7 +28,7 @@ from .mip import MIP
 
 class MIPResult(NamedTuple):
     best_model: Model | None = None
-    best_fitness: float | None = None
+    best_objective: float | None = None
     time: float = 0
 
 
@@ -38,7 +38,7 @@ def learn_mip(
     alternatives: NormalPerformanceTable,
     comparisons: list[PreferenceStructure],
     rng_lexicographic_order: RNGParam = None,
-    seed_mip: SeedLike = seed(),
+    seed_mip: SeedLike | None = None,
     max_time: int = DEFAULT_MAX_TIME,
     lex_order: list[int] | None = None,
     collective: bool = False,
@@ -98,7 +98,7 @@ def learn_mip(
         indifference_relations = indifference_relations_list[0]
 
     if lex_order:
-        lexicographic_orders: npt.NDArray[np.int_] = np.array([lex_order])
+        lexicographic_orders = np.array([lex_order], dtype=np.int_)
     elif lex_order_shared:
         if reference_model is None or lexicographic_order_distance == 0:
             lexicographic_orders = np.array(list(permutations(range(k))))
@@ -108,7 +108,7 @@ def learn_mip(
                     all_max_adjacent_distance(
                         reference_model.lexicographic_order,
                         lexicographic_order_distance,
-                    )  # type: ignore
+                    )
                 )
             )
     else:
@@ -126,6 +126,7 @@ def learn_mip(
                 if NB_DM == 1:
                     if reference_model:
                         mip = MIPSRMPAccept(
+                            *args,
                             alternatives=alternatives,
                             preference_relations=preference_relations,
                             indifference_relations=indifference_relations,
@@ -135,11 +136,11 @@ def learn_mip(
                             weights_amp=weights_amp,
                             time_limit=time_left,
                             seed=seed_mip,
-                            *args,
                             **kwargs,
                         )
                     else:
                         mip = MIPSRMP(
+                            *args,
                             alternatives=alternatives,
                             preference_relations=preference_relations,
                             indifference_relations=indifference_relations,
@@ -148,7 +149,6 @@ def learn_mip(
                             best_fitness=best_objective,
                             time_limit=time_left,
                             seed=seed_mip,
-                            *args,
                             **kwargs,
                         )
                 elif collective:
@@ -171,6 +171,7 @@ def learn_mip(
 
                     if reference_model:
                         mip = MIPSRMPCollectiveDistance(
+                            *args,
                             alternatives=alternatives,
                             preference_relations=preference_relations_list,
                             indifference_relations=indifference_relations_list,
@@ -186,11 +187,11 @@ def learn_mip(
                             best_objective=best_objective,
                             time_limit=time_left,
                             seed=seed_mip,
-                            *args,
                             **kwargs,
                         )
                     elif reference_models:
                         mip = MIPSRMPCollectiveBound(
+                            *args,
                             alternatives=alternatives,
                             preference_relations=preference_relations_list,
                             indifference_relations=indifference_relations_list,
@@ -204,11 +205,11 @@ def learn_mip(
                             best_objective=best_objective,
                             time_limit=time_left,
                             seed=seed_mip,
-                            *args,
                             **kwargs,
                         )
                     else:
                         mip = MIPSRMPCollective(
+                            *args,
                             alternatives=alternatives,
                             preference_relations=preference_relations_list,
                             indifference_relations=indifference_relations_list,
@@ -221,12 +222,12 @@ def learn_mip(
                             best_objective=best_objective,
                             time_limit=time_left,
                             seed=seed_mip,
-                            *args,
                             **kwargs,
                         )
                 else:
                     if close:
                         mip = MIPSRMPGroupClose(
+                            *args,
                             alternatives=alternatives,
                             preference_relations=preference_relations_list,
                             indifference_relations=indifference_relations_list,
@@ -234,11 +235,11 @@ def learn_mip(
                             inconsistencies=inconsistencies,
                             time_limit=time_left,
                             seed=seed_mip,
-                            *args,
                             **kwargs,
                         )
                     else:
                         mip = MIPSRMPGroupLexicographicOrder(
+                            *args,
                             alternatives=alternatives,
                             preference_relations=preference_relations_list,
                             indifference_relations=indifference_relations_list,
@@ -247,12 +248,12 @@ def learn_mip(
                             inconsistencies=inconsistencies,
                             best_fitness=best_objective,
                             time_limit=time_left,
-                            *args,
                             **kwargs,
                         )
             else:
                 lexicographic_order = cast(list[list[int]], tolist(lexicographic_order))
                 mip = MIPSRMPGroup(
+                    *args,
                     alternatives=alternatives,
                     preference_relations=preference_relations_list,
                     indifference_relations=indifference_relations_list,
@@ -262,7 +263,6 @@ def learn_mip(
                     best_fitness=best_objective,
                     time_limit=time_left,
                     seed=seed_mip,
-                    *args,
                     **kwargs,
                 )
 
@@ -278,7 +278,7 @@ def learn_mip(
                     best_model = model
                     best_objective = cast(int, value(objective))
 
-                    if best_objective - sum(preferences_changes) == 0:
+                    if best_objective == sum(preferences_changes):
                         break
                 else:
                     best_model = model

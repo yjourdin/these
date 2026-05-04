@@ -5,8 +5,8 @@ from mcda import PerformanceTable
 from mcda.internal.core.scales import NormalScale, QuantitativeScale
 from mcda.outranking.srmp import SRMP
 
-from ..constants import DECIMALS
-from ..random import RNGParam, rng_
+from src.constants import DECIMALS
+from src.random import RNGParam, rng_
 
 
 class NormalPerformanceTable(PerformanceTable[NormalScale]):

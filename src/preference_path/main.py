@@ -2,14 +2,15 @@ from collections.abc import Container, Sequence
 
 from mcda.relations import PreferenceStructure
 
-from ..constants import DEFAULT_MAX_TIME
-from ..model import FrozenModel, Model
-from ..performance_table.type import PerformanceTableType
-from ..preference_structure.fitness import (
+from src.constants import DEFAULT_MAX_TIME
+from src.model import FrozenModel, Model
+from src.performance_table.type import PerformanceTableType
+from src.preference_structure.fitness import (
     fitness_comparisons_ranking,
 )
-from ..random import RNGParam
-from ..srmp.model import FrozenSRMPModel, SRMPModel
+from src.random import RNGParam
+from src.srmp.model import FrozenSRMPModel, SRMPModel
+
 from .gbfs import GBFS
 from .neighborhood import (
     Neighborhood,
@@ -21,8 +22,8 @@ from .neighborhood import (
 from .preference_path import preference_path, remove_refused, remove_reverted_changes
 
 
-def compute_model_path(
-    start_model: SRMPModel,
+def compute_model_paths(
+    start_models: list[SRMPModel],
     target_preferences: PreferenceStructure,
     alternatives: PerformanceTableType,
     rng: RNGParam = None,
@@ -47,7 +48,7 @@ def compute_model_path(
         )
 
     gbfs = GBFS(neighborhood, heuristic, max_time)
-    path = gbfs(start_model.frozen)
+    path = gbfs([model.frozen for model in start_models])
 
     return path, gbfs.time
 

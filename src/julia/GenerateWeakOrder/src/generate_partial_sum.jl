@@ -1,9 +1,9 @@
-PartialSum = Vector{BigFloat}
+const PartialSumType = BigFloat
 
-function generate_partial_sum(m, delta = 0.01)::PartialSum
+function generate_partial_sum(m, delta = 0.01)
     Wm = W(m)
     k  = 0
-    S  = BigFloat[0]
+    S  = PartialSumType[0]
 
     while (Wm - last(S) > delta) && ((length(S) < 2) || S[end] > S[end - 1])
         k += 1

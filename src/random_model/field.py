@@ -1,14 +1,14 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from ..field import RandomField, random_field
-from ..random import RNGParam, seed
+from src.field import RandomField, random_field
+from src.random import RNGParam, Seed, seed_
 
 
 @random_field("seed")
 @dataclass
 class SeedField(RandomField):
-    seed: int = field(default=seed())
+    seed: Seed = field(default=seed_())
 
     @staticmethod
     def field_random(
@@ -16,4 +16,4 @@ class SeedField(RandomField):
         *args: Any,
         **kwargs: Any,
     ):
-        return seed(rng)
+        return seed_(rng)

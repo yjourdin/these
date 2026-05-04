@@ -1,12 +1,13 @@
 from copy import deepcopy
-from dataclasses import InitVar, dataclass
+from dataclasses import InitVar
 
 import numpy as np
 
-from ..dataclass import Dataclass
-from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..random import RNGParam, rng_
-from ..utils import tolist
+from src.dataclass import Dataclass, dataclass
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.random import RNGParam, rng_
+from src.utils import tolist
+
 from .importance_relation import ImportanceRelation
 from .permutation import all_max_adjacent_distance
 

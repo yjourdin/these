@@ -12,6 +12,7 @@ class Config(FrozenDataclass):
     id: int = field(default_factory=count().__next__, init=False, hash=False)
     method: ClassVar[MethodEnum]
     max_time: int = field(default=DEFAULT_MAX_TIME, hash=False)
+    nb_cpus: int = field(default=1, hash=False)
 
     def __str__(self) -> str:
         return str(self.id)

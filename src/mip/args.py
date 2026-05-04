@@ -1,9 +1,9 @@
 import argparse
 from sys import stdout
 
-from ..constants import DEFAULT_MAX_TIME, EPSILON
-from ..models import ModelEnum
-from ..srmp.model import SRMPParamFlag
+from src.constants import DEFAULT_MAX_TIME, EPSILON
+from src.models import ModelEnum
+from src.srmp.model import SRMPParamFlag
 
 parser = argparse.ArgumentParser()
 parser.add_argument("model", type=ModelEnum, choices=ModelEnum, help="Model")
@@ -64,7 +64,7 @@ parser.add_argument(
 )
 parser.add_argument("-s", "--seed", default=0, type=int, help="Random seed")
 parser.add_argument("-v", "--verbose", action="store_true", help="Verbose")
+parser.add_argument("--nb-cpus", default=1, type=int, help="Number of CPUs")
 
 
-def parse_args():
-    return parser.parse_args()
+ARGS = parser.parse_args()

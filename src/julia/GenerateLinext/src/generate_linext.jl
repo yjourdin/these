@@ -70,5 +70,5 @@ function generate_linext!(P, rng = Random.default_rng())
 
     append!(lmin, shuffle!(labels))
 
-    return [lmin; lmax] .|> Bit.decode .|> collect
+    return [lmin; lmax] .|> decode .|> collect
 end

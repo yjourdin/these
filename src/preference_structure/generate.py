@@ -7,14 +7,14 @@ from mcda.internal.core.relations import Relation
 from mcda.internal.core.values import Ranking
 from mcda.relations import I, P, PreferenceStructure
 
-from ..model import Model
-from ..performance_table.dominance_relation import (
+from src.model import Model
+from src.performance_table.dominance_relation import (
     dominance_structure,
     is_subset,
 )
-from ..performance_table.type import PerformanceTableType
-from ..random import RNGParam, rng_
-from ..weak_order import WeakOrder
+from src.performance_table.type import PerformanceTableType
+from src.random import RNGParam, rng_
+from src.weak_order import WeakOrder
 
 
 def random_preference_relation(

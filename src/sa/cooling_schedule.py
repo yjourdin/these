@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 
-from ..dataclass import Dataclass
+from src.dataclass import Dataclass, dataclass
 
 
 class CoolingSchedule(ABC):

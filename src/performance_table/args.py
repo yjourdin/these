@@ -14,5 +14,4 @@ parser.add_argument(
 )
 
 
-def parse_args():
-    return parser.parse_args()
+ARGS = parser.parse_args()

@@ -20,19 +20,17 @@ parser.add_argument(
 )
 
 
-def parse_args():
-    args = parser.parse_args()
+args = parser.parse_args()
 
-    with args.args as file:
-        match cast(ExperimentEnum, args.experiment):
-            case ExperimentEnum.ELICITATION:
-                arguments = ArgumentsElicitation.from_json(file.read())
-            case ExperimentEnum.GROUP_DECISION:
-                arguments = ArgumentsGroupDecision.from_json(file.read())
+with args.args as file:
+    match cast(ExperimentEnum, args.experiment):
+        case ExperimentEnum.ELICITATION:
+            ARGS = ArgumentsElicitation.from_json(file.read())
+        case ExperimentEnum.GROUP_DECISION:
+            ARGS = ArgumentsGroupDecision.from_json(file.read())  # pyright: ignore[reportConstantRedefinition]
 
-    arguments.dir = args.dir or arguments.dir
-    arguments.name = args.name or arguments.name
-    arguments.jobs = args.jobs or arguments.jobs
-    arguments.stop_error = args.stop_error
-    arguments.extend = args.extend
-    return arguments
+ARGS.dir = args.dir or ARGS.dir
+ARGS.name = args.name or ARGS.name
+ARGS.jobs = args.jobs or ARGS.jobs
+ARGS.stop_error = args.stop_error
+ARGS.extend = args.extend

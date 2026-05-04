@@ -1,13 +1,9 @@
-from .argument_parser import parse_args
+from .args import ARGS
 from .model import RandomModel
 
-# Parse arguments
-args = parse_args()
-
-
 # Create model
-model = RandomModel(args.seed)
+model = RandomModel(ARGS.seed)
 
 
 # Write results
-args.output.write(model.to_json())
+ARGS.output.write(model.to_json())

@@ -1,15 +1,15 @@
 import math
 from collections import defaultdict, deque
-from dataclasses import dataclass
 from typing import NamedTuple
 
 from mcda.relations import PreferenceStructure
 
-from ..dataclass import Dataclass
-from ..model import FrozenModel, Model
-from ..performance_table.type import PerformanceTableType
-from ..preference_structure.fitness import fitness_comparisons_ranking
-from ..preference_structure.utils import RankingSeries
+from src.dataclass import Dataclass, dataclass
+from src.model import FrozenModel, Model
+from src.performance_table.type import PerformanceTableType
+from src.preference_structure.fitness import fitness_comparisons_ranking
+from src.preference_structure.utils import RankingSeries
+
 from .neighborhood import Neighborhood
 
 
@@ -42,10 +42,11 @@ class ModelGraph[S: FrozenModel[Model]](Dataclass):
         while Q:
             v = Q.popleft()
             for dm, target in enumerate(targets):
-                if distances[v] <= distances_max[dm]:
-                    if fitness_comparisons_ranking(target, rankings[v]) == 1:
-                        dm_models[dm].append(v)
-                        distances_max[dm] = distances[v]
+                if (fitness_comparisons_ranking(target, rankings[v]) == 1) and (
+                    distances[v] <= distances_max[dm]
+                ):
+                    dm_models[dm].append(v)
+                    distances_max[dm] = distances[v]
 
             if distances[v] < max(distances_max):
                 for w in self.neighborhood(v):
@@ -57,5 +58,5 @@ class ModelGraph[S: FrozenModel[Model]](Dataclass):
                         parents[w].append(v)
 
         return ModelGraphResult(
-            parents, rankings, list(dm_models[dm] for dm in range(len(targets)))
+            parents, rankings, [dm_models[dm] for dm in range(len(targets))]
         )

@@ -1,15 +1,18 @@
 import heapq
 from collections.abc import Callable
-from dataclasses import dataclass, field
-from itertools import count
+from itertools import count, pairwise
 from time import process_time
+from typing import cast
 
-from ..constants import DEFAULT_MAX_TIME
-from ..dataclass import Dataclass
+from src.constants import DEFAULT_MAX_TIME
+from src.dataclass import Dataclass, dataclass, field
+from src.utils import CustomException
+
 from .neighborhood import Neighborhood
+from .path_reconstructor import Paths
 
 
-@dataclass(order=True)
+@dataclass(order=True, slots=True)
 class Node[T](Dataclass):
     item: T = field(compare=False)
     heuristic: float
@@ -17,67 +20,76 @@ class Node[T](Dataclass):
 
 
 @dataclass
-class PathsReconstructor[T](Dataclass):
-    parent: dict[T, T | None]
-
-    def __call__(self, v: T) -> list[T]:
-        parent = self.parent[v]
-        return [v] + self(parent) if parent is not None else [v]
-
-
-@dataclass
-class GBFS[T](Dataclass):
+class GBFS[T](Paths[T]):
     neighborhood: Neighborhood[T]
     heuristic: Callable[[T], float]
     max_time: int = DEFAULT_MAX_TIME
 
-    def __call__(self, source: T) -> list[T]:
-        # Initialise
-        start_time = process_time()
-        self.time = process_time() - start_time
-        # visited = {source}
-        open_heap = [Node(source, self.heuristic(source))]
-        closed_set = {source}
-        parent: dict[T, T | None] = {source: None}
+    def init(self, sources: list[T]):
+        self.start_time = process_time()
+        self.time = process_time() - self.start_time
+        self.open_heap = [Node(source, self.heuristic(source)) for source in sources]
+        heapq.heapify(self.open_heap)
+        self.parent = {source: {i: None} for i, source in enumerate(sources)}
 
-        # Stopping criterion
-        while (self.time < self.max_time) and open_heap:
+    def main_loop(self) -> dict[int, list[T]]:
+        while (self.time < self.max_time) and self.open_heap:
             # Best node
-            current = heapq.heappop(open_heap)
+            current_node = heapq.heappop(self.open_heap)
+            current = current_node.item
             # self.heuristic(current.item, verbose=True)
 
             # print(
-                # current.heuristic,
-                # current.item.profiles[0],
-                # current.item.importance_relation[1:3],
-                # current.item.weights,
+            # current.heuristic,
+            # current.item.profiles[0],
+            # current.item.importance_relation[1:3],
+            # current.item.weights,
             # )
             # print()
             # print("Cur", current.heuristic, current.item.weights)
             # print("Cur", current.item.weights)
 
             # Explore neighborhood
-            for neighbor in self.neighborhood(current.item):
+            for neighbor in self.neighborhood(current_node.item):
                 # print("Nei", neighbor.weights)
-                if neighbor not in closed_set:
+                if neighbor not in self.parent:
                     # print("passed")
-                    parent[neighbor] = current.item
+                    self.parent[neighbor] = {id: current for id in self.parent[current]}
 
                     # Stop when target reached
                     if (heuristic_value := self.heuristic(neighbor)) == 0:
                         # print(len(closed_set))
-                        return PathsReconstructor(parent)(neighbor)
+                        return self.paths(neighbor)
                     else:
                         # Add neighbor to queue
-                        heapq.heappush(open_heap, Node(neighbor, heuristic_value))
+                        heapq.heappush(self.open_heap, Node(neighbor, heuristic_value))
                         # print("Nei", heuristic_value, neighbor.weights)
-                        closed_set.add(neighbor)
-                        # visited.add(neighbor)
+
+                elif (
+                    neighbor_source_ids := frozenset(self.parent[neighbor].keys())
+                ) != (current_source_ids := frozenset(self.parent[current].keys())):
+                    # Remonte le path de neighbor
+                    if new_ids := current_source_ids - neighbor_source_ids:
+                        paths = self.paths(neighbor)
+                        for i in new_ids:
+                            for u, v in pairwise([current] + paths[i]):
+                                self.parent[v] |= {i: u}
+                    # Remonte le path de current
+                    if new_ids := neighbor_source_ids - current_source_ids:
+                        paths = self.paths(current)
+                        for i in new_ids:
+                            for u, v in pairwise([neighbor] + paths[i]):
+                                self.parent[v] |= {i: u}
 
             # Update time
-            self.time = process_time() - start_time
+            self.time = process_time() - self.start_time
 
-        if not open_heap:
-            raise Exception("Target unreachable")
+        if not self.open_heap:
+            raise CustomException("Target unreachable")
 
-        return []
+        return {}
+
+    def __call__(self, sources: list[T]):
+        self.init(sources)
+
+        return self.main_loop()

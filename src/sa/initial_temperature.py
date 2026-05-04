@@ -4,7 +4,8 @@ from math import log
 import numpy as np
 import pandas as pd
 
-from ..random import RNGParam
+from src.random import RNGParam
+
 from .neighbor import Neighbor
 from .objective import Objective
 from .random_walk import RandomWalk

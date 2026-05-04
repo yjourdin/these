@@ -1,9 +1,9 @@
-mcda[all]
-more-itertools
-numba
 drs
 highspy
 ipykernel
+mcda[all]
+more-itertools
+numba
 seaborn
 snakeviz
 https://github.com/JasonGross/tikzplotlib/archive/refs/tags/v0.10.1.post13.zip

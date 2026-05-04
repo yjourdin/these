@@ -17,7 +17,7 @@ from .dataclass import RandomDataclass, RandomFrozenDataclass
 from .performance_table.type import PerformanceTableType
 from .preference_structure.fitness import fitness_comparisons_ranking
 from .random import Random, RNGParam
-from .utils import list_replace
+from .utils import list_replace, tolist
 
 
 class ParamFlag(Flag): ...
@@ -30,10 +30,13 @@ class Model(RandomDataclass):
         self, performance_table: PerformanceTableType
     ) -> npt.NDArray[np.int_]: ...
 
+    def rank_list(self, performance_table: PerformanceTableType):
+        return tolist(self.rank_numpy(performance_table))
+
     def rank_series(self, performance_table: PerformanceTableType):
         return Series(
-            self.rank_numpy(performance_table),
-            performance_table.alternatives,
+            self.rank_list(performance_table),
+            performance_table.alternatives,  # type: ignore
             dtype=int,
         )
 
@@ -42,7 +45,7 @@ class Model(RandomDataclass):
         return CommensurableValues(
             ranking,
             scale=DiscreteQuantitativeScale(
-                ranking.unique(),  # type: ignore
+                ranking.unique().tolist(),
                 PreferenceDirection.MIN,
             ),
         )
@@ -119,10 +122,8 @@ class GroupModel[M: Model](Model, Sequence[M]):
                 return super().fitness(performance_table, comparisons)
             case _:
                 return agg_float(
-                    map(
-                        lambda x: x[0].fitness(performance_table, x[1]),
-                        zip(self, comparisons),
-                    )
+                    x[0].fitness(performance_table, x[1])
+                    for x in zip(self, comparisons)
                 )
 
 

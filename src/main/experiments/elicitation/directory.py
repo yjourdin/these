@@ -5,7 +5,7 @@ from src.models import GroupModelEnum
 from src.utils import filename_csv, filename_json
 
 from ...directory import Directory
-from ...experiments.elicitation.config import Config
+from .config import Config
 from .csv_files import (
     ConfigCSVFile,
     TestCSVFile,

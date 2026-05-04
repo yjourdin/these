@@ -3,8 +3,8 @@ import numpy.typing as npt
 from more_itertools import powerset
 from scipy.stats import rankdata
 
-from ..random import RNGParam, rng_
-from ..utils import tolist
+from src.random import RNGParam, rng_
+from src.utils import tolist
 
 
 def random_weights(nb_crit: int, rng: RNGParam = None):
@@ -18,11 +18,11 @@ def normalize_weights(weights: npt.NDArray[np.float64]):
     return weights
 
 
-def frozen_importance_relation_from_weights(w: npt.NDArray[np.float64]):  # type: ignore
+def frozen_importance_relation_from_weights(w: npt.NDArray[np.float64]):
     power_sets = powerset(range(len(w)))
-    result = []
+    result: list[float] = []
 
     for set in power_sets:
         result.append(w[list(set)].sum())
 
-    return tuple(tolist(rankdata(result, "dense")))  # type: ignore
+    return tuple(tolist(rankdata(result, "dense").astype(np.int_)))

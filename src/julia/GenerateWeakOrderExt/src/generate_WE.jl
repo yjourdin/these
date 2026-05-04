@@ -1,13 +1,19 @@
-function generate_WE(P)
-    BP = BitPoset(P)
-    labels = [Bit.empty]
+function generate_WE(M)
+    N          = DEDEKIND[M]
+    P          = M |> subset_lattice |> BitPoset
+    labels_set = Set{Bitset}([Bit.empty])
+    sizehint!(labels_set, N)
 
-    AllWeak3!(labels, BP, min(BP), Bit.empty)
+    AllWeak3!(labels_set, P, min(P), Bit.empty)
 
-    NV       = length(labels)
-    nb_paths = ones(UInt128, NV)
-    for i ∈ (NV - 2):-1:1
-        nb_paths[i] = sum(x -> nb_paths[x], successors(labels, i); init = UInt128(0))
+    labels   = sort!(collect(labels_set))
+    nb_paths = ones(UInt128, N)
+    for i ∈ (N - 1):-1:1
+        u  = labels[i]
+        nu = nb_paths[i]
+        for j ∈ 1:(i - 1)
+            Bit.issubset(labels[j], u) && (nb_paths[j] += nu)
+        end
         # @info "Vertices traversed : $(length(nb_paths) - i + 1) / $(length(nb_paths))"
     end
 

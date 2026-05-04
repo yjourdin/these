@@ -1,13 +1,13 @@
 from pathlib import Path
 
+from src.case_insensitive_str_enum import CaseInsensitiveStrEnum
 from src.dataclass import Dataclass, dataclass
 from src.default_max_jobs import DEFAULT_MAX_JOBS
-from src.strenum import StrEnumCustom
 
 from .directory import RESULTS_DIR
 
 
-class ExperimentEnum(StrEnumCustom):
+class ExperimentEnum(CaseInsensitiveStrEnum):
     ELICITATION = "E"
     GROUP_DECISION = "G"
 

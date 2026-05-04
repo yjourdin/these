@@ -41,7 +41,7 @@ def field(fieldname: str):
                 dct[fieldname] = original_class.field_encode(dct[fieldname])
             return dct
 
-        original_class.decode = classmethod(decode)
+        original_class.decode = decode
         original_class.encode = encode
 
         return original_class
@@ -50,10 +50,9 @@ def field(fieldname: str):
 
 
 class RandomField(Random, Field):
-    @classmethod
-    def random(
-        cls, init_dict: dict[str, Any] = {}, *args: Any, **kwargs: Any
-    ) -> "RandomField": ...
+    @staticmethod
+    def update_init_dict(init_dict: dict[str, Any], *args: Any, **kwargs: Any):
+        return init_dict
 
     @staticmethod
     def field_random(rng: RNGParam = None, *args: Any, **kwargs: Any) -> Any: ...
@@ -64,11 +63,14 @@ def random_field(fieldname: str):
         __class__ = original_class  # noqa: F841
 
         @classmethod
-        def random(cls: T, init_dict: dict[str, Any] = {}, *args: Any, **kwargs: Any):
-            super().random(init_dict=init_dict, *args, **kwargs)  # type: ignore
+        def update_init_dict(
+            cls: T, init_dict: dict[str, Any], *args: Any, **kwargs: Any
+        ) -> dict[str, Any]:
+            init_dict = super().update_init_dict(*args, init_dict=init_dict, **kwargs)  # type: ignore
             init_dict[fieldname] = original_class.field_random(*args, **kwargs)
+            return init_dict
 
-        original_class.random = random
+        original_class.update_init_dict = update_init_dict
 
         return original_class
 
@@ -92,7 +94,7 @@ def group_field(fieldname: str, fieldclass: type[Field]):
 
         @classmethod
         def encode(cls: T, dct: dict[Any, Any]):
-            super().encode(dct)  # type: ignore
+            super(original_class, original_class).encode(dct)  # type: ignore
             if fieldname in dct:
                 dct[fieldname] = (
                     [fieldclass.field_encode(o) for o in dct[fieldname]]
@@ -114,14 +116,19 @@ def random_group_field(fieldname: str, fieldclass: type[RandomField]):
         __class__ = original_class  # noqa: F841
 
         @classmethod
-        def random(cls: T, init_dict: dict[str, Any] = {}, *args: Any, **kwargs: Any):
-            super().random(init_dict=init_dict, *args, **kwargs)  # type: ignore
+        def update_init_dict(
+            cls: T, init_dict: dict[str, Any] | None = None, *args: Any, **kwargs: Any
+        ):
+            init_dict = init_dict or {}
+            super().update_init_dict(  # type: ignore
+                *args, init_dict=init_dict, **kwargs
+            )
             init_dict[fieldname] = [
                 fieldclass.field_random(*args, **kwargs)
                 for _ in range(kwargs["group_size"])
             ]
 
-        original_class.random = random  # type: ignore
+        original_class.update_init_dict = update_init_dict
 
         return original_class
 
@@ -130,10 +137,8 @@ def random_group_field(fieldname: str, fieldclass: type[RandomField]):
 
 def group_group_field(fieldname: str, fieldclass: type[Field]):
     def decorator[T: type[Field]](original_class: T) -> T:
-        __class__ = original_class  # noqa: F841
-
-        @classmethod
-        def decode(cls: T, dct: dict[Any, Any]):
+        @staticmethod
+        def decode(dct: dict[Any, Any]):
             super().decode(dct)  # type: ignore
             if fieldname in dct:
                 dct[fieldname] = (
@@ -146,8 +151,8 @@ def group_group_field(fieldname: str, fieldclass: type[Field]):
                 )
             return dct
 
-        @classmethod
-        def encode(cls: T, dct: dict[Any, Any]):
+        @staticmethod
+        def encode(dct: dict[Any, Any]):
             super().encode(dct)  # type: ignore
             if fieldname in dct:
                 dct[fieldname] = (

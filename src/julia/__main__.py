@@ -1,4 +1,5 @@
-from .argument_parser import ScriptEnum, parse_args
+from .argument_parser import parse_args
+from .script_enum import ScriptEnum
 
 # Parse arguments
 args = vars(parse_args())

@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass, fields
+from dataclasses import *  # type: ignore
 from json import dumps, loads
 from operator import attrgetter
 from typing import Any
@@ -90,8 +90,7 @@ class FrozenDataclass(Field):
 class RandomDataclass(Dataclass, RandomField):
     @classmethod
     def random(cls, *args: Any, **kwargs: Any):
-        init_dict: dict[Any, Any] = {}
-        super().random(init_dict=init_dict, *args, **kwargs)
+        init_dict = super().update_init_dict(*args, init_dict={}, **kwargs)
         return cls(**{
             k: v
             for k, v in init_dict.items()
@@ -103,8 +102,7 @@ class RandomDataclass(Dataclass, RandomField):
 class RandomFrozenDataclass(FrozenDataclass, RandomField):
     @classmethod
     def random(cls, *args: Any, **kwargs: Any):
-        init_dict: dict[Any, Any] = {}
-        super().random(init_dict=init_dict, *args, **kwargs)
+        init_dict = super().update_init_dict(*args, init_dict={}, **kwargs)
         return cls(**{
             k: v
             for k, v in init_dict.items()

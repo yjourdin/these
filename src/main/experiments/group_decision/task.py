@@ -1,5 +1,6 @@
 import csv
 from dataclasses import dataclass, field, replace
+from math import inf
 from typing import Any
 
 from mcda.relations import PreferenceStructure
@@ -7,9 +8,9 @@ from pandas import read_csv
 
 from src.methods import MethodEnum
 from src.mip.main import learn_mip
-from src.models import GroupModelEnum
+from src.models import GroupModelEnum, ModelEnum
 from src.performance_table.normal_performance_table import NormalPerformanceTable
-from src.preference_path.main import compute_model_path, compute_preference_path
+from src.preference_path.main import compute_model_paths, compute_preference_path
 from src.preference_structure.generate import random_comparisons
 from src.preference_structure.io import from_csv, to_csv
 from src.preference_structure.utils import preference_structure_from_outranking
@@ -384,6 +385,56 @@ class AbstractCollectiveTask(AbstractDTask):
             it,
         )
 
+    def Mcp_file(self, dir: DirectoryGroupDecision, id: int):
+        return dir.Mcp(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.group,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.method,
+            self.config,
+            self.Mie,
+            self.Mie_config,
+            self.Mie_id,
+            self.Mc_id,
+            id,
+            self.path,
+            self.P_id,
+            self.it,
+        )
+
+    def Dcp_file(self, dir: DirectoryGroupDecision, id: int):
+        return dir.Dcp(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.group,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.method,
+            self.config,
+            self.Mie,
+            self.Mie_config,
+            self.Mie_id,
+            self.Mc_id,
+            id,
+            self.path,
+            self.P_id,
+            self.it,
+        )
+
     def Mc_file(self, dir: DirectoryGroupDecision):
         return dir.Mc(
             self.m,
@@ -433,7 +484,7 @@ class AbstractCollectiveTask(AbstractDTask):
         )
 
     def done(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any):
-        return self.Mc_file(dir).exists()
+        return self.Mcp_file(dir, 0).exists()
 
 
 @dataclass(frozen=True)
@@ -514,7 +565,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
 
         Mie: list[SRMPModel] | None = []
         for dm_id in range(self.group_size):
-            if (Mie_file := self.Mie_file(dir, dm_id)).exists():
+            if self.Mie and (Mie_file := self.Mie_file(dir, dm_id)).exists():
                 with Mie_file.open("r") as f:
                     Mie.append(SRMPModel.from_json(f.read()))
             else:
@@ -523,41 +574,51 @@ class CollectiveMIPTask(AbstractCollectiveTask):
 
         seed_lex, seed_mip = self.seed(seed).spawn(2)
 
-        best_model, best_objective, time = learn_mip(
-            GroupModelEnum.SRMP,
-            self.ko,
-            A,
-            D,
-            seed_lex,
-            seed_mip,
-            min(max_time, self.config.max_time)
-            if max_time is not None
-            else self.config.max_time,
-            self.lexicographic_order if self.fixed_lex_order else None,
-            True,
-            False,
-            C,
-            R,
-            ACC,
-            reference_models=Mie,
-            gamma=self.config.gamma,
-        )
+        global_time = 0
+        global_best_objective = inf
+        seeds_mip = seed_mip.spawn(self.nb_Mcp) if self.nb_Mcp > 1 else [seed_mip]
+        for Mcp_id in range(self.nb_Mcp):
+            best_model, best_objective, time = learn_mip(
+                GroupModelEnum.SRMP,
+                self.ko,
+                A,
+                D,
+                seed_lex,
+                seeds_mip[Mcp_id],
+                int(min(max_time, self.config.max_time) / self.nb_Mcp)
+                if max_time is not None
+                else self.config.max_time,
+                self.lexicographic_order if self.fixed_lex_order else None,
+                True,
+                False,
+                C,
+                R,
+                ACC,
+                reference_models=Mie,
+                gamma=self.config.gamma,
+                nb_cpus=self.config.nb_cpus,
+            )
+            global_time += time
+            if (best_objective is not None) and (
+                best_objective < global_best_objective
+            ):
+                global_best_objective = best_objective
 
-        if best_model is not None:
-            with self.Mc_file(dir).open("w") as f:
-                f.write(best_model.to_json())
+            if best_model is not None:
+                with self.Mcp_file(dir, Mcp_id).open("w") as f:
+                    f.write(best_model.to_json())
 
-            with self.Dc_file(dir).open("w") as f:
-                to_csv(
-                    random_comparisons(
-                        A,
-                        best_model,
-                        pairs=set.union(
-                            *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
+                with self.Dcp_file(dir, Mcp_id).open("w") as f:
+                    to_csv(
+                        random_comparisons(
+                            A,
+                            best_model,
+                            pairs=set.union(
+                                *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
+                            ),
                         ),
-                    ),
-                    f,
-                )
+                        f,
+                    )
 
         csv_file = dir.csv_files["collective"]
         csv_file.writerow(
@@ -583,12 +644,12 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                 Path=self.path,
                 P_id=self.P_id,
                 It=self.it,
-                Time=time,
-                Objective=best_objective,
+                Time=global_time,
+                Objective=global_best_objective,
             )
         )
 
-        return best_model is not None
+        return global_best_objective < inf
 
     def Mie_file(self, dir: DirectoryGroupDecision, dm_id: int):
         assert self.Mie_config
@@ -690,9 +751,14 @@ class CollectiveSATask(AbstractCollectiveTask):
 
         rng_init, rng_sa = self.rng(seed).spawn(2)
 
-        with open(f"log_sa_{self.Mc_id}_{self.it}.txt", "a") as f:
+        global_time = 0
+        global_best_objective = inf
+        rngs_init = rng_init.spawn(self.nb_Mcp) if self.nb_Mcp > 1 else [rng_init]
+        rngs_sa = rng_sa.spawn(self.nb_Mcp) if self.nb_Mcp > 1 else [rng_sa]
+
+        for Mcp_id in range(self.nb_Mcp):
             best_model, best_objective, time, it = learn_sa(
-                GroupModelEnum.SRMP,
+                ModelEnum.SRMP,
                 self.ko,
                 A,
                 D,
@@ -707,26 +773,27 @@ class CollectiveSATask(AbstractCollectiveTask):
                 max_it_non_improving=self.config.max_it_non_improving,
                 preferences_changes=C,
                 comparisons_refused=R,
-                log_file=f,
-                rng_init=rng_init,
-                rng_sa=rng_sa,
+                rng_init=rngs_init[Mcp_id],
+                rng_sa=rngs_sa[Mcp_id],
             )
+            global_time += time
+            global_best_objective = min(best_objective, global_best_objective)
 
-        if best_objective < float("inf"):
-            with self.Mc_file(dir).open("w") as f:
-                f.write(best_model.to_json())
+            if best_objective < inf:
+                with self.Mcp_file(dir, Mcp_id).open("w") as f:
+                    f.write(best_model.to_json())
 
-            with self.Dc_file(dir).open("w") as f:
-                to_csv(
-                    random_comparisons(
-                        A,
-                        best_model,
-                        pairs=set.union(
-                            *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
+                with self.Dcp_file(dir, Mcp_id).open("w") as f:
+                    to_csv(
+                        random_comparisons(
+                            A,
+                            best_model,
+                            pairs=set.union(
+                                *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
+                            ),
                         ),
-                    ),
-                    f,
-                )
+                        f,
+                    )
 
         csv_file = dir.csv_files["collective"]
         csv_file.writerow(
@@ -752,87 +819,111 @@ class CollectiveSATask(AbstractCollectiveTask):
                 Path=self.path,
                 P_id=self.P_id,
                 It=self.it,
-                Time=time,
-                Objective=best_objective,
+                Time=global_time,
+                Objective=global_best_objective,
             )
         )
 
-        return best_objective < float("inf")
+        return global_best_objective < inf
+
+
+# @dataclass(frozen=True)
+# class AcceptMcTask(AbstractCollectiveTask, MiTask):
+#     name = "AcceptMc"
+
+#     def task(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any) -> Any:
+#         with self.Mi_file(dir).open("r") as f:
+#             Mi = SRMPModel.from_json(f.read())
+
+#         with self.A_file(dir).open("r") as f:
+#             A = NormalPerformanceTable(read_csv(f, header=None))
+
+#         with self.Dc_file(dir).open("r") as f:
+#             Dc = from_csv(f)
+
+#         best_model, _best_fitness, _time = learn_mip(
+#             GroupModelEnum.SRMP,
+#             self.ko,
+#             A,
+#             [Dc],
+#             rng_(0),
+#             0,
+#             self.config.max_time,
+#             self.lexicographic_order,
+#             reference_model=Mi,
+#             profiles_amp=self.group.accept.P,
+#             weights_amp=self.group.accept.W,
+#             lexicographic_order_distance=self.group.accept.L,
+#         )
+
+#         csv_file = dir.csv_files["accept"]
+#         csv_file.writerow(
+#             csv_file.fields(
+#                 M=self.m,
+#                 N_tr=self.ntr,
+#                 Atr_id=self.Atr_id,
+#                 Ko=self.ko,
+#                 Mo_id=self.Mo_id,
+#                 Group_size=self.group_size,
+#                 Group=self.group,
+#                 Mi_id=self.Mi_id,
+#                 N_bc=self.nbc,
+#                 Same_alt=self.same_alt,
+#                 D_id=self.D_id,
+#                 Method=self.method,
+#                 Config=self.config,
+#                 Mie=self.Mie,
+#                 Mie_config=self.Mie_config,
+#                 Mie_id=self.Mie_id,
+#                 Mc_id=self.Mc_id,
+#                 Nb_Mcp=self.nb_Mcp,
+#                 Path=self.path,
+#                 P_id=self.P_id,
+#                 It=self.it,
+#                 Dm_id=self.dm_id,
+#                 T=0,
+#                 Accept=best_model is not None,
+#             )
+#         )
+
+#         return best_model is not None
+
+#     def Mc_file(self, dir: DirectoryGroupDecision):
+#         return dir.Mc(
+#             self.m,
+#             self.ntr,
+#             self.Atr_id,
+#             self.ko,
+#             self.Mo_id,
+#             self.group_size,
+#             self.group,
+#             self.Mi_id,
+#             self.nbc,
+#             self.same_alt,
+#             self.D_id,
+#             self.method,
+#             self.config,
+#             self.Mie,
+#             self.Mie_config,
+#             self.Mie_id,
+#             self.Mc_id,
+#             self.path,
+#             self.P_id,
+#             self.it,
+#         )
+
+#     def Mi_file(self, dir: DirectoryGroupDecision, dm_id: int | None = None):
+#         return super().Mi_file(dir, self.dm_id)
+
+#     def Di_file(self, dir: DirectoryGroupDecision, dm_id: int | None = None):
+#         return super().Di_file(dir, self.dm_id)
+
+#     def done(self, *args: Any, **kwargs: Any) -> bool:
+#         return False
 
 
 @dataclass(frozen=True)
-class AcceptMcTask(AbstractCollectiveTask, MiTask):
-    name = "AcceptMc"
-
-    def task(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any) -> Any:
-        with self.Mi_file(dir).open("r") as f:
-            Mi = SRMPModel.from_json(f.read())
-
-        with self.A_file(dir).open("r") as f:
-            A = NormalPerformanceTable(read_csv(f, header=None))
-
-        with self.Dc_file(dir).open("r") as f:
-            Dc = from_csv(f)
-
-        best_model, _best_fitness, _time = learn_mip(
-            GroupModelEnum.SRMP,
-            self.ko,
-            A,
-            [Dc],
-            rng_(0),
-            0,
-            self.config.max_time,
-            self.lexicographic_order,
-            reference_model=Mi,
-            profiles_amp=self.group.accept.P,
-            weights_amp=self.group.accept.W,
-            lexicographic_order_distance=self.group.accept.L,
-        )
-
-        csv_file = dir.csv_files["accept"]
-        csv_file.writerow(
-            csv_file.fields(
-                M=self.m,
-                N_tr=self.ntr,
-                Atr_id=self.Atr_id,
-                Ko=self.ko,
-                Mo_id=self.Mo_id,
-                Group_size=self.group_size,
-                Group=self.group,
-                Mi_id=self.Mi_id,
-                N_bc=self.nbc,
-                Same_alt=self.same_alt,
-                D_id=self.D_id,
-                Method=self.method,
-                Config=self.config,
-                Mie=self.Mie,
-                Mie_config=self.Mie_config,
-                Mie_id=self.Mie_id,
-                Mc_id=self.Mc_id,
-                Nb_Mcp=self.nb_Mcp,
-                Path=self.path,
-                P_id=self.P_id,
-                It=self.it,
-                Dm_id=self.dm_id,
-                T=0,
-                Accept=best_model is not None,
-            )
-        )
-
-        return best_model is not None
-
-    def Mi_file(self, dir: DirectoryGroupDecision, dm_id: int | None = None):
-        return super().Mi_file(dir, self.dm_id)
-
-    def Di_file(self, dir: DirectoryGroupDecision, dm_id: int | None = None):
-        return super().Di_file(dir, self.dm_id)
-
-    def done(self, *args: Any, **kwargs: Any) -> bool:
-        return False
-
-
-@dataclass(frozen=True)
-class PreferencePathTask(AcceptMcTask):
+class PreferencePathTask(AbstractCollectiveTask, MiTask):
     name = "Path"
 
     def task(
@@ -849,8 +940,14 @@ class PreferencePathTask(AcceptMcTask):
         with self.Di_file(dir).open("r") as f:
             D = from_csv(f)
 
-        with self.Mc_file(dir).open("r") as f:
-            Mc = SRMPModel.from_json(f.read())
+        Mcps: list[SRMPModel] = []
+        for Mcp_id in range(self.nb_Mcp):
+            with self.Mcp_file(dir, Mcp_id).open("r") as f:
+                Mcps.append(SRMPModel.from_json(f.read()))
+
+            if self.nb_Mcp == 1:
+                with self.Mc_file(dir).open("w") as f:
+                    f.write(SRMPModel.from_json(f.read()).to_json())
 
         if self.path:
             R: list[PreferenceStructure] = []
@@ -858,8 +955,8 @@ class PreferencePathTask(AcceptMcTask):
                 with Dr_file.open("r") as f:
                     R.append(from_csv(f))
 
-            model_path, time = compute_model_path(
-                Mc,
+            model_paths, time = compute_model_paths(
+                Mcps,
                 D,
                 A,
                 self.rng(seed),
@@ -868,13 +965,13 @@ class PreferencePathTask(AcceptMcTask):
                 else self.config.max_time,
                 self.fixed_lex_order,
             )
-            preference_path = compute_preference_path(model_path, D, A, R)
+            preference_path = compute_preference_path(model_paths[0], D, A, R)
         else:
-            model_path = []
+            model_paths = {0: []}
             time = 0
             preference_path = [
                 D,
-                random_comparisons(A, Mc, pairs=D.elements_pairs_relations),
+                random_comparisons(A, Mcps[0], pairs=D.elements_pairs_relations),
             ]
 
         t = None
@@ -910,11 +1007,17 @@ class PreferencePathTask(AcceptMcTask):
                     Dm_id=self.dm_id,
                     Time=time,
                     Length=t,
-                    Model_Length=len(model_path),
+                    Model_Length=len(model_paths[0]),
                 )
             )
 
         return len(preference_path) != 0
+
+    def Mi_file(self, dir: DirectoryGroupDecision, dm_id: int | None = None):
+        return super().Mi_file(dir, self.dm_id)
+
+    def Di_file(self, dir: DirectoryGroupDecision, dm_id: int | None = None):
+        return super().Di_file(dir, self.dm_id)
 
     def P_file(self, dir: DirectoryGroupDecision, t: int):
         return dir.P(

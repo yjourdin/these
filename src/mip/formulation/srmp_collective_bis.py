@@ -15,9 +15,10 @@ from pulp import (  # type: ignore
     value,
 )
 
-from ...constants import EPSILON
-from ...performance_table.normal_performance_table import NormalPerformanceTable
-from ...srmp.model import SRMPModel
+from src.constants import EPSILON
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.srmp.model import SRMPModel
+
 from ..mip import MIP, D, MIPParams, MIPVars
 
 

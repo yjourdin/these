@@ -1,8 +1,8 @@
 import argparse
 from sys import stdout
 
-from ..constants import DEFAULT_MAX_TIME
-from ..models import ModelEnum
+from src.constants import DEFAULT_MAX_TIME
+from src.models import ModelEnum
 
 parser = argparse.ArgumentParser()
 
@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("model", type=ModelEnum, choices=ModelEnum, help="Model")
 parser.add_argument("k", type=int, help="Number of profiles")
 parser.add_argument("A", type=argparse.FileType("r"), help="Alternatives")
-parser.add_argument("D", type=argparse.FileType("r"), help="Comparisons")
+parser.add_argument("D", nargs="+", type=argparse.FileType("r"), help="Comparisons")
 
 init_group = parser.add_mutually_exclusive_group(required=True)
 init_group.add_argument("--T0", type=float, help="Initial temperature")
@@ -46,7 +46,13 @@ parser.add_argument(
 parser.add_argument(
     "-l", "--log", nargs="?", type=argparse.FileType("w"), const=stdout, help="Log file"
 )
+parser.add_argument(
+    "--changes", nargs="+", type=int, help="Preferences previously changed"
+)
+parser.add_argument(
+    "--refused", nargs="+", type=argparse.FileType("r"), help="Refused preferences"
+)
+parser.add_argument("--nb-cpus", default=1, type=int, help="Number of CPUs")
 
 
-def parse_args():
-    return parser.parse_args()
+ARGS = parser.parse_args()

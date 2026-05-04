@@ -4,78 +4,76 @@ from functools import reduce
 from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
-from ..models import GroupModelEnum
-from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..preference_structure.io import from_csv
-from ..random import rng_, seed
-from ..srmp.model import SRMPModel, SRMPParamFlag
-from .argument_parser import parse_args
+from src.models import GroupModelEnum
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.preference_structure.io import from_csv
+from src.random import seed_
+from src.srmp.model import SRMPModel, SRMPParamFlag
+
+from .args import ARGS
 from .main import learn_mip
 
-# Parse arguments
-args = parse_args()
-
-
 # Import data
-A = NormalPerformanceTable(read_csv(args.A, header=None))
+A = NormalPerformanceTable(read_csv(ARGS.A, header=None))
 
 D: list[PreferenceStructure] = []
-for d in args.D:
+for d in ARGS.D:
     D.append(from_csv(d))
 
 Refused: list[PreferenceStructure] | None = None
-if args.refused:
+if ARGS.refused:
     Refused = []
-    for r in args.refused:
+    for r in ARGS.refused:
         Refused.append(from_csv(r))
 
 Accepted = None
-if args.accepted:
-    Accepted = from_csv(args.accepted)
+if ARGS.accepted:
+    Accepted = from_csv(ARGS.accepted)
 
-refs = None  # type: ignore
-if args.references:
-    refs: list[SRMPModel] = []
-    for ref in args.references:
+refs: list[SRMPModel] | None = None
+if ARGS.references:
+    refs = []
+    for ref in ARGS.references:
         refs.append(SRMPModel.from_json(ref.read()))
 
 ref = None
-if args.reference:
-    ref = SRMPModel.from_json(args.reference.read())
+if ARGS.reference:
+    ref = SRMPModel.from_json(ARGS.reference.read())
 
 # Create random seeds
-rng_lex, rng_mip = rng_(args.seed).spawn(2)
+seed_lex, seed_mip = seed_(ARGS.seed).spawn(2)
 
 
 # Learn MIP
 best_model, best_fitness, time = learn_mip(
     GroupModelEnum((
-        args.model,
-        reduce(lambda x, y: x | y, args.shared, SRMPParamFlag(0)),
+        ARGS.model,
+        reduce(lambda x, y: x | y, ARGS.shared, SRMPParamFlag(0)),
     )),
-    args.k,
+    ARGS.k,
     A,
     D,
-    rng_lex,
-    seed(rng_mip),
-    args.max_time,
-    args.lex_order,
-    args.collective,
-    args.group,
-    args.changes,
+    seed_lex,
+    seed_mip,
+    ARGS.max_time,
+    ARGS.lex_order,
+    ARGS.collective,
+    ARGS.group,
+    ARGS.changes,
     Refused,
     Accepted,
     reference_model=ref,
-    profiles_amp=args.profile_amp,
-    weights_amp=args.weight_amp,
+    profiles_amp=ARGS.profile_amp,
+    weights_amp=ARGS.weight_amp,
     reference_models=refs,
-    gamma=args.gamma,
-    inconsistencies=not args.no_inconsistencies,
-    verbose=args.verbose,
+    gamma=ARGS.gamma,
+    inconsistencies=not ARGS.no_inconsistencies,
+    verbose=ARGS.verbose,
+    nb_cpus=ARGS.nb_cpus,
 )
 
 
 # Write results
-args.output.write(best_model.to_json() if best_model else "")
-writer = csv.writer(args.result, "unix")
+ARGS.output.write(best_model.to_json() if best_model else "")
+writer = csv.writer(ARGS.result, "unix")
 writer.writerow([best_fitness, time])

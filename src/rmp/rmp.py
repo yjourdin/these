@@ -31,11 +31,12 @@ from mcda.scales import DiscreteQuantitativeScale, PreferenceDirection
 from mcda.transformers import ClosestTransformer
 from mcda.values import CommensurableValues, Values
 from pandas import DataFrame, Index, Series, concat
-from scipy.stats import rankdata
+from scipy.stats import rankdata  # type: ignore
 
-from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..performance_table.type import PerformanceTableType
-from ..utils import tolist
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.performance_table.type import PerformanceTableType
+from src.utils import tolist
+
 from .importance_relation import ImportanceRelation
 
 
@@ -87,8 +88,8 @@ class ProfileWiseOutranking(Ranker):
                     ]
                     for ai in self.performance_table.alternatives
                 ],
-                index=self.performance_table.alternatives,
-                columns=self.performance_table.alternatives,
+                index=self.performance_table.alternatives,  # type: ignore
+                columns=self.performance_table.alternatives,  # type: ignore
                 dtype="int64",
             )
         )
@@ -125,11 +126,11 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
         comp_df = self.performance_table.data >= self.profile.data
 
         scores = np.array([
-            self.importance_relation[frozenset(np.nonzero(a)[0])]
+            self.importance_relation[frozenset(np.nonzero(a)[0].tolist())]
             for a in comp_df.values
         ])
 
-        return np.greater_equal.outer(scores, scores)
+        return np.greater_equal.outer(scores, scores).astype(dtype=np.bool)
 
 
 class RMP(Ranker):
@@ -197,17 +198,17 @@ class RMP(Ranker):
         relations_ordered = [outranking_matrices[i] for i in lexicographic_order]
         n = len(relations_ordered)
         score = sum(
-            [(relations_ordered[i].data * 2).pow(n - 1 - i) for i in range(n)],
+            ((relations_ordered[i].data * 2).pow(n - 1 - i) for i in range(n)),
             DataFrame(
                 0,
-                index=relations_ordered[0].vertices,
-                columns=relations_ordered[0].vertices,
+                index=relations_ordered[0].vertices,  # type: ignore
+                columns=relations_ordered[0].vertices,  # type: ignore
             ),
         )
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
-        scores_ordered = sorted(set(scores.values), reverse=True)  # type: ignore
-        ranks: Series[int] = scores.apply(lambda x: scores_ordered.index(x) + 1)  # type: ignore
+        scores_ordered = sorted(set(scores.values), reverse=True)
+        ranks = scores.apply(lambda x: scores_ordered.index(x) + 1)  # type: ignore
         return CommensurableValues(
             ranks,
             scale=DiscreteQuantitativeScale(
@@ -303,7 +304,7 @@ class RMP(Ranker):
                 ax.add_plot(
                     AreaPlot(
                         list(map(float, x)),
-                        table.data.iloc[profile].to_list(),  # type: ignore
+                        table.data.iloc[profile].to_list(),
                         xticks=list(map(float, xticks)),
                         yticks=[],
                         xticklabels=xticklabels,
@@ -316,7 +317,7 @@ class RMP(Ranker):
                 ax.add_plot(
                     Annotation(
                         0,
-                        float(table.data.iloc[profile, 0]),  # type: ignore
+                        float(table.data.iloc[profile, 0]),
                         f"$P^{profile - nb_alt}$",
                         -1,
                         0,
@@ -588,11 +589,9 @@ class NormalRMP(RMP):
         profilewise_outranking_matrices = np.array([
             sub_rmp.rank() for sub_rmp in self.sub_rmp
         ])
-        relations_ordered = [
-            profilewise_outranking_matrices[i] for i in self.lexicographic_order
-        ]
+        relations_ordered = profilewise_outranking_matrices[self.lexicographic_order]
         n = len(relations_ordered)
-        power = np.array([2 ** (n - 1 - i) for i in range(n)])
+        power = 2 ** (n - 1 - np.arange(n))
         score = np.sum(relations_ordered * power[:, None, None], 0)
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)

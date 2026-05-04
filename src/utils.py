@@ -3,13 +3,17 @@ from enum import Enum
 from functools import partial, reduce
 from itertools import chain, count
 from pathlib import Path
-from typing import Any, NamedTuple, overload
+from typing import Any, NamedTuple, TypeGuard, overload
 
 import numpy as np
 import numpy.typing as npt
 from mcda import PerformanceTable
 
 from .constants import EPSILON
+
+
+class CustomException(Exception):
+    pass
 
 
 def midpoints(performance_table: PerformanceTable[Any]) -> PerformanceTable[Any]:
@@ -67,8 +71,10 @@ class Cell(NamedTuple):
 
 
 def add_str_to_list(
-    o: Any, index: Iterator[int] | None = None, prefix: list[str] = []
+    o: Any, index: Iterator[int] | None = None, prefix: list[str] | None = None
 ) -> list[Cell]:
+    if prefix is None:
+        prefix = []
     index = index or count()
     if np.ndim(o) > 0 and len(o) == 1:
         o = o[0]
@@ -138,3 +144,7 @@ def tolist(a: npt.NDArray[Any]) -> list[Any]:
 
 def int_to_ind_set(x: int):
     return [i for i in range(x.bit_length()) if (x >> i) & 1]
+
+
+def none_guard[T](x: T | None) -> TypeGuard[T]:
+    return True

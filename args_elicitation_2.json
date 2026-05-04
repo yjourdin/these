@@ -1,0 +1,41 @@
+{
+    "name": "test_cores",
+    "jobs": 10,
+    "seed": 0,
+    "nb_Atr": 1,
+    "N_tr": [
+        500
+    ],
+    "N_te": [
+        500
+    ],
+    "M": [
+        3
+    ],
+    "Mo": [
+        "SRMP"
+    ],
+    "Ko": [
+        4
+    ],
+    "Me": [
+        "SRMP"
+    ],
+    "N_bc": [
+        1000
+    ],
+    "method": [
+        "MIP"
+    ],
+    "error": [
+        0
+    ],
+    "config": [
+        {
+            "id": 0,
+            "max_time": 60,
+            "nb_cpus": 5,
+            "__class": "MIPConfig"
+        }
+    ]
+}

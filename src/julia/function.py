@@ -3,17 +3,20 @@ from itertools import chain
 from subprocess import run
 from typing import Any
 
+from src.utils import CustomException
+
 
 def run_julia(scriptname: str, *args: Any, **kwargs: Any):
     return run(
         [scriptname]
-        + [str(x) for x in args]
+        + [str(x) for x in args if x is not None]
         + list(
             chain.from_iterable(
                 (f"--{k}", str(v)) for k, v in kwargs.items() if v is not None
             )
         ),
         capture_output=True,
+        check=True,
         text=True,
     ).stdout
 
@@ -22,8 +25,8 @@ def python_exec(s: str):
     s = s.replace("Int64", "")
     try:
         return ast.literal_eval(s)
-    except Exception:
-        raise Exception(f"Julia output : {s}")
+    except ValueError:
+        raise CustomException(f"Julia output : {s}")
 
 
 def generate_linext(m: int, seed: int | None = None) -> list[list[int]]:

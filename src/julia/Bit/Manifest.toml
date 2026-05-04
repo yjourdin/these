@@ -1,0 +1,15 @@
+# This file is machine-generated - editing it directly is not advised
+
+julia_version = "1.12.6"
+manifest_format = "2.0"
+project_hash = "33dac1a4e558ee89e2fa93990c8a4274a45ca5da"
+
+[[deps.Bit]]
+path = "."
+uuid = "62dfbebb-ddaf-4e75-9a9b-e1df88454d7c"
+version = "0.1.0"
+
+[[deps.IterTools]]
+git-tree-sha1 = "42d5f897009e7ff2cf88db414a389e5ed1bdd023"
+uuid = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
+version = "1.10.0"

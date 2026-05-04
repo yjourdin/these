@@ -1,148 +1,117 @@
 import logging.config
-import traceback
-from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import Event, Process, Queue, set_start_method
+from multiprocessing import Process, Queue
 from multiprocessing.connection import Connection
-from queue import LifoQueue
 from threading import Thread
 
 from src.constants import SENTINEL
 
-from .argument_parser import parse_args
+from .args import ARGS
 from .arguments import ExperimentEnum
 from .connection import WorkerPipe
 from .directory import Directory
-from .experiments.elicitation.directory import DirectoryElicitation
 from .experiments.elicitation.main import main as main_elicitation
-from .experiments.group_decision.directory import DirectoryGroupDecision
 from .experiments.group_decision.main import main as main_group_decision
+from .init_directory import DIR
 from .logging import LoggingQueue, create_logging_config_dict
-from .threads.csv_file import csv_file_thread
-from .threads.logger import logger_thread
-from .threads.stop import stopping_thread
-from .threads.worker_manager import TaskQueue, worker_manager
-from .worker import worker
+from .threads.csv_file import CSVFileThread
+from .threads.logger import LoggerThread
+from .threads.stop import STOP, StopThread
+from .threads.task_manager import TASK_QUEUE, TaskManager
+from .worker import WorkerProcess
 
-# Set process start method
-set_start_method("forkserver")
-
-
-# Parse arguments
-args = parse_args()
-
-
-# Set experiment
+# Set main function
 directory_class = Directory
-match args.experiment:
+match ARGS.experiment:
     case ExperimentEnum.ELICITATION:
-        directory_class = DirectoryElicitation
-        main = main_elicitation
+        MAIN = main_elicitation
     case ExperimentEnum.GROUP_DECISION:
-        directory_class = DirectoryGroupDecision
-        main = main_group_decision
-
-
-# Initialise directory
-dir = directory_class(args.name, args.dir)
-
-
-if not args.extend:
-    # Create Directory
-    dir.mkdir()
-
-    # Write arguments
-    with dir.args.open("w") as f:
-        f.write(args.to_json())
-
-
-# Create logging queue
-logging_queue: LoggingQueue = Queue()
-
-
-# Start worker processes
-workers: list[Process] = []
-connections: list[Connection] = []
-for i in range(args.jobs):
-    worker_connection, manager_connection = WorkerPipe()
-    worker_process = Process(
-        target=worker, args=(worker_connection, logging_queue, dir)
-    )
-    connections.append(manager_connection)
-    worker_process.start()
-    workers.append(worker_process)
-
-
-# Start logging thread
-logging.config.dictConfig(create_logging_config_dict(dir))
-logging_thread = Thread(target=logger_thread, args=(logging_queue,))
-logging_thread.start()
+        MAIN = main_group_decision  # pyright: ignore[reportConstantRedefinition]
 
 
 # Start file threads
+
 csv_threads: list[Thread] = []
-for csv_file in dir.itercsv():
-    thread = Thread(target=csv_file_thread, args=(csv_file,))
+for csv_file in DIR.itercsv():
+    thread = CSVFileThread(csv_file)
     csv_threads.append(thread)
-    thread.start()
 
 
-# Create task queue
-task_queue: TaskQueue = LifoQueue()
+# Create logging queue
+
+logging_queue: LoggingQueue = Queue()
 
 
-# Create run file
-dir.run.touch()
+# Start logging thread
+
+logging.config.dictConfig(create_logging_config_dict(DIR))
+logging_thread = LoggerThread(logging_queue)
 
 
-# Start stop event
-stop = Event()
-stop_thread = Thread(
-    target=stopping_thread, args=(stop, dir.run)
-)
-stop_thread.start()
+# Start worker processes
+
+workers: list[Process] = []
+connections: list[Connection] = []
+for i in range(ARGS.jobs):
+    worker_connection, manager_connection = WorkerPipe()
+    worker_process = WorkerProcess(worker_connection, logging_queue, DIR)
+    connections.append(manager_connection)
+    workers.append(worker_process)
 
 
-with ThreadPoolExecutor(300) as thread_pool:
-    # Start worker manager thread
-    task_manager_thread = Thread(
-        target=worker_manager,
-        args=(
-            connections,
-            task_queue,
-            stop,
-            thread_pool,
-            args.stop_error,
-        ),
-    )
-    task_manager_thread.start()
+# Start worker manager thread
 
-    # Main
-    try:
-        main(args, dir, thread_pool, task_queue)  # type: ignore
-    except Exception:  # noqa: BLE001
-        traceback.print_exc()
+task_manager_thread = TaskManager(connections)
 
-    # Send stop signal
-    stop.set()
 
-    # Join task manager thread
-    task_manager_thread.join()
+# Start stop thread
 
-    # Join stopping thread
-    stop_thread.join()
+stop_thread = StopThread(DIR.run)
 
-    # Join workers
-    for worker_process in workers:
-        if worker_process.is_alive():
-            worker_process.terminate()
-        worker_process.join()
 
-    # Join threads
-    logging_queue.put(SENTINEL)
-    logging_thread.join()
+# Start main thread
+main_thread = Thread(target=MAIN, args=(ARGS,))
+main_thread.start()
 
-    for csv_file in dir.itercsv():
-        csv_file.close()
 
-    for csv_thread in csv_threads:
-        csv_thread.join()
+# Wait for main thread to finish or stopping condition
+while main_thread.is_alive() and not STOP.is_set():
+    main_thread.join(1)
+
+
+# Send stop signal
+STOP.set()
+
+
+# Join main thread
+main_thread.join()
+
+
+# Join stop thread
+stop_thread.join()
+
+
+# Join task manager thread
+task_manager_thread.join()
+
+
+# Join workers
+for worker_process in workers:
+    if worker_process.is_alive():
+        worker_process.terminate()
+    worker_process.join()
+
+
+# Join task queue
+TASK_QUEUE.join()
+
+
+# Join logging thread
+
+logging_queue.put(SENTINEL)
+logging_thread.join()
+
+
+# Close directory
+DIR.close()
+for csv_thread in csv_threads:
+    csv_thread.join()

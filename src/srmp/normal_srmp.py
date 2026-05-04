@@ -8,9 +8,9 @@ from mcda.outranking.srmp import SRMP, ProfileWiseOutranking
 from mcda.values import Values
 from scipy.stats import rankdata
 
-from ..performance_table.normal_performance_table import NormalPerformanceTable
+from src.performance_table.normal_performance_table import NormalPerformanceTable
 
-OutrankingMatrix = npt.NDArray[np.bool_]
+OutrankingMatrix = npt.NDArray[np.bool]
 
 
 class NormalProfileWiseOutranking(ProfileWiseOutranking):
@@ -48,7 +48,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
 
         return np.greater_equal.outer(
             conditional_weighted_sum, conditional_weighted_sum
-        )
+        ).astype(dtype=np.bool)
 
 
 class NormalSRMP(SRMP):
@@ -91,11 +91,9 @@ class NormalSRMP(SRMP):
         profilewise_outranking_matrices = np.array([
             sub_srmp.rank() for sub_srmp in self.sub_srmp
         ])
-        relations_ordered = [
-            profilewise_outranking_matrices[i] for i in self.lexicographic_order
-        ]
+        relations_ordered = profilewise_outranking_matrices[self.lexicographic_order]
         n = len(relations_ordered)
-        power = np.array([2 ** (n - 1 - i) for i in range(n)])
+        power = 2 ** (n - 1 - np.arange(n))
         score = np.sum(relations_ordered * power[:, None, None], 0)
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)

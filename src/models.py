@@ -1,5 +1,6 @@
 from enum import Enum, auto
 
+from .case_insensitive_str_enum import CaseInsensitiveStrEnum
 from .dataclass import Dataclass
 from .model import Model, ParamFlag
 from .random_model.model import RandomGroup, RandomModel
@@ -10,10 +11,9 @@ from .srmp.model import (
     srmp_model,
     srmp_model_from_name,
 )
-from .strenum import StrEnumCustom
 
 
-class ModelEnum(StrEnumCustom):
+class ModelEnum(CaseInsensitiveStrEnum):
     RMP = auto()
     SRMP = auto()
     RANDOM = auto()
@@ -35,7 +35,7 @@ class GroupModelEnum(Enum):
     RMP_I = (ModelEnum.RMP, RMPParamFlag.IMPORTANCE_RELATION)
     RMP_P = (ModelEnum.RMP, RMPParamFlag.PROFILES)
     RMP_L = (ModelEnum.RMP, RMPParamFlag.LEXICOGRAPHIC_ORDER)
-    RMP = (ModelEnum.RMP, RMPParamFlag(0))
+    RMP = (ModelEnum.RMP, RMPParamFlag.NONE)
     SRMP_WPL = (
         ModelEnum.SRMP,
         SRMPParamFlag.WEIGHTS
@@ -54,8 +54,8 @@ class GroupModelEnum(Enum):
     SRMP_W = (ModelEnum.SRMP, SRMPParamFlag.WEIGHTS)
     SRMP_P = (ModelEnum.SRMP, SRMPParamFlag.PROFILES)
     SRMP_L = (ModelEnum.SRMP, SRMPParamFlag.LEXICOGRAPHIC_ORDER)
-    SRMP = (ModelEnum.SRMP, SRMPParamFlag(0))
-    RANDOM = (ModelEnum.RANDOM, RMPParamFlag(0))
+    SRMP = (ModelEnum.SRMP, SRMPParamFlag.NONE)
+    RANDOM = (ModelEnum.RANDOM, RMPParamFlag.NONE)
 
     def __init__(self, model: ModelEnum, shared_params: ParamFlag):
         self.model = model

@@ -4,13 +4,14 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from ..field import (
+from src.field import (
     RandomField,
     random_field,
     random_group_field,
 )
-from ..random import RNGParam
-from ..utils import tolist
+from src.random import RNGParam
+from src.utils import tolist
+
 from .weight import frozen_importance_relation_from_weights, random_weights
 
 

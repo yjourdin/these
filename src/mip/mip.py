@@ -1,16 +1,14 @@
 from abc import abstractmethod
-from dataclasses import InitVar, dataclass, field
 from typing import Any, TypedDict
 
 from mcda.internal.core.interfaces import Learner
 from pulp import LpProblem, LpSolver, LpVariable, getSolver, listSolvers  # type: ignore
 
-from ..constants import DEFAULT_MAX_TIME
-from ..dataclass import Dataclass
-from ..random import SeedLike
-from ..random import seed as random_seed
+from src.constants import DEFAULT_MAX_TIME
+from src.dataclass import Dataclass, InitVar, dataclass, field
+from src.random import SeedLike, int_
 
-type D[T: LpVariable | D] = dict[Any, T]  # type: ignore
+type D[T: LpVariable | D] = dict[Any, T]
 
 
 class MIPVars(TypedDict): ...
@@ -30,20 +28,26 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
     time_limit: InitVar[float] = DEFAULT_MAX_TIME
     seed: InitVar[SeedLike | None] = None
     verbose: InitVar[bool] = False
+    nb_cpus: InitVar[int] = 1
 
     def __post_init__(
         self,
         time_limit: float,
-        seed: int | None,
+        seed: SeedLike | None,
         verbose: bool,
+        nb_cpus: int,
         *args: Any,
         **kw: Any,
     ):
         self.prob = LpProblem()
         self.objective = None
-        seed = random_seed(seed)
+        seed = int_(seed)
 
-        kwargs: dict[str, Any] = {"msg": verbose, "threads": 1, "timeLimit": time_limit}
+        kwargs: dict[str, Any] = {
+            "msg": verbose,
+            "threads": nb_cpus,
+            "timeLimit": time_limit,
+        }
 
         if "GUROBI" in listSolvers(True):
             kwargs["solver"] = "GUROBI"
@@ -56,6 +60,7 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
             kwargs["options"] = [f"RandomS {seed % 2_000_000_000}"]
 
         self.solver = getSolver(**kwargs)
+        print(self.solver.threads)
 
     def learn(self):
         self.create_problem()

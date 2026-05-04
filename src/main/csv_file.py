@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from functools import cached_property
-from multiprocessing import Queue
+from multiprocessing import JoinableQueue
 from pathlib import Path
 from typing import ClassVar, TypedDict
 
@@ -15,7 +15,7 @@ class CSVFields(TypedDict): ...
 class CSVFile[Fields: CSVFields](FrozenDataclass):
     path: Path
     fields: ClassVar[type[Fields]]  # type: ignore
-    queue: "Queue[dict[str, str]]" = field(default_factory=Queue)
+    queue: "JoinableQueue[dict[str, str]]" = field(default_factory=JoinableQueue)
 
     @cached_property
     def fieldnames(self):
@@ -26,3 +26,4 @@ class CSVFile[Fields: CSVFields](FrozenDataclass):
 
     def close(self):
         self.queue.put({})
+        self.queue.join()

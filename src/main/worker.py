@@ -1,5 +1,6 @@
 import logging
 import logging.handlers
+from multiprocessing import Process
 
 from src.constants import SENTINEL
 
@@ -8,27 +9,41 @@ from .directory import Directory
 from .logging import LoggingQueue
 
 
-def worker(
-    connection: ProcessEndWorkerConnection,
-    logging_queue: LoggingQueue,
-    dir: Directory,
-):
-    # Logging setup
-    logging_qh = logging.handlers.QueueHandler(logging_queue)
-    logging_root = logging.getLogger()
-    logging_root.setLevel(logging.INFO)
-    logging_root.addHandler(logging_qh)
-    logger = logging.getLogger("log")
+class WorkerProcess(Process):
+    def __init__(
+        self,
+        connection: ProcessEndWorkerConnection,
+        logging_queue: LoggingQueue,
+        dir: Directory,
+    ):
+        super().__init__()
 
-    logger.info("Start")
+        self.connection = connection
+        self.dir = dir
+        self.logging_queue = logging_queue
 
-    for task, args in iter(connection.recv, SENTINEL):
-        try:
-            logger.info(f"{'start':5} {task!s}")
-            connection.send(WorkerResult(task, task(dir, **args)))
-            logger.info(f"{'end':5} {task!s}")
-        except Exception:
-            logger.exception("Task error")
-            connection.send(SENTINEL)
+        self.name = self.name.replace("WorkerProcess", "Worker")
 
-    logger.info("Kill")
+        self.start()
+
+    def run(self):
+        # Logging setup
+        logging_qh = logging.handlers.QueueHandler(self.logging_queue)
+        logging_root = logging.getLogger()
+        logging_root.setLevel(logging.INFO)
+        logging_root.addHandler(logging_qh)
+        self.logger = logging.getLogger("log")
+
+        # Main
+        self.logger.info("Start")
+
+        for task, args in iter(self.connection.recv, SENTINEL):
+            try:
+                self.logger.info(f"{'start':5} {task!s}")
+                self.connection.send(WorkerResult(task, task(self.dir, **args)))
+                self.logger.info(f"{'end':5} {task!s}")
+            except Exception:
+                self.logger.exception("Task error")
+                self.connection.send(WorkerResult(task, SENTINEL))
+
+        self.logger.info("Kill")

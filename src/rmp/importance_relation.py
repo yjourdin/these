@@ -1,15 +1,15 @@
 import numpy as np
 
-from ..julia.function import generate_weak_order_ext
-from ..random import RNGParam, seed
-from ..utils import tolist
-from ..weak_order import WeakOrder
+from src.julia.function import generate_weak_order_ext
+from src.random import RNGParam, int_
+from src.utils import tolist
+from src.weak_order import WeakOrder
 
 
 class ImportanceRelation(WeakOrder[frozenset[int]]):
     @classmethod
     def random(cls, nb_crit: int, rng: RNGParam = None):
-        weak_order_ext = generate_weak_order_ext(nb_crit, seed(rng))
+        weak_order_ext = generate_weak_order_ext(nb_crit, int_(rng))
 
         labels = np.arange(nb_crit)
         dct: dict[frozenset[int], int] = {}

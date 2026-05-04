@@ -2,11 +2,12 @@ from dataclasses import dataclass
 from enum import auto
 from typing import Self, SupportsIndex
 
-from ..model import GroupModel, Model, ParamFlag
-from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..performance_table.type import PerformanceTableType
-from ..random import RNGParam
-from ..utils import print_list
+from src.model import GroupModel, Model, ParamFlag
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.performance_table.type import PerformanceTableType
+from src.random import RNGParam
+from src.utils import print_list
+
 from .field import (
     GroupImportanceRelationField,
     GroupLexicographicOrderField,
@@ -20,12 +21,13 @@ from .rmp import NormalRMP
 
 
 class RMPParamFlag(ParamFlag):
+    NONE = 0
     PROFILES = auto()
     IMPORTANCE_RELATION = auto()
     LEXICOGRAPHIC_ORDER = auto()
 
 
-@dataclass(unsafe_hash=True)
+@dataclass(unsafe_hash=True, slots=True)
 class RMPModel(
     Model,
     ProfilesField,
@@ -225,7 +227,7 @@ def rmp_group_model(
                 return RMPGroupModel
 
 
-def rmp_model(group_size: int, shared_params: RMPParamFlag = RMPParamFlag(0)):
+def rmp_model(group_size: int, shared_params: RMPParamFlag = RMPParamFlag.NONE):
     return RMPModel if group_size == 1 else rmp_group_model(shared_params)
 
 

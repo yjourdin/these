@@ -1,4 +1,7 @@
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field, replace
+from functools import partial
+from operator import attrgetter
 from typing import Any, cast
 
 from mcda.relations import PreferenceStructure
@@ -226,6 +229,7 @@ class MIPTask(AbstractElicitationTask):
             self.config.max_time,
             self.lexicographic_order if self.fixed_lex_order else None,
             gamma=self.config.gamma,
+            nb_cpus=self.config.nb_cpus,
         )
 
         with self.Me_file(dir).open("w") as f:
@@ -275,21 +279,46 @@ class SATask(AbstractElicitationTask):
 
         rng_init, rng_sa = self.rng(seed).spawn(2)
 
-        best_model, best_objective, time, it = learn_sa(
-            self.Me.value[0],
-            self.ke,
-            A,
-            D,
-            self.config.alpha,
-            self.config.amp,
-            self.lexicographic_order if self.fixed_lex_order else None,
-            accept=self.config.accept,
-            max_time=self.config.max_time,
-            max_it=self.config.max_it,
-            max_it_non_improving=self.config.max_it_non_improving,
-            rng_init=rng_init,
-            rng_sa=rng_sa,
-        )
+        if (NB_CPUS := self.config.nb_cpus) == 1:
+            best_model, best_objective, time, it = learn_sa(
+                self.Me.value[0],
+                self.ke,
+                A,
+                D,
+                self.config.alpha,
+                self.config.amp,
+                self.lexicographic_order if self.fixed_lex_order else None,
+                accept=self.config.accept,
+                max_time=self.config.max_time,
+                max_it=self.config.max_it,
+                max_it_non_improving=self.config.max_it_non_improving,
+                rng_init=rng_init,
+                rng_sa=rng_sa,
+            )
+        else:
+            with ProcessPoolExecutor(NB_CPUS) as process_pool:
+                fn = partial(
+                    learn_sa,
+                    self.Me.value[0],
+                    self.ke,
+                    A,
+                    D,
+                    self.config.alpha,
+                    self.config.amp,
+                    self.lexicographic_order if self.fixed_lex_order else None,
+                    accept=self.config.accept,
+                    max_time=self.config.max_time,
+                    max_it=self.config.max_it,
+                    max_it_non_improving=self.config.max_it_non_improving,
+                    rng_init=rng_init,
+                    rng_sa=rng_sa,
+                )
+                best_model, best_objective, time, it = min(
+                    process_pool.map(
+                        fn, zip(rng_init.spawn(NB_CPUS), rng_sa.spawn(NB_CPUS))
+                    ),
+                    key=attrgetter("best_objective"),
+                )
 
         with self.Me_file(dir).open("w") as f:
             f.write(best_model.to_json())

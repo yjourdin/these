@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import InitVar, dataclass, field, replace
+from dataclasses import InitVar
 from itertools import chain, product
 from typing import cast
 
@@ -8,14 +8,14 @@ import numpy.typing as npt
 from mcda.relations import PreferenceStructure
 from pandas import Series
 
-from ..dataclass import Dataclass
-from ..performance_table.type import PerformanceTableType
-from ..preference_structure.fitness import comparisons_ranking
-from ..random import RNGParam, rng_
-from ..rmp.permutation import adjacent_swap
-from ..sa.neighbor import weights_local_change
-from ..srmp.model import FrozenSRMPModel
-from ..utils import midpoints
+from src.dataclass import Dataclass, dataclass, field, replace
+from src.performance_table.type import PerformanceTableType
+from src.preference_structure.fitness import comparisons_ranking
+from src.random import RNGParam, rng_
+from src.rmp.permutation import adjacent_swap
+from src.sa.neighbor import weights_local_change
+from src.srmp.model import FrozenSRMPModel
+from src.utils import midpoints
 
 
 class Neighborhood[S](ABC):
@@ -28,7 +28,7 @@ class NeighborhoodCombined[S](Neighborhood[S], Dataclass):
     neighborhoods: list[Neighborhood[S]] = field(default_factory=list)
     rng: InitVar[RNGParam] = None
 
-    def __post_init__(self, rng: RNGParam = None):
+    def __post_init__(self, rng: RNGParam):
         self._rng = rng_(rng)
 
     def __call__(self, sol: S):

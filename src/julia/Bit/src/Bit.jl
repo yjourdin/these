@@ -1,14 +1,18 @@
 module Bit
 
-export decode, encode
+export Bitset, decode, encode
 
 using .Iterators: takewhile, filter, map
 using IterTools: iterated
 
+# Bitset type
+
+const Bitset = UInt128
+
 # Set operations
 
-const empty                 = typemin(UInt128)
-const full                  = typemax(UInt128)
+const empty                 = typemin(Bitset)
+const full                  = typemax(Bitset)
 length(a)                   = ndigits(a; base = 2)
 isempty(a)                  = a == empty
 union(a, b)                 = a | b
@@ -25,8 +29,9 @@ subsets(a)                  = takewhile(!isempty, iterated(x -> (x - 1) & a, a))
 
 # Encode / Decode
 
-encode(x::Integer) = one(UInt128) << (x - 1)
+encode(x::Integer) = one(Bitset) << (x - 1)
 encode(A) = sum(encode, A; init = empty)
 decode(c) = filter(in(c), 1:length(c))
 
 end # module Bit
+

@@ -1,6 +1,6 @@
 struct BitPoset
-    in  :: Vector{UInt128}
-    out :: Vector{UInt128}
+    in  :: Vector{Bitset}
+    out :: Vector{Bitset}
 end
 BitPoset(P) = BitPoset(encode.(P.d.badjlist), encode.(P.d.fadjlist))
 

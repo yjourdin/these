@@ -3,7 +3,7 @@ from typing import Any
 
 from .directory import Directory
 
-type LoggingQueue = "Queue[Any]"
+type LoggingQueue = Queue[Any]
 
 
 def create_logging_config_dict(dir: Directory):
@@ -12,7 +12,7 @@ def create_logging_config_dict(dir: Directory):
         "formatters": {
             "detailed": {
                 "class": "logging.Formatter",
-                "format": "%(asctime)s %(levelname)-8s %(processName)-10s %(message)s",
+                "format": "%(asctime)s %(levelname)-8s %(processName)-9s %(message)s",
             }
         },
         "handlers": {

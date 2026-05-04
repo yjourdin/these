@@ -1,9 +1,19 @@
+# pyright: reportAttributeAccessIssue=false
+# pyright: reportIndexIssue=false
+# pyright: reportOperatorIssue=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportUnknownParameterType=false
 from collections.abc import Sequence
 from dataclasses import InitVar, dataclass, field
 from typing import Any, cast
 
 import numpy as np
-from mcda.relations import I, P
+from mcda.relations import (
+    I,
+    IndifferenceRelation,
+    P,
+    PreferenceRelation,
+)
 from pulp import (  # type: ignore
     LpBinary,
     LpMaximize,
@@ -12,11 +22,208 @@ from pulp import (  # type: ignore
     lpSum,
     value,
 )
+from pyomo.core.base.param import (  # pyright: ignore[reportMissingTypeStubs]  # pyright: ignore[reportMissingTypeStubs]
+    IndexedParam,
+    ScalarParam,
+)
+from pyomo.core.base.set import (  # pyright: ignore[reportMissingTypeStubs]  # pyright: ignore[reportMissingTypeStubs]
+    FiniteScalarRangeSet,
+    IndexedSet,
+)
+from pyomo.core.base.var import (  # pyright: ignore[reportMissingTypeStubs]  # pyright: ignore[reportMissingTypeStubs]
+    IndexedVar,
+)
+from pyomo.environ import (  # pyright: ignore[reportMissingTypeStubs]
+    AbstractModel,
+    Binary,
+    Constraint,
+    Expression,
+    NonNegativeIntegers,
+    Objective,
+    Param,
+    PositiveIntegers,
+    RangeSet,
+    Set,
+    UnitInterval,
+    Var,
+    maximize,
+    quicksum,
+)
 
-from ...constants import EPSILON
-from ...performance_table.normal_performance_table import NormalPerformanceTable
-from ...srmp.model import SRMPModel
+from src.constants import EPSILON
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.srmp.model import SRMPModel
+
 from ..mip import MIP, D, MIPParams, MIPVars
+
+
+class _MIPSRMP(AbstractModel):
+    alternatives: IndexedSet
+    criteria: IndexedSet
+    A: IndexedParam
+    preference_relations: IndexedSet
+    indifference_relations: IndexedSet
+    K: ScalarParam
+    profiles: FiniteScalarRangeSet
+    extended_profiles: IndexedSet
+    lexicographic_order: IndexedParam
+    sigma: dict[int, int]
+    gamma: ScalarParam
+    w: IndexedVar
+    p: IndexedVar
+    delta: IndexedVar
+    omega: IndexedVar
+    s: IndexedVar
+    s_star: IndexedVar
+
+
+def srmp_model(inconsistencies: bool, best_fitness: float | None = None):
+    M = _MIPSRMP()
+
+    M.alternatives = Set()
+    M.criteria = Set()
+    M.A = Param(M.alternatives, M.criteria)
+
+    M.preference_relations = Set()
+    M.indifference_relations = Set()
+
+    M.K = Param(domain=NonNegativeIntegers)
+    M.profiles = RangeSet(M.K)
+    M.extended_profiles = {0} | M.profiles
+    M.lexicographic_order = Param(M.profiles, domain=PositiveIntegers)
+    M.sigma = {0: 0} + dict(M.lexicographic_order.items())
+
+    M.gamma = Param()
+
+    M.w = Var(M.criteria, domain=UnitInterval)
+    M.p = Var(M.profiles, M.criteria, domain=UnitInterval)
+    M.delta = Var(M.alternatives, M.profiles, M.criteria, domain=Binary)
+    M.omega = Var(M.alternatives, M.profiles, M.criteria, domain=UnitInterval)
+    M.s = Var(M.preference_relations, M.extended_profiles, domain=Binary)
+
+    # Constraints
+
+    # Normalized weights
+    M.normalized_weights = Constraint(expr=quicksum(M.w) == 1)
+
+    # Dominance between the reference profiles
+    def dominance(M: MIPSRMP, j: int, h: int) -> Expression:
+        return M.p[h + 1, j] >= M.p[h, j]
+
+    M.dominance = Constraint(M.criteria, M.profiles - {M.K}, rule=dominance)
+
+    # Constraints on the local concordances
+    def local_1(M: MIPSRMP, j: int, h: int, a: Any) -> Expression:
+        return M.A[a, j] - M.p[h, j] >= M.delta[a, h, j] - 1
+
+    def local_2(M: MIPSRMP, j: int, h: int, a: Any) -> Expression:
+        return M.delta[a, h, j] >= M.A[a, j] - M.p[h, j] + M.gamma
+
+    M.local_1 = Constraint(M.criteria, M.profiles, M.alternatives, rule=local_1)
+    M.local_2 = Constraint(M.criteria, M.profiles, M.alternatives, rule=local_2)
+
+    # Constraints on the weighted local concordances
+    def weighted_local_1(M: MIPSRMP, j: int, h: int, a: Any):
+        return M.omega[a, h, j] <= M.w[j]
+
+    def weighted_local_2(M: MIPSRMP, j: int, h: int, a: Any):
+        return M.omega[a, h, j] <= M.delta[a, h, j]
+
+    def weighted_local_3(M: MIPSRMP, j: int, h: int, a: Any):
+        return M.omega[a, h, j] >= M.delta[a, h, j] + M.w[j] - 1
+
+    M.weighted_local_1 = Constraint(
+        M.criteria, M.profiles, M.alternatives, rule=weighted_local_1
+    )
+    M.weighted_local_2 = Constraint(
+        M.criteria, M.profiles, M.alternatives, rule=weighted_local_2
+    )
+    M.weighted_local_3 = Constraint(
+        M.criteria, M.profiles, M.alternatives, rule=weighted_local_3
+    )
+
+    # Constraints on the preference ranking variables
+    if not inconsistencies:
+
+        def preference_ranking_1(M: MIPSRMP, r: PreferenceRelation):
+            return M.s[r, 0] == 1
+
+        M.preference_ranking_1 = Constraint(
+            M.preference_relations, rule=preference_ranking_1
+        )
+
+    def preference_ranking_2(M: MIPSRMP, r: int):
+        return M.s[r, M.K] == 1
+
+    M.preference_ranking_2 = Constraint(
+        M.preference_relations, rule=preference_ranking_2
+    )
+
+    def omega_sum(M: MIPSRMP, a: Any, h: int):
+        return quicksum(M.omega[a, M.sigma[h], j] for j in M.criteria)
+
+    # Constraints on the preferences
+    def preference_1(M: MIPSRMP, h: int, r: PreferenceRelation):
+        return omega_sum(M, r.a, M.sigma[h]) >= omega_sum(
+            M, r.b, M.sigma[h]
+        ) + M.gamma - M.s[r, M.sigma[h]] * (1 + M.gamma) - (1 - M.s[r, M.sigma[h - 1]])
+
+    def preference_2(M: MIPSRMP, h: int, r: PreferenceRelation):
+        return omega_sum(M, r.a, M.sigma[h]) >= omega_sum(M, r.b, M.sigma[h]) - (
+            1 - M.s[r, M.sigma[h]]
+        ) - (1 - M.s[r, M.sigma[h - 1]])
+
+    def preference_3(M: MIPSRMP, h: int, r: PreferenceRelation):
+        return omega_sum(M, r.a, M.sigma[h]) >= omega_sum(M, r.b, M.sigma[h]) + (
+            1 - M.s[r, M.sigma[h]]
+        ) + (1 - M.s[r, M.sigma[h - 1]])
+
+    M.preference_1 = Constraint(M.profiles, M.preference_relations, rule=preference_1)
+    M.preference_2 = Constraint(M.profiles, M.preference_relations, rule=preference_2)
+    M.preference_3 = Constraint(M.profiles, M.preference_relations, rule=preference_3)
+
+    # Constraints on the indifferences
+    if not inconsistencies:
+
+        def indifference_0(M: MIPSRMP, h: int, r: IndifferenceRelation):
+            return omega_sum(M, r.a, M.sigma[h]) == omega_sum(M, r.b, M.sigma[h])
+
+        M.indifference_0 = Constraint(
+            M.profiles, M.indifference_relations, rule=indifference_0
+        )
+    else:
+        M.s_star = Var(M.indifference_relations, domain=Binary)
+
+        objective = quicksum(M.s[i, 0] for i in M.preference_relations) + quicksum(
+            M.s_star
+        )
+
+        M.OBJ = Objective(
+            expr=objective,
+            sense=maximize,
+        )
+
+        def indifference_1(M: MIPSRMP, h: int, r: IndifferenceRelation):
+            return omega_sum(M, r.a, M.sigma[h]) <= omega_sum(M, r.b, M.sigma[h]) - (
+                1 - M.s_star[r]
+            )
+
+        def indifference_2(M: MIPSRMP, h: int, r: IndifferenceRelation):
+            return omega_sum(M, r.b, M.sigma[h]) <= omega_sum(M, r.a, M.sigma[h]) - (
+                1 - M.s_star[r]
+            )
+
+        M.indifference_1 = Constraint(
+            M.profiles, M.indifference_relations, rule=indifference_1
+        )
+        M.indifference_2 = Constraint(
+            M.profiles, M.indifference_relations, rule=indifference_2
+        )
+
+        if best_fitness is not None:
+            M.better_fitness = objective >= best_fitness + M.gamma
+
+    return M
 
 
 class MIPSRMPVars(MIPVars):

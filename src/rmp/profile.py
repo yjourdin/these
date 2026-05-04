@@ -1,8 +1,8 @@
 import numpy as np
 from pandas import DataFrame
 
-from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..random import RNGParam, rng_
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.random import RNGParam, rng_
 
 
 def random_profiles(

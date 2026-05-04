@@ -13,8 +13,9 @@ from pulp import (  # type: ignore
     value,
 )
 
-from ...performance_table.normal_performance_table import NormalPerformanceTable
-from ...srmp.model import SRMPModel
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.srmp.model import SRMPModel
+
 from ..mip import MIP, D, MIPParams, MIPVars
 
 
@@ -104,7 +105,9 @@ class MIPSRMP(MIP[SRMPModel, MIPSRMPConfidenceVars, MIPSRMPConfidenceParams]):
                 if self.inconsistencies
                 else {}  # type: ignore
             ),
-            gamma=LpVariable("Gamma", )
+            gamma=LpVariable(
+                "Gamma",
+            ),
         )
 
         ##############

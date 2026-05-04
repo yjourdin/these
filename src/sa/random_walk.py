@@ -1,12 +1,12 @@
 import csv
 import io
-from dataclasses import dataclass
 from time import process_time
 
 from mcda.internal.core.interfaces import Learner
 
-from ..dataclass import Dataclass
-from ..random import RNGParam, rng_
+from src.dataclass import Dataclass, dataclass
+from src.random import RNGParam, rng_
+
 from .neighbor import Neighbor
 from .objective import Objective
 

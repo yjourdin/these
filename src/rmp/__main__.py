@@ -1,28 +1,24 @@
-from .argument_parser import parse_args
+from .args import ARGS
 from .model import RMPModel, rmp_group_model
 
-# Parse arguments
-args = parse_args()
-
-
 # Create model
-if args.group_size == 1:
+if ARGS.group_size == 1:
     model = RMPModel.random(
-        nb_profiles=args.k,
-        nb_crit=args.m,
-        rng=args.seed,
-        profiles_values=args.profiles_values,
+        nb_profiles=ARGS.k,
+        nb_crit=ARGS.m,
+        rng=ARGS.seed,
+        profiles_values=ARGS.profiles_values,
     )
 else:
-    model_class = rmp_group_model(args.shared)
+    model_class = rmp_group_model(ARGS.shared)
     model = model_class.random(
-        group_size=args.group_size,
-        nb_profiles=args.k,
-        nb_crit=args.m,
-        rng=args.seed,
-        profiles_values=args.profiles_values,
+        group_size=ARGS.group_size,
+        nb_profiles=ARGS.k,
+        nb_crit=ARGS.m,
+        rng=ARGS.seed,
+        profiles_values=ARGS.profiles_values,
     )
 
 
 # Write results
-args.output.write(model.to_json())
+ARGS.output.write(model.to_json())

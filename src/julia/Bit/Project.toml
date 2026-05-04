@@ -1,0 +1,7 @@
+name = "Bit"
+uuid = "62dfbebb-ddaf-4e75-9a9b-e1df88454d7c"
+version = "0.1.0"
+authors = ["Yann Jourdin <yann.jourdin@imt-atlantique.fr>"]
+
+[deps]
+IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"

@@ -27,13 +27,14 @@ class DirectoryGroupDecision(Directory):
         D: Path
         Di: Path
         Mie: Path
+        Mcp: Path
         Mc: Path
+        Dcp: Path
         Dc: Path
         C: Path
         Dr: Path
         Cr: Path
         P: Path
-        Mcp: Path
 
     class CSVFiles(Directory.CSVFiles):
         accept: AcceptCSVFile
@@ -57,13 +58,14 @@ class DirectoryGroupDecision(Directory):
             D=self.dirs["root"] / "D",
             Di=self.dirs["root"] / "Di",
             Mie=self.dirs["root"] / "Mie",
+            Mcp=self.dirs["root"] / "Mcp",
             Mc=self.dirs["root"] / "Mc",
+            Dcp=self.dirs["root"] / "Dcp",
             Dc=self.dirs["root"] / "Dc",
             C=self.dirs["root"] / "C",
             Dr=self.dirs["root"] / "Dr",
             Cr=self.dirs["root"] / "Cr",
             P=self.dirs["root"] / "P",
-            Mcp=self.dirs["root"] / "Mcp",
         )
 
         self.seeds = self.dirs["root"] / "seeds.json"
@@ -213,6 +215,32 @@ class DirectoryGroupDecision(Directory):
         it: int,
     ):
         return self.dirs["Mc"] / filename_json(locals())
+
+    def Dcp(
+        self,
+        m: int,
+        ntr: int,
+        Atr_id: int,
+        k: int,
+        Mo_id: int,
+        group_size: int,
+        group: GroupParameters,
+        Mi_id: int,
+        n: int,
+        same_alt: bool,
+        D_id: int,
+        method: MethodEnum,
+        config: Config,
+        Mie: bool,
+        Mie_config: MIPConfig | None,
+        Mie_id: int,
+        Mc_id: int,
+        id: int,
+        path: bool,
+        P_id: int,
+        it: int,
+    ):
+        return self.dirs["Dcp"] / filename_csv(locals())
 
     def Dc(
         self,

@@ -1,54 +1,69 @@
 import csv
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
+from operator import attrgetter
 
+from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
-from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..preference_structure.io import from_csv
-from ..random import rng_
-from .argument_parser import parse_args
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.preference_structure.io import from_csv
+from src.random import rng_
+
+from .args import ARGS
 from .main import learn_sa
 
-# Parse arguments
-args = parse_args()
-
-
 # Import data
-A = NormalPerformanceTable(read_csv(args.A, header=None))
+A = NormalPerformanceTable(read_csv(ARGS.A, header=None))
 
-D = from_csv(args.D)
+D: list[PreferenceStructure] = []
+for d in ARGS.D:
+    D.append(from_csv(d))
 
 
 # Create random seeds
 rng_init, rng_sa = (
-    (args.seed_init, args.seed_sa)
-    if (args.seed_init is not None) and (args.seed_sa is not None)
-    else rng_(args.seed).spawn(2)
+    (ARGS.seed_init, ARGS.seed_sa)
+    if (ARGS.seed_init is not None) and (ARGS.seed_sa is not None)
+    else rng_(ARGS.seed).spawn(2)
 )
 
+Refused: list[PreferenceStructure] | None = None
+if ARGS.refused:
+    Refused = []
+    for r in ARGS.refused:
+        Refused.append(from_csv(r))
 
 # Learn SA
-best_model, best_fitness, time, it = learn_sa(
-    args.model,
-    args.k,
-    A,
-    D,
-    args.alpha,
-    args.amp,
-    rng_init,
-    rng_sa,
-    None,
-    args.T0,
-    args.accept,
-    args.L,
-    args.Tf,
-    args.max_time,
-    args.max_it,
-    args.max_it_non_improving,
-    args.log,
-)
-
+with ProcessPoolExecutor(ARGS.nb_cpus) as process_pool:
+    fn = partial(
+        learn_sa,
+        ARGS.model,
+        ARGS.k,
+        A,
+        D,
+        ARGS.alpha,
+        ARGS.amp,
+        None,
+        ARGS.T0,
+        ARGS.accept,
+        ARGS.L,
+        ARGS.Tf,
+        ARGS.max_time,
+        ARGS.max_it,
+        ARGS.max_it_non_improving,
+        ARGS.log,
+        ARGS.changes,
+        Refused,
+    )
+    best_model, best_objective, time, it = min(
+        process_pool.map(
+            fn, zip(rng_init.spawn(ARGS.nb_cpus), rng_sa.spawn(ARGS.nb_cpus))
+        ),
+        key=attrgetter("best_objective"),
+    )
 
 # Write results
-args.output.write(best_model.to_json() + "\n")
-writer = csv.writer(args.result, "unix")
-writer.writerow([best_fitness, time, it])
+ARGS.output.write(best_model.to_json() + "\n")
+writer = csv.writer(ARGS.result, "unix")
+writer.writerow([1 - best_objective, time, it])

@@ -3,7 +3,6 @@ from collections.abc import Iterable
 from typing import Any
 
 import numpy as np
-import numpy.typing as npt
 from mcda.internal.core.matrices import AdjacencyValueMatrix, OutrankingMatrix
 from mcda.internal.core.relations import Relation
 from mcda.relations import I, P, PreferenceStructure
@@ -14,7 +13,7 @@ type RankingSeries = Series[int]
 
 
 def preference_structure_from_outranking(outranking: OutrankingMatrix):
-    relations: list[Relation] = list()
+    relations: list[Relation] = []
     for ii, i in enumerate(outranking.vertices):  # type: ignore
         for j in outranking.vertices[ii + 1 :]:
             if outranking.data.at[i, j]:
@@ -27,16 +26,14 @@ def preference_structure_from_outranking(outranking: OutrankingMatrix):
     return PreferenceStructure(relations, validate=False)
 
 
-def outranking_numpy_from_outranking(
-    outranking: OutrankingMatrix,
-) -> npt.NDArray[np.bool_]:
-    return outranking.data.to_numpy().astype(bool, copy=False)
+def outranking_numpy_from_outranking(outranking: OutrankingMatrix):
+    return outranking.data.to_numpy().astype(np.bool, copy=False)
 
 
 def outranking_numpy_from_ranking(ranking: RankingSeries):
-    ranking_numpy: npt.NDArray[np.int_] = ranking.to_numpy()
+    ranking_numpy = ranking.to_numpy()
 
-    return np.less_equal.outer(ranking_numpy, ranking_numpy).astype(bool, copy=False)
+    return np.less_equal.outer(ranking_numpy, ranking_numpy).astype(np.bool, copy=False)  # type: ignore
 
 
 def outranking_numpy(o: OutrankingMatrix | RankingSeries):
@@ -81,7 +78,7 @@ def preference_to_numeric(r: Relation):
     elif r == P(b, a):
         return -1
     else:
-        raise Exception(f"Relation {r} not recognized")
+        raise ValueError(f"Relation {r} not recognized")
 
 
 def complementary_relation(r: P | I) -> list[P | I]:

@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from copy import deepcopy
-from dataclasses import dataclass, replace
 from functools import reduce
 from typing import cast
 
@@ -9,14 +8,14 @@ import numpy as np
 import numpy.typing as npt
 from numba import njit  # type: ignore
 
-from ..constants import EPSILON
-from ..dataclass import Dataclass
-from ..performance_table.type import PerformanceTableType
-from ..random import RNGParam, rng_
-from ..rmp.importance_relation import ImportanceRelation
-from ..rmp.model import RMPModel
-from ..rmp.permutation import swap
-from ..srmp.model import SRMPModel
+from src.constants import EPSILON
+from src.dataclass import Dataclass, dataclass, replace
+from src.performance_table.type import PerformanceTableType
+from src.random import RNGParam, rng_
+from src.rmp.importance_relation import ImportanceRelation
+from src.rmp.model import RMPModel
+from src.rmp.permutation import swap
+from src.srmp.model import SRMPModel
 
 
 class Neighbor[S](ABC):
@@ -270,40 +269,45 @@ def compute_alpha(subset_sum: npt.NDArray[np.float64], weight: float, increase: 
 @dataclass
 class NeighborWeight[S: SRMPModel](Neighbor[S]):
     def __call__(self, sol: S, rng: RNGParam = None):
-        rng = rng_(rng)
+        if np.any(sol.weights >= 1 - EPSILON):
+            new_weights = np.full_like(sol.weights, 1 / len(sol.weights))
+        else:
+            rng = rng_(rng)
 
-        crit_ind = rng.choice(len(sol.weights))
+            crit_ind = rng.choice(len(sol.weights))
 
-        weight = sol.weights[crit_ind]
+            weight = sol.weights[crit_ind]
 
-        subset_sum = compute_subset_sum(np.delete(sol.weights, crit_ind))
+            subset_sum = compute_subset_sum(np.delete(sol.weights, crit_ind))
 
-        diffs = np.diff((np.sort(add_subset_sum(subset_sum, weight))))
+            diffs = np.diff(np.sort(add_subset_sum(subset_sum, weight)))
 
-        eps = np.min(diffs, initial=1, where=diffs != 0)
+            eps = np.min(diffs, initial=1, where=diffs != 0)
 
-        d = rng.choice([-1, 0, 1])
+            d = rng.choice([-1, 0, 1])
 
-        s = rng.integers(1, len(subset_sum))
+            s = rng.integers(1, len(subset_sum))
 
-        i = rng.choice(len(subset_sum))
+            i = rng.choice(len(subset_sum))
 
-        j1 = s & i
+            j1 = s & i
 
-        j2 = s & (~i)
+            j2 = s & (~i)
 
-        s_min, s_max = (
-            (s1, s2) if (s1 := subset_sum[j1]) <= (s2 := subset_sum[j2]) else (s2, s1)
-        )
+            s_min, s_max = (
+                (s1, s2)
+                if (s1 := subset_sum[j1]) <= (s2 := subset_sum[j2])
+                else (s2, s1)
+            )
 
-        s_zero = 1 - weight - s_min - s_max
+            s_zero = 1 - weight - s_min - s_max
 
-        alpha = (1 + d * eps) / (2 * s_max + s_zero)
+            alpha = (1 + d * eps) / (2 * s_max + s_zero)
 
-        delta = (1 - weight) * (1 - alpha)
+            delta = (1 - weight) * (1 - alpha)
 
-        new_weights = alpha * sol.weights
-        new_weights[crit_ind] = weight + delta
+            new_weights = alpha * sol.weights
+            new_weights[crit_ind] = weight + delta
 
         return replace(sol, weights=new_weights)
 

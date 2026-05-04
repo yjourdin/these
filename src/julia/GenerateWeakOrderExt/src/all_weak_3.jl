@@ -5,10 +5,7 @@ function AllWeak3!(labels, P, Y, A)
 
     for B ∈ Bit.subsets(Y)
         A′ = Bit.union(ideal_A, B)
-        i = searchsortedfirst(labels, A′)
-        get(labels, i, nothing) ≠ A′ || continue
-
-        insert!(labels, i, A′)
+        in!(A′, labels) && continue
         # @info "Vertices created : $(length(labels))"
         Y′ = @chain B begin
             filter(P)

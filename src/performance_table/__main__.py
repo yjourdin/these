@@ -1,13 +1,9 @@
-from .argument_parser import parse_args
+from .args import ARGS
 from .normal_performance_table import NormalPerformanceTable
 
-# Parse arguments
-args = parse_args()
-
-
 # Create performance table
-A = NormalPerformanceTable.random(args.n, args.m, args.seed)
+A = NormalPerformanceTable.random(ARGS.n, ARGS.m, ARGS.seed)
 
 
 # Write results
-A.data.to_csv(args.output, header=False, index=False)
+A.data.to_csv(ARGS.output, header=False, index=False)

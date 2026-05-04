@@ -4,37 +4,33 @@ from typing import cast
 
 from mcda.internal.core.values import Ranking
 from mcda.relations import PreferenceStructure
-from numpy.random import SeedSequence
 from pandas import read_csv
 
-from ..model import GroupModel, Model
-from ..models import model_from_json
-from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..random import rng_
-from ..utils import add_filename_suffix
-from .argument_parser import TypeEnum, parse_args
+from src.model import GroupModel, Model
+from src.models import model_from_json
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.random import rng_, seed_
+from src.utils import add_filename_suffix
+
+from .args import ARGS, TypeEnum
 from .generate import noisy_comparisons, random_comparisons
 from .io import to_csv
 
-# Parse arguments
-args = parse_args()
-
-
 # Import data
-model = model_from_json(args.model.read())
+model = model_from_json(ARGS.model.read())
 
-A = NormalPerformanceTable(read_csv(args.A, header=None))
+A = NormalPerformanceTable(read_csv(ARGS.A, header=None))
 
 NB_DM = model.group_size if isinstance(model, GroupModel) else 1
 DMS = range(NB_DM)
 
-match cast(TypeEnum, args.type):
+match cast(TypeEnum, ARGS.type):
     case TypeEnum.PREFERENCE_STRUCTURE:
         # Create random seeds
         seed_shuffle, seed_error = (
-            (args.seed_shuffle, args.seed_error)
-            if (args.seed_shuffle is not None) and (args.seed_error is not None)
-            else SeedSequence(args.seed).spawn(2)
+            (ARGS.seed_shuffle, ARGS.seed_error)
+            if (ARGS.seed_shuffle is not None) and (ARGS.seed_error is not None)
+            else seed_(ARGS.seed).spawn(2)
         )
 
         # Create preference structure
@@ -44,15 +40,15 @@ match cast(TypeEnum, args.type):
             model_dm = (
                 cast(Model, model[dm]) if isinstance(model, GroupModel) else model
             )
-            if args.same:
+            if ARGS.same:
                 rng_shuffle = seed_shuffle
-            D.append(random_comparisons(A, model_dm, args.n, rng=rng_shuffle))
+            D.append(random_comparisons(A, model_dm, ARGS.n, rng=seed_shuffle))
 
         # Add errors
         rng_error = rng_(seed_error)
-        if args.error:
+        if ARGS.error:
             for dm in DMS:
-                D[dm] = noisy_comparisons(D[dm], args.error, rng_error)
+                D[dm] = noisy_comparisons(D[dm], ARGS.error, rng_error)
     case TypeEnum.RANKING:
         R: list[Ranking] = []
         for dm in DMS:
@@ -61,7 +57,7 @@ match cast(TypeEnum, args.type):
 
 # Write results
 def filename(dm: int):
-    path = Path(args.output)
+    path = Path(ARGS.output)
     if NB_DM == 1:
         return path
     else:
@@ -69,8 +65,8 @@ def filename(dm: int):
 
 
 for dm in DMS:
-    with stdout if args.output == "stdout" else open(filename(dm), "w") as f:
-        match cast(TypeEnum, args.type):
+    with stdout if ARGS.output == "stdout" else open(filename(dm), "w") as f:
+        match cast(TypeEnum, ARGS.type):
             case TypeEnum.PREFERENCE_STRUCTURE:
                 to_csv(D[dm], f)  # type: ignore
             case TypeEnum.RANKING:

@@ -1,9 +1,10 @@
 {
-    "name": "test",
+    "name": "time_per_it_2",
     "jobs": 10,
     "seed": 0,
-    "max_time": 300,
-    "nb_Atr": 2,
+    "max_time": 3600,
+    "time_per_it": 300,
+    "nb_Atr": 10,
     "group_size": [
         2
     ],
@@ -11,19 +12,25 @@
         100
     ],
     "M": [
-        3
+        3, 4
     ],
     "Ko": [
-        2
+        1, 2, 3
     ],
     "N_bc": [
-        20
+        10, 20, 30, 40, 50
+    ],
+    "method": [
+        "MIP"
     ],
     "config": [
         {
             "id": 0,
-            "max_time": 300,
-            "method": "MIP"
+            "accept": 0.9,
+            "alpha": 0.999,
+            "amp": 2,
+            "max_it_non_improving": 10000,
+            "method": "SA"
         }
     ],
     "group": [
@@ -34,19 +41,17 @@
                 "L": 0
             },
             "accept": {
-                "P": 0.1,
-                "W": 0.1,
-                "L": 0
+                "P": 0.2,
+                "W": 0.2,
+                "L": 1
             }
         }
     ],
     "path": [
-        true,
-	false
+        true
     ],
     "Mie": [
-        true,
-	false
+        false
     ],
     "fixed_lex_order": false
 }

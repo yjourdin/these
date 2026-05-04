@@ -1,12 +1,11 @@
 import random
-from dataclasses import dataclass
 
 import numpy as np
 import numpy.typing as npt
-from drs import drs  # type: ignore
+from drs import drs  # pyright: ignore[reportMissingTypeStubs]
 
-from ..dataclass import Dataclass
-from ..random import RNGParam, seed
+from src.dataclass import Dataclass, dataclass
+from src.random import RNGParam, int_
 
 
 @dataclass
@@ -14,7 +13,7 @@ class PerturbWeight(Dataclass):
     amp: float
 
     def __call__(self, weights: npt.NDArray[np.float64], rng: RNGParam = None):
-        random.seed(seed(rng))
+        random.seed(int_(rng))
 
         return np.array(
             drs(

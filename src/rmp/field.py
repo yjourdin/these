@@ -2,14 +2,15 @@ import ast
 from dataclasses import dataclass
 from typing import Any
 
-from ..field import (
+from src.field import (
     RandomField,
     random_field,
     random_group_field,
 )
-from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..random import RNGParam, rng_
-from ..utils import tolist
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.random import RNGParam, rng_
+from src.utils import tolist
+
 from .importance_relation import ImportanceRelation
 from .profile import random_profiles
 
@@ -69,7 +70,7 @@ class ImportanceRelationField(RandomField):
     def field_decode(o: Any):
         return ImportanceRelation(
             [int(x) for x in o.values()],
-            [frozenset(ast.literal_eval(label)) for label in o.keys()],
+            [frozenset(ast.literal_eval(label)) for label in o],
         )
 
     @staticmethod

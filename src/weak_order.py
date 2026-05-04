@@ -6,7 +6,7 @@ from mcda.internal.core.relations import Relation
 from mcda.relations import I, P, PreferenceStructure
 
 from .julia.function import generate_weak_order
-from .random import Random, RNGParam, seed
+from .random import Random, RNGParam, int_
 
 
 class WeakOrder[Element](MutableMapping[Element, int], Random):
@@ -48,5 +48,5 @@ class WeakOrder[Element](MutableMapping[Element, int], Random):
     def random(
         cls, labels: list[Element], rng: RNGParam = None, *args: Any, **kwargs: Any
     ):
-        scores = generate_weak_order(len(labels), seed(rng))
+        scores = generate_weak_order(len(labels), int_(rng))
         return cls(scores, labels)

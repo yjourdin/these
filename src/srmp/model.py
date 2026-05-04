@@ -5,11 +5,11 @@ from typing import Self, SupportsIndex
 import numpy as np
 import numpy.typing as npt
 
-from ..model import FrozenModel, GroupModel, Model, ParamFlag
-from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..performance_table.type import PerformanceTableType
-from ..random import RNGParam
-from ..rmp.field import (
+from src.model import FrozenModel, GroupModel, Model, ParamFlag
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.performance_table.type import PerformanceTableType
+from src.random import RNGParam
+from src.rmp.field import (
     FrozenLexicographicOrderField,
     FrozenProfilesField,
     GroupLexicographicOrderField,
@@ -17,20 +17,22 @@ from ..rmp.field import (
     LexicographicOrderField,
     ProfilesField,
 )
-from ..rmp.perturbations import PerturbLexOrder, PerturbProfile
-from ..srmp.perturbations import PerturbWeight
-from ..utils import print_list, tolist
+from src.rmp.perturbations import PerturbLexOrder, PerturbProfile
+from src.srmp.perturbations import PerturbWeight
+from src.utils import print_list, tolist
+
 from .field import FrozenWeightsField, GroupWeightsField, WeightsField
 from .normal_srmp import NormalSRMP
 
 
 class SRMPParamFlag(ParamFlag):
+    NONE = 0
     PROFILES = auto()
     WEIGHTS = auto()
     LEXICOGRAPHIC_ORDER = auto()
 
 
-@dataclass
+@dataclass(slots=True)
 class SRMPModel(
     Model,
     ProfilesField,
@@ -40,8 +42,8 @@ class SRMPModel(
     def __str__(self) -> str:
         return "\t".join([
             print_list(list(self.weights)),
-            print_list(self.profiles.data.to_numpy()[0]),
-            print_list(self.lexicographic_order),
+            # print_list(self.profiles.data.to_numpy()[0]),
+            # print_list(self.lexicographic_order),
         ])
 
     def rank_numpy(self, performance_table: PerformanceTableType):
@@ -257,7 +259,7 @@ def srmp_group_model(
                 return SRMPGroupModel
 
 
-def srmp_model(group_size: int, shared_params: SRMPParamFlag = SRMPParamFlag(0)):
+def srmp_model(group_size: int, shared_params: SRMPParamFlag = SRMPParamFlag.NONE):
     return SRMPModel if group_size == 1 else srmp_group_model(shared_params)
 
 

@@ -13,9 +13,9 @@ from pulp import (  # type: ignore
     value,
 )
 
-from ...constants import EPSILON
-from ...performance_table.normal_performance_table import NormalPerformanceTable
-from ...srmp.model import (
+from src.constants import EPSILON
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.srmp.model import (
     SRMPGroupModelLexicographic,
     SRMPGroupModelProfilesLexicographic,
     SRMPGroupModelWeightsLexicographic,
@@ -23,6 +23,7 @@ from ...srmp.model import (
     SRMPParamFlag,
     srmp_group_model,
 )
+
 from ..mip import MIP, D, MIPParams, MIPVars
 
 

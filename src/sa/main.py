@@ -2,14 +2,15 @@ from typing import NamedTuple, TextIO
 
 from mcda.relations import PreferenceStructure
 
-from ..constants import DEFAULT_MAX_TIME
-from ..model import Model
-from ..models import ModelEnum
-from ..performance_table.normal_performance_table import NormalPerformanceTable
-from ..random import RNGParam, rng_
-from ..rmp.model import RMPModel
-from ..srmp.model import SRMPModel
-from ..utils import midpoints
+from src.constants import DEFAULT_MAX_TIME
+from src.model import Model
+from src.models import ModelEnum
+from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.random import RNGParam
+from src.rmp.model import RMPModel
+from src.srmp.model import SRMPModel
+from src.utils import midpoints
+
 from .cooling_schedule import GeometricSchedule
 from .initial_temperature import initial_temperature
 from .neighbor import (
@@ -20,13 +21,13 @@ from .neighbor import (
     NeighborWeightAmp,
     RandomNeighbor,
 )
-from .objective import FitnessObjective
+from .objective import CollectiveObjective, FitnessObjective
 from .sa import Neighbor, SimulatedAnnealing
 
 
-class SAResult(NamedTuple):
+class SAResult[O](NamedTuple):
     best_model: Model
-    best_fitness: float
+    best_objective: O
     time: float
     it: int
 
@@ -35,11 +36,9 @@ def learn_sa(
     model: ModelEnum,
     k: int,
     alternatives: NormalPerformanceTable,
-    comparisons: PreferenceStructure,
+    comparisons: list[PreferenceStructure],
     alpha: float,
     amp: float,
-    rng_init: RNGParam = None,
-    rng_sa: RNGParam = None,
     lex_order: list[int] | None = None,
     t0: float | None = None,
     accept: float | None = None,
@@ -49,12 +48,29 @@ def learn_sa(
     max_it: int | None = None,
     max_it_non_improving: int | None = None,
     log_file: TextIO | None = None,
+    preferences_changes: list[int] | None = None,
+    comparisons_refused: list[PreferenceStructure] | None = None,
+    rng_init: RNGParam = None,
+    rng_sa: RNGParam = None,
 ):
-    alternatives = alternatives.subtable(comparisons.elements)
+    # DMs
+    NB_DM = len(comparisons)
+    DMS = range(NB_DM)
 
+    # Comparisons constraints
+    preferences_changes = preferences_changes or [0] * NB_DM
+    comparisons_refused = comparisons_refused or []
+
+    # Alternatives
+    alternatives = alternatives.subtable(
+        list(set.union(*(set(comparisons[dm].elements) for dm in DMS)))  # type: ignore
+    )
+
+    # Criteria
     M = len(alternatives.criteria)  # type: ignore
 
-    match model.lower():
+    # Initial solution
+    match model:
         case ModelEnum.RMP:
             init_sol = RMPModel.random(
                 nb_profiles=k,
@@ -74,13 +90,16 @@ def learn_sa(
     if lex_order:
         init_sol.lexicographic_order = lex_order
 
+    # Neighborhood operators
     neighbors: list[Neighbor[SRMPModel | RMPModel]] = []
     prob: list[int] = []
 
-    neighbors.append(NeighborProfileDiscretized(NormalPerformanceTable(midpoints(alternatives).data)))
+    neighbors.append(
+        NeighborProfileDiscretized(NormalPerformanceTable(midpoints(alternatives).data))
+    )
     prob.append(k * M)
 
-    match model.lower():
+    match model:
         case ModelEnum.RMP:
             neighbors.append(NeighborImportanceRelation(False))
             prob.append(2**M)
@@ -90,9 +109,6 @@ def learn_sa(
             else:
                 neighbors.append(NeighborWeightAmp(amp))
             prob.append(M)
-            pass
-        case _:
-            raise ValueError(f"{model} model not compatible")
 
     if (not lex_order) and (k >= 2):
         neighbors.append(NeighborLexOrder(False))
@@ -100,12 +116,19 @@ def learn_sa(
 
     neighbor = RandomNeighbor(neighbors, prob)
 
-    objective = FitnessObjective(alternatives, comparisons)
+    # Objective
+    objective = (
+        FitnessObjective(alternatives, comparisons[0])
+        if NB_DM == 1
+        else CollectiveObjective(
+            alternatives, comparisons, preferences_changes, comparisons_refused
+        )
+    )
 
+    # Cooling schedule
     cooling_schedule = GeometricSchedule(alpha)
 
-    rng_sa = rng_(rng_sa)
-
+    # Random walk
     if t0 is None:
         assert accept
         t0 = initial_temperature(
@@ -118,6 +141,7 @@ def learn_sa(
             max(max_it // 100, 1) if max_it else None,
         )
 
+    # Simulated Annealing
     sa = SimulatedAnnealing(
         t0,
         L,
@@ -135,4 +159,4 @@ def learn_sa(
 
     sa.learn()
 
-    return SAResult(sa.best_sol, 1 - sa.best_obj, sa.time, sa.it)
+    return SAResult(sa.best_sol, sa.best_obj, sa.time, sa.it)

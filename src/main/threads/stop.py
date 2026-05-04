@@ -1,10 +1,17 @@
 from pathlib import Path
+from threading import Event, Thread
 
-from ..connection import StopEvent
+
+class StopThread(Thread):
+    def __init__(self, file: Path) -> None:
+        super().__init__(name="Stop")
+        self.file = file
+        self.start()
+
+    def run(self) -> None:
+        while self.file.exists() and not STOP.wait(1):
+            continue
+        STOP.set()
 
 
-def stopping_thread(stop_event: StopEvent, file: Path):
-    while file.exists():
-        stop_event.wait(1)
-    file.unlink(True)
-    stop_event.set()
+STOP = Event()

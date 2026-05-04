@@ -1,8 +1,8 @@
 from enum import auto
 
-from .strenum import StrEnumCustom
+from .case_insensitive_str_enum import CaseInsensitiveStrEnum
 
 
-class MethodEnum(StrEnumCustom):
+class MethodEnum(CaseInsensitiveStrEnum):
     MIP = auto()
     SA = auto()

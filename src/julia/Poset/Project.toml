@@ -1,0 +1,8 @@
+name = "Poset"
+uuid = "902a90bd-1ce0-4c24-a936-1b020cbad31f"
+version = "0.1.0"
+authors = ["Yann Jourdin <yann.jourdin@imt-atlantique.fr>"]
+
+[deps]
+Bit = "62dfbebb-ddaf-4e75-9a9b-e1df88454d7c"
+Posets = "9a158a65-591e-4f68-ac4f-9ffef2fc51f2"
