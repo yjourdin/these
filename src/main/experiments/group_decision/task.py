@@ -968,7 +968,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             )
             preference_path = compute_preference_path(model_paths[0], D, A, R)
         else:
-            model_paths = {0: []}
+            model_paths = {}
             time = 0
             preference_path = [
                 D,
@@ -1008,7 +1008,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                     Dm_id=self.dm_id,
                     Time=time,
                     Length=t,
-                    Model_Length=len(model_paths[0]),
+                    Model_Length=len(model_paths[0]) if model_paths else 0,
                 )
             )
 

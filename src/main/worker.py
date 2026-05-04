@@ -43,7 +43,7 @@ class WorkerProcess(Process):
                 self.connection.send(WorkerResult(task, task(self.dir, **args)))
                 self.logger.info(f"{'end':5} {task!s}")
             except Exception:
-                self.logger.exception("Task error")
+                self.logger.exception(f"{'error':5} {task!s}")
                 self.connection.send(WorkerResult(task, SENTINEL))
 
         self.logger.info("Kill")
