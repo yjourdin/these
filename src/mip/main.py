@@ -268,7 +268,7 @@ def learn_mip(
 
             model = mip.learn()
 
-            time += mip.prob.solutionCpuTime
+            time += mip.prob.solutionTime
             time_left = max_time - time
             status = mip.prob.status
             objective = mip.prob.objective
