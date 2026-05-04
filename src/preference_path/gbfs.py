@@ -1,7 +1,7 @@
 import heapq
 from collections.abc import Callable
 from itertools import count, pairwise
-from time import process_time
+from time import thread_time
 from typing import cast
 
 from src.constants import DEFAULT_MAX_TIME
@@ -26,8 +26,8 @@ class GBFS[T](Paths[T]):
     max_time: int = DEFAULT_MAX_TIME
 
     def init(self, sources: list[T]):
-        self.start_time = process_time()
-        self.time = process_time() - self.start_time
+        self.start_time = thread_time()
+        self.time = thread_time() - self.start_time
         self.open_heap = [Node(source, self.heuristic(source)) for source in sources]
         heapq.heapify(self.open_heap)
         self.parent = {source: {i: None} for i, source in enumerate(sources)}
@@ -82,7 +82,7 @@ class GBFS[T](Paths[T]):
                                 self.parent[v] |= {i: u}
 
             # Update time
-            self.time = process_time() - self.start_time
+            self.time = thread_time() - self.start_time
 
         if not self.open_heap:
             raise CustomException("Target unreachable")

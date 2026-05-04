@@ -1,6 +1,6 @@
 import csv
 import io
-from time import process_time
+from time import thread_time
 
 from mcda.internal.core.interfaces import Learner
 
@@ -30,8 +30,8 @@ class RandomWalk[S](Learner[S], Dataclass):
         # Initialise
         sol = initial_sol
         obj = self.objective(sol)
-        start_time = process_time()
-        self.time = process_time() - start_time
+        start_time = thread_time()
+        self.time = thread_time() - start_time
         self.it = 0
         self.non_improving_it = 0
 
@@ -54,7 +54,7 @@ class RandomWalk[S](Learner[S], Dataclass):
             (self.max_it is None) or (self.it < self.max_it)
         ):
             # New iteration
-            self.time = process_time() - start_time
+            self.time = thread_time() - start_time
             self.it += 1
             self.non_improving_it += 1
 

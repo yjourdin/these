@@ -2,7 +2,7 @@ import csv
 from collections.abc import Callable
 from dataclasses import InitVar
 from math import exp
-from time import process_time
+from time import thread_time
 from typing import ClassVar, TextIO
 
 from mcda.internal.core.interfaces import Learner
@@ -88,15 +88,14 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
         else:
             return False
 
-
     def init(self, initial_sol: S):
         self.temp = self.T0
         self.current_sol = initial_sol
         self.current_obj = self.objective(self.current_sol)
         self.best_sol = initial_sol
         self.best_obj = self.objective(self.best_sol)
-        self.start_time = process_time()
-        self.time = process_time() - self.start_time
+        self.start_time = thread_time()
+        self.time = thread_time() - self.start_time
         self.it = 0
         self.non_improving_it = 0
 
@@ -153,12 +152,11 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
                             return self.best_sol
 
                 # Update time
-                self.time = process_time() - self.start_time
+                self.time = thread_time() - self.start_time
 
             # Update temperature
             self.temp = self.cooling_schedule(self.temp)
         return self.best_sol
-
 
     def _learn(
         self,
@@ -170,7 +168,6 @@ class SimulatedAnnealing[S](Learner[S], Dataclass):
 
         # Main loop
         return self.main_loop(rng)
-
 
     def learn(self):
         return self._learn(self.init_sol, self._rng)

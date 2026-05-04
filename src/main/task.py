@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from concurrent.futures import Future
 from dataclasses import dataclass, fields
-from time import process_time
+from time import thread_time
 from typing import Any, ClassVar, NamedTuple
 
 from src.dataclass import FrozenDataclass
@@ -44,9 +44,9 @@ class Task(FrozenDataclass, AbstractTask):
         return f"{self.name:13} ({', '.join(f'{field.name}: {getattr(self, field.name)!s}' for field in fields(self))})"
 
     def __call__(self, dir: Directory, *args: Any, **kwargs: Any):
-        tic = process_time()
+        tic = thread_time()
         result = self.task(*args, dir=dir, **kwargs)
-        toc = process_time()
+        toc = thread_time()
 
         time = toc - tic
         csv_file = dir.csv_files["tasks"]
