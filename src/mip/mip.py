@@ -60,7 +60,6 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
             kwargs["options"] = [f"RandomS {seed % 2_000_000_000}"]
 
         self.solver = getSolver(**kwargs)
-        print(self.solver.threads)
 
     def learn(self):
         self.create_problem()
