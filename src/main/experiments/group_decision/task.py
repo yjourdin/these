@@ -945,9 +945,9 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             with self.Mcp_file(dir, Mcp_id).open("r") as f:
                 Mcps.append(SRMPModel.from_json(f.read()))
 
-            if self.nb_Mcp == 1:
-                with self.Mc_file(dir).open("w") as g:
-                    g.write(SRMPModel.from_json(f.read()).to_json())
+                if self.nb_Mcp == 1:
+                    with self.Mc_file(dir).open("w") as g:
+                        g.write(SRMPModel.from_json(f.read()).to_json())
 
         if self.path:
             R: list[PreferenceStructure] = []
