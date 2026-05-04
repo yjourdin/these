@@ -21,7 +21,7 @@ TASK_QUEUE: TaskQueue = LifoQueue()
 
 
 class TaskManager(Thread):
-    def __init__(self, connections: list[ManagerEndWorkerConnection]):
+    def __init__(self, connections: list[ManagerEndWorkerConnection], stop_on_error: bool):
         super().__init__(name="Task manager")
         self.worker_connections = {
             worker: connection for worker, connection in enumerate(connections)
@@ -29,6 +29,7 @@ class TaskManager(Thread):
         self.waiting = set(self.worker_connections.keys())
         self.task_connections: dict[Task, ManagerEndTaskConnection] = {}
         self.working: dict[Task, list[int]] = {}
+        self.stop_on_error = stop_on_error
         self.start()
 
     def send_task(self, element: TaskQueueElement):
@@ -105,6 +106,8 @@ class TaskManager(Thread):
                 ):
                     if obj := self.receive_result(connection):
                         task, result = obj
+                        if self.stop_on_error and (result == SENTINEL):
+                            STOP.set()
                         self.send_result(task, result)
                         self.waiting |= set(self.working.pop(task))
 

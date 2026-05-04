@@ -60,7 +60,7 @@ for i in range(ARGS.jobs):
 
 # Start worker manager thread
 
-task_manager_thread = TaskManager(connections)
+task_manager_thread = TaskManager(connections, ARGS.stop_error)
 
 
 # Start stop thread
