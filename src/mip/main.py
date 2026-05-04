@@ -55,7 +55,6 @@ def learn_mip(
     *args: Any,
     **kwargs: Any,
 ) -> MIPResult:
-    print(max_time)
     if model_type.model is not ModelEnum.SRMP:
         return MIPResult()
 
