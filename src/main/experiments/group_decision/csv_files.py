@@ -87,7 +87,7 @@ class CollectiveCSVFile(CSVFile[CollectiveFields]):
 class PathFields(DMFields):
     Time: float
     Length: int | None
-    Model_Length: int
+    Model_Length: int | None
 
 
 class PathCSVFile(CSVFile[PathFields]):

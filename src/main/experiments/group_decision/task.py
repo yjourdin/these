@@ -998,7 +998,9 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 else self.config.max_time,
                 self.fixed_lex_order,
             )
-            preference_path = compute_preference_path(model_paths[0], D, A, R)
+            preference_path = (
+                compute_preference_path(model_paths[0], D, A, R) if model_paths else []
+            )
         else:
             model_paths = {}
             time = 0
@@ -1040,7 +1042,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                     Dm_id=self.dm_id,
                     Time=time,
                     Length=t,
-                    Model_Length=len(model_paths[0]) if model_paths else 0,
+                    Model_Length=len(model_paths[0]) if model_paths else None,
                 )
             )
 
