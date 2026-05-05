@@ -608,7 +608,22 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                 with self.Mcp_file(dir, Mcp_id).open("w") as f:
                     f.write(best_model.to_json())
 
+                with self.Mc_file(dir).open("w") as f:
+                    f.write(best_model.to_json())
+
                 with self.Dcp_file(dir, Mcp_id).open("w") as f:
+                    to_csv(
+                        random_comparisons(
+                            A,
+                            best_model,
+                            pairs=set.union(
+                                *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
+                            ),
+                        ),
+                        f,
+                    )
+
+                with self.Dc_file(dir).open("w") as f:
                     to_csv(
                         random_comparisons(
                             A,
@@ -766,9 +781,14 @@ class CollectiveSATask(AbstractCollectiveTask):
                 self.config.amp,
                 self.lexicographic_order if self.fixed_lex_order else None,
                 accept=self.config.accept,
-                max_time=min(max_time, self.config.max_time)
-                if max_time is not None
-                else self.config.max_time,
+                max_time=int(
+                    (
+                        min(max_time, self.config.max_time)
+                        if max_time is not None
+                        else self.config.max_time
+                    )
+                    / self.nb_Mcp
+                ),
                 max_it=self.config.max_it,
                 max_it_non_improving=self.config.max_it_non_improving,
                 preferences_changes=C,
@@ -784,6 +804,22 @@ class CollectiveSATask(AbstractCollectiveTask):
                     f.write(best_model.to_json())
 
                 with self.Dcp_file(dir, Mcp_id).open("w") as f:
+                    to_csv(
+                        random_comparisons(
+                            A,
+                            best_model,
+                            pairs=set.union(
+                                *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
+                            ),
+                        ),
+                        f,
+                    )
+
+            if self.nb_Mcp == 1:
+                with self.Mc_file(dir).open("w") as f:
+                    f.write(best_model.to_json())
+
+                with self.Dc_file(dir).open("w") as f:
                     to_csv(
                         random_comparisons(
                             A,
@@ -945,22 +981,6 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             with self.Mcp_file(dir, Mcp_id).open("r") as f:
                 Mcp = SRMPModel.from_json(f.read())
                 Mcps.append(Mcp)
-
-                if self.nb_Mcp == 1:
-                    with self.Mc_file(dir).open("w") as f:
-                        f.write(Mcp.to_json())
-
-                    with self.Dc_file(dir).open("w") as f:
-                        to_csv(
-                            random_comparisons(
-                                A,
-                                Mcp,
-                                pairs=set.union(
-                                    *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
-                                ),
-                            ),
-                            f,
-                        )
 
         if self.path:
             R: list[PreferenceStructure] = []
