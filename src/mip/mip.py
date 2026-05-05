@@ -64,6 +64,7 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
     def learn(self):
         self.create_problem()
         self.prob.solve(self.solver)
+        return self.create_solution()
         return self.create_solution() if self.prob.sol_status > 0 else None
 
     @abstractmethod
