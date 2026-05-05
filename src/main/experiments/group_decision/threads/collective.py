@@ -4,11 +4,9 @@ from dataclasses import replace
 from shutil import copy
 from typing import Any
 
-from mcda.internal.core.relations import Relation
-from mcda.relations import I, P, PreferenceStructure
-
 from src.methods import MethodEnum
 from src.preference_structure.io import from_csv, to_csv
+from src.utils import CustomException
 
 from ....init_directory import DIR
 from ....task import FutureTask, TaskResult, result_dict, result_list
@@ -116,7 +114,7 @@ def collective_thread(
                 {
                     "seed": args["seeds"].Mc[args["Mc_id"]],
                     "max_time": min(time_left, time_left_per_it),
-                    "nb_cpus": args["nb_cpus"]
+                    "nb_cpus": args["nb_cpus"],
                 },
                 [],
             )
@@ -125,11 +123,11 @@ def collective_thread(
 
             time_left -= time_Mc
             time_left_per_it -= time_Mc
-            # if (time_left < 1) or (time_left_per_it < 1):
-            if (time_left < 1):
+            if (time_left < 1) or (time_left_per_it < 1):
                 break
 
             if not result_Mc:
+                raise CustomException("No collective model")
                 if args["Mie"] and it == 0:
                     break
 
@@ -241,7 +239,7 @@ def collective_thread(
                         tasks_P[dm_id],
                         {
                             "seed": args["seeds"].P[args["P_id"]],
-                            "max_time": max(min(time_left, time_left_per_it), 1),
+                            "max_time": min(time_left, time_left_per_it),
                         },
                         [],
                     )
@@ -250,8 +248,7 @@ def collective_thread(
 
                 time_left -= max(result.time for result in results_P)
                 time_left_per_it -= max(result.time for result in results_P)
-                # if (time_left < 1) or (time_left_per_it < 1):
-                if (time_left < 1):
+                if (time_left < 1) or (time_left_per_it < 1):
                     break
                 if not all(result.res for result in results_P):
                     break
@@ -318,8 +315,9 @@ def collective_thread(
                     for row in C_reader:
                         changes.append(int(row[0]))
 
-                new_it = it + 1 if not compromise_found else it
-                new_task_Mc = replace(task_Mc, it=new_it)
+                new_task_Mc = (
+                    replace(task_Mc, it=it + 1) if not compromise_found else None
+                )
 
                 for dm_id in DMS:
                     with task_Mc.Di_file(DIR, dm_id=dm_id).open("r") as f:
@@ -336,12 +334,6 @@ def collective_thread(
                         else tasks_P[dm_id].P_file(DIR, t=accepted_t).open("r")
                     ) as f:
                         accepted_D = from_csv(f)
-
-                    if not compromise_found:
-                        copy(
-                            tasks_P[dm_id].P_file(DIR, t=accepted_t),
-                            new_task_Mc.Di_file(DIR, dm_id=dm_id),
-                        )
 
                     changes[dm_id] += len(original_D - accepted_D)
 
@@ -375,7 +367,12 @@ def collective_thread(
                         )
                     )
 
-                    if not compromise_found:
+                    if new_task_Mc is not None:
+                        copy(
+                            tasks_P[dm_id].P_file(DIR, t=accepted_t),
+                            new_task_Mc.Di_file(DIR, dm_id=dm_id),
+                        )
+
                         with new_task_Mc.C_file(DIR).open("a", newline="") as f:
                             C_writer = csv.writer(f, dialect="unix")
                             C_writer.writerow([changes[dm_id]])
@@ -393,20 +390,21 @@ def collective_thread(
                             ):
                                 refused_D = from_csv(f)
 
-                            Cr: list[Relation] = []
-                            for r in refused_D - accepted_D:
-                                Cr.append(r)
-                                if isinstance(r, I) and (
-                                    accepted_r := accepted_D.elements_pairs_relations[
-                                        r.a, r.b
-                                    ]
-                                ):
-                                    Cr.append(P(accepted_r.b, accepted_r.a))
+                            Cr = refused_D - accepted_D
+                            # Cr: list[Relation] = []
+                            # for r in refused_D - accepted_D:
+                            #     Cr.append(r)
+                            #     if isinstance(r, I) and (
+                            #         accepted_r := accepted_D.elements_pairs_relations[
+                            #             r.a, r.b
+                            #         ]
+                            #     ):
+                            #         Cr.append(P(accepted_r.b, accepted_r.a))
 
                             with (new_task_Mc.Cr_file(DIR, dm_id, it)).open("w") as f:
-                                to_csv(PreferenceStructure(Cr, validate=False), f)
-                if not compromise_found:
-                    it = new_it
+                                to_csv(Cr, f)
+                if new_task_Mc is not None:
+                    it = it + 1
                     task_Mc = new_task_Mc
                     time_left_per_it = args["time_per_it"]
 

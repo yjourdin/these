@@ -947,8 +947,20 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 Mcps.append(Mcp)
 
                 if self.nb_Mcp == 1:
-                    with self.Mc_file(dir).open("w") as g:
-                        g.write(Mcp.to_json())
+                    with self.Mc_file(dir).open("w") as f:
+                        f.write(Mcp.to_json())
+
+                    with self.Dc_file(dir).open("w") as f:
+                        to_csv(
+                            random_comparisons(
+                                A,
+                                Mcp,
+                                pairs=set.union(
+                                    *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
+                                ),
+                            ),
+                            f,
+                        )
 
         if self.path:
             R: list[PreferenceStructure] = []
