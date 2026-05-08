@@ -7,7 +7,7 @@ from src.dataclass import dataclass
 from src.random import RNG
 from src.utils import none_guard
 
-from .cooling_schedule import CoolingSchedule, GeometricSchedule
+from .cooling_schedule import CoolingSchedule
 from .iterative import Iterative
 
 
@@ -15,7 +15,7 @@ from .iterative import Iterative
 class SimulatedAnnealing[S](Iterative[S]):
     T0: float = 1
     L: int = 1
-    cooling_schedule: CoolingSchedule = field(default=GeometricSchedule(0.999))
+    cooling_schedule: CoolingSchedule = field(default_factory=CoolingSchedule)
     Tf: float | None = None
     stopping_criteria_dict: ClassVar[dict[str, str]] = (
         Iterative.stopping_criteria_dict | {"Tf": "stop_temp"}
