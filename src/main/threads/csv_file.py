@@ -1,11 +1,11 @@
 import csv
 from threading import Thread
 
-from ..csv_file import CSVFields, CSVFile
+from ..csv_file import CSVFile
 
 
 class CSVFileThread(Thread):
-    def __init__(self, file: CSVFile[CSVFields]) -> None:
+    def __init__(self, file: CSVFile) -> None:
         self.path = file.path
         self.fieldnames = file.fieldnames
         self.queue = file.queue
