@@ -311,8 +311,9 @@ def learn_mip(
 
 
 def mip_result[M: Model](mip: MIP[M, Any, Any]):
+    best_model = mip.learn()
     return MIPResult[M, float](
-        mip.learn(), cast(float, value(mip.prob.objective)), mip.prob.solutionCpuTime
+        best_model, cast(float, value(mip.prob.objective)), mip.prob.solutionCpuTime
     )
 
     #         model = mip.learn()
