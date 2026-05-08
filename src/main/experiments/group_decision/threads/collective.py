@@ -127,7 +127,7 @@ def collective_thread(
                 break
 
             if not result_Mc:
-                raise CustomException("No collective model")
+                break
                 if args["Mie"] and it == 0:
                     break
 
