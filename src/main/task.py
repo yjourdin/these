@@ -50,7 +50,7 @@ class Task(FrozenDataclass, AbstractTask):
 
         time = toc - tic
         csv_file = dir.csv_files["tasks"]
-        csv_file.writerow(self.log(csv_file.fields, time, *args, **kwargs))
+        csv_file.writerow(**self.log(time, *args, **kwargs))
 
         return TaskResult(result, time)
 
@@ -61,8 +61,8 @@ class Task(FrozenDataclass, AbstractTask):
     def done(self, *args: Any, **kwargs: Any) -> bool:
         return False
 
-    def log(self, fields: type[TaskFields], time: float, *args: Any, **kwargs: Any):
-        return fields(Task=self, Time=time, Seed=None)
+    def log(self, time: float, *args: Any, **kwargs: Any):
+        return TaskFields(Task=self, Time=time, Seed=None)
 
 
 @dataclass(frozen=True)
@@ -70,10 +70,10 @@ class SeedTask(Task, SeedMixin):
     def seed(self, seed: SeedLike):
         return seed_(abs(hash(seed)))
 
-    def log(self, fields: type[TaskFields], time: float, *args: Any, **kwargs: Any):
+    def log(self, time: float, *args: Any, **kwargs: Any):
         seed = (
             int_(self.seed(s))
             if ((s := kwargs.get("seed", None)) is not None)
             else None
         )
-        return fields(Task=self, Time=time, Seed=seed)
+        return TaskFields(Task=self, Time=time, Seed=seed)
