@@ -1,3 +1,4 @@
+from functools import cached_property
 from typing import Unpack
 
 from src.random import SeedLike
@@ -13,5 +14,9 @@ class TaskFields(CSVFields):
 
 
 class TaskCSVFile(CSVFile):
+    @cached_property
+    def fieldnames(self):
+        return list(TaskFields.__annotations__.keys())
+
     def writerow(self, **kwargs: Unpack[TaskFields]):
         return super().writerow(**kwargs)

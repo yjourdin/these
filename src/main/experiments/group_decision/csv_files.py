@@ -1,3 +1,4 @@
+from functools import cached_property
 from typing import Unpack
 
 from src.methods import MethodEnum
@@ -15,6 +16,10 @@ class GroupParametersFields(CSVFields):
 
 
 class GroupParametersCSVFile(CSVFile):
+    @cached_property
+    def fieldnames(self):
+        return list(GroupParametersFields.__annotations__.keys())
+
     def writerow(self, **kwargs: Unpack[GroupParametersFields]):
         return super().writerow(**kwargs)
 
@@ -63,6 +68,10 @@ class MieFields(CSVFields):
 
 
 class MieCSVFile(CSVFile):
+    @cached_property
+    def fieldnames(self):
+        return list(MieFields.__annotations__.keys())
+
     def writerow(self, **kwargs: Unpack[MieFields]):
         return super().writerow(**kwargs)
 
@@ -84,6 +93,10 @@ class CollectiveFields(IterationFields):
 
 
 class CollectiveCSVFile(CSVFile):
+    @cached_property
+    def fieldnames(self):
+        return list(CollectiveFields.__annotations__.keys())
+
     def writerow(self, **kwargs: Unpack[CollectiveFields]):
         return super().writerow(**kwargs)
 
@@ -96,6 +109,10 @@ class PathFields(DMFields):
 
 
 class PathCSVFile(CSVFile):
+    @cached_property
+    def fieldnames(self):
+        return list(PathFields.__annotations__.keys())
+
     def writerow(self, **kwargs: Unpack[PathFields]):
         return super().writerow(**kwargs)
 
@@ -107,6 +124,10 @@ class AcceptFields(DMFields):
 
 
 class AcceptCSVFile(CSVFile):
+    @cached_property
+    def fieldnames(self):
+        return list(AcceptFields.__annotations__.keys())
+
     def writerow(self, **kwargs: Unpack[AcceptFields]):
         return super().writerow(**kwargs)
 
@@ -118,6 +139,10 @@ class ChangesFields(DMFields):
 
 
 class ChangesCSVFile(CSVFile):
+    @cached_property
+    def fieldnames(self):
+        return list(ChangesFields.__annotations__.keys())
+
     def writerow(self, **kwargs: Unpack[ChangesFields]):
         return super().writerow(**kwargs)
 
@@ -129,6 +154,10 @@ class CleanFields(DMFields):
 
 
 class CleanCSVFile(CSVFile):
+    @cached_property
+    def fieldnames(self):
+        return list(CleanFields.__annotations__.keys())
+
     def writerow(self, **kwargs: Unpack[CleanFields]):
         return super().writerow(**kwargs)
 
@@ -142,5 +171,9 @@ class CompromiseFields(ExperimentFields):
 
 
 class CompromiseCSVFile(CSVFile):
+    @cached_property
+    def fieldnames(self):
+        return list(CompromiseFields.__annotations__.keys())
+
     def writerow(self, **kwargs: Unpack[CompromiseFields]):
         return super().writerow(**kwargs)

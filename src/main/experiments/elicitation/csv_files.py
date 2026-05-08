@@ -1,3 +1,4 @@
+from functools import cached_property
 from typing import Any, NotRequired, Unpack
 
 from src.methods import MethodEnum
@@ -15,6 +16,10 @@ class ConfigFields(CSVFields):
 
 
 class ConfigCSVFile(CSVFile):
+    @cached_property
+    def fieldnames(self):
+        return list(ConfigFields.__annotations__.keys())
+
     def writerow(self, **kwargs: Unpack[ConfigFields]):
         return super().writerow(**kwargs)
 
@@ -47,6 +52,10 @@ class TrainFields(ExperimentFields):
 
 
 class TrainCSVFile(CSVFile):
+    @cached_property
+    def fieldnames(self):
+        return list(TrainFields.__annotations__.keys())
+
     def writerow(self, **kwargs: Unpack[TrainFields]):
         return super().writerow(**kwargs)
 
@@ -60,5 +69,9 @@ class TestFields(ExperimentFields):
 
 
 class TestCSVFile(CSVFile):
+    @cached_property
+    def fieldnames(self):
+        return list(TestFields.__annotations__.keys())
+
     def writerow(self, **kwargs: Unpack[TestFields]):
         return super().writerow(**kwargs)
