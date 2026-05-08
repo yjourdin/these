@@ -306,7 +306,7 @@ def learn_mip(
             )
             toc = monotonic()
             return MIPResult(best_model, best_objective, toc - tic)
-        except TimeoutError:
+        except (TimeoutError, TypeError):
             return MIPResult[Model, float]()
 
 
