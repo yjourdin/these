@@ -99,22 +99,24 @@ def learn_mip(
         lexicographic_orders = np.array([lex_order], dtype=np.int_)
     elif lex_order_shared:
         if reference_model is None or lexicographic_order_distance == 0:
-            lexicographic_orders = np.array(list(permutations(range(k))))
+            lexicographic_orders = np.fromiter(permutations(range(k)), dtype=int)
         else:
-            lexicographic_orders = np.array(
-                list(
-                    all_max_adjacent_distance(
-                        reference_model.lexicographic_order,
-                        lexicographic_order_distance,
-                    )
-                )
+            lexicographic_orders = np.fromiter(
+                all_max_adjacent_distance(
+                    reference_model.lexicographic_order,
+                    lexicographic_order_distance,
+                ),
+                dtype=int,
             )
+
     else:
         lexicographic_orders = np.array(
             list(product(permutations(range(k)), repeat=NB_DM))
         )
 
     rng_(rng_lexicographic_order).shuffle(lexicographic_orders)
+
+    lexicographic_orders = lexicographic_orders.tolist()
 
     NB_CPUS = max(nb_cpus // len(lexicographic_orders), 1)
 

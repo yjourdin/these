@@ -6,7 +6,7 @@ import numpy.typing as npt
 from mcda.internal.core.scales import NormalScale
 from mcda.outranking.srmp import SRMP, ProfileWiseOutranking
 from mcda.values import Values
-from scipy.stats import rankdata
+from scipy.stats import rankdata  # pyright: ignore[reportMissingTypeStubs]
 
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 
