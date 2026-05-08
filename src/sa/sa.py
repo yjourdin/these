@@ -1,3 +1,4 @@
+from dataclasses import field
 from math import exp
 from time import thread_time
 from typing import ClassVar
@@ -14,7 +15,7 @@ from .iterative import Iterative
 class SimulatedAnnealing[S](Iterative[S]):
     T0: float = 1
     L: int = 1
-    cooling_schedule: CoolingSchedule = GeometricSchedule(0.999)
+    cooling_schedule: CoolingSchedule = field(default=GeometricSchedule(0.999))
     Tf: float | None = None
     stopping_criteria_dict: ClassVar[dict[str, str]] = (
         Iterative.stopping_criteria_dict | {"Tf": "stop_temp"}
