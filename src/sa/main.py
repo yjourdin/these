@@ -3,7 +3,6 @@ from typing import NamedTuple, TextIO
 from mcda.relations import PreferenceStructure
 
 from src.constants import DEFAULT_MAX_TIME
-from src.model import Model
 from src.models import ModelEnum
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.random import RNGParam
@@ -14,6 +13,7 @@ from src.utils import midpoints
 from .cooling_schedule import GeometricSchedule
 from .initial_temperature import initial_temperature
 from .neighbor import (
+    Neighbor,
     NeighborImportanceRelation,
     NeighborLexOrder,
     NeighborProfileDiscretized,
@@ -22,11 +22,11 @@ from .neighbor import (
     RandomNeighbor,
 )
 from .objective import CollectiveObjective, FitnessObjective
-from .sa import Neighbor, SimulatedAnnealing
+from .sa import SimulatedAnnealing
 
 
-class SAResult[O](NamedTuple):
-    best_model: Model
+class SAResult[M, O](NamedTuple):
+    best_model: M
     best_objective: O
     time: float
     it: int
@@ -143,18 +143,18 @@ def learn_sa(
 
     # Simulated Annealing
     sa = SimulatedAnnealing(
-        t0,
-        L,
         neighbor,
         objective,
-        cooling_schedule,
         init_sol,
         rng_sa,
-        Tf,
         max_time,
         max_it,
         max_it_non_improving,
         log_file,
+        t0,
+        L,
+        cooling_schedule,
+        Tf,
     )
 
     sa.learn()

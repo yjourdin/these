@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from multiprocessing import JoinableQueue
 from pathlib import Path
-from typing import ClassVar, TypedDict
+from typing import Any, TypedDict
 
 from src.dataclass import FrozenDataclass
 from src.utils import dict_str
@@ -10,19 +10,17 @@ from src.utils import dict_str
 
 class CSVFields(TypedDict): ...
 
-
 @dataclass(frozen=True)
-class CSVFile[Fields: CSVFields](FrozenDataclass):
+class CSVFile(FrozenDataclass):
     path: Path
-    fields: ClassVar[type[Fields]]  # type: ignore
     queue: "JoinableQueue[dict[str, str]]" = field(default_factory=JoinableQueue)
 
     @cached_property
     def fieldnames(self):
-        return list(self.fields.__annotations__.keys())
+        return list(CSVFields.__annotations__.keys())
 
-    def writerow(self, fields: Fields):
-        self.queue.put(dict_str(fields))
+    def writerow(self, **kwargs: Any):
+        self.queue.put(dict_str(kwargs))
 
     def close(self):
         self.queue.put({})

@@ -1,4 +1,4 @@
-from typing import Any, NotRequired
+from typing import Any, NotRequired, Unpack
 
 from src.methods import MethodEnum
 from src.models import GroupModelEnum
@@ -14,8 +14,8 @@ class ConfigFields(CSVFields):
     Config: dict[str, Any]
 
 
-class ConfigCSVFile(CSVFile[ConfigFields]):
-    fields = ConfigFields
+class ConfigCSVFile(CSVFile):
+    def writerow(self, **kwargs: Unpack[ConfigFields]): ...
 
 
 # Experiment
@@ -45,8 +45,8 @@ class TrainFields(ExperimentFields):
     It: NotRequired[int]
 
 
-class TrainCSVFile(CSVFile[TrainFields]):
-    fields = TrainFields
+class TrainCSVFile(CSVFile):
+    def writerow(self, **kwargs: Unpack[TrainFields]): ...
 
 
 # Test
@@ -57,5 +57,5 @@ class TestFields(ExperimentFields):
     Value: float
 
 
-class TestCSVFile(CSVFile[TestFields]):
-    fields = TestFields
+class TestCSVFile(CSVFile):
+    def writerow(self, **kwargs: Unpack[TestFields]): ...

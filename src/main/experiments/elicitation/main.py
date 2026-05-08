@@ -46,9 +46,7 @@ def main(args: ArgumentsElicitation):
     # Write configs
     for config in args.config:
         csv_file = DIR.csv_files["configs"]
-        csv_file.writerow(
-            csv_file.fields(Id=config.id, Method=config.method, Config=config.to_dict())
-        )
+        csv_file.writerow(Id=config.id, Method=config.method, Config=config.to_dict())
 
     # Task dict
     futures: dict[Task, FutureTask] = {}

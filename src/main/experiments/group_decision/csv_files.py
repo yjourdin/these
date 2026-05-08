@@ -1,3 +1,5 @@
+from typing import Unpack
+
 from src.methods import MethodEnum
 
 from ...csv_file import CSVFields, CSVFile
@@ -12,8 +14,8 @@ class GroupParametersFields(CSVFields):
     Accept: SRMPParametersDeviation
 
 
-class GroupParametersCSVFile(CSVFile[GroupParametersFields]):
-    fields = GroupParametersFields
+class GroupParametersCSVFile(CSVFile):
+    def writerow(self, **kwargs: Unpack[GroupParametersFields]): ...
 
 
 # Experiment
@@ -59,8 +61,8 @@ class MieFields(CSVFields):
     Fitness: float | None
 
 
-class MieCSVFile(CSVFile[MieFields]):
-    fields = MieFields
+class MieCSVFile(CSVFile):
+    def writerow(self, **kwargs: Unpack[MieFields]): ...
 
 
 # Iteration
@@ -79,8 +81,8 @@ class CollectiveFields(IterationFields):
     Objective: float | None
 
 
-class CollectiveCSVFile(CSVFile[CollectiveFields]):
-    fields = CollectiveFields
+class CollectiveCSVFile(CSVFile):
+    def writerow(self, **kwargs: Unpack[CollectiveFields]): ...
 
 
 # Path
@@ -90,8 +92,8 @@ class PathFields(DMFields):
     Model_Length: int | None
 
 
-class PathCSVFile(CSVFile[PathFields]):
-    fields = PathFields
+class PathCSVFile(CSVFile):
+    def writerow(self, **kwargs: Unpack[PathFields]): ...
 
 
 # Accept
@@ -100,8 +102,8 @@ class AcceptFields(DMFields):
     Accept: bool
 
 
-class AcceptCSVFile(CSVFile[AcceptFields]):
-    fields = AcceptFields
+class AcceptCSVFile(CSVFile):
+    def writerow(self, **kwargs: Unpack[AcceptFields]): ...
 
 
 # Changes
@@ -110,8 +112,8 @@ class ChangesFields(DMFields):
     Changes: int
 
 
-class ChangesCSVFile(CSVFile[ChangesFields]):
-    fields = ChangesFields
+class ChangesCSVFile(CSVFile):
+    def writerow(self, **kwargs: Unpack[ChangesFields]): ...
 
 
 # Clean
@@ -120,8 +122,8 @@ class CleanFields(DMFields):
     Total: int
 
 
-class CleanCSVFile(CSVFile[CleanFields]):
-    fields = CleanFields
+class CleanCSVFile(CSVFile):
+    def writerow(self, **kwargs: Unpack[CleanFields]): ...
 
 
 # Compromise
@@ -132,5 +134,5 @@ class CompromiseFields(ExperimentFields):
     Changes: int
 
 
-class CompromiseCSVFile(CSVFile[CompromiseFields]):
-    fields = CompromiseFields
+class CompromiseCSVFile(CSVFile):
+    def writerow(self, **kwargs: Unpack[CompromiseFields]): ...

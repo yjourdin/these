@@ -1,4 +1,7 @@
+from concurrent.futures import ProcessPoolExecutor
 from itertools import permutations, product
+from operator import attrgetter
+from time import monotonic
 from typing import Any, NamedTuple, cast
 
 import numpy as np
@@ -13,7 +16,6 @@ from src.preference_structure.utils import complementary_preference, divide_pref
 from src.random import RNGParam, SeedLike, rng_
 from src.rmp.permutation import all_max_adjacent_distance
 from src.srmp.model import SRMPModel, SRMPParamFlag
-from src.utils import tolist
 
 from .formulation.srmp import MIPSRMP
 from .formulation.srmp_accept import MIPSRMPAccept
@@ -26,9 +28,9 @@ from .formulation.srmp_group_lexicographic import MIPSRMPGroupLexicographicOrder
 from .mip import MIP
 
 
-class MIPResult(NamedTuple):
-    best_model: Model | None = None
-    best_objective: float | None = None
+class MIPResult[M: Model, O: float](NamedTuple):
+    best_model: M | None = None
+    best_objective: O | None = None
     time: float = 0
 
 
@@ -52,11 +54,12 @@ def learn_mip(
     reference_models: list[SRMPModel] | None = None,
     lexicographic_order_distance: int = 0,
     inconsistencies: bool = False,
+    nb_cpus: int = 1,
     *args: Any,
     **kwargs: Any,
-) -> MIPResult:
+):
     if model_type.model is not ModelEnum.SRMP:
-        return MIPResult()
+        return MIPResult[Model, float]()
 
     NB_DM = len(comparisons)
     DMS = range(NB_DM)
@@ -64,11 +67,6 @@ def learn_mip(
     alternatives = alternatives.subtable(
         list(set.union(*(set(comparisons[dm].elements) for dm in DMS)))  # type: ignore
     )
-
-    best_model = None
-    best_objective: float | None = None
-    time = 0
-    time_left = max_time
 
     preference_relations_list: list[list[P]] = []
     indifference_relations_list: list[list[I]] = []
@@ -118,182 +116,230 @@ def learn_mip(
 
     rng_(rng_lexicographic_order).shuffle(lexicographic_orders)
 
-    for lexicographic_order in lexicographic_orders:
-        if time_left >= 1:
-            mip: MIP[Any, Any, Any]
-            if lex_order_shared:
-                lexicographic_order = cast(list[int], tolist(lexicographic_order))
-                if NB_DM == 1:
-                    if reference_model:
-                        mip = MIPSRMPAccept(
-                            *args,
-                            alternatives=alternatives,
-                            preference_relations=preference_relations,
-                            indifference_relations=indifference_relations,
-                            lexicographic_order=lexicographic_order,
-                            model=reference_model,
-                            profiles_amp=profiles_amp,
-                            weights_amp=weights_amp,
-                            time_limit=time_left,
-                            seed=seed_mip,
-                            **kwargs,
-                        )
-                    else:
-                        mip = MIPSRMP(
-                            *args,
-                            alternatives=alternatives,
-                            preference_relations=preference_relations,
-                            indifference_relations=indifference_relations,
-                            lexicographic_order=lexicographic_order,
-                            inconsistencies=inconsistencies,
-                            best_fitness=best_objective,
-                            time_limit=time_left,
-                            seed=seed_mip,
-                            **kwargs,
-                        )
-                elif collective:
-                    comparisons_refused = comparisons_refused or []
-                    preference_to_accept_list: list[list[P]] = []
-                    indifference_to_accept_list: list[list[I]] = []
-                    for comp in comparisons_refused:
-                        comp_complementary = complementary_preference(comp)
+    NB_CPUS = max(nb_cpus // len(lexicographic_orders), 1)
 
-                        preference_to_accept, indifference_to_accept = (
-                            divide_preferences(comp_complementary)
-                        )
-                        preference_to_accept_list.append(preference_to_accept)
-                        indifference_to_accept_list.append(indifference_to_accept)
+    sense = min
 
-                    comparisons_accepted = comparisons_accepted or PreferenceStructure()
-                    preference_accepted_list, indifference_accepted_list = (
-                        divide_preferences(comparisons_accepted)
+    if lex_order_shared:
+        if NB_DM == 1:
+            if reference_model:
+                mips = [
+                    MIPSRMPAccept(
+                        *args,
+                        alternatives=alternatives,
+                        preference_relations=preference_relations,
+                        indifference_relations=indifference_relations,
+                        lexicographic_order=lexicographic_order,
+                        model=reference_model,
+                        profiles_amp=profiles_amp,
+                        weights_amp=weights_amp,
+                        time_limit=max_time,
+                        seed=seed_mip,
+                        nb_cpus=NB_CPUS,
+                        **kwargs,
                     )
+                    for lexicographic_order in lexicographic_orders
+                ]
 
-                    if reference_model:
-                        mip = MIPSRMPCollectiveDistance(
-                            *args,
-                            alternatives=alternatives,
-                            preference_relations=preference_relations_list,
-                            indifference_relations=indifference_relations_list,
-                            lexicographic_order=lexicographic_order,
-                            preferences_changed=preferences_changes,
-                            preference_to_accept=preference_to_accept_list,
-                            indifference_to_accept=indifference_to_accept_list,
-                            preference_accepted=preference_accepted_list,
-                            indifference_accepted=indifference_accepted_list,
-                            model=reference_model,
-                            profiles_amp=profiles_amp,
-                            weights_amp=weights_amp,
-                            best_objective=best_objective,
-                            time_limit=time_left,
-                            seed=seed_mip,
-                            **kwargs,
-                        )
-                    elif reference_models:
-                        mip = MIPSRMPCollectiveBound(
-                            *args,
-                            alternatives=alternatives,
-                            preference_relations=preference_relations_list,
-                            indifference_relations=indifference_relations_list,
-                            lexicographic_order=lexicographic_order,
-                            preferences_changed=preferences_changes,
-                            preference_to_accept=preference_to_accept_list,
-                            indifference_to_accept=indifference_to_accept_list,
-                            preference_accepted=preference_accepted_list,
-                            indifference_accepted=indifference_accepted_list,
-                            models=reference_models,
-                            best_objective=best_objective,
-                            time_limit=time_left,
-                            seed=seed_mip,
-                            **kwargs,
-                        )
-                    else:
-                        mip = MIPSRMPCollective(
-                            *args,
-                            alternatives=alternatives,
-                            preference_relations=preference_relations_list,
-                            indifference_relations=indifference_relations_list,
-                            lexicographic_order=lexicographic_order,
-                            preferences_changed=preferences_changes,
-                            preference_to_accept=preference_to_accept_list,
-                            indifference_to_accept=indifference_to_accept_list,
-                            preference_accepted=preference_accepted_list,
-                            indifference_accepted=indifference_accepted_list,
-                            best_objective=best_objective,
-                            time_limit=time_left,
-                            seed=seed_mip,
-                            **kwargs,
-                        )
-                else:
-                    if close:
-                        mip = MIPSRMPGroupClose(
-                            *args,
-                            alternatives=alternatives,
-                            preference_relations=preference_relations_list,
-                            indifference_relations=indifference_relations_list,
-                            lexicographic_order=lexicographic_order,
-                            inconsistencies=inconsistencies,
-                            time_limit=time_left,
-                            seed=seed_mip,
-                            **kwargs,
-                        )
-                    else:
-                        mip = MIPSRMPGroupLexicographicOrder(
-                            *args,
-                            alternatives=alternatives,
-                            preference_relations=preference_relations_list,
-                            indifference_relations=indifference_relations_list,
-                            lexicographic_order=lexicographic_order,
-                            shared_params=shared_params,
-                            inconsistencies=inconsistencies,
-                            best_fitness=best_objective,
-                            time_limit=time_left,
-                            **kwargs,
-                        )
             else:
-                lexicographic_order = cast(list[list[int]], tolist(lexicographic_order))
-                mip = MIPSRMPGroup(
-                    *args,
-                    alternatives=alternatives,
-                    preference_relations=preference_relations_list,
-                    indifference_relations=indifference_relations_list,
-                    lexicographic_order=lexicographic_order,
-                    shared_params=shared_params,
-                    inconsistencies=inconsistencies,
-                    best_fitness=best_objective,
-                    time_limit=time_left,
-                    seed=seed_mip,
-                    **kwargs,
-                )
-
-            model = mip.learn()
-
-            time += mip.prob.solutionCpuTime
-            time_left = max_time - time
-            status = mip.prob.status
-            objective = mip.prob.objective
-
-            if model is not None:
-                if collective:
-                    best_model = model
-                    best_objective = cast(int, value(objective))
-
-                    if best_objective == sum(preferences_changes):
-                        break
-                else:
-                    best_model = model
-                    best_objective = (
-                        (
-                            cast(int, value(objective))
-                            / sum(len(comparisons[dm]) for dm in DMS)
-                            if status > 0
-                            else 0
-                        )
-                        if objective
-                        else 1
+                mips = [
+                    MIPSRMP(
+                        *args,
+                        alternatives=alternatives,
+                        preference_relations=preference_relations,
+                        indifference_relations=indifference_relations,
+                        lexicographic_order=lexicographic_order,
+                        inconsistencies=inconsistencies,
+                        time_limit=max_time,
+                        seed=seed_mip,
+                        nb_cpus=NB_CPUS,
+                        **kwargs,
                     )
+                    for lexicographic_order in lexicographic_orders
+                ]
+                sense = max
+        elif collective:
+            comparisons_refused = comparisons_refused or []
+            preference_to_accept_list: list[list[P]] = []
+            indifference_to_accept_list: list[list[I]] = []
+            for comp in comparisons_refused:
+                comp_complementary = complementary_preference(comp)
 
-                    if best_objective == 1:
-                        break
+                preference_to_accept, indifference_to_accept = divide_preferences(
+                    comp_complementary
+                )
+                preference_to_accept_list.append(preference_to_accept)
+                indifference_to_accept_list.append(indifference_to_accept)
 
-    return MIPResult(best_model, best_objective, time)
+            comparisons_accepted = comparisons_accepted or PreferenceStructure()
+            preference_accepted_list, indifference_accepted_list = divide_preferences(
+                comparisons_accepted
+            )
+
+            if reference_model:
+                mips = [
+                    MIPSRMPCollectiveDistance(
+                        *args,
+                        alternatives=alternatives,
+                        preference_relations=preference_relations_list,
+                        indifference_relations=indifference_relations_list,
+                        lexicographic_order=lexicographic_order,
+                        preferences_changed=preferences_changes,
+                        preference_to_accept=preference_to_accept_list,
+                        indifference_to_accept=indifference_to_accept_list,
+                        preference_accepted=preference_accepted_list,
+                        indifference_accepted=indifference_accepted_list,
+                        model=reference_model,
+                        profiles_amp=profiles_amp,
+                        weights_amp=weights_amp,
+                        time_limit=max_time,
+                        seed=seed_mip,
+                        nb_cpus=NB_CPUS,
+                        **kwargs,
+                    )
+                    for lexicographic_order in lexicographic_orders
+                ]
+            elif reference_models:
+                mips = [
+                    MIPSRMPCollectiveBound(
+                        *args,
+                        alternatives=alternatives,
+                        preference_relations=preference_relations_list,
+                        indifference_relations=indifference_relations_list,
+                        lexicographic_order=lexicographic_order,
+                        preferences_changed=preferences_changes,
+                        preference_to_accept=preference_to_accept_list,
+                        indifference_to_accept=indifference_to_accept_list,
+                        preference_accepted=preference_accepted_list,
+                        indifference_accepted=indifference_accepted_list,
+                        models=reference_models,
+                        time_limit=max_time,
+                        seed=seed_mip,
+                        nb_cpus=NB_CPUS,
+                        **kwargs,
+                    )
+                    for lexicographic_order in lexicographic_orders
+                ]
+            else:
+                mips = [
+                    MIPSRMPCollective(
+                        *args,
+                        alternatives=alternatives,
+                        preference_relations=preference_relations_list,
+                        indifference_relations=indifference_relations_list,
+                        lexicographic_order=lexicographic_order,
+                        preferences_changed=preferences_changes,
+                        preference_to_accept=preference_to_accept_list,
+                        indifference_to_accept=indifference_to_accept_list,
+                        preference_accepted=preference_accepted_list,
+                        indifference_accepted=indifference_accepted_list,
+                        time_limit=max_time,
+                        seed=seed_mip,
+                        nb_cpus=NB_CPUS,
+                        **kwargs,
+                    )
+                    for lexicographic_order in lexicographic_orders
+                ]
+        else:
+            if close:
+                mips = [
+                    MIPSRMPGroupClose(
+                        *args,
+                        alternatives=alternatives,
+                        preference_relations=preference_relations_list,
+                        indifference_relations=indifference_relations_list,
+                        lexicographic_order=lexicographic_order,
+                        inconsistencies=inconsistencies,
+                        time_limit=max_time,
+                        seed=seed_mip,
+                        nb_cpus=NB_CPUS,
+                        **kwargs,
+                    )
+                    for lexicographic_order in lexicographic_orders
+                ]
+            else:
+                mips = [
+                    MIPSRMPGroupLexicographicOrder(
+                        *args,
+                        alternatives=alternatives,
+                        preference_relations=preference_relations_list,
+                        indifference_relations=indifference_relations_list,
+                        lexicographic_order=lexicographic_order,
+                        shared_params=shared_params,
+                        inconsistencies=inconsistencies,
+                        time_limit=max_time,
+                        seed=seed_mip,
+                        nb_cpus=NB_CPUS,
+                        **kwargs,
+                    )
+                    for lexicographic_order in lexicographic_orders
+                ]
+                sense = max
+    else:
+        mips = [
+            MIPSRMPGroup(
+                *args,
+                alternatives=alternatives,
+                preference_relations=preference_relations_list,
+                indifference_relations=indifference_relations_list,
+                lexicographic_order=lexicographic_order,
+                shared_params=shared_params,
+                inconsistencies=inconsistencies,
+                time_limit=max_time,
+                seed=seed_mip,
+                nb_cpus=NB_CPUS,
+                **kwargs,
+            )
+            for lexicographic_order in lexicographic_orders
+        ]
+        sense = max
+
+    with ProcessPoolExecutor(nb_cpus) as process_pool:
+        try:
+            tic = monotonic()
+            best_model, best_objective, _ = sense(
+                process_pool.map(mip_result, mips, timeout=max_time),
+                key=attrgetter("best_objective"),
+            )
+            toc = monotonic()
+            return MIPResult(best_model, best_objective, toc - tic)
+        except TimeoutError:
+            return MIPResult[Model, float]()
+
+
+def mip_result[M: Model](mip: MIP[M, Any, Any]):
+    return MIPResult[M, float](
+        mip.learn(), cast(float, value(mip.prob.objective)), mip.prob.solutionCpuTime
+    )
+
+    #         model = mip.learn()
+
+    #         time += mip.prob.solutionCpuTime
+    #         time_left = max_time - time
+    #         status = mip.prob.status
+    #         objective = mip.prob.objective
+
+    #         if model is not None:
+    #             if collective:
+    #                 best_model = model
+    #                 best_objective = cast(int, value(objective))
+
+    #                 if best_objective == sum(preferences_changes):
+    #                     break
+    #             else:
+    #                 best_model = model
+    #                 best_objective = (
+    #                     (
+    #                         cast(int, value(objective))
+    #                         / sum(len(comparisons[dm]) for dm in DMS)
+    #                         if status > 0
+    #                         else 0
+    #                     )
+    #                     if objective
+    #                     else 1
+    #                 )
+
+    #                 if best_objective == 1:
+    #                     break
+
+    # return MIPResult(best_model, best_objective, time)

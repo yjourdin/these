@@ -200,7 +200,7 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
 
                     # Constraints on the weighted local concordances
                     self.prob += self.vars["omega"][a][h][j] <= self.vars["w"][j]
-                    self.prob += self.vars["omega"][a][h][j] >= 0
+                    # self.prob += self.vars["omega"][a][h][j] >= 0
                     self.prob += (
                         self.vars["omega"][a][h][j] <= self.vars["delta"][a][h][j]
                     )
@@ -209,9 +209,15 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                         >= self.vars["delta"][a][h][j] + self.vars["w"][j] - 1
                     )
 
+                    # if h > 1:
+                    #     self.prob += self.vars["omega"][a][h][j] <= self.vars["omega"][a][h-1][j]
+
         # Constraints on the preference ranking variables
         for index in preference_relations_union_indices:
             self.prob += self.vars["s"][index][self.params.sigma[self.params.k]] == 1
+
+            # for h in self.params.profile_indices:
+            #     self.prob += self.vars["s"][index][self.params.sigma[h - 1]] <= self.vars["s"][index][self.params.sigma[h]]
 
         for h in self.params.profile_indices:
             # Constraints on the preferences

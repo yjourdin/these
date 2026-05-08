@@ -4,7 +4,14 @@ from typing import Any, cast
 
 import numpy as np
 from mcda.relations import I, P
-from pulp import LpBinary, LpProblem, LpVariable, lpSum, value  # type: ignore
+from pulp import (  # type: ignore
+    LpBinary,
+    LpMinimize,
+    LpProblem,
+    LpVariable,
+    lpSum,
+    value,
+)
 
 from src.constants import EPSILON
 from src.performance_table.normal_performance_table import NormalPerformanceTable
@@ -94,7 +101,7 @@ class MIPSRMPAccept(MIP[SRMPModel, MIPSRMPAcceptVars, MIPSRMPAcceptParams]):
         # LP problem #
         ##############
 
-        self.prob = LpProblem("SRMP_Elicitation")
+        self.prob = LpProblem("SRMP_Elicitation", LpMinimize)
 
         ###############
         # Constraints #

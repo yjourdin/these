@@ -44,8 +44,8 @@ if ARGS.reference:
 seed_lex, seed_mip = seed_(ARGS.seed).spawn(2)
 
 
-# Learn MIP
-best_model, best_fitness, time = learn_mip(
+# Generate MIP
+best_model, best_objective, time = learn_mip(
     GroupModelEnum((
         ARGS.model,
         reduce(lambda x, y: x | y, ARGS.shared, SRMPParamFlag(0)),
@@ -76,4 +76,4 @@ best_model, best_fitness, time = learn_mip(
 # Write results
 ARGS.output.write(best_model.to_json() if best_model else "")
 writer = csv.writer(ARGS.result, "unix")
-writer.writerow([best_fitness, time])
+writer.writerow([best_objective, time])

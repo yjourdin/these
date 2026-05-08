@@ -58,19 +58,15 @@ def main(args: ArgumentsGroupDecision):
     # Write configs
     for config in args.config:
         csv_file = DIR.csv_files["configs"]
-        csv_file.writerow(
-            csv_file.fields(Id=config.id, Method=config.method, Config=config.to_dict())
-        )
+        csv_file.writerow(Id=config.id, Method=config.method, Config=config.to_dict())
 
     # Write hyperparameters
     for group_parameters in args.group:
         csv_file = DIR.csv_files["group_parameters"]
         csv_file.writerow(
-            csv_file.fields(
-                Id=group_parameters.id,
-                Gen=group_parameters.gen,
-                Accept=group_parameters.accept,
-            )
+            Id=group_parameters.id,
+            Gen=group_parameters.gen,
+            Accept=group_parameters.accept,
         )
 
     # Task dict

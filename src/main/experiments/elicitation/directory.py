@@ -6,11 +6,7 @@ from src.utils import filename_csv, filename_json
 
 from ...directory import Directory
 from .config import Config
-from .csv_files import (
-    ConfigCSVFile,
-    TestCSVFile,
-    TrainCSVFile,
-)
+from .csv_files import ConfigCSVFile, TestCSVFile, TrainCSVFile
 
 
 class DirectoryElicitation(Directory):

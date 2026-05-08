@@ -1,78 +1,32 @@
-import csv
-import io
 from time import thread_time
 
-from mcda.internal.core.interfaces import Learner
+from src.dataclass import dataclass
+from src.random import RNG
 
-from src.dataclass import Dataclass, dataclass
-from src.random import RNGParam, rng_
-
-from .neighbor import Neighbor
-from .objective import Objective
+from .iterative import Iterative
 
 
 @dataclass
-class RandomWalk[S](Learner[S], Dataclass):
-    neighbor: Neighbor[S]
-    objective: Objective[S]
-    init_sol: S
-    rng: RNGParam = None
-    max_time: int | None = None
-    max_it: int | None = None
-    log_file: io.StringIO | None = None
-
-    def _learn(
-        self,
-        initial_sol: S,
-        rng: RNGParam = None,
-    ):
-        rng = rng_(rng)
-        # Initialise
-        sol = initial_sol
-        obj = self.objective(sol)
-        start_time = thread_time()
-        self.time = thread_time() - start_time
-        self.it = 0
-        self.non_improving_it = 0
-
-        if self.log_file:
-            log_writer = csv.DictWriter(
-                self.log_file,
-                (
-                    "It",
-                    "Non-improving it",
-                    "Time",
-                    "Sol",
-                    "Obj",
-                ),
-                dialect="unix",
-            )
-            log_writer.writeheader()
-
-        # Stopping criterion
-        while ((self.max_time is None) or (self.time < self.max_time)) and (
-            (self.max_it is None) or (self.it < self.max_it)
-        ):
+class RandomWalk[S](Iterative[S]):
+    def main_loop(self, rng: RNG):
+        while not self.stop():
             # New iteration
-            self.time = thread_time() - start_time
+            self.time = thread_time() - self.start_time
             self.it += 1
             self.non_improving_it += 1
 
             # Neighbor model
-            sol = self.neighbor(sol, rng)
-            obj = self.objective(sol)
+            self.current_sol = self.neighbor(self.current_sol, rng)
+            self.current_obj = self.objective(self.current_sol)
 
-            if self.log_file:
-                log_writer.writerow(  # type: ignore
-                    {
-                        "It": self.it,
-                        "Non-improving it": self.non_improving_it,
-                        "Time": self.time,
-                        "Sol": sol,
-                        "Obj": obj,
-                    }
+            if hasattr(self, "log_writer"):
+                self.log_writer.writerow(
+                    self.LogFields(
+                        It=self.it,
+                        Non_improving_it=self.non_improving_it,
+                        Time=self.time,
+                        Current_sol=self.current_sol,
+                        Current_obj=self.current_obj,
+                    )
                 )
-        return sol
-
-    def learn(self):
-        return self._learn(self.init_sol, self.rng)
+        return self.current_sol

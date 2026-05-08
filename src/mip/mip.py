@@ -23,7 +23,6 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
     vars: Vars = field(init=False)
     params: Params = field(init=False)
     prob: LpProblem = field(init=False)
-    objective: float | None = field(init=False)
     solver: LpSolver = field(init=False)
     time_limit: InitVar[float] = DEFAULT_MAX_TIME
     seed: InitVar[SeedLike | None] = None
@@ -40,7 +39,6 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
         **kw: Any,
     ):
         self.prob = LpProblem()
-        self.objective = None
         seed = int_(seed)
 
         kwargs: dict[str, Any] = {
