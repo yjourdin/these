@@ -13,4 +13,5 @@ class TaskFields(CSVFields):
 
 
 class TaskCSVFile(CSVFile):
-    def writerow(self, **kwargs: Unpack[TaskFields]): ...
+    def writerow(self, **kwargs: Unpack[TaskFields]):
+        return super().writerow(**kwargs)

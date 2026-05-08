@@ -15,7 +15,8 @@ class GroupParametersFields(CSVFields):
 
 
 class GroupParametersCSVFile(CSVFile):
-    def writerow(self, **kwargs: Unpack[GroupParametersFields]): ...
+    def writerow(self, **kwargs: Unpack[GroupParametersFields]):
+        return super().writerow(**kwargs)
 
 
 # Experiment
@@ -62,7 +63,8 @@ class MieFields(CSVFields):
 
 
 class MieCSVFile(CSVFile):
-    def writerow(self, **kwargs: Unpack[MieFields]): ...
+    def writerow(self, **kwargs: Unpack[MieFields]):
+        return super().writerow(**kwargs)
 
 
 # Iteration
@@ -82,7 +84,8 @@ class CollectiveFields(IterationFields):
 
 
 class CollectiveCSVFile(CSVFile):
-    def writerow(self, **kwargs: Unpack[CollectiveFields]): ...
+    def writerow(self, **kwargs: Unpack[CollectiveFields]):
+        return super().writerow(**kwargs)
 
 
 # Path
@@ -93,7 +96,8 @@ class PathFields(DMFields):
 
 
 class PathCSVFile(CSVFile):
-    def writerow(self, **kwargs: Unpack[PathFields]): ...
+    def writerow(self, **kwargs: Unpack[PathFields]):
+        return super().writerow(**kwargs)
 
 
 # Accept
@@ -103,7 +107,8 @@ class AcceptFields(DMFields):
 
 
 class AcceptCSVFile(CSVFile):
-    def writerow(self, **kwargs: Unpack[AcceptFields]): ...
+    def writerow(self, **kwargs: Unpack[AcceptFields]):
+        return super().writerow(**kwargs)
 
 
 # Changes
@@ -113,7 +118,8 @@ class ChangesFields(DMFields):
 
 
 class ChangesCSVFile(CSVFile):
-    def writerow(self, **kwargs: Unpack[ChangesFields]): ...
+    def writerow(self, **kwargs: Unpack[ChangesFields]):
+        return super().writerow(**kwargs)
 
 
 # Clean
@@ -123,7 +129,8 @@ class CleanFields(DMFields):
 
 
 class CleanCSVFile(CSVFile):
-    def writerow(self, **kwargs: Unpack[CleanFields]): ...
+    def writerow(self, **kwargs: Unpack[CleanFields]):
+        return super().writerow(**kwargs)
 
 
 # Compromise
@@ -135,4 +142,5 @@ class CompromiseFields(ExperimentFields):
 
 
 class CompromiseCSVFile(CSVFile):
-    def writerow(self, **kwargs: Unpack[CompromiseFields]): ...
+    def writerow(self, **kwargs: Unpack[CompromiseFields]):
+        return super().writerow(**kwargs)

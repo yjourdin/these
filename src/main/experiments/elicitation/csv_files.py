@@ -15,7 +15,8 @@ class ConfigFields(CSVFields):
 
 
 class ConfigCSVFile(CSVFile):
-    def writerow(self, **kwargs: Unpack[ConfigFields]): ...
+    def writerow(self, **kwargs: Unpack[ConfigFields]):
+        return super().writerow(**kwargs)
 
 
 # Experiment
@@ -46,7 +47,8 @@ class TrainFields(ExperimentFields):
 
 
 class TrainCSVFile(CSVFile):
-    def writerow(self, **kwargs: Unpack[TrainFields]): ...
+    def writerow(self, **kwargs: Unpack[TrainFields]):
+        return super().writerow(**kwargs)
 
 
 # Test
@@ -58,4 +60,5 @@ class TestFields(ExperimentFields):
 
 
 class TestCSVFile(CSVFile):
-    def writerow(self, **kwargs: Unpack[TestFields]): ...
+    def writerow(self, **kwargs: Unpack[TestFields]):
+        return super().writerow(**kwargs)
