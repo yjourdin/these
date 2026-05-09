@@ -119,7 +119,8 @@ def learn_mip(
 
     lexicographic_orders = lexicographic_orders.tolist()
 
-    NB_CPUS = max(nb_cpus // len(lexicographic_orders), 1)
+    NB_CPUS_MIP = max(nb_cpus // len(lexicographic_orders), 1)
+    NB_WORKERS = nb_cpus // NB_CPUS_MIP
 
     sense = min
 
@@ -138,7 +139,7 @@ def learn_mip(
                         weights_amp=weights_amp,
                         time_limit=max_time,
                         seed=seed_mip,
-                        nb_cpus=NB_CPUS,
+                        nb_cpus=NB_CPUS_MIP,
                         **kwargs,
                     )
                     for lexicographic_order in lexicographic_orders
@@ -155,7 +156,7 @@ def learn_mip(
                         inconsistencies=inconsistencies,
                         time_limit=max_time,
                         seed=seed_mip,
-                        nb_cpus=NB_CPUS,
+                        nb_cpus=NB_CPUS_MIP,
                         **kwargs,
                     )
                     for lexicographic_order in lexicographic_orders
@@ -197,7 +198,7 @@ def learn_mip(
                         weights_amp=weights_amp,
                         time_limit=max_time,
                         seed=seed_mip,
-                        nb_cpus=NB_CPUS,
+                        nb_cpus=NB_CPUS_MIP,
                         **kwargs,
                     )
                     for lexicographic_order in lexicographic_orders
@@ -218,7 +219,7 @@ def learn_mip(
                         models=reference_models,
                         time_limit=max_time,
                         seed=seed_mip,
-                        nb_cpus=NB_CPUS,
+                        nb_cpus=NB_CPUS_MIP,
                         **kwargs,
                     )
                     for lexicographic_order in lexicographic_orders
@@ -238,7 +239,7 @@ def learn_mip(
                         indifference_accepted=indifference_accepted_list,
                         time_limit=max_time,
                         seed=seed_mip,
-                        nb_cpus=NB_CPUS,
+                        nb_cpus=NB_CPUS_MIP,
                         **kwargs,
                     )
                     for lexicographic_order in lexicographic_orders
@@ -255,7 +256,7 @@ def learn_mip(
                         inconsistencies=inconsistencies,
                         time_limit=max_time,
                         seed=seed_mip,
-                        nb_cpus=NB_CPUS,
+                        nb_cpus=NB_CPUS_MIP,
                         **kwargs,
                     )
                     for lexicographic_order in lexicographic_orders
@@ -272,7 +273,7 @@ def learn_mip(
                         inconsistencies=inconsistencies,
                         time_limit=max_time,
                         seed=seed_mip,
-                        nb_cpus=NB_CPUS,
+                        nb_cpus=NB_CPUS_MIP,
                         **kwargs,
                     )
                     for lexicographic_order in lexicographic_orders
@@ -290,14 +291,14 @@ def learn_mip(
                 inconsistencies=inconsistencies,
                 time_limit=max_time,
                 seed=seed_mip,
-                nb_cpus=NB_CPUS,
+                nb_cpus=NB_CPUS_MIP,
                 **kwargs,
             )
             for lexicographic_order in lexicographic_orders
         ]
         sense = max
 
-    with ProcessPoolExecutor(nb_cpus) as process_pool:
+    with ProcessPoolExecutor(NB_WORKERS) as process_pool:
         try:
             tic = monotonic()
             best_model, best_objective, _ = sense(
