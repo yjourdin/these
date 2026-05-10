@@ -299,16 +299,20 @@ def learn_mip(
         sense = max
 
     with ProcessPoolExecutor(NB_WORKERS) as process_pool:
+        tic = monotonic()
+        result = MIPResult[Model, float]()
         try:
-            tic = monotonic()
             best_model, best_objective, _ = sense(
                 process_pool.map(mip_result, mips, timeout=max_time),
                 key=attrgetter("best_objective"),
             )
-            toc = monotonic()
-            return MIPResult(best_model, best_objective, toc - tic)
+
+            result._replace(best_model=best_model, best_objective=best_objective)
         except (TimeoutError, TypeError):
-            return MIPResult[Model, float]()
+            ...
+        toc = monotonic()
+        result._replace(time=toc - tic)
+        return result
 
 
 def mip_result[M: Model](mip: MIP[M, Any, Any]):

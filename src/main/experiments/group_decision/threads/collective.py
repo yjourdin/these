@@ -6,7 +6,6 @@ from typing import Any
 
 from src.methods import MethodEnum
 from src.preference_structure.io import from_csv, to_csv
-from src.utils import CustomException
 
 from ....init_directory import DIR
 from ....task import FutureTask, TaskResult, result_dict, result_list
