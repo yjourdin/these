@@ -1,4 +1,4 @@
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from itertools import permutations, product
 from operator import attrgetter
 from time import monotonic
@@ -298,12 +298,12 @@ def learn_mip(
         ]
         sense = max
 
-    with ProcessPoolExecutor(NB_WORKERS) as process_pool:
+    with ThreadPoolExecutor(NB_WORKERS) as thread_pool:
         tic = monotonic()
         result = MIPResult[Model, float]()
         try:
             best_model, best_objective, _ = sense(
-                process_pool.map(mip_result, mips, timeout=max_time),
+                thread_pool.map(mip_result, mips, timeout=max_time),
                 key=attrgetter("best_objective"),
             )
 
