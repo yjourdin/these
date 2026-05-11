@@ -146,24 +146,24 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
 
         self.prob = LpProblem("SRMP_Elicitation", LpMinimize)
 
-        # self.prob += self.vars["S"]
-        self.prob += self.vars["S"] * max(len(self.preference_relations[dm]) + len(self.indifference_relations[dm]) for dm in self.params.DM) + (
-            lpSum([self.preferences_changed[dm] for dm in self.params.DM])
-            + sum(
-                lpSum([
-                    self.vars["s"][preference_relations_union.index(r)][0]
-                    for r in self.preference_relations[dm]
-                ])
-                for dm in self.params.DM
-            )
-            + sum(
-                lpSum([
-                    self.vars["s_star"][indifference_relations_union.index(r)]
-                    for r in self.indifference_relations[dm]
-                ])
-                for dm in self.params.DM
-            )
-        ) / len(self.params.DM)
+        self.prob += self.vars["S"]
+        # self.prob += self.vars["S"] * max(len(self.preference_relations[dm]) + len(self.indifference_relations[dm]) for dm in self.params.DM) + (
+        #     lpSum([self.preferences_changed[dm] for dm in self.params.DM])
+        #     + sum(
+        #         lpSum([
+        #             self.vars["s"][preference_relations_union.index(r)][0]
+        #             for r in self.preference_relations[dm]
+        #         ])
+        #         for dm in self.params.DM
+        #     )
+        #     + sum(
+        #         lpSum([
+        #             self.vars["s_star"][indifference_relations_union.index(r)]
+        #             for r in self.indifference_relations[dm]
+        #         ])
+        #         for dm in self.params.DM
+        #     )
+        # ) / len(self.params.DM)
 
         ###############
         # Constraints #

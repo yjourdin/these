@@ -307,11 +307,13 @@ def learn_mip(
                 key=attrgetter("best_objective"),
             )
 
-            result._replace(best_model=best_model, best_objective=best_objective)
+            result = result._replace(
+                best_model=best_model, best_objective=best_objective
+            )
         except (TimeoutError, TypeError):
             ...
         toc = monotonic()
-        result._replace(time=toc - tic)
+        result = result._replace(time=toc - tic)
         return result
 
 
