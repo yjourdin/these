@@ -124,7 +124,7 @@ def collective_thread(
 
             time_left -= time_Mc
             time_left_per_it -= time_Mc
-            if (time_left < 1) or (time_left_per_it < 1):
+            if time_left < 1:  # or (time_left_per_it < 1):
                 break
 
             if not result_Mc:
@@ -249,7 +249,7 @@ def collective_thread(
 
                 time_left -= max(result.time for result in results_P)
                 time_left_per_it -= max(result.time for result in results_P)
-                if (time_left < 1) or (time_left_per_it < 1):
+                if time_left < 1:  # or (time_left_per_it < 1):
                     break
                 if not all(result.res for result in results_P):
                     break
