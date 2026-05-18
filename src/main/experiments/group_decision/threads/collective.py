@@ -111,7 +111,7 @@ def collective_thread(
         ):
             future_Mc = thread_pool.submit(
                 task_thread,
-                task_Mc,
+                task_Mc,  # pyright: ignore[reportUnknownArgumentType]
                 {
                     "seed": args["seeds"].Mc[args["Mc_id"]],
                     "max_time": min(time_left, time_left_per_it),
