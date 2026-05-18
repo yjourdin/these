@@ -35,7 +35,8 @@ class CollectiveObjective(Objective[Model], Dataclass):
     performance_table: PerformanceTableType
     comparisons: list[PreferenceStructure]
     preferences_changes: list[int]
-    comparisons_refused: list[PreferenceStructure]
+    comparisons_accepted: PreferenceStructure
+    comparisons_refused: PreferenceStructure
     M: int = field(init=False)
     nb_DM: int = field(init=False)
 
@@ -48,16 +49,22 @@ class CollectiveObjective(Objective[Model], Dataclass):
 
         ranks = sol.rank_series(self.performance_table).to_dict()
 
-        for R in self.comparisons_refused:
-            if not comparisons_ranking(R, ranks):
-                result += self.M ** self.nb_DM
+        if not_accepted := comparisons_ranking(self.comparisons_accepted, ranks):
+            result += len(not_accepted) * self.M ^ self.nb_DM
+
+        if set(self.comparisons_refused) != set(
+            refused := comparisons_ranking(self.comparisons_refused, ranks)
+        ):
+            result += (
+                len(self.comparisons_refused) - len(refused)
+            ) * self.M ^ self.nb_DM
 
         tup = sorted(
             self.preferences_changes[dm]
             + len(comparisons_ranking(self.comparisons[dm], ranks))
             for dm in range(self.nb_DM)
         )
-        result += sum(x * self.M**i for (i, x) in enumerate(tup))
+        result += sum(x * self.M ^ i for (i, x) in enumerate(tup))
 
         return result
 

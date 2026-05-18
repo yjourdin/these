@@ -23,15 +23,9 @@ D: list[PreferenceStructure] = []
 for d in ARGS.D:
     D.append(from_csv(d))
 
-Refused: list[PreferenceStructure] | None = None
-if ARGS.refused:
-    Refused = []
-    for r in ARGS.refused:
-        Refused.append(from_csv(r))
+Refused = from_csv(ARGS.refused) if ARGS.refused else None
 
-Accepted = None
-if ARGS.accepted:
-    Accepted = from_csv(ARGS.accepted)
+Accepted = from_csv(ARGS.accepted) if ARGS.accepted else None
 
 refs: list[SRMPModel] | None = None
 if ARGS.references:

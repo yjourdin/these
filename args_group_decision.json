@@ -1,5 +1,5 @@
 {
-    "name": "time_per_it_2",
+    "name": "time_per_it_test",
     "jobs": 10,
     "seed": 0,
     "max_time": 3600,
@@ -12,13 +12,13 @@
         100
     ],
     "M": [
-        3, 4
+        3
     ],
     "Ko": [
-        1, 2, 3
+        1
     ],
     "N_bc": [
-        10, 20, 30, 40, 50
+        10
     ],
     "method": [
         "MIP"

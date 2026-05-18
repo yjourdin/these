@@ -120,8 +120,7 @@ class PathCSVFile(CSVFile):
 
 # Accept
 class AcceptFields(DMFields):
-    T: int | None
-    Accept: bool
+    T: int
 
 
 class AcceptCSVFile(CSVFile):

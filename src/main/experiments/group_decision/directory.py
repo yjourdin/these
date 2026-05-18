@@ -29,11 +29,12 @@ class DirectoryGroupDecision(Directory):
         Mie: Path
         Mcp: Path
         Mc: Path
+        Mp: Path
         Dcp: Path
         Dc: Path
         C: Path
         Dr: Path
-        Cr: Path
+        Dp: Path
         P: Path
 
     class CSVFiles(Directory.CSVFiles):
@@ -60,11 +61,12 @@ class DirectoryGroupDecision(Directory):
             Mie=self.dirs["root"] / "Mie",
             Mcp=self.dirs["root"] / "Mcp",
             Mc=self.dirs["root"] / "Mc",
+            Mp=self.dirs["root"] / "Mp",
             Dcp=self.dirs["root"] / "Dcp",
             Dc=self.dirs["root"] / "Dc",
             C=self.dirs["root"] / "C",
             Dr=self.dirs["root"] / "Dr",
-            Cr=self.dirs["root"] / "Cr",
+            Dp=self.dirs["root"] / "Dp",
             P=self.dirs["root"] / "P",
         )
 
@@ -301,7 +303,6 @@ class DirectoryGroupDecision(Directory):
         Mo_id: int,
         group_size: int,
         group: GroupParameters,
-        dm_id: int,
         Mi_id: int,
         n: int,
         same_alt: bool,
@@ -318,7 +319,7 @@ class DirectoryGroupDecision(Directory):
     ):
         return self.dirs["Dr"] / filename_csv(locals())
 
-    def Cr(
+    def Mp(
         self,
         m: int,
         ntr: int,
@@ -339,10 +340,38 @@ class DirectoryGroupDecision(Directory):
         Mie_config: MIPConfig | None,
         Mie_id: int,
         path: bool,
-        P_id: int,
+        id: int,
         it: int,
+        t: int,
     ):
-        return self.dirs["Cr"] / filename_csv(locals())
+        return self.dirs["Mp"] / filename_csv(locals())
+
+    def Dp(
+        self,
+        m: int,
+        ntr: int,
+        Atr_id: int,
+        k: int,
+        Mo_id: int,
+        group_size: int,
+        group: GroupParameters,
+        dm_id: int,
+        Mi_id: int,
+        n: int,
+        same_alt: bool,
+        D_id: int,
+        method: MethodEnum,
+        config: Config,
+        Mc_id: int,
+        Mie: bool,
+        Mie_config: MIPConfig | None,
+        Mie_id: int,
+        path: bool,
+        id: int,
+        it: int,
+        t: int,
+    ):
+        return self.dirs["Dp"] / filename_csv(locals())
 
     def P(
         self,
@@ -367,6 +396,5 @@ class DirectoryGroupDecision(Directory):
         path: bool,
         id: int,
         it: int,
-        t: int,
     ):
         return self.dirs["P"] / filename_csv(locals())

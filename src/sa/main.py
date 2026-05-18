@@ -56,7 +56,8 @@ def create_sa(
     max_it_non_improving: int | None = None,
     log_file: TextIO | None = None,
     preferences_changes: list[int] | None = None,
-    comparisons_refused: list[PreferenceStructure] | None = None,
+    comparisons_accepted: PreferenceStructure | None = None,
+    comparisons_refused: PreferenceStructure | None = None,
     rng_init: RNGParam = None,
     rng_sa: RNGParam = None,
     nb_cpus: int = 1,
@@ -67,7 +68,8 @@ def create_sa(
 
     # Comparisons constraints
     preferences_changes = preferences_changes or [0] * NB_DM
-    comparisons_refused = comparisons_refused or []
+    comparisons_accepted = comparisons_accepted or PreferenceStructure()
+    comparisons_refused = comparisons_refused or PreferenceStructure()
 
     # Alternatives
     alternatives = alternatives.subtable(
@@ -136,7 +138,7 @@ def create_sa(
         FitnessObjective(alternatives, comparisons[0])
         if NB_DM == 1
         else CollectiveObjective(
-            alternatives, comparisons, preferences_changes, comparisons_refused
+            alternatives, comparisons, preferences_changes, comparisons_accepted, comparisons_refused
         )
     )
 

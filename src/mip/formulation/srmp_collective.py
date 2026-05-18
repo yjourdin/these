@@ -55,8 +55,8 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
     indifference_relations: list[list[I]]
     lexicographic_order: Sequence[int]
     preferences_changed: list[int]
-    preference_to_accept: list[list[P]]
-    indifference_to_accept: list[list[I]]
+    preference_refused: list[P]
+    indifference_refused: list[I]
     preference_accepted: list[P]
     indifference_accepted: list[I]
     gamma: float = EPSILON
@@ -78,12 +78,10 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                     self.preference_relations[dm] for dm in self.params.DM
                 )
             )
-            | set(
-                itertools.chain.from_iterable(
-                    pref_refused for pref_refused in self.preference_to_accept
-                )
-            )
             | set(self.preference_accepted)
+            | {P(r.b, r.a) for r in self.preference_refused}
+            | {P(r.a, r.b) for r in self.indifference_refused}
+            | {P(r.b, r.a) for r in self.indifference_refused}
         )
         preference_relations_union_indices = range(len(self.preference_relations_union))
         # Binary comparisons with indifference
@@ -93,12 +91,8 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                     self.indifference_relations[dm] for dm in self.params.DM
                 )
             )
-            | set(
-                itertools.chain.from_iterable(
-                    indif_refused for indif_refused in self.indifference_to_accept
-                )
-            )
             | set(self.indifference_accepted)
+            | {I(r.a, r.b) for r in self.preference_refused}
         )
         indifference_relations_union_indices = range(
             len(self.indifference_relations_union)
@@ -284,34 +278,35 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                     <= self.vars["s_star"][index]
                 )
 
+        # Constraint on accepted preferences
+        for r in self.preference_accepted:
+            self.vars["s"][self.preference_relations_union.index(r)][0].setInitialValue(
+                0
+            )
+            self.vars["s"][self.preference_relations_union.index(r)][0].fixValue()
+
+        for r in self.indifference_accepted:
+            self.vars["s_star"][
+                self.indifference_relations_union.index(r)
+            ].setInitialValue(0)
+            self.vars["s_star"][self.indifference_relations_union.index(r)].fixValue()
+
         # Constraint on refused preferences
-        for index in range(len(self.preference_to_accept)):
+        for r in self.preference_refused:
             self.prob += (
-                lpSum([
-                    self.vars["s"][self.preference_relations_union.index(r)][0]
-                    for r in self.preference_to_accept[index]
-                ])
-                + lpSum([
-                    self.vars["s_star"][self.indifference_relations_union.index(r)]
-                    for r in self.indifference_to_accept[index]
-                ])
-                <= len(self.preference_to_accept[index])
-                + len(self.indifference_to_accept[index])
-                - 1
+                self.vars["s"][self.preference_relations_union.index(P(r.b, r.a))][0]
+                + self.vars["s_star"][
+                    self.indifference_relations_union.index(I(r.a, r.b))
+                ]
+                <= 1
             )
 
-        # Constraint on accepted preferences
-        self.prob += (
-            lpSum([
-                self.vars["s"][self.preference_relations_union.index(r)][0]
-                for r in self.preference_accepted
-            ])
-            + lpSum([
-                self.vars["s_star"][self.indifference_relations_union.index(r)]
-                for r in self.indifference_accepted
-            ])
-            <= 0
-        )
+        for r in self.indifference_refused:
+            self.prob += (
+                self.vars["s"][self.preference_relations_union.index(P(r.a, r.b))][0]
+                + self.vars["s"][self.preference_relations_union.index(P(r.b, r.a))][0]
+                <= 1
+            )
 
         # Constraints on minimum number of preferences changes
         for dm in self.params.DM:

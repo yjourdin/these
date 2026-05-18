@@ -5,6 +5,7 @@ from operator import attrgetter
 from typing import Any
 
 from mcda.relations import PreferenceStructure
+from mcda.types import Relation
 from pandas import read_csv
 
 from src.methods import MethodEnum
@@ -346,7 +347,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.it,
         )
 
-    def Dr_file(self, dir: DirectoryGroupDecision, dm_id: int, it: int):
+    def Dr_file(self, dir: DirectoryGroupDecision):
         return dir.Dr(
             self.m,
             self.ntr,
@@ -355,7 +356,6 @@ class AbstractCollectiveTask(AbstractDTask):
             self.Mo_id,
             self.group_size,
             self.group,
-            dm_id,
             self.Mi_id,
             self.nbc,
             self.same_alt,
@@ -368,32 +368,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.Mie_id,
             self.path,
             self.P_id,
-            it,
-        )
-
-    def Cr_file(self, dir: DirectoryGroupDecision, dm_id: int, it: int):
-        return dir.Cr(
-            self.m,
-            self.ntr,
-            self.Atr_id,
-            self.ko,
-            self.Mo_id,
-            self.group_size,
-            self.group,
-            dm_id,
-            self.Mi_id,
-            self.nbc,
-            self.same_alt,
-            self.D_id,
-            self.method,
-            self.config,
-            self.Mc_id,
-            self.Mie,
-            self.Mie_config,
-            self.Mie_id,
-            self.path,
-            self.P_id,
-            it,
+            self.it,
         )
 
     def Mcp_file(self, dir: DirectoryGroupDecision, id: int):
@@ -550,9 +525,9 @@ class CollectiveMIPTask(AbstractCollectiveTask):
 
             # D_closure.append(d)
 
-        # Acc_set: set[Relation] = set.intersection(*[set(d) for d in D])
-        # ACC = PreferenceStructure(list(Acc_set), validate=False)
-        ACC = PreferenceStructure()
+        Acc_set: set[Relation] = set.intersection(*[set(d) for d in D])
+        ACC = PreferenceStructure(list(Acc_set), validate=False)
+        # ACC = PreferenceStructure()
 
         for d in D:
             d -= ACC
@@ -563,16 +538,20 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             for changes in C_reader:
                 C.append(int(changes[0]))
 
-        R: list[PreferenceStructure] = []
-        for dm_id in range(self.group_size):
-            for it in range(self.it):
-                if (Cr_file := self.Cr_file(dir, dm_id, it)).exists():
-                    with Cr_file.open("r") as f:
-                        if (RC := from_csv(f)) not in R:
-                            R.append(RC)
-                if (Dr_file := self.Dr_file(dir, dm_id, it)).exists():
-                    with Dr_file.open("r") as f:
-                        R.append(from_csv(f))
+        # R: list[PreferenceStructure] = []
+        # for dm_id in range(self.group_size):
+        #     for it in range(self.it):
+        #         if (Cr_file := self.Cr_file(dir, dm_id, it)).exists():
+        #             with Cr_file.open("r") as f:
+        #                 if (RC := from_csv(f)) not in R:
+        #                     R.append(RC)
+        #         if (Dr_file := self.Dr_file(dir, dm_id, it)).exists():
+        #             with Dr_file.open("r") as f:
+        #                 R.append(from_csv(f))
+        R = PreferenceStructure()
+        if (Dr_file := self.Dr_file(dir)).exists():
+            with Dr_file.open("r") as f:
+                R = from_csv(f)  # pyright: ignore[reportConstantRedefinition]
 
         Mie: list[SRMPModel] | None = []
         for dm_id in range(self.group_size):
@@ -615,12 +594,12 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             ThreadPoolExecutor(self.config.nb_cpus) as thread_pool,
             catchtime() as time,
         ):
-            results = thread_pool.map(mip_result, mips)
+            results = list(thread_pool.map(mip_result, mips))
 
         optimal = all(result.optimal for result in results)
-        sorted_results = sorted(results, key=attrgetter("best_objective"))
+        results.sort(key=attrgetter("best_objective"))
 
-        if (best_model := sorted_results[0].best_model) is not None:
+        if (best_model := results[0].best_model) is not None:
             with self.Mc_file(dir).open("w") as f:
                 f.write(best_model.to_json())
 
@@ -637,7 +616,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                 )
 
         for Mcp_id in range(self.nb_Mcp):
-            if (best_model := sorted_results[Mcp_id].best_model) is not None:
+            if (best_model := results[Mcp_id].best_model) is not None:
                 with self.Mcp_file(dir, Mcp_id).open("w") as f:
                     f.write(best_model.to_json())
 
@@ -677,11 +656,11 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             P_id=self.P_id,
             It=self.it,
             Time=time(),
-            Objective=sorted_results[0].best_objective,
+            Objective=results[0].best_objective,
             Optimal=optimal,
         )
 
-        return sorted_results[0].best_model is not None
+        return results[0].best_model is not None
 
     def Mie_file(self, dir: DirectoryGroupDecision, dm_id: int):
         assert self.Mie_config
@@ -757,9 +736,9 @@ class CollectiveSATask(AbstractCollectiveTask):
 
             # D_closure.append(d)
 
-        # Acc_set: set[Relation] = set.intersection(*[set(d) for d in D])
-        # ACC = PreferenceStructure(list(Acc_set), validate=False)
-        ACC = PreferenceStructure()
+        Acc_set: set[Relation] = set.intersection(*[set(d) for d in D])
+        ACC = PreferenceStructure(list(Acc_set), validate=False)
+        # ACC = PreferenceStructure()
 
         for d in D:
             d -= ACC
@@ -770,16 +749,17 @@ class CollectiveSATask(AbstractCollectiveTask):
             for changes in C_reader:
                 C.append(int(changes[0]))
 
-        R: list[PreferenceStructure] = []
-        for dm_id in range(self.group_size):
-            for it in range(self.it):
-                if (Cr_file := self.Cr_file(dir, dm_id, it)).exists():
-                    with Cr_file.open("r") as f:
-                        if (RC := from_csv(f)) not in R:
-                            R.append(RC)
-                if (Dr_file := self.Dr_file(dir, dm_id, it)).exists():
-                    with Dr_file.open("r") as f:
-                        R.append(from_csv(f))
+        # R: list[PreferenceStructure] = []
+        # for dm_id in range(self.group_size):
+        #     for it in range(self.it):
+        #         if (Cr_file := self.Cr_file(dir, dm_id, it)).exists():
+        #             with Cr_file.open("r") as f:
+        #                 if (RC := from_csv(f)) not in R:
+        #                     R.append(RC)
+        #         if (Dr_file := self.Dr_file(dir, dm_id, it)).exists():
+        #             with Dr_file.open("r") as f:
+        #                 R.append(from_csv(f))
+        R = from_csv(self.Dr_file(dir))
 
         rng_init, rng_sa = self.rng(seed).spawn(2)
 
@@ -803,6 +783,7 @@ class CollectiveSATask(AbstractCollectiveTask):
             max_it=self.config.max_it,
             max_it_non_improving=self.config.max_it_non_improving,
             preferences_changes=C,
+            comparisons_accepted=ACC,
             comparisons_refused=R,
             rng_init=rng_init,
             rng_sa=rng_sa,
@@ -813,12 +794,12 @@ class CollectiveSATask(AbstractCollectiveTask):
             ProcessPoolExecutor(self.config.nb_cpus) as process_pool,
             catchtime() as time,
         ):
-            results = process_pool.map(sa_result, sas)
+            results = list(process_pool.map(sa_result, sas))
 
-        sorted_results = sorted(results, key=attrgetter("best_objective"))
+        results.sort(key=attrgetter("best_objective"))
 
         for Mcp_id in range(self.nb_Mcp):
-            best_model = sorted_results[Mcp_id].best_model
+            best_model = results[Mcp_id].best_model
 
             with self.Mcp_file(dir, Mcp_id).open("w") as f:
                 f.write(best_model.to_json())
@@ -836,7 +817,7 @@ class CollectiveSATask(AbstractCollectiveTask):
                 )
 
         if self.nb_Mcp == 1:
-            best_model = sorted_results[0].best_model
+            best_model = results[0].best_model
             with self.Mc_file(dir).open("w") as f:
                 f.write(best_model.to_json())
 
@@ -876,7 +857,7 @@ class CollectiveSATask(AbstractCollectiveTask):
             P_id=self.P_id,
             It=self.it,
             Time=time(),
-            Objective=sorted_results[0].best_objective,
+            Objective=results[0].best_objective,
             Optimal=False,
         )
 
@@ -1002,6 +983,8 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 Mcp = SRMPModel.from_json(f.read())
                 Mcps.append(Mcp)
 
+        rng_path, rng_order = self.rng(seed).spawn(2)
+
         if self.path:
             R: list[PreferenceStructure] = []
             for Dr_file in self.Dr_file(dir).parent.iterdir():
@@ -1012,7 +995,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 Mcps,
                 D,
                 A,
-                self.rng(seed),
+                rng_path,
                 min(max_time, self.config.max_time)
                 if max_time is not None
                 else self.config.max_time,
@@ -1022,16 +1005,32 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 compute_preference_path(model_paths[0], D, A, R) if model_paths else []
             )
         else:
-            model_paths = {}
+            model_paths = {i: Mcp for i, Mcp in enumerate(Mcps)}
             time = 0
             preference_path = [
                 D,
                 random_comparisons(A, Mcps[0], pairs=D.elements_pairs_relations),
             ]
 
+        comparisons_order: list[Relation] = []
+        D1 = D
+        for D2 in preference_path[1:]:
+            changes = list(set(D2) - set(D1))
+            for i in rng_order.permutation(len(changes)):
+                comparisons_order.append(changes[int(i)])
+            D1 = D2  # pyright: ignore[reportConstantRedefinition]
+
+        with self.P_file(dir).open("w") as f:
+            to_csv(PreferenceStructure(comparisons_order, False), f)
+
+        t = None
+        for t, model in enumerate(model_paths[0]):
+            with self.Mp_file(dir, t).open("w") as f:
+                f.write(model.to_json())
+
         t = None
         for t, preferences in enumerate(preference_path):
-            with self.P_file(dir, t).open("w") as f:
+            with self.Dp_file(dir, t).open("w") as f:
                 to_csv(preferences, f)
 
         if self.path:
@@ -1072,8 +1071,59 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
     def Di_file(self, dir: DirectoryGroupDecision, dm_id: int | None = None):
         return super().Di_file(dir, self.dm_id)
 
-    def P_file(self, dir: DirectoryGroupDecision, t: int):
+    def P_file(self, dir: DirectoryGroupDecision):
         return dir.P(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.group,
+            self.dm_id,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.method,
+            self.config,
+            self.Mc_id,
+            self.Mie,
+            self.Mie_config,
+            self.Mie_id,
+            self.path,
+            self.P_id,
+            self.it,
+        )
+
+    def Mp_file(self, dir: DirectoryGroupDecision, t: int):
+        return dir.Mp(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.group,
+            self.dm_id,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.method,
+            self.config,
+            self.Mc_id,
+            self.Mie,
+            self.Mie_config,
+            self.Mie_id,
+            self.path,
+            self.P_id,
+            self.it,
+            t,
+        )
+
+    def Dp_file(self, dir: DirectoryGroupDecision, t: int):
+        return dir.Dp(
             self.m,
             self.ntr,
             self.Atr_id,
@@ -1104,16 +1154,15 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
         dm_id: int | None = None,
         it: int | None = None,
     ):
-        return super().Dr_file(dir, self.dm_id, self.it)
+        return super().Dr_file(dir)
 
     def done(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any):
-        return self.P_file(dir, 0).exists()
+        return self.Dp_file(dir, 0).exists()
 
 
 @dataclass(frozen=True)
 class AcceptPTask(PreferencePathTask):
     name = "AcceptP"
-    t: int = field(hash=False)
 
     def task(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any) -> Any:
         with self.Mi_file(dir).open("r") as f:
@@ -1122,27 +1171,41 @@ class AcceptPTask(PreferencePathTask):
         with self.A_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
-        with self.P_file(dir).open("r") as f:
+        with self.Di_file(dir).open("r") as f:
             D = from_csv(f)
 
-        mips, sense = create_mip(
-            GroupModelEnum.SRMP,
-            self.ko,
-            A,
-            [D],
-            rng_(0),
-            0,
-            self.config.max_time,
-            self.lexicographic_order,
-            reference_model=Mi,
-            profiles_amp=self.group.accept.P,
-            weights_amp=self.group.accept.W,
-            lexicographic_order_distance=self.group.accept.L,
-        )
+        with self.P_file(dir).open("r") as f:
+            P = from_csv(f)
 
-        results = map(mip_result, mips)
+        t = 0
+        accept = True
+        while accept and t < len(P):
+            new_relation = P.relations[t]
+            if old_relation := D.elements_pairs_relations[new_relation.elements]:
+                D -= old_relation  # pyright: ignore[reportConstantRedefinition]
+            D += new_relation  # pyright: ignore[reportConstantRedefinition]
 
-        best_model, _, _, _ = sense.value(results, key=attrgetter("best_objective"))
+            mips, _ = create_mip(
+                GroupModelEnum.SRMP,
+                self.ko,
+                A,
+                [D],
+                rng_(0),
+                0,
+                self.config.max_time,
+                self.lexicographic_order,
+                reference_model=Mi,
+                profiles_amp=self.group.accept.P,
+                weights_amp=self.group.accept.W,
+                lexicographic_order_distance=self.group.accept.L,
+            )
+
+            accept = any(mip_result(mip).optimal for mip in mips)
+            if accept:
+                t += 1
+
+        if accept:
+            t = -1
 
         csv_file = dir.csv_files["accept"]
         csv_file.writerow(
@@ -1168,97 +1231,90 @@ class AcceptPTask(PreferencePathTask):
             P_id=self.P_id,
             It=self.it,
             Dm_id=self.dm_id,
-            T=self.t,
-            Accept=best_model is not None,
+            T=t,
         )
 
-        return best_model is not None
-
-    def P_file(self, dir: DirectoryGroupDecision, t: int | None = None):
-        return super().P_file(dir, self.t)
+        return t
 
     def done(self, *args: Any, **kwargs: Any) -> bool:
         return False
 
 
-@dataclass(frozen=True)
-class CleanTask(PreferencePathTask):
-    name = "Clean"
+# @dataclass(frozen=True)
+# class CleanTask(PreferencePathTask):
+#     name = "Clean"
 
-    def task(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any) -> Any:
-        # with self.Mi_file(dir).open("r") as f:
-        #     Mi = SRMPModel.from_json(f.read())
+#     def task(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any) -> Any:
+#         # with self.Mi_file(dir).open("r") as f:
+#         #     Mi = SRMPModel.from_json(f.read())
 
-        # with self.A_file(dir).open("r") as f:
-        #     A = NormalPerformanceTable(read_csv(f, header=None))
+#         # with self.A_file(dir).open("r") as f:
+#         #     A = NormalPerformanceTable(read_csv(f, header=None))
 
-        count = 0
-        total = 0
-        for it in range(self.it + 1):
-            if (Cr_file := self.Cr_file(dir, it)).exists():
-                # with Cr_file.open("r") as f:
-                #     R = from_csv(f)
+#         count = 0
+#         total = 0
+#         for it in range(self.it + 1):
+#             if (Cr_file := self.Cr_file(dir, it)).exists():
+#                 # with Cr_file.open("r") as f:
+#                 #     R = from_csv(f)
 
-                # removed: list[Relation] = []
-                # for r in R:
-                #     total += 1
-                #     best_model, _best_fitness, _time = learn_mip(
-                #         GroupModelEnum.SRMP,
-                #         self.ko,
-                #         A,
-                #         [PreferenceStructure(r)],
-                #         rng_(0),
-                #         0,
-                #         self.config.max_time,
-                #         self.lexicographic_order,
-                #         reference_model=Mi,
-                #         gamma=self.config.gamma,
-                #         profiles_amp=self.group.accept.P,
-                #         weights_amp=self.group.accept.W,
-                #         lexicographic_order_distance=self.group.accept.L,
-                #     )
+#                 # removed: list[Relation] = []
+#                 # for r in R:
+#                 #     total += 1
+#                 #     best_model, _best_fitness, _time = learn_mip(
+#                 #         GroupModelEnum.SRMP,
+#                 #         self.ko,
+#                 #         A,
+#                 #         [PreferenceStructure(r)],
+#                 #         rng_(0),
+#                 #         0,
+#                 #         self.config.max_time,
+#                 #         self.lexicographic_order,
+#                 #         reference_model=Mi,
+#                 #         gamma=self.config.gamma,
+#                 #         profiles_amp=self.group.accept.P,
+#                 #         weights_amp=self.group.accept.W,
+#                 #         lexicographic_order_distance=self.group.accept.L,
+#                 #     )
 
-                #     if best_model is not None:
-                #         removed.append(r)
-                #         count += 1
+#                 #     if best_model is not None:
+#                 #         removed.append(r)
+#                 #         count += 1
 
-                # if R_final := R - PreferenceStructure(removed, validate=False):
-                #     with Cr_file.open("w") as f:
-                #         to_csv(R_final, f)
-                # else:
-                Cr_file.unlink()
+#                 # if R_final := R - PreferenceStructure(removed, validate=False):
+#                 #     with Cr_file.open("w") as f:
+#                 #         to_csv(R_final, f)
+#                 # else:
+#                 Cr_file.unlink()
 
-        csv_file = dir.csv_files["clean"]
+#         csv_file = dir.csv_files["clean"]
 
-        csv_file.writerow(
-            M=self.m,
-            N_tr=self.ntr,
-            Atr_id=self.Atr_id,
-            Ko=self.ko,
-            Mo_id=self.Mo_id,
-            Group_size=self.group_size,
-            Group=self.group,
-            Mi_id=self.Mi_id,
-            N_bc=self.nbc,
-            Same_alt=self.same_alt,
-            D_id=self.D_id,
-            Method=self.method,
-            Config=self.config,
-            Mie=self.Mie,
-            Mie_config=self.Mie_config,
-            Mie_id=self.Mie_id,
-            Mc_id=self.Mc_id,
-            Nb_Mcp=self.nb_Mcp,
-            Path=self.path,
-            P_id=self.P_id,
-            It=self.it,
-            Dm_id=self.dm_id,
-            Removed=count,
-            Total=total,
-        )
+#         csv_file.writerow(
+#             M=self.m,
+#             N_tr=self.ntr,
+#             Atr_id=self.Atr_id,
+#             Ko=self.ko,
+#             Mo_id=self.Mo_id,
+#             Group_size=self.group_size,
+#             Group=self.group,
+#             Mi_id=self.Mi_id,
+#             N_bc=self.nbc,
+#             Same_alt=self.same_alt,
+#             D_id=self.D_id,
+#             Method=self.method,
+#             Config=self.config,
+#             Mie=self.Mie,
+#             Mie_config=self.Mie_config,
+#             Mie_id=self.Mie_id,
+#             Mc_id=self.Mc_id,
+#             Nb_Mcp=self.nb_Mcp,
+#             Path=self.path,
+#             P_id=self.P_id,
+#             It=self.it,
+#             Dm_id=self.dm_id,
+#             Removed=count,
+#             Total=total,
+#         )
 
-    def Cr_file(self, dir: DirectoryGroupDecision, it: int, *args: Any, **kwargs: Any):
-        return super().Cr_file(dir, self.dm_id, it)
-
-    def done(self, *args: Any, **kwargs: Any) -> bool:
-        return False
+#     def done(self, *args: Any, **kwargs: Any) -> bool:
+#         return False

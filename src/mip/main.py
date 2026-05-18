@@ -10,7 +10,7 @@ from src.constants import DEFAULT_MAX_TIME
 from src.model import Model
 from src.models import GroupModelEnum
 from src.performance_table.normal_performance_table import NormalPerformanceTable
-from src.preference_structure.utils import complementary_preference, divide_preferences
+from src.preference_structure.utils import divide_preferences
 from src.random import RNGParam, SeedLike, rng_
 from src.rmp.permutation import all_max_adjacent_distance
 from src.srmp.model import SRMPModel, SRMPParamFlag
@@ -50,7 +50,7 @@ def create_mip(
     collective: bool = False,
     close: bool = False,
     preferences_changes: list[int] | None = None,
-    comparisons_refused: list[PreferenceStructure] | None = None,
+    comparisons_refused: PreferenceStructure | None = None,
     comparisons_accepted: PreferenceStructure | None = None,
     reference_model: SRMPModel | None = None,
     profiles_amp: float = 1,
@@ -166,17 +166,21 @@ def create_mip(
                 ]
                 sense = SenseEnum.MAX
         elif collective:
-            comparisons_refused = comparisons_refused or []
-            preference_to_accept_list: list[list[P]] = []
-            indifference_to_accept_list: list[list[I]] = []
-            for comp in comparisons_refused:
-                comp_complementary = complementary_preference(comp)
+            comparisons_refused = comparisons_refused or PreferenceStructure()
+            preference_refused_list, indifference_refused_list = divide_preferences(
+                comparisons_refused
+            )
 
-                preference_to_accept, indifference_to_accept = divide_preferences(
-                    comp_complementary
-                )
-                preference_to_accept_list.append(preference_to_accept)
-                indifference_to_accept_list.append(indifference_to_accept)
+            # preference_to_accept_list: list[list[P]] = []
+            # indifference_to_accept_list: list[list[I]] = []
+            # for comp in comparisons_refused:
+            #     comp_complementary = complementary_preference(comp)
+
+            #     preference_to_accept, indifference_to_accept = divide_preferences(
+            #         comp_complementary
+            #     )
+            #     preference_to_accept_list.append(preference_to_accept)
+            #     indifference_to_accept_list.append(indifference_to_accept)
 
             comparisons_accepted = comparisons_accepted or PreferenceStructure()
             preference_accepted_list, indifference_accepted_list = divide_preferences(
@@ -192,8 +196,8 @@ def create_mip(
                         indifference_relations=indifference_relations_list,
                         lexicographic_order=lexicographic_order,
                         preferences_changed=preferences_changes,
-                        preference_to_accept=preference_to_accept_list,
-                        indifference_to_accept=indifference_to_accept_list,
+                        preference_refused=preference_refused_list,
+                        indifference_refused=indifference_refused_list,
                         preference_accepted=preference_accepted_list,
                         indifference_accepted=indifference_accepted_list,
                         model=reference_model,
@@ -215,8 +219,8 @@ def create_mip(
                         indifference_relations=indifference_relations_list,
                         lexicographic_order=lexicographic_order,
                         preferences_changed=preferences_changes,
-                        preference_to_accept=preference_to_accept_list,
-                        indifference_to_accept=indifference_to_accept_list,
+                        preference_refused=preference_refused_list,
+                        indifference_refused=indifference_refused_list,
                         preference_accepted=preference_accepted_list,
                         indifference_accepted=indifference_accepted_list,
                         models=reference_models,
@@ -236,8 +240,8 @@ def create_mip(
                         indifference_relations=indifference_relations_list,
                         lexicographic_order=lexicographic_order,
                         preferences_changed=preferences_changes,
-                        preference_to_accept=preference_to_accept_list,
-                        indifference_to_accept=indifference_to_accept_list,
+                        preference_refused=preference_refused_list,
+                        indifference_refused=indifference_refused_list,
                         preference_accepted=preference_accepted_list,
                         indifference_accepted=indifference_accepted_list,
                         time_limit=max_time,

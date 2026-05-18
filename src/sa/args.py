@@ -50,7 +50,10 @@ parser.add_argument(
     "--changes", nargs="+", type=int, help="Preferences previously changed"
 )
 parser.add_argument(
-    "--refused", nargs="+", type=argparse.FileType("r"), help="Refused preferences"
+    "--refused", type=argparse.FileType("r"), help="Refused preferences"
+)
+parser.add_argument(
+    "--accepted", type=argparse.FileType("r"), help="Accepted preferences"
 )
 parser.add_argument("--nb-cpus", default=1, type=int, help="Number of CPUs")
 

@@ -28,11 +28,9 @@ rng_init, rng_sa = (
     else rng_(ARGS.seed).spawn(2)
 )
 
-Refused: list[PreferenceStructure] | None = None
-if ARGS.refused:
-    Refused = []
-    for r in ARGS.refused:
-        Refused.append(from_csv(r))
+Refused = from_csv(ARGS.refused) if ARGS.refused else None
+
+Accepted = from_csv(ARGS.accepted) if ARGS.accepted else None
 
 # Learn SA
 sas, sense = create_sa(
@@ -52,6 +50,7 @@ sas, sense = create_sa(
     ARGS.max_it_non_improving,
     ARGS.log,
     ARGS.changes,
+    Accepted,
     Refused,
     rng_init,
     rng_sa,

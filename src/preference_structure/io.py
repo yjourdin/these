@@ -25,4 +25,4 @@ def from_csv(csvfile: Any) -> PreferenceStructure:
 
 def to_csv(comparisons: PreferenceStructure, csvfile: Any):
     writer = csv.writer(csvfile, "unix")
-    writer.writerows([str(r).split(" ") for r in comparisons.relations])
+    writer.writerows([str(r).split(" ") for r in comparisons])

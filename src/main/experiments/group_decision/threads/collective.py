@@ -4,6 +4,8 @@ from dataclasses import replace
 from shutil import copy
 from typing import Any
 
+from mcda.relations import PreferenceStructure
+
 from src.methods import MethodEnum
 from src.preference_structure.io import from_csv, to_csv
 
@@ -14,7 +16,7 @@ from ..directory import DirectoryGroupDecision
 from ..task import (
     # AcceptMcTask,
     AcceptPTask,
-    CleanTask,
+    # CleanTask,
     CollectiveMIPTask,
     CollectiveSATask,
     PreferencePathTask,
@@ -127,42 +129,42 @@ def collective_thread(
 
             if not result_Mc:
                 break
-                if args["Mie"] and it == 0:
-                    break
+                # if args["Mie"] and it == 0:
+                #     break
 
-                futures_clean: list[FutureTask] = []
-                for dm_id in DMS:
-                    task_clean = CleanTask(
-                        args["m"],
-                        args["n_tr"],
-                        args["Atr_id"],
-                        args["ko"],
-                        args["fixed_lex_order"],
-                        args["Mo_id"],
-                        args["group_size"],
-                        args["group"],
-                        args["Mi_id"],
-                        dm_id,
-                        args["n_bc"],
-                        args["same_alt"],
-                        args["D_id"],
-                        args["Mie"],
-                        args["Mie_config"],
-                        args["Mie_id"],
-                        args["method"],
-                        args["config"],
-                        args["nb_Mcp"],
-                        args["Mc_id"],
-                        args["path"],
-                        args["P_id"],
-                        it,
-                    )
+                # futures_clean: list[FutureTask] = []
+                # for dm_id in DMS:
+                #     task_clean = CleanTask(
+                #         args["m"],
+                #         args["n_tr"],
+                #         args["Atr_id"],
+                #         args["ko"],
+                #         args["fixed_lex_order"],
+                #         args["Mo_id"],
+                #         args["group_size"],
+                #         args["group"],
+                #         args["Mi_id"],
+                #         dm_id,
+                #         args["n_bc"],
+                #         args["same_alt"],
+                #         args["D_id"],
+                #         args["Mie"],
+                #         args["Mie_config"],
+                #         args["Mie_id"],
+                #         args["method"],
+                #         args["config"],
+                #         args["nb_Mcp"],
+                #         args["Mc_id"],
+                #         args["path"],
+                #         args["P_id"],
+                #         it,
+                #     )
 
-                    futures_clean.append(
-                        thread_pool.submit(task_thread, task_clean, {}, [])
-                    )
+                #     futures_clean.append(
+                #         thread_pool.submit(task_thread, task_clean, {}, [])
+                #     )
 
-                result_list(futures_clean)
+                # result_list(futures_clean)
             else:
                 # futures_accept: dict[int, FutureTask] = {}
                 # for dm_id in DMS:
@@ -257,84 +259,75 @@ def collective_thread(
 
                 dms_refusing: list[int] = []
 
-                while dms := [
-                    dm_id for dm_id in dms if tasks_P[dm_id].P_file(DIR, t).exists()
-                ]:
-                    futures_accept: dict[int, FutureTask] = {}
+                # while dms := [
+                #     dm_id for dm_id in dms if tasks_P[dm_id].Dp_file(DIR, t).exists()
+                # ]:
+                tasks_accept: dict[int, AcceptPTask] = {}
+                futures_accept: dict[int, FutureTask] = {}
+                for dm_id in dms:
+                    tasks_accept[dm_id] = AcceptPTask(
+                        args["m"],
+                        args["n_tr"],
+                        args["Atr_id"],
+                        args["ko"],
+                        args["fixed_lex_order"],
+                        args["Mo_id"],
+                        args["group_size"],
+                        args["group"],
+                        args["Mi_id"],
+                        dm_id,
+                        args["n_bc"],
+                        args["same_alt"],
+                        args["D_id"],
+                        args["Mie"],
+                        args["Mie_config"],
+                        args["Mie_id"],
+                        args["method"],
+                        args["config"],
+                        args["nb_Mcp"],
+                        args["Mc_id"],
+                        args["path"],
+                        args["P_id"],
+                        it,
+                    )
+                    futures_accept[dm_id] = thread_pool.submit(
+                        task_thread, tasks_accept[dm_id], {}, [futures_P[dm_id]]
+                    )
 
-                    for dm_id in dms:
-                        tasks_accept = AcceptPTask(
-                            args["m"],
-                            args["n_tr"],
-                            args["Atr_id"],
-                            args["ko"],
-                            args["fixed_lex_order"],
-                            args["Mo_id"],
-                            args["group_size"],
-                            args["group"],
-                            args["Mi_id"],
-                            dm_id,
-                            args["n_bc"],
-                            args["same_alt"],
-                            args["D_id"],
-                            args["Mie"],
-                            args["Mie_config"],
-                            args["Mie_id"],
-                            args["method"],
-                            args["config"],
-                            args["nb_Mcp"],
-                            args["Mc_id"],
-                            args["path"],
-                            args["P_id"],
-                            it,
-                            t,
-                        )
-                        futures_accept[dm_id] = thread_pool.submit(
-                            task_thread, tasks_accept, {}, [futures_P[dm_id]]
-                        )
+                results_accept = result_dict(futures_accept)
 
-                    results_accept = result_dict(futures_accept)
+                dms_refusing = [
+                    dm_id for dm_id, result in results_accept.items() if result.res >= 0
+                ]
 
-                    dms_refusing = [
-                        dm_id
-                        for dm_id, result in results_accept.items()
-                        if not result.res
-                    ]
-
-                    if dms_refusing:
-                        break
-
-                    t += 1
+                t = (
+                    min(int(results_accept[dm].res) for dm in dms_refusing)
+                    if dms_refusing
+                    else None
+                )
 
                 compromise_found = not dms_refusing
 
                 changes = []
                 with task_Mc.C_file(DIR).open("r", newline="") as f:
-                    C_reader = csv.reader(f, dialect="unix")
+                    C_reader = csv.reader(f, dialect="unix")  # pyright: ignore[reportUnknownArgumentType]
                     for row in C_reader:
                         changes.append(int(row[0]))
 
                 new_task_Mc = (
-                    replace(task_Mc, it=it + 1) if not compromise_found else None
+                    replace(task_Mc, it=it + 1) if not compromise_found else None  # pyright: ignore[reportUnknownArgumentType]
                 )
 
                 for dm_id in DMS:
-                    with task_Mc.Di_file(DIR, dm_id=dm_id).open("r") as f:
-                        original_D = from_csv(f)
+                    with tasks_accept[dm_id].Di_file(DIR).open("r") as f:
+                        D = from_csv(f)
 
-                    temp = 0
-                    while (temp < t) and tasks_P[dm_id].P_file(DIR, t=temp).exists():
-                        temp += 1
-                    accepted_t = temp - 1
+                    with tasks_accept[dm_id].P_file(DIR).open("r") as f:
+                        P = from_csv(f)
 
-                    with (
-                        task_Mc.Dc_file(DIR).open("r")
-                        if accepted_t == -1
-                        else tasks_P[dm_id].P_file(DIR, t=accepted_t).open("r")
-                    ) as f:
-                        accepted_D = from_csv(f)
+                    t_dm = min(t, len(P)) if t is not None else len(P)
 
-                    changes[dm_id] += len(original_D - accepted_D)
+                    changes[dm_id] += t_dm
 
                     csv_file = DIR.csv_files["changes"]
                     csv_file.writerow(
@@ -360,46 +353,31 @@ def collective_thread(
                         Nb_Mcp=args["nb_Mcp"],
                         It=it,
                         Dm_id=dm_id,
-                        T=accepted_t,
+                        T=t_dm,
                         Changes=changes[dm_id],
                     )
 
                     if new_task_Mc is not None:
-                        copy(
-                            tasks_P[dm_id].P_file(DIR, t=accepted_t),
-                            new_task_Mc.Di_file(DIR, dm_id=dm_id),
-                        )
+                        for i in range(t_dm):
+                            new_relation = P.relations[i]
+                            old_relation = P.elements_pairs_relations[
+                                new_relation.a, new_relation.b
+                            ]
+                            if old_relation:
+                                D -= old_relation  # pyright: ignore[reportConstantRedefinition]
+                            D += new_relation  # pyright: ignore[reportConstantRedefinition]
+
+                        with new_task_Mc.Di_file(DIR, dm_id=dm_id).open("w") as f:
+                            to_csv(D, f)
 
                         with new_task_Mc.C_file(DIR).open("a", newline="") as f:
-                            C_writer = csv.writer(f, dialect="unix")
+                            C_writer = csv.writer(f, dialect="unix")  # pyright: ignore[reportUnknownArgumentType]
                             C_writer.writerow([changes[dm_id]])
 
                         if dm_id in dms_refusing:
-                            copy(
-                                tasks_P[dm_id].P_file(DIR, accepted_t + 1),
-                                new_task_Mc.Dr_file(DIR, dm_id, it),
-                            )
+                            with new_task_Mc.Dr_file(DIR).open("a") as f:
+                                to_csv(PreferenceStructure(P.relations[t_dm]), f)
 
-                            with (
-                                tasks_P[dm_id]
-                                .P_file(DIR, accepted_t + 1)
-                                .open("r") as f
-                            ):
-                                refused_D = from_csv(f)
-
-                            Cr = refused_D - accepted_D
-                            # Cr: list[Relation] = []
-                            # for r in refused_D - accepted_D:
-                            #     Cr.append(r)
-                            #     if isinstance(r, I) and (
-                            #         accepted_r := accepted_D.elements_pairs_relations[
-                            #             r.a, r.b
-                            #         ]
-                            #     ):
-                            #         Cr.append(P(accepted_r.b, accepted_r.a))
-
-                            with (new_task_Mc.Cr_file(DIR, dm_id, it)).open("w") as f:
-                                to_csv(Cr, f)
                 if new_task_Mc is not None:
                     it = it + 1
                     task_Mc = new_task_Mc
