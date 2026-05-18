@@ -240,7 +240,9 @@ def collective_thread(
                         tasks_P[dm_id],
                         {
                             "seed": args["seeds"].P[args["P_id"]],
-                            "max_time": min(time_left, time_left_per_it),
+                            "max_time": min(
+                                time_left, args["time_per_it"]
+                            ),  # min(time_left, time_left_per_it),
                         },
                         [],
                     )
