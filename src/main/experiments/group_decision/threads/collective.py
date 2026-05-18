@@ -298,7 +298,7 @@ def collective_thread(
 
                 results_accept = result_dict(futures_accept)
 
-                if all(result.res == 1 for result in results_accept.values()):
+                if all((result.res == 1) for result in results_accept.values()):
                     compromise_found = True
                     t = None
                 else:

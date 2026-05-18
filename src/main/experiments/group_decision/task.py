@@ -1234,8 +1234,8 @@ class AcceptPTask(PreferencePathTask):
         accept = True
         while accept and t < len(P):
             new_relation = P.relations[t]
-            # if old_relation := D.elements_pairs_relations[new_relation.elements]:
-            #     D -= old_relation  # pyright: ignore[reportConstantRedefinition]
+            if old_relation := ACC.elements_pairs_relations[new_relation.elements]:
+                ACC -= old_relation  # pyright: ignore[reportConstantRedefinition]
             ACC += new_relation  # pyright: ignore[reportConstantRedefinition]
 
             mips, _ = create_mip(
