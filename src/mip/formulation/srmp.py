@@ -8,12 +8,7 @@ from dataclasses import InitVar, dataclass, field
 from typing import Any, cast
 
 import numpy as np
-from mcda.relations import (
-    I,
-    IndifferenceRelation,
-    P,
-    PreferenceRelation,
-)
+from mcda.relations import I, P
 from pulp import (  # type: ignore
     LpBinary,
     LpMaximize,
@@ -259,24 +254,18 @@ class MIPSRMP(MIP[SRMPModel, MIPSRMPVars, MIPSRMPParams]):
     inconsistencies: bool = True
     best_fitness: float | None = None
 
-    def create_problem(self):
-        ##############
-        # Parameters #
-        ##############
-
+    def create_parameters(self):
         self.params = MIPSRMPParams(
             A=self.alternatives.alternatives,  # type: ignore
             M=self.alternatives.criteria,  # type: ignore
             lexicographic_order=self.lexicographic_order,
         )
+
+    def create_variables(self):
         # Binary comparisons with preference
         preference_relations_indices = range(len(self.preference_relations))
         # Binary comparisons with indifference
         indifference_relations_indices = range(len(self.indifference_relations))
-
-        #############
-        # Variables #
-        #############
 
         self.vars = MIPSRMPVars(
             w=LpVariable.dicts("Weight", self.params.M, lowBound=0, upBound=1),  # type: ignore
@@ -313,22 +302,13 @@ class MIPSRMP(MIP[SRMPModel, MIPSRMPVars, MIPSRMPParams]):
             ),
         )
 
-        ##############
-        # LP problem #
-        ##############
-
+    def create_problem(self):
         self.prob = LpProblem("SRMP_Elicitation", LpMaximize)
 
         if self.inconsistencies:
-            self.prob += lpSum([
-                self.vars["s"][index][0] for index in preference_relations_indices
-            ]) + lpSum([
-                self.vars["s_star"][index] for index in indifference_relations_indices
+            self.prob += lpSum([s[0] for s in self.vars["s"].values()]) + lpSum([
+                s_star for s_star in self.vars["s_star"].values()
             ])
-
-        ###############
-        # Constraints #
-        ###############
 
         # Normalized weights
         self.prob += lpSum([self.vars["w"][j] for j in self.params.M]) == 1
@@ -371,10 +351,10 @@ class MIPSRMP(MIP[SRMPModel, MIPSRMPVars, MIPSRMPParams]):
                     )
 
         # Constraints on the preference ranking variables
-        for index in preference_relations_indices:
+        for s in self.vars["s"]:
             if not self.inconsistencies:
-                self.prob += self.vars["s"][index][self.params.sigma[0]] == 1
-            self.prob += self.vars["s"][index][self.params.sigma[self.params.k]] == 0
+                self.prob += s[self.params.sigma[0]] == 1
+            self.prob += s[self.params.sigma[self.params.k]] == 0
 
         for h in self.params.profile_indices:
             # Constraints on the preferences
@@ -454,13 +434,8 @@ class MIPSRMP(MIP[SRMPModel, MIPSRMPVars, MIPSRMPParams]):
 
         if self.inconsistencies and (self.best_fitness is not None):
             self.prob += (
-                lpSum([
-                    self.vars["s"][index][0] for index in preference_relations_indices
-                ])
-                + lpSum([
-                    self.vars["s_star"][index]
-                    for index in indifference_relations_indices
-                ])
+                lpSum([s[0] for s in self.vars["s"].values()])
+                + lpSum([s_star for s_star in self.vars["s_star"].values()])
                 >= self.best_fitness + self.gamma
             )
 
@@ -473,7 +448,7 @@ class MIPSRMP(MIP[SRMPModel, MIPSRMPVars, MIPSRMPParams]):
             for h in self.params.profile_indices
         ])
 
-        return SRMPModel(
+        self.sol = SRMPModel(
             profiles=profiles,
             weights=weights,
             lexicographic_order=[p - 1 for p in self.params.sigma[1:]],

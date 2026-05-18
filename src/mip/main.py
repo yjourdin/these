@@ -1,7 +1,5 @@
-from concurrent.futures import ThreadPoolExecutor
+from enum import Enum, member
 from itertools import permutations, product
-from operator import attrgetter
-from time import monotonic
 from typing import Any, NamedTuple, cast
 
 import numpy as np
@@ -10,7 +8,7 @@ from pulp import value  # type: ignore
 
 from src.constants import DEFAULT_MAX_TIME
 from src.model import Model
-from src.models import GroupModelEnum, ModelEnum
+from src.models import GroupModelEnum
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.preference_structure.utils import complementary_preference, divide_preferences
 from src.random import RNGParam, SeedLike, rng_
@@ -28,13 +26,19 @@ from .formulation.srmp_group_lexicographic import MIPSRMPGroupLexicographicOrder
 from .mip import MIP
 
 
+class SenseEnum(Enum):
+    MAX = member(max)
+    MIN = member(min)
+
+
 class MIPResult[M: Model, O: float](NamedTuple):
     best_model: M | None = None
     best_objective: O | None = None
     time: float = 0
+    optimal: bool = False
 
 
-def learn_mip(
+def create_mip(
     model_type: GroupModelEnum,
     k: int,
     alternatives: NormalPerformanceTable,
@@ -58,8 +62,8 @@ def learn_mip(
     *args: Any,
     **kwargs: Any,
 ):
-    if model_type.model is not ModelEnum.SRMP:
-        return MIPResult[Model, float]()
+    # if model_type.model is not ModelEnum.SRMP:
+    #     return [], SenseEnum.MIN
 
     NB_DM = len(comparisons)
     DMS = range(NB_DM)
@@ -120,9 +124,8 @@ def learn_mip(
     lexicographic_orders = lexicographic_orders.tolist()
 
     NB_CPUS_MIP = max(nb_cpus // len(lexicographic_orders), 1)
-    NB_WORKERS = nb_cpus // NB_CPUS_MIP
 
-    sense = min
+    sense = SenseEnum.MIN
 
     if lex_order_shared:
         if NB_DM == 1:
@@ -161,7 +164,7 @@ def learn_mip(
                     )
                     for lexicographic_order in lexicographic_orders
                 ]
-                sense = max
+                sense = SenseEnum.MAX
         elif collective:
             comparisons_refused = comparisons_refused or []
             preference_to_accept_list: list[list[P]] = []
@@ -278,7 +281,7 @@ def learn_mip(
                     )
                     for lexicographic_order in lexicographic_orders
                 ]
-                sense = max
+                sense = SenseEnum.MAX
     else:
         mips = [
             MIPSRMPGroup(
@@ -296,25 +299,27 @@ def learn_mip(
             )
             for lexicographic_order in lexicographic_orders
         ]
-        sense = max
+        sense = SenseEnum.MAX
 
-    with ThreadPoolExecutor(NB_WORKERS) as thread_pool:
-        tic = monotonic()
-        result = MIPResult[Model, float]()
-        try:
-            best_model, best_objective, _ = sense(
-                thread_pool.map(mip_result, mips, timeout=max_time),
-                key=attrgetter("best_objective"),
-            )
+    return (mips, sense)
 
-            result = result._replace(
-                best_model=best_model, best_objective=best_objective
-            )
-        except (TimeoutError, TypeError):
-            ...
-        toc = monotonic()
-        result = result._replace(time=toc - tic)
-        return result
+    # with ThreadPoolExecutor(NB_WORKERS) as thread_pool:
+    #     tic = monotonic()
+    #     result = MIPResult[Model, float]()
+    #     try:
+    #         best_model, best_objective, _ = sense(
+    #             thread_pool.map(mip_result, mips, timeout=max_time),
+    #             key=attrgetter("best_objective"),
+    #         )
+
+    #         result = result._replace(
+    #             best_model=best_model, best_objective=best_objective
+    #         )
+    #     except (TimeoutError, TypeError):
+    #         ...
+    #     toc = monotonic()
+    #     result = result._replace(time=toc - tic)
+    #     return result
 
 
 def mip_result[M: Model](mip: MIP[M, Any, Any]):
@@ -322,8 +327,9 @@ def mip_result[M: Model](mip: MIP[M, Any, Any]):
         mip.learn(),
         cast(float, value(objective))
         if (objective := mip.prob.objective) is not None
-        else objective,
+        else None,
         mip.prob.solutionCpuTime,
+        mip.prob.status > 0,
     )
 
     #         model = mip.learn()

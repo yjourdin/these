@@ -24,6 +24,7 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
     params: Params = field(init=False)
     prob: LpProblem = field(init=False)
     solver: LpSolver = field(init=False)
+    sol: T = field(init=False)
     time_limit: InitVar[float] = DEFAULT_MAX_TIME
     seed: InitVar[SeedLike | None] = None
     verbose: InitVar[bool] = False
@@ -38,9 +39,21 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
         *args: Any,
         **kw: Any,
     ):
-        self.prob = LpProblem()
-        seed = int_(seed)
+        self.create_solver(time_limit, int_(seed), verbose, nb_cpus)
 
+    def learn(self):
+        self.create_parameters()
+        self.create_variables()
+        self.create_problem()
+        self.prob.solve(self.solver)
+        try:
+            self.create_solution()
+        except TypeError:
+            return None
+        else:
+            return self.sol
+
+    def create_solver(self, time_limit: float, seed: int, verbose: bool, nb_cpus: int):
         kwargs: dict[str, Any] = {
             "msg": verbose,
             "threads": nb_cpus,
@@ -59,13 +72,14 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
 
         self.solver = getSolver(**kwargs)
 
-    def learn(self):
-        self.create_problem()
-        self.prob.solve(self.solver)
-        return self.create_solution() if self.prob.sol_status > 0 else None
+    @abstractmethod
+    def create_parameters(self): ...
 
     @abstractmethod
-    def create_problem(self, *args: Any, **kwargs: Any): ...
+    def create_variables(self): ...
 
     @abstractmethod
-    def create_solution(self) -> T: ...
+    def create_problem(self): ...
+
+    @abstractmethod
+    def create_solution(self): ...

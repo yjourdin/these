@@ -1,3 +1,4 @@
+from enum import Enum, member
 from typing import NamedTuple, TextIO
 
 from mcda.relations import PreferenceStructure
@@ -5,11 +6,12 @@ from mcda.relations import PreferenceStructure
 from src.constants import DEFAULT_MAX_TIME
 from src.models import ModelEnum
 from src.performance_table.normal_performance_table import NormalPerformanceTable
-from src.random import RNGParam
+from src.random import RNGParam, rng_
 from src.rmp.model import RMPModel
 from src.srmp.model import SRMPModel
 from src.utils import midpoints
 
+from ..model import Model
 from .cooling_schedule import GeometricSchedule
 from .initial_temperature import initial_temperature
 from .neighbor import (
@@ -25,6 +27,11 @@ from .objective import CollectiveObjective, FitnessObjective
 from .sa import SimulatedAnnealing
 
 
+class SenseEnum(Enum):
+    MAX = member(max)
+    MIN = member(min)
+
+
 class SAResult[M, O](NamedTuple):
     best_model: M
     best_objective: O
@@ -32,7 +39,7 @@ class SAResult[M, O](NamedTuple):
     it: int
 
 
-def learn_sa(
+def create_sa(
     model: ModelEnum,
     k: int,
     alternatives: NormalPerformanceTable,
@@ -52,6 +59,7 @@ def learn_sa(
     comparisons_refused: list[PreferenceStructure] | None = None,
     rng_init: RNGParam = None,
     rng_sa: RNGParam = None,
+    nb_cpus: int = 1,
 ):
     # DMs
     NB_DM = len(comparisons)
@@ -69,26 +77,33 @@ def learn_sa(
     # Criteria
     M = len(alternatives.criteria)  # type: ignore
 
-    # Initial solution
+    # Initial solutions
     match model:
         case ModelEnum.RMP:
-            init_sol = RMPModel.random(
-                nb_profiles=k,
-                nb_crit=M,
-                rng=rng_init,
-                profiles_values=midpoints(alternatives),
-            )
+            init_sols = [
+                RMPModel.random(
+                    nb_profiles=k,
+                    nb_crit=M,
+                    rng=rng,
+                    profiles_values=midpoints(alternatives),
+                )
+                for rng in rng_(rng_init).spawn(nb_cpus)
+            ]
         case ModelEnum.SRMP:
-            init_sol = SRMPModel.random(
-                nb_profiles=k,
-                nb_crit=M,
-                rng=rng_init,
-                profiles_values=midpoints(alternatives),
-            )
+            init_sols = [
+                SRMPModel.random(
+                    nb_profiles=k,
+                    nb_crit=M,
+                    rng=rng,
+                    profiles_values=midpoints(alternatives),
+                )
+                for rng in rng_(rng_init).spawn(nb_cpus)
+            ]
         case _:
             raise ValueError(f"{model} model not compatible")
     if lex_order:
-        init_sol.lexicographic_order = lex_order
+        for init_sol in init_sols:
+            init_sol.lexicographic_order = lex_order
 
     # Neighborhood operators
     neighbors: list[Neighbor[SRMPModel | RMPModel]] = []
@@ -135,28 +150,36 @@ def learn_sa(
             accept,
             neighbor,
             objective,
-            init_sol,
+            init_sols[0],
             rng_sa,
             max(max_time // 100, 1) if max_time else None,
             max(max_it // 100, 1) if max_it else None,
         )
 
     # Simulated Annealing
-    sa = SimulatedAnnealing(
-        neighbor,
-        objective,
-        init_sol,
-        rng_sa,
-        max_time,
-        max_it,
-        max_it_non_improving,
-        log_file,
-        t0,
-        L,
-        cooling_schedule,
-        Tf,
+    return (
+        [
+            SimulatedAnnealing(
+                neighbor,
+                objective,
+                init_sol,
+                rng,
+                max_time,
+                max_it,
+                max_it_non_improving,
+                log_file,
+                t0,
+                L,
+                cooling_schedule,
+                Tf,
+            )
+            for (init_sol, rng) in zip(init_sols, rng_(rng_sa).spawn(len(init_sols)))
+        ],
+        SenseEnum.MIN,
     )
 
+
+def sa_result[S: Model](sa: SimulatedAnnealing[S]):
     sa.learn()
 
     return SAResult(sa.best_sol, sa.best_obj, sa.time, sa.it)

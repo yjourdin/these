@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import InitVar, dataclass, field
+from itertools import chain
 from typing import Any, cast
 
 import numpy as np
@@ -63,17 +64,15 @@ class MIPSRMPGroupClose(
     inconsistencies: bool = True
     best_fitness: float | None = None
 
-    def create_problem(self):
-        ##############
-        # Parameters #
-        ##############
-
+    def create_parameters(self):
         self.params = MIPSRMPGroupCloseParams(
             A=self.alternatives.alternatives,  # type: ignore
             M=self.alternatives.criteria,  # type: ignore
             DM=range(len(self.preference_relations)),
             lexicographic_order=self.lexicographic_order,
         )
+
+    def create_variables(self):
         # Binary comparisons with preference
         preference_relations_indices = [
             range(len(self.preference_relations[dm])) for dm in self.params.DM
@@ -82,12 +81,6 @@ class MIPSRMPGroupClose(
         indifference_relations_indices = [
             range(len(self.indifference_relations[dm])) for dm in self.params.DM
         ]
-        # Number of DMs
-        NB_DM = len(self.params.DM)
-
-        #############
-        # Variables #
-        #############
 
         self.vars = MIPSRMPGroupCloseVars(
             w=LpVariable.dicts(
@@ -150,33 +143,36 @@ class MIPSRMPGroupClose(
             },
         )
 
-        ##############
-        # LP problem #
-        ##############
+    def create_problem(self):
+        # Number of DMs
+        NB_DM = len(self.params.DM)
 
         self.prob = LpProblem("SRMP_Elicitation", LpMinimize)
 
         self.prob += (
-            lpSum([
+            lpSum(
                 [
-                    1 - self.vars["s"][dm][index][0]
-                    for index in preference_relations_indices[dm]
-                ]
-                for dm in self.params.DM
-            ])
-            + lpSum([
+                    1 - s[0]
+                    for s in chain.from_iterable([
+                        list(s_dm.values()) for s_dm in self.vars["s"].values()
+                    ])
+                ]  # pyright: ignore[reportUnknownArgumentType]
+            )
+            + lpSum(
                 [
-                    1 - self.vars["s_star"][dm][index]
-                    for index in indifference_relations_indices[dm]
-                ]
-                for dm in self.params.DM
-            ])
-            + lpSum([self.vars["w_amp"][j] for j in self.params.M])
-            / (2 * len(self.params.M))
-            + lpSum([
-                [self.vars["p_amp"][h][j] for h in self.params.profile_indices]
-                for j in self.params.M
-            ])
+                    1 - s_star
+                    for s_star in chain.from_iterable([
+                        list(s_star_dm.values())
+                        for s_star_dm in self.vars["s_star"].values()
+                    ])
+                ]  # pyright: ignore[reportUnknownArgumentType]
+            )
+            + lpSum(list(self.vars["w_amp"].values())) / (2 * len(self.params.M))
+            + lpSum(
+                chain.from_iterable([
+                    list(p_amp.values()) for p_amp in self.vars["p_amp"].values()
+                ])
+            )
             / (2 * len(self.params.M) * self.params.k)
         )
 
@@ -239,12 +235,10 @@ class MIPSRMPGroupClose(
 
         # Constraints on the preference ranking varsiables
         for dm in self.params.DM:
-            for index in preference_relations_indices[dm]:
+            for s in self.vars["s"][dm].values():
                 if not self.inconsistencies:
-                    self.prob += self.vars["s"][dm][index][self.params.sigma[0]] == 1
-                self.prob += (
-                    self.vars["s"][dm][index][self.params.sigma[self.params.k]] == 0
-                )
+                    self.prob += s[self.params.sigma[0]] == 1
+                self.prob += s[self.params.sigma[self.params.k]] == 0
 
         for h in self.params.profile_indices:
             # Constraints on the preferences
@@ -325,20 +319,30 @@ class MIPSRMPGroupClose(
 
         if self.best_fitness is not None:
             self.prob += (
-                lpSum([
+                lpSum(
                     [
-                        self.vars["s"][dm][index][0]
-                        for index in preference_relations_indices[dm]
-                    ]
-                    for dm in self.params.DM
-                ])
-                + lpSum([
+                        1 - s[0]
+                        for s in chain.from_iterable([
+                            list(s_dm.values()) for s_dm in self.vars["s"].values()
+                        ])
+                    ]  # pyright: ignore[reportUnknownArgumentType]
+                )
+                + lpSum(
                     [
-                        self.vars["s_star"][dm][index]
-                        for index in indifference_relations_indices[dm]
-                    ]
-                    for dm in self.params.DM
-                ])
+                        1 - s_star
+                        for s_star in chain.from_iterable([
+                            list(s_star_dm.values())
+                            for s_star_dm in self.vars["s_star"].values()
+                        ])
+                    ]  # pyright: ignore[reportUnknownArgumentType]
+                )
+                + lpSum(list(self.vars["w_amp"].values())) / (2 * len(self.params.M))
+                + lpSum(
+                    chain.from_iterable([
+                        list(p_amp.values()) for p_amp in self.vars["p_amp"].values()
+                    ])
+                )
+                / (2 * len(self.params.M) * self.params.k)
                 >= self.best_fitness + self.gamma
             )
 
@@ -373,7 +377,7 @@ class MIPSRMPGroupClose(
             for dm in self.params.DM
         ]
 
-        return SRMPGroupModelLexicographic(
+        self.sol = SRMPGroupModelLexicographic(
             _group_size=len(self.params.DM),
             profiles=profiles,
             weights=weights,

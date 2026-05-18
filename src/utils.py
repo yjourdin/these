@@ -1,8 +1,10 @@
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from enum import Enum
 from functools import partial, reduce
 from itertools import chain, count
 from pathlib import Path
+from time import perf_counter
 from typing import Any, NamedTuple, TypeGuard, overload
 
 import numpy as np
@@ -148,3 +150,10 @@ def int_to_ind_set(x: int):
 
 def none_guard[T](x: T | None) -> TypeGuard[T]:
     return True
+
+
+@contextmanager
+def catchtime():
+    t1 = t2 = perf_counter()
+    yield lambda: t2 - t1
+    t2 = perf_counter()

@@ -1,6 +1,5 @@
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
-from functools import partial
 from operator import attrgetter
 from typing import Any, cast
 
@@ -8,17 +7,17 @@ from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
 from src.methods import MethodEnum
-from src.mip.main import learn_mip
+from src.mip.main import create_mip, mip_result
 from src.model import GroupModel, Model
 from src.models import GroupModelEnum, model
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.preference_structure.generate import noisy_comparisons, random_comparisons
 from src.preference_structure.io import from_csv, to_csv
 from src.random import SeedLike
-from src.sa.main import learn_sa
+from src.sa.main import create_sa, sa_result
 from src.test.main import test_consensus, test_distance
 from src.test.test import DistanceRankingEnum
-from src.utils import tolist
+from src.utils import catchtime, tolist
 
 from ...task import SeedTask
 from .config import Config, MIPConfig, SAConfig
@@ -38,7 +37,7 @@ class ATrainTask(AbstractMTask):
 
     def task(
         self, dir: DirectoryElicitation, seed: SeedLike, *args: Any, **kwargs: Any
-    ):
+    ) -> Any:
         A = NormalPerformanceTable.random(self.ntr, self.m, self.rng(seed))
 
         with self.A_train_file(dir).open("w") as f:
@@ -59,7 +58,7 @@ class ATestTask(AbstractMTask):
 
     def task(
         self, dir: DirectoryElicitation, seed: SeedLike, *args: Any, **kwargs: Any
-    ):
+    ) -> Any:
         A = NormalPerformanceTable.random(self.nte, self.m, self.rng(seed))
 
         with self.A_test_file(dir).open("w") as f:
@@ -83,7 +82,7 @@ class MoTask(AbstractMTask):
 
     def task(
         self, dir: DirectoryElicitation, seed: SeedLike, *args: Any, **kwargs: Any
-    ):
+    ) -> Any:
         Mo = model(self.Mo, self.group_size).random(
             nb_profiles=self.ko,
             nb_crit=self.m,
@@ -140,7 +139,7 @@ class DTask(AbstractDTask):
 
     def task(
         self, dir: DirectoryElicitation, seed: SeedLike, *args: Any, **kwargs: Any
-    ):
+    ) -> Any:
         with self.Mo_file(dir).open("r") as f:
             Mo = model(self.Mo, self.group_size).from_json(f.read())
 
@@ -208,7 +207,7 @@ class MIPTask(AbstractElicitationTask):
 
     def task(
         self, dir: DirectoryElicitation, seed: SeedLike, *args: Any, **kwargs: Any
-    ):
+    ) -> Any:
         with self.A_train_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
@@ -219,7 +218,7 @@ class MIPTask(AbstractElicitationTask):
 
         seed_lex, seed_mip = self.seed(seed).spawn(2)
 
-        best_model, best_fitness, time = learn_mip(
+        mips, sense = create_mip(
             self.Me,
             self.ke,
             A,
@@ -232,8 +231,19 @@ class MIPTask(AbstractElicitationTask):
             nb_cpus=self.config.nb_cpus,
         )
 
+        with (
+            ThreadPoolExecutor(min(len(mips), self.config.nb_cpus)) as thread_pool,
+            catchtime() as time,
+        ):
+            results = thread_pool.map(mip_result, mips)
+
+        optimal = all(result.optimal for result in results)
+        best_model, best_fitness, _, _ = sense.value(
+            results, key=attrgetter("best_objective")
+        )
+
         with self.Me_file(dir).open("w") as f:
-            f.write(best_model.to_json() if best_model else "None")
+            f.write(best_model.to_json() if (best_model and optimal) else "None")
 
         csv_file = dir.csv_files["train"]
         csv_file.writerow(
@@ -253,9 +263,11 @@ class MIPTask(AbstractElicitationTask):
             Method=MethodEnum.MIP,
             Config=self.config,
             Me_id=self.Me_id,
-            Time=time,
-            Fitness=best_fitness,
+            Time=time(),
+            Fitness=best_fitness if optimal else None,
         )
+
+        return optimal
 
 
 @dataclass(frozen=True)
@@ -266,7 +278,7 @@ class SATask(AbstractElicitationTask):
 
     def task(
         self, dir: DirectoryElicitation, seed: SeedLike, *args: Any, **kwargs: Any
-    ):
+    ) -> Any:
         with self.A_train_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
@@ -277,46 +289,32 @@ class SATask(AbstractElicitationTask):
 
         rng_init, rng_sa = self.rng(seed).spawn(2)
 
-        if (NB_CPUS := self.config.nb_cpus) == 1:
-            best_model, best_objective, time, it = learn_sa(
-                self.Me.value[0],
-                self.ke,
-                A,
-                D,
-                self.config.alpha,
-                self.config.amp,
-                self.lexicographic_order if self.fixed_lex_order else None,
-                accept=self.config.accept,
-                max_time=self.config.max_time,
-                max_it=self.config.max_it,
-                max_it_non_improving=self.config.max_it_non_improving,
-                rng_init=rng_init,
-                rng_sa=rng_sa,
-            )
-        else:
-            with ProcessPoolExecutor(NB_CPUS) as process_pool:
-                fn = partial(
-                    learn_sa,
-                    self.Me.value[0],
-                    self.ke,
-                    A,
-                    D,
-                    self.config.alpha,
-                    self.config.amp,
-                    self.lexicographic_order if self.fixed_lex_order else None,
-                    accept=self.config.accept,
-                    max_time=self.config.max_time,
-                    max_it=self.config.max_it,
-                    max_it_non_improving=self.config.max_it_non_improving,
-                    rng_init=rng_init,
-                    rng_sa=rng_sa,
-                )
-                best_model, best_objective, time, it = min(
-                    process_pool.map(
-                        fn, zip(rng_init.spawn(NB_CPUS), rng_sa.spawn(NB_CPUS))
-                    ),
-                    key=attrgetter("best_objective"),
-                )
+        sas, sense = create_sa(
+            self.Me.value[0],
+            self.ke,
+            A,
+            D,
+            self.config.alpha,
+            self.config.amp,
+            self.lexicographic_order if self.fixed_lex_order else None,
+            accept=self.config.accept,
+            max_time=self.config.max_time,
+            max_it=self.config.max_it,
+            max_it_non_improving=self.config.max_it_non_improving,
+            rng_init=rng_init,
+            rng_sa=rng_sa,
+            nb_cpus=self.config.nb_cpus,
+        )
+
+        with (
+            ProcessPoolExecutor(self.config.nb_cpus) as process_pool,
+            catchtime() as time,
+        ):
+            results = process_pool.map(sa_result, sas)
+
+        best_model, best_objective, _, it = sense.value(
+            results, key=attrgetter("best_objective")
+        )
 
         with self.Me_file(dir).open("w") as f:
             f.write(best_model.to_json())
@@ -339,7 +337,7 @@ class SATask(AbstractElicitationTask):
             Method=MethodEnum.SA,
             Config=self.config,
             Me_id=self.Me_id,
-            Time=time,
+            Time=time(),
             It=it,
             Fitness=1 - best_objective,
         )
@@ -349,7 +347,7 @@ class SATask(AbstractElicitationTask):
 class TestTask(ATestTask, AbstractElicitationTask):
     name = "Test"
 
-    def task(self, dir: DirectoryElicitation, *args: Any, **kwargs: Any):
+    def task(self, dir: DirectoryElicitation, *args: Any, **kwargs: Any) -> Any:
         with self.A_test_file(dir).open("r") as f:
             A_test = NormalPerformanceTable(read_csv(f, header=None))
 

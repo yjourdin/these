@@ -1,13 +1,14 @@
 import csv
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
-from math import inf
+from operator import attrgetter
 from typing import Any
 
 from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
 from src.methods import MethodEnum
-from src.mip.main import learn_mip
+from src.mip.main import create_mip, mip_result
 from src.models import GroupModelEnum, ModelEnum
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.preference_path.main import compute_model_paths, compute_preference_path
@@ -15,9 +16,9 @@ from src.preference_structure.generate import random_comparisons
 from src.preference_structure.io import from_csv, to_csv
 from src.preference_structure.utils import preference_structure_from_outranking
 from src.random import SeedLike, rng_
-from src.sa.main import learn_sa
+from src.sa.main import create_sa, sa_result
 from src.srmp.model import SRMPModel
-from src.utils import tolist
+from src.utils import catchtime, tolist
 
 from ...task import SeedTask
 from ..elicitation.config import Config, MIPConfig, SAConfig
@@ -207,7 +208,7 @@ class MieTask(AbstractDTask):
 
         seed_lex, seed_mip = self.seed(seed).spawn(2)
 
-        best_model, best_fitness, time = learn_mip(
+        mips, sense = create_mip(
             GroupModelEnum.SRMP,
             self.ko,
             A,
@@ -221,9 +222,21 @@ class MieTask(AbstractDTask):
             False,
             True,
             gamma=self.Mie_config.gamma,
+            nb_cpus=self.Mie_config.nb_cpus,
         )
 
-        if best_model is not None:
+        with (
+            ThreadPoolExecutor(self.Mie_config.nb_cpus) as thread_pool,
+            catchtime() as time,
+        ):
+            results = thread_pool.map(mip_result, mips)
+
+        optimal = all(result.optimal for result in results)
+        best_model, best_fitness, _, _ = sense.value(
+            results, key=attrgetter("best_objective")
+        )
+
+        if (best_model is not None) and (optimal):
             for dm_id in range(self.group_size):
                 with self.Mie_file(dir, dm_id).open("w") as f:
                     f.write(best_model[dm_id].to_json())  # type: ignore
@@ -243,7 +256,7 @@ class MieTask(AbstractDTask):
             D_id=self.D_id,
             Config=self.Mie_config,
             Mie_id=self.Mie_id,
-            Time=time,
+            Time=time(),
             Fitness=best_fitness,
         )
 
@@ -572,56 +585,63 @@ class CollectiveMIPTask(AbstractCollectiveTask):
 
         seed_lex, seed_mip = self.seed(seed).spawn(2)
 
-        global_time = 0
-        global_best_objective = inf
         seeds_mip = seed_mip.spawn(self.nb_Mcp) if self.nb_Mcp > 1 else [seed_mip]
+        seeds_lex = seed_lex.spawn(self.nb_Mcp) if self.nb_Mcp > 1 else [seed_lex]
+        mips: list[Any] = []
         for Mcp_id in range(self.nb_Mcp):
-            best_model, best_objective, time = learn_mip(
-                GroupModelEnum.SRMP,
-                self.ko,
-                A,
-                D,
-                seed_lex,
-                seeds_mip[Mcp_id],
-                int(min(max_time, self.config.max_time) / self.nb_Mcp)
-                if max_time is not None
-                else self.config.max_time,
-                self.lexicographic_order if self.fixed_lex_order else None,
-                True,
-                False,
-                C,
-                R,
-                ACC,
-                reference_models=Mie,
-                gamma=self.config.gamma,
-                nb_cpus=self.config.nb_cpus,
+            mips.extend(
+                create_mip(
+                    GroupModelEnum.SRMP,
+                    self.ko,
+                    A,
+                    D,
+                    seeds_lex[Mcp_id],
+                    seeds_mip[Mcp_id],
+                    int(min(max_time, self.config.max_time) / self.nb_Mcp)
+                    if max_time is not None
+                    else self.config.max_time,
+                    self.lexicographic_order if self.fixed_lex_order else None,
+                    True,
+                    False,
+                    C,
+                    R,
+                    ACC,
+                    reference_models=Mie,
+                    gamma=self.config.gamma,
+                    nb_cpus=self.config.nb_cpus // self.nb_Mcp,
+                )[0]
             )
-            global_time += time
-            if (best_objective is not None) and (
-                best_objective < global_best_objective
-            ):
-                global_best_objective = best_objective
+        with (
+            ThreadPoolExecutor(self.config.nb_cpus) as thread_pool,
+            catchtime() as time,
+        ):
+            results = thread_pool.map(mip_result, mips)
 
-            if best_model is not None:
+        optimal = all(result.optimal for result in results)
+        sorted_results = sorted(results, key=attrgetter("best_objective"))
+
+        if (best_model := sorted_results[0].best_model) is not None:
+            with self.Mc_file(dir).open("w") as f:
+                f.write(best_model.to_json())
+
+            with self.Dc_file(dir).open("w") as f:
+                to_csv(
+                    random_comparisons(
+                        A,
+                        best_model,
+                        pairs=set.union(
+                            *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
+                        ),
+                    ),
+                    f,
+                )
+
+        for Mcp_id in range(self.nb_Mcp):
+            if (best_model := sorted_results[Mcp_id].best_model) is not None:
                 with self.Mcp_file(dir, Mcp_id).open("w") as f:
                     f.write(best_model.to_json())
 
-                with self.Mc_file(dir).open("w") as f:
-                    f.write(best_model.to_json())
-
                 with self.Dcp_file(dir, Mcp_id).open("w") as f:
-                    to_csv(
-                        random_comparisons(
-                            A,
-                            best_model,
-                            pairs=set.union(
-                                *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
-                            ),
-                        ),
-                        f,
-                    )
-
-                with self.Dc_file(dir).open("w") as f:
                     to_csv(
                         random_comparisons(
                             A,
@@ -656,11 +676,12 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             Path=self.path,
             P_id=self.P_id,
             It=self.it,
-            Time=global_time,
-            Objective=global_best_objective,
+            Time=time(),
+            Objective=sorted_results[0].best_objective,
+            Optimal=optimal,
         )
 
-        return global_best_objective < inf
+        return sorted_results[0].best_model is not None
 
     def Mie_file(self, dir: DirectoryGroupDecision, dm_id: int):
         assert self.Mie_config
@@ -762,70 +783,74 @@ class CollectiveSATask(AbstractCollectiveTask):
 
         rng_init, rng_sa = self.rng(seed).spawn(2)
 
-        global_time = 0
-        global_best_objective = inf
-        rngs_init = rng_init.spawn(self.nb_Mcp) if self.nb_Mcp > 1 else [rng_init]
-        rngs_sa = rng_sa.spawn(self.nb_Mcp) if self.nb_Mcp > 1 else [rng_sa]
+        sas, _ = create_sa(
+            ModelEnum.SRMP,
+            self.ko,
+            A,
+            D,
+            self.config.alpha,
+            self.config.amp,
+            self.lexicographic_order if self.fixed_lex_order else None,
+            accept=self.config.accept,
+            max_time=int(
+                (
+                    min(max_time, self.config.max_time)
+                    if max_time is not None
+                    else self.config.max_time
+                )
+                / self.nb_Mcp
+            ),
+            max_it=self.config.max_it,
+            max_it_non_improving=self.config.max_it_non_improving,
+            preferences_changes=C,
+            comparisons_refused=R,
+            rng_init=rng_init,
+            rng_sa=rng_sa,
+            nb_cpus=max(self.config.nb_cpus, self.nb_Mcp),
+        )
+
+        with (
+            ProcessPoolExecutor(self.config.nb_cpus) as process_pool,
+            catchtime() as time,
+        ):
+            results = process_pool.map(sa_result, sas)
+
+        sorted_results = sorted(results, key=attrgetter("best_objective"))
 
         for Mcp_id in range(self.nb_Mcp):
-            best_model, best_objective, time, it = learn_sa(
-                ModelEnum.SRMP,
-                self.ko,
-                A,
-                D,
-                self.config.alpha,
-                self.config.amp,
-                self.lexicographic_order if self.fixed_lex_order else None,
-                accept=self.config.accept,
-                max_time=int(
-                    (
-                        min(max_time, self.config.max_time)
-                        if max_time is not None
-                        else self.config.max_time
-                    )
-                    / self.nb_Mcp
-                ),
-                max_it=self.config.max_it,
-                max_it_non_improving=self.config.max_it_non_improving,
-                preferences_changes=C,
-                comparisons_refused=R,
-                rng_init=rngs_init[Mcp_id],
-                rng_sa=rngs_sa[Mcp_id],
-            )
-            global_time += time
-            global_best_objective = min(best_objective, global_best_objective)
+            best_model = sorted_results[Mcp_id].best_model
 
-            if best_objective < inf:
-                with self.Mcp_file(dir, Mcp_id).open("w") as f:
-                    f.write(best_model.to_json())
+            with self.Mcp_file(dir, Mcp_id).open("w") as f:
+                f.write(best_model.to_json())
 
-                with self.Dcp_file(dir, Mcp_id).open("w") as f:
-                    to_csv(
-                        random_comparisons(
-                            A,
-                            best_model,
-                            pairs=set.union(
-                                *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
-                            ),
+            with self.Dcp_file(dir, Mcp_id).open("w") as f:
+                to_csv(
+                    random_comparisons(
+                        A,
+                        best_model,
+                        pairs=set.union(
+                            *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
                         ),
-                        f,
-                    )
+                    ),
+                    f,
+                )
 
-            if self.nb_Mcp == 1:
-                with self.Mc_file(dir).open("w") as f:
-                    f.write(best_model.to_json())
+        if self.nb_Mcp == 1:
+            best_model = sorted_results[0].best_model
+            with self.Mc_file(dir).open("w") as f:
+                f.write(best_model.to_json())
 
-                with self.Dc_file(dir).open("w") as f:
-                    to_csv(
-                        random_comparisons(
-                            A,
-                            best_model,
-                            pairs=set.union(
-                                *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
-                            ),
+            with self.Dc_file(dir).open("w") as f:
+                to_csv(
+                    random_comparisons(
+                        A,
+                        best_model,
+                        pairs=set.union(
+                            *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
                         ),
-                        f,
-                    )
+                    ),
+                    f,
+                )
 
         csv_file = dir.csv_files["collective"]
         csv_file.writerow(
@@ -850,11 +875,12 @@ class CollectiveSATask(AbstractCollectiveTask):
             Path=self.path,
             P_id=self.P_id,
             It=self.it,
-            Time=global_time,
-            Objective=global_best_objective,
+            Time=time(),
+            Objective=sorted_results[0].best_objective,
+            Optimal=False,
         )
 
-        return global_best_objective < inf
+        return True
 
 
 # @dataclass(frozen=True)
@@ -1099,7 +1125,7 @@ class AcceptPTask(PreferencePathTask):
         with self.P_file(dir).open("r") as f:
             D = from_csv(f)
 
-        best_model, _best_fitness, _time = learn_mip(
+        mips, sense = create_mip(
             GroupModelEnum.SRMP,
             self.ko,
             A,
@@ -1113,6 +1139,10 @@ class AcceptPTask(PreferencePathTask):
             weights_amp=self.group.accept.W,
             lexicographic_order_distance=self.group.accept.L,
         )
+
+        results = map(mip_result, mips)
+
+        best_model, _, _, _ = sense.value(results, key=attrgetter("best_objective"))
 
         csv_file = dir.csv_files["accept"]
         csv_file.writerow(

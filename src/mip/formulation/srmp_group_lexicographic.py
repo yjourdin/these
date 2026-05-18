@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import InitVar, dataclass, field
+from itertools import chain
 from typing import Any, cast
 
 import numpy as np
@@ -69,16 +70,12 @@ class MIPSRMPGroupLexicographicOrder(
     preference_relations: list[list[P]]
     indifference_relations: list[list[I]]
     lexicographic_order: Sequence[int]
-    shared_params: SRMPParamFlag = SRMPParamFlag(0)
+    shared_params: SRMPParamFlag = SRMPParamFlag.NONE
     gamma: float = EPSILON
     inconsistencies: bool = True
     best_fitness: float | None = None
 
-    def create_problem(self):
-        ##############
-        # Parameters #
-        ##############
-
+    def create_parameters(self):
         self.params = MIPSRMPGroupLexicographicOrderParams(
             profiles_shared=SRMPParamFlag.PROFILES in self.shared_params,
             weights_shared=SRMPParamFlag.WEIGHTS in self.shared_params,
@@ -87,6 +84,8 @@ class MIPSRMPGroupLexicographicOrder(
             DM=range(len(self.preference_relations)),
             lexicographic_order=self.lexicographic_order,
         )
+
+    def create_variables(self):
         # Binary comparisons with preference
         preference_relations_indices = [
             range(len(self.preference_relations[dm])) for dm in self.params.DM
@@ -95,10 +94,6 @@ class MIPSRMPGroupLexicographicOrder(
         indifference_relations_indices = [
             range(len(self.indifference_relations[dm])) for dm in self.params.DM
         ]
-
-        #############
-        # Variables #
-        #############
 
         self.vars = MIPSRMPGroupLexicographicOrderVars(
             w=LpVariable.dicts(
@@ -156,30 +151,22 @@ class MIPSRMPGroupLexicographicOrder(
             ),
         )
 
-        ##############
-        # LP problem #
-        ##############
-
+    def create_problem(self):
         self.prob = LpProblem("SRMP_Elicitation", LpMaximize)
 
         if self.inconsistencies:
             self.prob += lpSum([
-                [
-                    self.vars["s"][dm][index][0]
-                    for index in preference_relations_indices[dm]
-                ]
-                for dm in self.params.DM
+                s[0]
+                for s in chain.from_iterable([
+                    list(s_dm.values()) for s_dm in self.vars["s"].values()
+                ])
             ]) + lpSum([
-                [
-                    self.vars["s_star"][dm][index]
-                    for index in indifference_relations_indices[dm]
-                ]
-                for dm in self.params.DM
+                s_star
+                for s_star in chain.from_iterable([
+                    list(s_star_dm.values())
+                    for s_star_dm in self.vars["s_star"].values()
+                ])
             ])
-
-        ###############
-        # Constraints #
-        ###############
 
         # Normalized weights
         # for dm in self.params.DM:
@@ -236,12 +223,10 @@ class MIPSRMPGroupLexicographicOrder(
 
         # Constraints on the preference ranking varsiables
         for dm in self.params.DM:
-            for index in preference_relations_indices[dm]:
+            for s in self.vars["s"][dm].values():
                 if not self.inconsistencies:
-                    self.prob += self.vars["s"][dm][index][self.params.sigma[0]] == 1
-                self.prob += (
-                    self.vars["s"][dm][index][self.params.sigma[self.params.k]] == 0
-                )
+                    self.prob += s[self.params.sigma[0]] == 1
+                self.prob += s[self.params.sigma[self.params.k]] == 0
 
         for h in self.params.profile_indices:
             # Constraints on the preferences
@@ -335,18 +320,17 @@ class MIPSRMPGroupLexicographicOrder(
         if self.inconsistencies and (self.best_fitness is not None):
             self.prob += (
                 lpSum([
-                    [
-                        self.vars["s"][dm][index][0]
-                        for index in preference_relations_indices[dm]
-                    ]
-                    for dm in self.params.DM
+                    s[0]
+                    for s in chain.from_iterable([
+                        list(s_dm.values()) for s_dm in self.vars["s"].values()
+                    ])
                 ])
                 + lpSum([
-                    [
-                        self.vars["s_star"][dm][index]
-                        for index in indifference_relations_indices[dm]
-                    ]
-                    for dm in self.params.DM
+                    s_star
+                    for s_star in chain.from_iterable([
+                        list(s_star_dm.values())
+                        for s_star_dm in self.vars["s_star"].values()
+                    ])
                 ])
                 >= self.best_fitness + self.gamma
             )
@@ -377,7 +361,7 @@ class MIPSRMPGroupLexicographicOrder(
             ]
         )
 
-        return srmp_group_model(self.shared_params)(
+        self.sol = srmp_group_model(self.shared_params)(
             group_size=len(self.params.DM),
             profiles=profiles,
             weights=weights,

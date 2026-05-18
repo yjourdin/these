@@ -1,5 +1,7 @@
 import csv
+from concurrent.futures import ThreadPoolExecutor
 from functools import reduce
+from operator import attrgetter
 
 from mcda.relations import PreferenceStructure
 from pandas import read_csv
@@ -10,8 +12,9 @@ from src.preference_structure.io import from_csv
 from src.random import seed_
 from src.srmp.model import SRMPModel, SRMPParamFlag
 
+from ..utils import catchtime
 from .args import ARGS
-from .main import learn_mip
+from .main import create_mip, mip_result
 
 # Import data
 A = NormalPerformanceTable(read_csv(ARGS.A, header=None))
@@ -45,7 +48,7 @@ seed_lex, seed_mip = seed_(ARGS.seed).spawn(2)
 
 
 # Generate MIP
-best_model, best_objective, time = learn_mip(
+mips, sense = create_mip(
     GroupModelEnum((
         ARGS.model,
         reduce(lambda x, y: x | y, ARGS.shared, SRMPParamFlag(0)),
@@ -72,8 +75,16 @@ best_model, best_objective, time = learn_mip(
     nb_cpus=ARGS.nb_cpus,
 )
 
+with ThreadPoolExecutor(ARGS.nb_cpus) as thread_pool, catchtime() as time:
+    results = thread_pool.map(mip_result, mips)
+
+optimal = all(result.optimal for result in results)
+best_model, best_objective, _, _ = sense.value(
+    results, key=attrgetter("best_objective")
+)
+
 
 # Write results
 ARGS.output.write(best_model.to_json() if best_model else "")
 writer = csv.writer(ARGS.result, "unix")
-writer.writerow([best_objective, time])
+writer.writerow([best_objective, time(), optimal])

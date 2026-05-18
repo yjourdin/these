@@ -90,6 +90,7 @@ class DMFields(IterationFields):
 class CollectiveFields(IterationFields):
     Time: float
     Objective: float | None
+    Optimal: bool
 
 
 class CollectiveCSVFile(CSVFile):

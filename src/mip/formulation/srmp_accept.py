@@ -54,22 +54,16 @@ class MIPSRMPAccept(MIP[SRMPModel, MIPSRMPAcceptVars, MIPSRMPAcceptParams]):
     weights_amp: float
     gamma: float = EPSILON
 
-    def create_problem(self):
-        ##############
-        # Parameters #
-        ##############
-
+    def create_parameters(self):
         self.params = MIPSRMPAcceptParams(
             A=self.alternatives.alternatives,  # type: ignore
             M=self.alternatives.criteria,  # type: ignore
             lexicographic_order=self.lexicographic_order,
         )
+
+    def create_variables(self):
         # Binary comparisons with preference
         preference_relations_indices = range(len(self.preference_relations))
-
-        #############
-        # Variables #
-        #############
 
         self.vars = MIPSRMPAcceptVars(
             w=LpVariable.dicts("Weight", self.params.M, lowBound=0, upBound=1),  # type: ignore
@@ -97,15 +91,8 @@ class MIPSRMPAccept(MIP[SRMPModel, MIPSRMPAcceptVars, MIPSRMPAcceptParams]):
             ),  # type: ignore
         )
 
-        ##############
-        # LP problem #
-        ##############
-
+    def create_problem(self):
         self.prob = LpProblem("SRMP_Elicitation", LpMinimize)
-
-        ###############
-        # Constraints #
-        ###############
 
         # Normalized weights
         self.prob += lpSum([self.vars["w"][j] for j in self.params.M]) == 1
@@ -147,10 +134,10 @@ class MIPSRMPAccept(MIP[SRMPModel, MIPSRMPAcceptVars, MIPSRMPAcceptParams]):
                         >= self.vars["delta"][a][h][j] + self.vars["w"][j] - 1
                     )
 
-        # Constraints on the preference ranking varsiables
-        for index in preference_relations_indices:
-            self.prob += self.vars["s"][index][self.params.sigma[0]] == 0
-            self.prob += self.vars["s"][index][self.params.sigma[self.params.k]] == 1
+        # Constraints on the preference ranking variables
+        for s in self.vars["s"].values():
+            self.prob += s[self.params.sigma[0]] == 0
+            self.prob += s[self.params.sigma[self.params.k]] == 1
 
         for h in self.params.profile_indices:
             # Constraints on the preferences
@@ -232,7 +219,7 @@ class MIPSRMPAccept(MIP[SRMPModel, MIPSRMPAcceptVars, MIPSRMPAcceptParams]):
             for h in self.params.profile_indices
         ])
 
-        return SRMPModel(
+        self.sol = SRMPModel(
             profiles=profiles,
             weights=weights,
             lexicographic_order=[p - 1 for p in self.params.sigma[1:]],
