@@ -13,7 +13,7 @@ parser.add_argument(
 )
 parser.add_argument("-s", "--seed", type=int, help="Random seed")
 parser.add_argument(
-    "-R", nargs="+", type=argparse.FileType("r"), help="Refused comparisons"
+    "-R", type=argparse.FileType("r"), help="Refused comparisons"
 )
 parser.add_argument("--model-output", help="Output model files")
 parser.add_argument(

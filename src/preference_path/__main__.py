@@ -19,7 +19,7 @@ A = NormalPerformanceTable(read_csv(ARGS.A, header=None))
 
 D = from_csv(ARGS.D)
 
-R = [from_csv(R_file) for R_file in ARGS.R] if ARGS.R is not None else []
+R = from_csv(ARGS.R)
 
 
 # Compute model path

@@ -986,10 +986,8 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
         rng_path, rng_order = self.rng(seed).spawn(2)
 
         if self.path:
-            R: list[PreferenceStructure] = []
-            for Dr_file in self.Dr_file(dir).parent.iterdir():
-                with Dr_file.open("r") as f:
-                    R.append(from_csv(f))
+            with self.Dr_file(dir).open("r") as f:
+                R = from_csv(f)
 
             model_paths, time = compute_model_paths(
                 Mcps,
@@ -1024,7 +1022,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             to_csv(PreferenceStructure(comparisons_order, False), f)
 
         t = None
-        for t, model in enumerate(model_paths[0]):
+        for t, model in enumerate(model_paths[0] if model_paths else []):
             with self.Mp_file(dir, t).open("w") as f:
                 f.write(model.to_json())
 

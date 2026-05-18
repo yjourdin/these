@@ -1,4 +1,4 @@
-from collections.abc import Container, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 from mcda.relations import PreferenceStructure
@@ -32,11 +32,11 @@ def preference_path(
 
 
 def remove_refused(
-    path: list[PreferenceStructure], refused: Container[PreferenceStructure]
+    path: list[PreferenceStructure], refused: PreferenceStructure
 ):
     i = 1
     while i < len(path):
-        if path[i] in refused:
+        if set(path[i]) & set(refused):
             del path[i]
         else:
             i += 1
