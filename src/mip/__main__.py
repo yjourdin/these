@@ -69,8 +69,8 @@ mips, sense = create_mip(
     nb_cpus=ARGS.nb_cpus,
 )
 
-with ThreadPoolExecutor(ARGS.nb_cpus) as thread_pool, catchtime() as time:
-    results = thread_pool.map(mip_result, mips)
+with catchtime() as time, ThreadPoolExecutor(ARGS.nb_cpus) as thread_pool:
+    results = list(thread_pool.map(mip_result, mips))
 
 optimal = all(result.optimal for result in results)
 best_model, best_objective, _, _ = sense.value(

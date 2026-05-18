@@ -57,8 +57,8 @@ sas, sense = create_sa(
     ARGS.nb_cpus,
 )
 
-with ProcessPoolExecutor(ARGS.nb_cpus) as process_pool, catchtime() as time:
-    results = process_pool.map(sa_result, sas)
+with catchtime() as time, ProcessPoolExecutor(ARGS.nb_cpus) as process_pool:
+    results = list(process_pool.map(sa_result, sas))
 
 best_model, best_objective, _, it = sense.value(
     results, key=attrgetter("best_objective")

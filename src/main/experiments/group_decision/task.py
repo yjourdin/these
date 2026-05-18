@@ -227,10 +227,10 @@ class MieTask(AbstractDTask):
         )
 
         with (
-            ThreadPoolExecutor(self.Mie_config.nb_cpus) as thread_pool,
             catchtime() as time,
+            ThreadPoolExecutor(self.Mie_config.nb_cpus) as thread_pool,
         ):
-            results = thread_pool.map(mip_result, mips)
+            results = list(thread_pool.map(mip_result, mips))
 
         optimal = all(result.optimal for result in results)
         best_model, best_fitness, _, _ = sense.value(
@@ -591,8 +591,8 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                 )[0]
             )
         with (
-            ThreadPoolExecutor(self.config.nb_cpus) as thread_pool,
             catchtime() as time,
+            ThreadPoolExecutor(self.config.nb_cpus) as thread_pool,
         ):
             results = list(thread_pool.map(mip_result, mips))
 
@@ -791,8 +791,8 @@ class CollectiveSATask(AbstractCollectiveTask):
         )
 
         with (
-            ProcessPoolExecutor(self.config.nb_cpus) as process_pool,
             catchtime() as time,
+            ProcessPoolExecutor(self.config.nb_cpus) as process_pool,
         ):
             results = list(process_pool.map(sa_result, sas))
 

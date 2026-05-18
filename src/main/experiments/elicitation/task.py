@@ -232,8 +232,8 @@ class MIPTask(AbstractElicitationTask):
         )
 
         with (
-            ThreadPoolExecutor(min(len(mips), self.config.nb_cpus)) as thread_pool,
             catchtime() as time,
+            ThreadPoolExecutor(min(len(mips), self.config.nb_cpus)) as thread_pool,
         ):
             results = thread_pool.map(mip_result, mips)
 
@@ -307,8 +307,8 @@ class SATask(AbstractElicitationTask):
         )
 
         with (
-            ProcessPoolExecutor(self.config.nb_cpus) as process_pool,
             catchtime() as time,
+            ProcessPoolExecutor(self.config.nb_cpus) as process_pool,
         ):
             results = process_pool.map(sa_result, sas)
 

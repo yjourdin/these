@@ -333,7 +333,7 @@ def mip_result[M: Model](mip: MIP[M, Any, Any]):
         if (objective := mip.prob.objective) is not None
         else None,
         mip.prob.solutionCpuTime,
-        mip.prob.status > 0,
+        mip.prob.sol_status == 1,
     )
 
     #         model = mip.learn()
