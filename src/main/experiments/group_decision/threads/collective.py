@@ -298,17 +298,23 @@ def collective_thread(
 
                 results_accept = result_dict(futures_accept)
 
-                dms_refusing = [
-                    dm_id for dm_id, result in results_accept.items() if result.res >= 0
-                ]
+                if all(result.res == 1 for result in results_accept.values()):
+                    compromise_found = True
+                    t = None
+                else:
+                    compromise_found = False
 
-                t = (
-                    min(int(results_accept[dm].res) for dm in dms_refusing)
-                    if dms_refusing
-                    else None
-                )
+                    t = min(
+                        int(result.res)
+                        for result in results_accept.values()
+                        if result.res >= 0
+                    )
 
-                compromise_found = not dms_refusing
+                    dms_refusing = [
+                        dm_id
+                        for dm_id, result in results_accept.items()
+                        if result.res == t
+                    ]
 
                 changes = []
                 with task_Mc.C_file(DIR).open("r", newline="") as f:
