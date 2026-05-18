@@ -351,6 +351,30 @@ class AbstractCollectiveTask(AbstractDTask):
             self.it,
         )
 
+    def Da_file(self, dir: DirectoryGroupDecision):
+        return dir.Da(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.group,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.method,
+            self.config,
+            self.Mc_id,
+            self.Mie,
+            self.Mie_config,
+            self.Mie_id,
+            self.path,
+            self.P_id,
+            self.it,
+        )
+
     def Dr_file(self, dir: DirectoryGroupDecision):
         return dir.Dr(
             self.m,
@@ -533,6 +557,9 @@ class CollectiveMIPTask(AbstractCollectiveTask):
         ACC = PreferenceStructure(list(Acc_set), validate=False)
         # ACC = PreferenceStructure()
 
+        with self.Da_file(dir).open("w") as f:
+            to_csv(ACC, f)
+
         for d in D:
             d -= ACC
 
@@ -556,6 +583,8 @@ class CollectiveMIPTask(AbstractCollectiveTask):
         if (Dr_file := self.Dr_file(dir)).exists():
             with Dr_file.open("r") as f:
                 R = from_csv(f)  # pyright: ignore[reportConstantRedefinition]
+        else:
+            Dr_file.touch()
 
         Mie: list[SRMPModel] | None = []
         for dm_id in range(self.group_size):
@@ -747,6 +776,9 @@ class CollectiveSATask(AbstractCollectiveTask):
         ACC = PreferenceStructure(list(Acc_set), validate=False)
         # ACC = PreferenceStructure()
 
+        with self.Da_file(dir).open("w") as f:
+            to_csv(ACC, f)
+
         for d in D:
             d -= ACC
 
@@ -766,7 +798,12 @@ class CollectiveSATask(AbstractCollectiveTask):
         #         if (Dr_file := self.Dr_file(dir, dm_id, it)).exists():
         #             with Dr_file.open("r") as f:
         #                 R.append(from_csv(f))
-        R = from_csv(self.Dr_file(dir))
+        R = PreferenceStructure()
+        if (Dr_file := self.Dr_file(dir)).exists():
+            with Dr_file.open("r") as f:
+                R = from_csv(f)  # pyright: ignore[reportConstantRedefinition]
+        else:
+            Dr_file.touch()
 
         rng_init, rng_sa = self.rng(seed).spawn(2)
 
@@ -1027,7 +1064,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
         comparisons_order: list[Relation] = []
         D1 = D
         for D2 in preference_path[1:]:
-            changes = list(set(D2) - set(D1)) # pyright: ignore[reportUnknownArgumentType]
+            changes = list(set(D2) - set(D1))  # pyright: ignore[reportUnknownArgumentType]
             for i in rng_order.permutation(len(changes)):
                 comparisons_order.append(changes[int(i)])
             D1 = D2  # pyright: ignore[reportConstantRedefinition]
@@ -1184,25 +1221,28 @@ class AcceptPTask(PreferencePathTask):
         with self.A_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
-        with self.Di_file(dir).open("r") as f:
-            D = from_csv(f)
+        # with self.Di_file(dir).open("r") as f:
+        #     D = from_csv(f)
 
         with self.P_file(dir).open("r") as f:
             P = from_csv(f)
+
+        with self.Da_file(dir).open("r") as f:
+            ACC = from_csv(f)
 
         t = 0
         accept = True
         while accept and t < len(P):
             new_relation = P.relations[t]
-            if old_relation := D.elements_pairs_relations[new_relation.elements]:
-                D -= old_relation  # pyright: ignore[reportConstantRedefinition]
-            D += new_relation  # pyright: ignore[reportConstantRedefinition]
+            # if old_relation := D.elements_pairs_relations[new_relation.elements]:
+            #     D -= old_relation  # pyright: ignore[reportConstantRedefinition]
+            ACC += new_relation  # pyright: ignore[reportConstantRedefinition]
 
             mips, _ = create_mip(
                 GroupModelEnum.SRMP,
                 self.ko,
                 A,
-                [D],
+                [ACC],
                 rng_(0),
                 0,
                 self.config.max_time,

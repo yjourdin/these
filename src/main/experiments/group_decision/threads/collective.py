@@ -321,10 +321,7 @@ def collective_thread(
                 )
 
                 if new_task_Mc is not None:
-                    if task_Mc.Dr_file(DIR).exists():
-                        copy(task_Mc.Dr_file(DIR), new_task_Mc.Dr_file(DIR))  # pyright: ignore[reportUnknownArgumentType]
-                    else:
-                        new_task_Mc.Dr_file(DIR).touch()
+                    copy(task_Mc.Dr_file(DIR), new_task_Mc.Dr_file(DIR))  # pyright: ignore[reportUnknownArgumentType]
 
                 for dm_id in DMS:
                     with tasks_accept[dm_id].Di_file(DIR).open("r") as f:

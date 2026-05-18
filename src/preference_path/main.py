@@ -1,4 +1,4 @@
-from collections.abc import Container, Sequence
+from collections.abc import Sequence
 
 from mcda.relations import PreferenceStructure
 
@@ -57,7 +57,7 @@ def compute_preference_path(
     model_path: Sequence[FrozenModel[Model]],
     start_preferences: PreferenceStructure,
     alternatives: PerformanceTableType,
-    refused: Container[PreferenceStructure],
+    refused: PreferenceStructure,
 ):
     path = preference_path(model_path, alternatives, start_preferences)
 
