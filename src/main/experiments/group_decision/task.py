@@ -992,6 +992,10 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
 
         rng_path, rng_order = self.rng(seed).spawn(2)
 
+        model_paths = {}
+        preference_path = []
+        time = 0
+        result = True
         if self.path:
             R = PreferenceStructure()
             if (Dr_file := self.Dr_file(dir)).exists():
@@ -1008,12 +1012,13 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 else self.config.max_time,
                 self.fixed_lex_order,
             )
-            preference_path = (
-                compute_preference_path(model_paths[0], D, A, R) if model_paths else []
-            )
-        else:
+
+            if model_paths:
+                preference_path = compute_preference_path(model_paths[0], D, A, R)
+            else:
+                result = False
+        if not model_paths:
             model_paths = {i: [Mcp] for i, Mcp in enumerate(Mcps)}
-            time = 0
             preference_path = [
                 D,
                 random_comparisons(A, Mcps[0], pairs=D.elements_pairs_relations),
@@ -1022,7 +1027,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
         comparisons_order: list[Relation] = []
         D1 = D
         for D2 in preference_path[1:]:
-            changes = list(set(D2) - set(D1))
+            changes = list(set(D2) - set(D1)) # pyright: ignore[reportUnknownArgumentType]
             for i in rng_order.permutation(len(changes)):
                 comparisons_order.append(changes[int(i)])
             D1 = D2  # pyright: ignore[reportConstantRedefinition]
@@ -1068,6 +1073,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 Time=time,
                 Length=t,
                 Model_Length=len(model_paths[0]) if model_paths else None,
+                Found=result,
             )
 
         return len(preference_path) != 0

@@ -107,6 +107,7 @@ class PathFields(DMFields):
     Time: float
     Length: int | None
     Model_Length: int | None
+    Found: bool
 
 
 class PathCSVFile(CSVFile):
