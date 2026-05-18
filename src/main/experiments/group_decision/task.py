@@ -1,6 +1,7 @@
 import csv
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
+from math import inf
 from operator import attrgetter
 from typing import Any
 
@@ -232,6 +233,9 @@ class MieTask(AbstractDTask):
         ):
             results = list(thread_pool.map(mip_result, mips))
 
+        for i, result in enumerate(results):
+            if result.best_objective is None:
+                results[i] = result._replace(best_objective=inf)
         optimal = all(result.optimal for result in results)
         best_model, best_fitness, _, _ = sense.value(
             results, key=attrgetter("best_objective")
@@ -596,6 +600,9 @@ class CollectiveMIPTask(AbstractCollectiveTask):
         ):
             results = list(thread_pool.map(mip_result, mips))
 
+        for i, result in enumerate(results):
+            if result.best_objective is None:
+                results[i] = result._replace(best_objective=inf)
         optimal = all(result.optimal for result in results)
         results.sort(key=attrgetter("best_objective"))
 

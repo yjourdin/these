@@ -327,11 +327,11 @@ def create_mip(
 
 
 def mip_result[M: Model](mip: MIP[M, Any, Any]):
+    best_sol = mip.learn()
+    best_objective = cast(float, value(objective)) if (objective := mip.prob.objective) is not None else None
     return MIPResult[M, float](
-        mip.learn(),
-        cast(float, value(objective))
-        if (objective := mip.prob.objective) is not None
-        else None,
+        best_sol if best_objective is not None else None,
+        best_objective if best_objective is not None else None,
         mip.prob.solutionCpuTime,
         mip.prob.sol_status == 1,
     )
