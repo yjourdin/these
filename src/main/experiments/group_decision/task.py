@@ -1005,7 +1005,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 compute_preference_path(model_paths[0], D, A, R) if model_paths else []
             )
         else:
-            model_paths = {i: Mcp for i, Mcp in enumerate(Mcps)}
+            model_paths = {i: [Mcp] for i, Mcp in enumerate(Mcps)}
             time = 0
             preference_path = [
                 D,
