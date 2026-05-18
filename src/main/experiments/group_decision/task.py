@@ -986,9 +986,10 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
         rng_path, rng_order = self.rng(seed).spawn(2)
 
         if self.path:
+            R = PreferenceStructure()
             if (Dr_file := self.Dr_file(dir)).exists():
                 with Dr_file.open("r") as f:
-                    R = from_csv(f)
+                    R = from_csv(f)  # pyright: ignore[reportConstantRedefinition]
 
             model_paths, time = compute_model_paths(
                 Mcps,
