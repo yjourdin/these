@@ -318,6 +318,9 @@ def collective_thread(
                     replace(task_Mc, it=it + 1) if not compromise_found else None  # pyright: ignore[reportUnknownArgumentType]
                 )
 
+                if new_task_Mc is not None:
+                    copy(task_Mc.Dr_file(DIR), new_task_Mc.Dr_file(DIR))  # pyright: ignore[reportUnknownArgumentType]
+
                 for dm_id in DMS:
                     with tasks_accept[dm_id].Di_file(DIR).open("r") as f:
                         D = from_csv(f)
