@@ -135,7 +135,7 @@ def create_mip(
     if lex_order_shared:
         if NB_DM == 1:
             if reference_model:
-                mips = partial(
+                mip = partial(
                     MIPSRMPAccept,
                     alternatives=alternatives,
                     preference_relations=preference_relations,
@@ -149,7 +149,7 @@ def create_mip(
                 )
 
             else:
-                mips = partial(
+                mip = partial(
                     MIPSRMP,
                     alternatives=alternatives,
                     preference_relations=preference_relations,
@@ -183,7 +183,7 @@ def create_mip(
             )
 
             if reference_model:
-                mips = partial(
+                mip = partial(
                     MIPSRMPCollectiveDistance,
                     alternatives=alternatives,
                     preference_relations=preference_relations_list,
@@ -201,7 +201,7 @@ def create_mip(
                     nb_cpus=NB_CPUS_MIP,
                 )
             elif reference_models:
-                mips = partial(
+                mip = partial(
                     MIPSRMPCollectiveBound,
                     alternatives=alternatives,
                     preference_relations=preference_relations_list,
@@ -217,7 +217,7 @@ def create_mip(
                     nb_cpus=NB_CPUS_MIP,
                 )
             else:
-                mips = partial(
+                mip = partial(
                     MIPSRMPCollective,
                     alternatives=alternatives,
                     preference_relations=preference_relations_list,
@@ -233,7 +233,7 @@ def create_mip(
                 )
         else:
             if close:
-                mips = partial(
+                mip = partial(
                     MIPSRMPGroupClose,
                     alternatives=alternatives,
                     preference_relations=preference_relations_list,
@@ -244,7 +244,7 @@ def create_mip(
                     nb_cpus=NB_CPUS_MIP,
                 )
             else:
-                mips = partial(
+                mip = partial(
                     MIPSRMPGroupLexicographicOrder,
                     alternatives=alternatives,
                     preference_relations=preference_relations_list,
@@ -257,7 +257,7 @@ def create_mip(
                 )
                 sense = SenseEnum.MAX
     else:
-        mips = partial(
+        mip = partial(
             MIPSRMPGroup,
             alternatives=alternatives,
             preference_relations=preference_relations_list,
@@ -271,7 +271,7 @@ def create_mip(
         sense = SenseEnum.MAX
 
     mips = (
-        partial(mips, lexicographic_order=lexicographic_order)
+        partial(mip, lexicographic_order=lexicographic_order)
         for lexicographic_order in lexicographic_orders
     )
 
