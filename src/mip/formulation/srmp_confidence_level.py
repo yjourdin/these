@@ -44,7 +44,7 @@ class MIPSRMPConfidenceParams(MIPParams):
         self.sigma = [0] + [profile + 1 for profile in lexicographic_order]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class MIPSRMPConfidence(MIP[SRMPModel, MIPSRMPConfidenceVars, MIPSRMPConfidenceParams]):
     alternatives: NormalPerformanceTable
     preference_relations: list[P]

@@ -1,15 +1,18 @@
 import argparse
-from sys import stdout
+from dataclasses import dataclass
+from pathlib import Path
+
+from ..dataclass import Dataclass
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--seed", type=int, help="Random seed")
-parser.add_argument(
-    "-o",
-    "--output",
-    default=stdout,
-    type=argparse.FileType("w"),
-    help="Output file",
-)
+parser.add_argument("-o", "--output", type=Path, help="Output file")
 
 
-ARGS = parser.parse_args()
+@dataclass(init=False)
+class Arguments(Dataclass):
+    seed: int | None = None
+    output: Path | None = None
+
+
+ARGS = parser.parse_args(namespace=Arguments())

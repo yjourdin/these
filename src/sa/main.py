@@ -1,5 +1,6 @@
 from enum import Enum, member
-from typing import NamedTuple, TextIO
+from pathlib import Path
+from typing import NamedTuple
 
 from mcda.relations import PreferenceStructure
 
@@ -54,7 +55,8 @@ def create_sa(
     max_time: int = DEFAULT_MAX_TIME,
     max_it: int | None = None,
     max_it_non_improving: int | None = None,
-    log_file: TextIO | None = None,
+    verbose: bool = False,
+    log_path: Path | None = None,
     preferences_changes: list[int] | None = None,
     comparisons_accepted: PreferenceStructure | None = None,
     comparisons_refused: PreferenceStructure | None = None,
@@ -138,7 +140,11 @@ def create_sa(
         FitnessObjective(alternatives, comparisons[0])
         if NB_DM == 1
         else CollectiveObjective(
-            alternatives, comparisons, preferences_changes, comparisons_accepted, comparisons_refused
+            alternatives,
+            comparisons,
+            preferences_changes,
+            comparisons_accepted,
+            comparisons_refused,
         )
     )
 
@@ -169,7 +175,8 @@ def create_sa(
                 max_time,
                 max_it,
                 max_it_non_improving,
-                log_file,
+                verbose,
+                log_path,
                 t0,
                 L,
                 cooling_schedule,

@@ -60,7 +60,7 @@ class MIPSRMPCollectiveParams(MIPParams):
         ]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveParams]):
     alternatives: NormalPerformanceTable
     preference_relations: list[PreferenceStructure]

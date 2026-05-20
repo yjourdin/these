@@ -57,11 +57,12 @@ def compute_preference_path(
     model_path: Sequence[FrozenModel[Model]],
     start_preferences: PreferenceStructure,
     alternatives: PerformanceTableType,
-    refused: PreferenceStructure,
+    refused: PreferenceStructure | None = None,
 ):
     path = preference_path(model_path, alternatives, start_preferences)
 
-    remove_refused(path, refused)
+    if refused:
+        remove_refused(path, refused)
     remove_reverted_changes(path)
 
     return path

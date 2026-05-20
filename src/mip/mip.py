@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from pathlib import Path
 from typing import Any, TypedDict
 
 from mcda.internal.core.interfaces import Learner
@@ -28,18 +29,18 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
     time_limit: InitVar[float] = DEFAULT_MAX_TIME
     seed: InitVar[SeedLike | None] = None
     verbose: InitVar[bool] = False
+    log_path: InitVar[Path | None] = None
     nb_cpus: InitVar[int] = 1
 
-    def __post_init__(
+    def __post_init__(  # pyright: ignore[reportGeneralTypeIssues]
         self,
         time_limit: float,
         seed: SeedLike | None,
         verbose: bool,
+        log_path: Path,
         nb_cpus: int,
-        *args: Any,
-        **kw: Any,
     ):
-        self.create_solver(time_limit, int_(seed), verbose, nb_cpus)
+        self.create_solver(time_limit, int_(seed), verbose, nb_cpus, log_path)
 
     def learn(self):
         self.create_parameters()
@@ -53,22 +54,28 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
         else:
             return self.sol
 
-    def create_solver(self, time_limit: float, seed: int, verbose: bool, nb_cpus: int):
+    def create_solver(
+        self, time_limit: float, seed: int, verbose: bool, nb_cpus: int, log_path: Path
+    ):
         kwargs: dict[str, Any] = {
             "msg": verbose,
             "threads": nb_cpus,
             "timeLimit": time_limit,
         }
+        seed = seed % 2_000_000_000
 
         if "GUROBI" in listSolvers(True):
             kwargs["solver"] = "GUROBI"
-            kwargs["seed"] = seed % 2_000_000_000
+            kwargs["seed"] = seed
+            kwargs["logPath"] = str(log_path)
         elif "HiGHS" in listSolvers(True):
             kwargs["solver"] = "HiGHS"
-            kwargs["random_seed"] = seed % 2_000_000_000
+            kwargs["random_seed"] = seed
+            kwargs["log_file"] = str(log_path)
         else:
             kwargs["solver"] = "PULP_CBC_CMD"
-            kwargs["options"] = [f"RandomS {seed % 2_000_000_000}"]
+            kwargs["options"] = [f"RandomS {seed}"]
+            kwargs["logPath"] = str(log_path)
 
         self.solver = getSolver(**kwargs)
 

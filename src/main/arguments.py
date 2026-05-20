@@ -12,9 +12,10 @@ class ExperimentEnum(CaseInsensitiveStrEnum):
     GROUP_DECISION = "G"
 
 
-@dataclass
+@dataclass(init=False)
 class Arguments(Dataclass):
     experiment: ExperimentEnum
+    args: Path
     dir: Path = RESULTS_DIR
     name: str = ""
     jobs: int = DEFAULT_MAX_JOBS

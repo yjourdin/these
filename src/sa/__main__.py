@@ -9,7 +9,7 @@ from src.performance_table.normal_performance_table import NormalPerformanceTabl
 from src.preference_structure.io import from_csv
 from src.random import rng_
 
-from ..utils import catchtime
+from ..utils import catchtime, file_or_stdout
 from .args import ARGS
 from .main import create_sa, sa_result
 
@@ -18,7 +18,8 @@ A = NormalPerformanceTable(read_csv(ARGS.A, header=None))
 
 D: list[PreferenceStructure] = []
 for d in ARGS.D:
-    D.append(from_csv(d))
+    with d.open("r") as f:
+        D.append(from_csv(f))
 
 
 # Create random seeds
@@ -28,9 +29,15 @@ rng_init, rng_sa = (
     else rng_(ARGS.seed).spawn(2)
 )
 
-Refused = from_csv(ARGS.refused) if ARGS.refused else None
+Refused = None
+if ARGS.refused:
+    with ARGS.refused.open("r", newline="") as f:
+        Refused = from_csv(f)
 
-Accepted = from_csv(ARGS.accepted) if ARGS.accepted else None
+Accepted = None
+if ARGS.accepted:
+    with ARGS.accepted.open("r", newline="") as f:
+        Accepted = from_csv(f)
 
 # Learn SA
 sas, sense = create_sa(
@@ -48,7 +55,8 @@ sas, sense = create_sa(
     ARGS.max_time,
     ARGS.max_it,
     ARGS.max_it_non_improving,
-    ARGS.log,
+    ARGS.verbose,
+    ARGS.log_path,
     ARGS.changes,
     Accepted,
     Refused,
@@ -64,7 +72,11 @@ best_model, best_objective, _, it = sense.value(
     results, key=attrgetter("best_objective")
 )
 
+# Write output
+with file_or_stdout(ARGS.output, "w") as f:
+    f.write(best_model.to_json() if best_model else "")
+
 # Write results
-ARGS.output.write(best_model.to_json() + "\n")
-writer = csv.writer(ARGS.result, "unix")
-writer.writerow([1 - best_objective, time(), it])
+with file_or_stdout(ARGS.result, "w", "") as f:
+    writer = csv.writer(f, "unix")
+    writer.writerow([1 - best_objective, time(), it])

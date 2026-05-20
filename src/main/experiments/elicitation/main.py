@@ -7,7 +7,7 @@ from src.methods import MethodEnum
 from src.models import ModelEnum
 from src.utils import list_replace
 
-from ...init_directory import DIR
+from ...dir import DIR
 from ...task import FutureTask, Task, TaskException
 from ...threads.task import task_thread
 from .arguments import ArgumentsElicitation

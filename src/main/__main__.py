@@ -6,27 +6,15 @@ from threading import Thread
 from src.constants import SENTINEL
 
 from .args import ARGS
-from .arguments import ExperimentEnum
 from .connection import WorkerPipe
-from .directory import Directory
-from .experiments.elicitation.main import main as main_elicitation
-from .experiments.group_decision.main import main as main_group_decision
-from .init_directory import DIR
+from .dir import DIR
 from .logging import LoggingQueue, create_logging_config_dict
+from .main import MAIN
 from .threads.csv_file import CSVFileThread
 from .threads.logger import LoggerThread
 from .threads.stop import STOP, StopThread
 from .threads.task_manager import TASK_QUEUE, TaskManager
 from .worker import WorkerProcess
-
-# Set main function
-directory_class = Directory
-match ARGS.experiment:
-    case ExperimentEnum.ELICITATION:
-        MAIN = main_elicitation
-    case ExperimentEnum.GROUP_DECISION:
-        MAIN = main_group_decision  # pyright: ignore[reportConstantRedefinition]
-
 
 # Start file threads
 

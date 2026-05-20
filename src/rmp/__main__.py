@@ -1,5 +1,8 @@
+from functools import reduce
+
+from ..utils import file_or_stdout
 from .args import ARGS
-from .model import RMPModel, rmp_group_model
+from .model import RMPModel, RMPParamFlag, rmp_group_model
 
 # Create model
 if ARGS.group_size == 1:
@@ -10,7 +13,9 @@ if ARGS.group_size == 1:
         profiles_values=ARGS.profiles_values,
     )
 else:
-    model_class = rmp_group_model(ARGS.shared)
+    model_class = rmp_group_model(
+        reduce(lambda x, y: x | y, ARGS.shared, RMPParamFlag.NONE)
+    )
     model = model_class.random(
         group_size=ARGS.group_size,
         nb_profiles=ARGS.k,
@@ -20,5 +25,6 @@ else:
     )
 
 
-# Write results
-ARGS.output.write(model.to_json())
+# Write output
+with file_or_stdout(ARGS.output, "w") as f:
+    f.write(model.to_json())

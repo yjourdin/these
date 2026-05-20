@@ -1,6 +1,8 @@
 import argparse
-from sys import stdout
+from dataclasses import dataclass, field
+from pathlib import Path
 
+from ..dataclass import Dataclass
 from .model import RMPParamFlag
 
 parser = argparse.ArgumentParser()
@@ -16,15 +18,21 @@ parser.add_argument(
     help="Parameters shared between decision makers",
 )
 parser.add_argument(
-    "-p",
-    "--profiles-values",
-    type=argparse.FileType("w"),
-    help="Possible values for profiles",
+    "-p", "--profiles-values", type=Path, help="Possible values for profiles"
 )
 parser.add_argument("-s", "--seed", type=int, help="Random seed")
-parser.add_argument(
-    "-o", "--output", default=stdout, type=argparse.FileType("w"), help="Output file"
-)
+parser.add_argument("-o", "--output", type=Path, help="Output file")
 
 
-ARGS = parser.parse_args()
+@dataclass(init=False)
+class Arguments(Dataclass):
+    group_size: int
+    k: int
+    m: int
+    shared: list[RMPParamFlag] = field(default_factory=list)
+    profiles_values: Path | None = None
+    seed: int | None = None
+    output: Path | None = None
+
+
+ARGS = parser.parse_args(namespace=Arguments())

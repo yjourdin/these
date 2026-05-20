@@ -1,15 +1,17 @@
 import csv
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import InitVar
+from pathlib import Path
 from time import thread_time
-from typing import ClassVar, NotRequired, TextIO, TypedDict
+from typing import ClassVar, NotRequired, TypedDict
 
 from mcda.internal.core.interfaces import Learner
 
 from src.constants import DEFAULT_MAX_TIME
 from src.dataclass import Dataclass, dataclass
 from src.random import RNG, RNGParam, rng_
-from src.utils import none_guard
+from src.utils import file_or_stdout, none_guard
 
 from .neighbor import Neighbor
 from .objective import Objective
@@ -24,7 +26,8 @@ class Iterative[S](Learner[S], Dataclass):
     max_time: int = DEFAULT_MAX_TIME
     max_it: int | None = None
     max_it_non_improving: int | None = None
-    log_file: InitVar[TextIO | None] = None
+    verbose: bool = False
+    log_path: Path | None = None
     stopping_criteria_dict: ClassVar[dict[str, str]] = {
         "max_time": "stop_time",
         "max_it": "stop_it",
@@ -42,19 +45,21 @@ class Iterative[S](Learner[S], Dataclass):
         Current_obj: float
         Best_obj: NotRequired[float]
 
-    def __post_init__(self, rng: RNGParam, log_file: TextIO | None):
+    def __post_init__(self, rng: RNGParam):
         self.stopping_criteria: list[Callable[[], bool]] = [self.stop_optimum]
         for attr, f in self.stopping_criteria_dict.items():
             if getattr(self, attr) is not None:
                 self.stopping_criteria.append(getattr(self, f))
         self._rng = rng_(rng)
-        if log_file:
-            self.log_writer = csv.DictWriter(
-                log_file,
+
+    @contextmanager
+    def log_writer(self):
+        with file_or_stdout(self.log_path, "w", "") as f:
+            yield csv.DictWriter(
+                f,
                 list(self.LogFields.__annotations__.keys()),
                 dialect="unix",
             )
-            self.log_writer.writeheader()
 
     def stop_time(self):
         return self.time >= self.max_time
@@ -83,6 +88,10 @@ class Iterative[S](Learner[S], Dataclass):
         self.time = thread_time() - self.start_time
         self.it = 0
         self.non_improving_it = 0
+
+        if self.verbose:
+            with self.log_writer() as log_writer:
+                log_writer.writeheader()
 
     def stop(self):
         return any(f() for f in self.stopping_criteria)

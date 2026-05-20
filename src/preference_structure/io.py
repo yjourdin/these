@@ -1,11 +1,12 @@
 import csv
+from collections.abc import Iterable
 from typing import Any
 
 from mcda.internal.core.relations import Relation
 from mcda.relations import I, P, PreferenceStructure, R
 
 
-def from_csv(csvfile: Any) -> PreferenceStructure:
+def from_csv(csvfile: Iterable[str]) -> PreferenceStructure:
     reader = csv.reader(csvfile, "unix")
     relations: list[Relation] = []
     for line in reader:

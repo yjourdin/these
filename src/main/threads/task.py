@@ -3,7 +3,7 @@ from typing import Any
 from src.constants import SENTINEL
 
 from ..connection import TaskPipe, TaskQueueElement
-from ..init_directory import DIR
+from ..dir import DIR
 from ..task import FutureTask, Task, TaskException, TaskResult, result_list
 from .task_manager import TASK_QUEUE
 

@@ -1,16 +1,19 @@
 import argparse
-from sys import stdout
+from dataclasses import dataclass
+from pathlib import Path
 
 from src.constants import DEFAULT_MAX_TIME
 from src.models import ModelEnum
+
+from ..dataclass import Dataclass
 
 parser = argparse.ArgumentParser()
 
 
 parser.add_argument("model", type=ModelEnum, choices=ModelEnum, help="Model")
 parser.add_argument("k", type=int, help="Number of profiles")
-parser.add_argument("A", type=argparse.FileType("r"), help="Alternatives")
-parser.add_argument("D", nargs="+", type=argparse.FileType("r"), help="Comparisons")
+parser.add_argument("A", type=Path, help="Alternatives")
+parser.add_argument("D", nargs="+", type=Path, help="Comparisons")
 
 init_group = parser.add_mutually_exclusive_group(required=True)
 init_group.add_argument("--T0", type=float, help="Initial temperature")
@@ -37,25 +40,44 @@ stop_group.add_argument(
 parser.add_argument("-s", "--seed", type=int, help="Random seed")
 parser.add_argument("--seed-init", type=int, help="Initial model random seed")
 parser.add_argument("--seed-sa", type=int, help="Simulated annealing random seed")
-parser.add_argument(
-    "-o", "--output", default=stdout, type=argparse.FileType("w"), help="Output file"
-)
-parser.add_argument(
-    "-r", "--result", default=stdout, type=argparse.FileType("a"), help="Result file"
-)
-parser.add_argument(
-    "-l", "--log", nargs="?", type=argparse.FileType("w"), const=stdout, help="Log file"
-)
+parser.add_argument("-o", "--output", type=Path, help="Output file")
+parser.add_argument("-r", "--result", type=Path, help="Result file")
+parser.add_argument("-v", "--verbose", action="store_true", help="Verbose")
+parser.add_argument("-l", "--log_path", type=Path, help="Log file")
 parser.add_argument(
     "--changes", nargs="+", type=int, help="Preferences previously changed"
 )
-parser.add_argument(
-    "--refused", type=argparse.FileType("r"), help="Refused preferences"
-)
-parser.add_argument(
-    "--accepted", type=argparse.FileType("r"), help="Accepted preferences"
-)
+parser.add_argument("--refused", type=Path, help="Refused preferences")
+parser.add_argument("--accepted", type=Path, help="Accepted preferences")
 parser.add_argument("--nb-cpus", default=1, type=int, help="Number of CPUs")
 
 
-ARGS = parser.parse_args()
+@dataclass(init=False)
+class Arguments(Dataclass):
+    model: ModelEnum
+    k: int
+    A: Path
+    D: list[Path]
+    alpha: float
+    amp: float
+    L: int
+    max_time: int
+    nb_cpus: int
+    T0: float | None = None
+    accept: float | None = None
+    Tf: float | None = None
+    max_it: int | None = None
+    max_it_non_improving: int | None = None
+    seed: int | None = None
+    seed_init: int | None = None
+    seed_sa: int | None = None
+    output: Path | None = None
+    result: Path | None = None
+    log_path: Path | None = None
+    changes: list[int] | None = None
+    refused: Path | None = None
+    accepted: Path | None = None
+    verbose: bool = False
+
+
+ARGS = parser.parse_args(namespace=Arguments())

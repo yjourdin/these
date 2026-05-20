@@ -1,3 +1,4 @@
+from ..utils import file_or_stdout
 from .args import ARGS
 from .normal_performance_table import NormalPerformanceTable
 
@@ -5,5 +6,6 @@ from .normal_performance_table import NormalPerformanceTable
 A = NormalPerformanceTable.random(ARGS.n, ARGS.m, ARGS.seed)
 
 
-# Write results
-A.data.to_csv(ARGS.output, header=False, index=False)
+# Write output
+with file_or_stdout(ARGS.output, "w") as f:
+    A.data.to_csv(f, header=False, index=False)

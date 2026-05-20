@@ -1,3 +1,4 @@
+from ..utils import file_or_stdout
 from .args import ARGS
 from .model import RandomModel
 
@@ -5,5 +6,6 @@ from .model import RandomModel
 model = RandomModel(ARGS.seed)
 
 
-# Write results
-ARGS.output.write(model.to_json())
+# Write output
+with file_or_stdout(ARGS.output, "w") as f:
+    f.write(model.to_json())

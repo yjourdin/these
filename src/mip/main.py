@@ -53,8 +53,8 @@ def create_mip(
     comparisons_refused: PreferenceStructure | None = None,
     comparisons_accepted: PreferenceStructure | None = None,
     reference_model: SRMPModel | None = None,
-    profiles_amp: float = 1,
-    weights_amp: float = 1,
+    profiles_amp: float | None = None,
+    weights_amp: float | None = None,
     reference_models: list[SRMPModel] | None = None,
     lexicographic_order_distance: int = 0,
     inconsistencies: bool = False,
@@ -92,6 +92,9 @@ def create_mip(
     preferences_changes = preferences_changes or ([0] * NB_DM)
 
     shared_params = SRMPParamFlag(model_type.shared_params)
+
+    profiles_amp = profiles_amp or 1
+    weights_amp = weights_amp or 1
 
     preference_relations: list[P] = []
     indifference_relations: list[I] = []
@@ -328,7 +331,11 @@ def create_mip(
 
 def mip_result[M: Model](mip: MIP[M, Any, Any]):
     best_sol = mip.learn()
-    best_objective = cast(float, value(objective)) if (objective := mip.prob.objective) is not None else None
+    best_objective = (
+        cast(float, value(objective))
+        if (objective := mip.prob.objective) is not None
+        else None
+    )
     return MIPResult[M, float](
         best_sol if best_objective is not None else None,
         best_objective if best_objective is not None else None,

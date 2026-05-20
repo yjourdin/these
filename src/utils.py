@@ -1,9 +1,10 @@
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from enum import Enum
 from functools import partial, reduce
 from itertools import chain, count
 from pathlib import Path
+from sys import stdout
 from time import perf_counter
 from typing import Any, NamedTuple, TypeGuard, overload
 
@@ -157,3 +158,9 @@ def catchtime():
     t1 = t2 = perf_counter()
     yield lambda: t2 - t1
     t2 = perf_counter()
+
+
+@contextmanager
+def file_or_stdout(path: Path | None, mode: str, newline: str | None = None):
+    with path.open(mode, newline=newline) if path else nullcontext(stdout) as f:
+        yield f

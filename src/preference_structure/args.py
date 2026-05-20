@@ -1,6 +1,10 @@
 import argparse
+from dataclasses import dataclass
+from pathlib import Path
 
 from src.case_insensitive_str_enum import CaseInsensitiveStrEnum
+
+from ..dataclass import Dataclass
 
 
 class TypeEnum(CaseInsensitiveStrEnum):
@@ -9,8 +13,8 @@ class TypeEnum(CaseInsensitiveStrEnum):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("model", type=argparse.FileType("r"), help="Preferences model")
-parser.add_argument("A", type=argparse.FileType("r"), help="Alternatives")
+parser.add_argument("model", type=Path, help="Preferences model")
+parser.add_argument("A", type=Path, help="Alternatives")
 
 subparsers = parser.add_subparsers(dest="type", required=True, help="Output type")
 
@@ -26,12 +30,21 @@ parser_PS.add_argument("--seed-error", type=int, help="Error random seed")
 
 parser_R = subparsers.add_parser(TypeEnum.RANKING, help="Ranking")
 
-parser.add_argument(
-    "-o",
-    "--output",
-    default="stdout",
-    help="Output filename",
-)
+parser.add_argument("-o", "--output", type=Path, help="Output filename")
 
 
-ARGS = parser.parse_args()
+@dataclass(init=False)
+class Arguments(Dataclass):
+    model: Path
+    A: Path
+    type: TypeEnum
+    n: int | None = None
+    error: float | None = None
+    same: bool = False
+    seed: int | None = None
+    seed_shuffle: int | None = None
+    seed_error: int | None = None
+    output: Path | None = None
+
+
+ARGS = parser.parse_args(namespace=Arguments())

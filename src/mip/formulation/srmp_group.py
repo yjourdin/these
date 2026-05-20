@@ -57,7 +57,7 @@ class MIPSRMPGroupParams(MIPParams):
         ]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class MIPSRMPGroup(
     MIP[
         SRMPGroupModelWeightsProfiles

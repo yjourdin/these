@@ -9,7 +9,7 @@ from mcda.relations import PreferenceStructure
 from src.methods import MethodEnum
 from src.preference_structure.io import from_csv, to_csv
 
-from ....init_directory import DIR
+from ....dir import DIR
 from ....task import FutureTask, TaskResult, result_dict, result_list
 from ....threads.task import task_thread
 from ..directory import DirectoryGroupDecision
