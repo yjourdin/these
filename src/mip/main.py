@@ -1,7 +1,6 @@
 from enum import Enum, member
 from functools import partial
 from itertools import permutations, product
-from operator import call
 from typing import Any, NamedTuple, cast
 
 import numpy as np
@@ -271,18 +270,18 @@ def create_mip(
         )
         sense = SenseEnum.MAX
 
-    mips = [
+    mips = (
         partial(mips, lexicographic_order=lexicographic_order)
         for lexicographic_order in lexicographic_orders
-    ]
+    )
 
-    if log_path := kwargs.get("log_path"):
-        mips = [
+    if log_path := kwargs.pop("log_path", None):
+        mips = (
             partial(mip, log_path=add_filename_suffix(log_path, f"_{i}"))
             for i, mip in enumerate(mips)
-        ]
+        )
 
-    return (map(call, mips), sense)
+    return ((mip(**kwargs) for mip in mips), sense)
 
     # with ThreadPoolExecutor(NB_WORKERS) as thread_pool:
     #     tic = monotonic()
