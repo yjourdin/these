@@ -41,11 +41,11 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
         nb_cpus: int,
     ):
         self.create_solver(time_limit, int_(seed), verbose, nb_cpus, log_path)
-
-    def learn(self):
         self.create_parameters()
         self.create_variables()
         self.create_problem()
+
+    def learn(self):
         self.prob.solve(self.solver)
         try:
             self.create_solution()

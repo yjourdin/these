@@ -1,5 +1,7 @@
 from enum import Enum, member
+from functools import partial
 from itertools import permutations, product
+from operator import call
 from typing import Any, NamedTuple, cast
 
 import numpy as np
@@ -15,6 +17,7 @@ from src.random import RNGParam, SeedLike, rng_
 from src.rmp.permutation import all_max_adjacent_distance
 from src.srmp.model import SRMPModel, SRMPParamFlag
 
+from ..utils import add_filename_suffix
 from .formulation.srmp import MIPSRMP
 from .formulation.srmp_accept import MIPSRMPAccept
 from .formulation.srmp_collective import MIPSRMPCollective
@@ -103,12 +106,12 @@ def create_mip(
         indifference_relations = indifference_relations_list[0]
 
     if lex_order:
-        lexicographic_orders = np.array([lex_order], dtype=np.int_)
+        lexicographic_orders_array = np.array([lex_order], dtype=np.int_)
     elif lex_order_shared:
         if reference_model is None or lexicographic_order_distance == 0:
-            lexicographic_orders = np.array(list(permutations(range(k))))
+            lexicographic_orders_array = np.array(list(permutations(range(k))))
         else:
-            lexicographic_orders = np.array(
+            lexicographic_orders_array = np.array(
                 list(
                     all_max_adjacent_distance(
                         reference_model.lexicographic_order,
@@ -118,13 +121,13 @@ def create_mip(
             )
 
     else:
-        lexicographic_orders = np.array(
+        lexicographic_orders_array = np.array(
             list(product(permutations(range(k)), repeat=NB_DM))
         )
 
-    rng_(rng_lexicographic_order).shuffle(lexicographic_orders)
+    rng_(rng_lexicographic_order).shuffle(lexicographic_orders_array)
 
-    lexicographic_orders = lexicographic_orders.tolist()
+    lexicographic_orders: list[Any] = lexicographic_orders_array.tolist()
 
     NB_CPUS_MIP = max(nb_cpus // len(lexicographic_orders), 1)
 
@@ -133,40 +136,30 @@ def create_mip(
     if lex_order_shared:
         if NB_DM == 1:
             if reference_model:
-                mips = [
-                    MIPSRMPAccept(
-                        *args,
-                        alternatives=alternatives,
-                        preference_relations=preference_relations,
-                        indifference_relations=indifference_relations,
-                        lexicographic_order=lexicographic_order,
-                        model=reference_model,
-                        profiles_amp=profiles_amp,
-                        weights_amp=weights_amp,
-                        time_limit=max_time,
-                        seed=seed_mip,
-                        nb_cpus=NB_CPUS_MIP,
-                        **kwargs,
-                    )
-                    for lexicographic_order in lexicographic_orders
-                ]
+                mips = partial(
+                    MIPSRMPAccept,
+                    alternatives=alternatives,
+                    preference_relations=preference_relations,
+                    indifference_relations=indifference_relations,
+                    model=reference_model,
+                    profiles_amp=profiles_amp,
+                    weights_amp=weights_amp,
+                    time_limit=max_time,
+                    seed=seed_mip,
+                    nb_cpus=NB_CPUS_MIP,
+                )
 
             else:
-                mips = [
-                    MIPSRMP(
-                        *args,
-                        alternatives=alternatives,
-                        preference_relations=preference_relations,
-                        indifference_relations=indifference_relations,
-                        lexicographic_order=lexicographic_order,
-                        inconsistencies=inconsistencies,
-                        time_limit=max_time,
-                        seed=seed_mip,
-                        nb_cpus=NB_CPUS_MIP,
-                        **kwargs,
-                    )
-                    for lexicographic_order in lexicographic_orders
-                ]
+                mips = partial(
+                    MIPSRMP,
+                    alternatives=alternatives,
+                    preference_relations=preference_relations,
+                    indifference_relations=indifference_relations,
+                    inconsistencies=inconsistencies,
+                    time_limit=max_time,
+                    seed=seed_mip,
+                    nb_cpus=NB_CPUS_MIP,
+                )
                 sense = SenseEnum.MAX
         elif collective:
             comparisons_refused = comparisons_refused or PreferenceStructure()
@@ -191,124 +184,105 @@ def create_mip(
             )
 
             if reference_model:
-                mips = [
-                    MIPSRMPCollectiveDistance(
-                        *args,
-                        alternatives=alternatives,
-                        preference_relations=preference_relations_list,
-                        indifference_relations=indifference_relations_list,
-                        lexicographic_order=lexicographic_order,
-                        preferences_changed=preferences_changes,
-                        preference_refused=preference_refused_list,
-                        indifference_refused=indifference_refused_list,
-                        preference_accepted=preference_accepted_list,
-                        indifference_accepted=indifference_accepted_list,
-                        model=reference_model,
-                        profiles_amp=profiles_amp,
-                        weights_amp=weights_amp,
-                        time_limit=max_time,
-                        seed=seed_mip,
-                        nb_cpus=NB_CPUS_MIP,
-                        **kwargs,
-                    )
-                    for lexicographic_order in lexicographic_orders
-                ]
+                mips = partial(
+                    MIPSRMPCollectiveDistance,
+                    alternatives=alternatives,
+                    preference_relations=preference_relations_list,
+                    indifference_relations=indifference_relations_list,
+                    preferences_changed=preferences_changes,
+                    preference_refused=preference_refused_list,
+                    indifference_refused=indifference_refused_list,
+                    preference_accepted=preference_accepted_list,
+                    indifference_accepted=indifference_accepted_list,
+                    model=reference_model,
+                    profiles_amp=profiles_amp,
+                    weights_amp=weights_amp,
+                    time_limit=max_time,
+                    seed=seed_mip,
+                    nb_cpus=NB_CPUS_MIP,
+                )
             elif reference_models:
-                mips = [
-                    MIPSRMPCollectiveBound(
-                        *args,
-                        alternatives=alternatives,
-                        preference_relations=preference_relations_list,
-                        indifference_relations=indifference_relations_list,
-                        lexicographic_order=lexicographic_order,
-                        preferences_changed=preferences_changes,
-                        preference_refused=preference_refused_list,
-                        indifference_refused=indifference_refused_list,
-                        preference_accepted=preference_accepted_list,
-                        indifference_accepted=indifference_accepted_list,
-                        models=reference_models,
-                        time_limit=max_time,
-                        seed=seed_mip,
-                        nb_cpus=NB_CPUS_MIP,
-                        **kwargs,
-                    )
-                    for lexicographic_order in lexicographic_orders
-                ]
+                mips = partial(
+                    MIPSRMPCollectiveBound,
+                    alternatives=alternatives,
+                    preference_relations=preference_relations_list,
+                    indifference_relations=indifference_relations_list,
+                    preferences_changed=preferences_changes,
+                    preference_refused=preference_refused_list,
+                    indifference_refused=indifference_refused_list,
+                    preference_accepted=preference_accepted_list,
+                    indifference_accepted=indifference_accepted_list,
+                    models=reference_models,
+                    time_limit=max_time,
+                    seed=seed_mip,
+                    nb_cpus=NB_CPUS_MIP,
+                )
             else:
-                mips = [
-                    MIPSRMPCollective(
-                        *args,
-                        alternatives=alternatives,
-                        preference_relations=preference_relations_list,
-                        indifference_relations=indifference_relations_list,
-                        lexicographic_order=lexicographic_order,
-                        preferences_changed=preferences_changes,
-                        preference_refused=preference_refused_list,
-                        indifference_refused=indifference_refused_list,
-                        preference_accepted=preference_accepted_list,
-                        indifference_accepted=indifference_accepted_list,
-                        time_limit=max_time,
-                        seed=seed_mip,
-                        nb_cpus=NB_CPUS_MIP,
-                        **kwargs,
-                    )
-                    for lexicographic_order in lexicographic_orders
-                ]
+                mips = partial(
+                    MIPSRMPCollective,
+                    alternatives=alternatives,
+                    preference_relations=preference_relations_list,
+                    indifference_relations=indifference_relations_list,
+                    preferences_changed=preferences_changes,
+                    preference_refused=preference_refused_list,
+                    indifference_refused=indifference_refused_list,
+                    preference_accepted=preference_accepted_list,
+                    indifference_accepted=indifference_accepted_list,
+                    time_limit=max_time,
+                    seed=seed_mip,
+                    nb_cpus=NB_CPUS_MIP,
+                )
         else:
             if close:
-                mips = [
-                    MIPSRMPGroupClose(
-                        *args,
-                        alternatives=alternatives,
-                        preference_relations=preference_relations_list,
-                        indifference_relations=indifference_relations_list,
-                        lexicographic_order=lexicographic_order,
-                        inconsistencies=inconsistencies,
-                        time_limit=max_time,
-                        seed=seed_mip,
-                        nb_cpus=NB_CPUS_MIP,
-                        **kwargs,
-                    )
-                    for lexicographic_order in lexicographic_orders
-                ]
+                mips = partial(
+                    MIPSRMPGroupClose,
+                    alternatives=alternatives,
+                    preference_relations=preference_relations_list,
+                    indifference_relations=indifference_relations_list,
+                    inconsistencies=inconsistencies,
+                    time_limit=max_time,
+                    seed=seed_mip,
+                    nb_cpus=NB_CPUS_MIP,
+                )
             else:
-                mips = [
-                    MIPSRMPGroupLexicographicOrder(
-                        *args,
-                        alternatives=alternatives,
-                        preference_relations=preference_relations_list,
-                        indifference_relations=indifference_relations_list,
-                        lexicographic_order=lexicographic_order,
-                        shared_params=shared_params,
-                        inconsistencies=inconsistencies,
-                        time_limit=max_time,
-                        seed=seed_mip,
-                        nb_cpus=NB_CPUS_MIP,
-                        **kwargs,
-                    )
-                    for lexicographic_order in lexicographic_orders
-                ]
+                mips = partial(
+                    MIPSRMPGroupLexicographicOrder,
+                    alternatives=alternatives,
+                    preference_relations=preference_relations_list,
+                    indifference_relations=indifference_relations_list,
+                    shared_params=shared_params,
+                    inconsistencies=inconsistencies,
+                    time_limit=max_time,
+                    seed=seed_mip,
+                    nb_cpus=NB_CPUS_MIP,
+                )
                 sense = SenseEnum.MAX
     else:
-        mips = [
-            MIPSRMPGroup(
-                *args,
-                alternatives=alternatives,
-                preference_relations=preference_relations_list,
-                indifference_relations=indifference_relations_list,
-                lexicographic_order=lexicographic_order,
-                shared_params=shared_params,
-                inconsistencies=inconsistencies,
-                time_limit=max_time,
-                seed=seed_mip,
-                nb_cpus=NB_CPUS_MIP,
-                **kwargs,
-            )
-            for lexicographic_order in lexicographic_orders
-        ]
+        mips = partial(
+            MIPSRMPGroup,
+            alternatives=alternatives,
+            preference_relations=preference_relations_list,
+            indifference_relations=indifference_relations_list,
+            shared_params=shared_params,
+            inconsistencies=inconsistencies,
+            time_limit=max_time,
+            seed=seed_mip,
+            nb_cpus=NB_CPUS_MIP,
+        )
         sense = SenseEnum.MAX
 
-    return (mips, sense)
+    mips = [
+        partial(mips, lexicographic_order=lexicographic_order)
+        for lexicographic_order in lexicographic_orders
+    ]
+
+    if log_path := kwargs.get("log_path"):
+        mips = [
+            partial(mip, log_path=add_filename_suffix(log_path, f"_{i}"))
+            for i, mip in enumerate(mips)
+        ]
+
+    return (map(call, mips), sense)
 
     # with ThreadPoolExecutor(NB_WORKERS) as thread_pool:
     #     tic = monotonic()
