@@ -6,7 +6,7 @@ from ..elicitation.fields import GroupConfigField, GroupMethodField
 from .fields import GroupGroupParametersField, GroupMieConfigField, SeedsField
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ArgumentsGroupDecision(
     Arguments,
     GroupMethodField,

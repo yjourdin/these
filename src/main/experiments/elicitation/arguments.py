@@ -11,7 +11,7 @@ from .fields import (
 )
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ArgumentsElicitation(
     Arguments,
     GroupMethodField,

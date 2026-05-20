@@ -621,6 +621,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                     reference_models=Mie,
                     gamma=self.config.gamma,
                     nb_cpus=self.config.nb_cpus // self.nb_Mcp,
+                    log_path=self.log_file(dir, Mcp_id),
                 )[0]
             )
         with (
@@ -715,6 +716,31 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             self.Mie_config,
             self.Mie_id,
             dm_id,
+        )
+
+    def log_file(self, dir: DirectoryGroupDecision, id: int):
+        return dir.MIP_log(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.group,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.method,
+            self.config,
+            self.Mie,
+            self.Mie_config,
+            self.Mie_id,
+            self.Mc_id,
+            id,
+            self.path,
+            self.P_id,
+            self.it,
         )
 
 
@@ -1232,7 +1258,7 @@ class AcceptPTask(PreferencePathTask):
 
         for r1 in P:
             if r2 := D.elements_pairs_relations[r1.elements]:
-                D -= r2 # pyright: ignore[reportConstantRedefinition]
+                D -= r2  # pyright: ignore[reportConstantRedefinition]
 
         t = 0
         accept = True

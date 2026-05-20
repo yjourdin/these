@@ -12,7 +12,7 @@ class ExperimentEnum(CaseInsensitiveStrEnum):
     GROUP_DECISION = "G"
 
 
-@dataclass(init=False)
+@dataclass(init=False, kw_only=True)
 class Arguments(Dataclass):
     experiment: ExperimentEnum
     args: Path

@@ -28,6 +28,7 @@ class DirectoryGroupDecision(Directory):
         Di: Path
         Mie: Path
         Mcp: Path
+        MIP_log: Path
         Mc: Path
         Mp: Path
         Dcp: Path
@@ -61,6 +62,7 @@ class DirectoryGroupDecision(Directory):
             Di=self.dirs["root"] / "Di",
             Mie=self.dirs["root"] / "Mie",
             Mcp=self.dirs["root"] / "Mcp",
+            MIP_log=self.dirs["root"] / "MIP_log",
             Mc=self.dirs["root"] / "Mc",
             Mp=self.dirs["root"] / "Mp",
             Dcp=self.dirs["root"] / "Dcp",
@@ -194,6 +196,32 @@ class DirectoryGroupDecision(Directory):
         it: int,
     ):
         return self.dirs["Mcp"] / filename_json(locals())
+
+    def MIP_log(
+        self,
+        m: int,
+        ntr: int,
+        Atr_id: int,
+        k: int,
+        Mo_id: int,
+        group_size: int,
+        group: GroupParameters,
+        Mi_id: int,
+        n: int,
+        same_alt: bool,
+        D_id: int,
+        method: MethodEnum,
+        config: Config,
+        Mie: bool,
+        Mie_config: MIPConfig | None,
+        Mie_id: int,
+        Mc_id: int,
+        id: int,
+        path: bool,
+        P_id: int,
+        it: int,
+    ):
+        return self.dirs["MIP_log"] / filename_json(locals())
 
     def Mc(
         self,
