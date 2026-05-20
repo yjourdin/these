@@ -2,7 +2,7 @@ import argparse
 from dataclasses import replace
 from pathlib import Path
 
-from .arguments import Arguments, ExperimentEnum
+from .arguments import ExperimentEnum
 from .experiments.elicitation.arguments import ArgumentsElicitation
 from .experiments.group_decision.arguments import ArgumentsGroupDecision
 
@@ -21,13 +21,16 @@ parser.add_argument(
 )
 
 
-args = parser.parse_args(namespace=Arguments())
+args = vars(parser.parse_args())
 
-with args.args.open("r") as file:
-    match args.experiment:
+args_file: Path = args.pop("args")
+experiment: ExperimentEnum = args.pop("experiment")
+
+with args_file.open("r") as file:
+    match experiment:
         case ExperimentEnum.ELICITATION:
             ARGS = ArgumentsElicitation.from_json(file.read())
         case ExperimentEnum.GROUP_DECISION:
             ARGS = ArgumentsGroupDecision.from_json(file.read())  # pyright: ignore[reportConstantRedefinition]
 
-replace(ARGS, **args.to_dict())
+replace(ARGS, **args)

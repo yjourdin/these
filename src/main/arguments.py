@@ -14,8 +14,6 @@ class ExperimentEnum(CaseInsensitiveStrEnum):
 
 @dataclass(init=False, kw_only=True)
 class Arguments(Dataclass):
-    experiment: ExperimentEnum
-    args: Path
     dir: Path = RESULTS_DIR
     name: str = ""
     jobs: int = DEFAULT_MAX_JOBS
