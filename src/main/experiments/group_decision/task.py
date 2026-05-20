@@ -621,6 +621,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                     reference_models=Mie,
                     gamma=self.config.gamma,
                     nb_cpus=self.config.nb_cpus // self.nb_Mcp,
+                    verbose=True,
                     log_path=self.log_file(dir, Mcp_id),
                 )[0]
             )
