@@ -1221,28 +1221,29 @@ class AcceptPTask(PreferencePathTask):
         with self.A_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
-        # with self.Di_file(dir).open("r") as f:
-        #     D = from_csv(f)
+        with self.Di_file(dir).open("r") as f:
+            D = from_csv(f)
 
         with self.P_file(dir).open("r") as f:
             P = from_csv(f)
 
-        with self.Da_file(dir).open("r") as f:
-            ACC = from_csv(f)
+        # with self.Da_file(dir).open("r") as f:
+        #     ACC = from_csv(f)
+
+        for r1 in P:
+            if r2 := D.elements_pairs_relations[r1.elements]:
+                D -= r2 # pyright: ignore[reportConstantRedefinition]
 
         t = 0
         accept = True
         while accept and t < len(P):
-            new_relation = P.relations[t]
-            if old_relation := ACC.elements_pairs_relations[new_relation.elements]:
-                ACC -= old_relation  # pyright: ignore[reportConstantRedefinition]
-            ACC += new_relation  # pyright: ignore[reportConstantRedefinition]
+            D += P.relations[t]  # pyright: ignore[reportConstantRedefinition]
 
             mips, _ = create_mip(
                 GroupModelEnum.SRMP,
                 self.ko,
                 A,
-                [ACC],
+                [D],
                 rng_(0),
                 0,
                 self.config.max_time,
