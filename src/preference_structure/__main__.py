@@ -1,5 +1,4 @@
 from pathlib import Path
-from sys import stdout
 from typing import cast
 
 from mcda.internal.core.values import Ranking
@@ -10,21 +9,22 @@ from src.model import GroupModel, Model
 from src.models import model_from_json
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.random import rng_, seed_
-from src.utils import add_filename_suffix
+from src.utils import add_filename_suffix, file_or_stdout
 
 from .args import ARGS, TypeEnum
 from .generate import noisy_comparisons, random_comparisons
 from .io import to_csv
 
 # Import data
-model = model_from_json(ARGS.model.read())
+with ARGS.model.open("r") as f:
+    model = model_from_json(f.read())
 
 A = NormalPerformanceTable(read_csv(ARGS.A, header=None))
 
 NB_DM = model.group_size if isinstance(model, GroupModel) else 1
 DMS = range(NB_DM)
 
-match cast(TypeEnum, ARGS.type):
+match ARGS.type:
     case TypeEnum.PREFERENCE_STRUCTURE:
         # Create random seeds
         seed_shuffle, seed_error = (
@@ -56,8 +56,9 @@ match cast(TypeEnum, ARGS.type):
 
 
 # Write results
-def filename(dm: int):
-    path = Path(ARGS.output)
+def filename(path: Path | None, dm: int):
+    if path is None:
+        return None
     if NB_DM == 1:
         return path
     else:
@@ -65,9 +66,9 @@ def filename(dm: int):
 
 
 for dm in DMS:
-    with stdout if ARGS.output == "stdout" else open(filename(dm), "w") as f:
-        match cast(TypeEnum, ARGS.type):
+    with file_or_stdout(filename(ARGS.output, dm), "w") as f:
+        match ARGS.type:
             case TypeEnum.PREFERENCE_STRUCTURE:
-                to_csv(D[dm], f)  # type: ignore
+                to_csv(D[dm], f) # pyright: ignore[reportUnknownArgumentType, reportPossiblyUnboundVariable]
             case TypeEnum.RANKING:
-                R[dm].data.to_csv(f, header=False, index=False)  # type: ignore
+                R[dm].data.to_csv(f, header=False) # pyright: ignore[reportPossiblyUnboundVariable]
