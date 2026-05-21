@@ -84,7 +84,7 @@ with catchtime() as time, ThreadPoolExecutor(ARGS.nb_cpus) as thread_pool:
     results = list(thread_pool.map(mip_result, mips))
 
 for i, result in enumerate(results):
-    if result.best_objective is None:
+    if result.best_model is None:
         match sense:
             case SenseEnum.MIN:
                 placeholder = inf

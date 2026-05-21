@@ -310,8 +310,8 @@ def mip_result[M: Model](mip: MIP[M, Any, Any]):
         else None
     )
     return MIPResult[M, float](
-        best_sol if best_objective is not None else None,
-        best_objective if best_objective is not None else None,
+        best_sol,
+        best_objective,
         mip.prob.solutionCpuTime,
         mip.prob.sol_status == 1,
     )
