@@ -102,7 +102,6 @@ with file_or_stdout(ARGS.output, "w") as f:
     f.write(best_model.to_json() if best_model else "")
 
 # Write results
-if ARGS.result:
-    with file_or_stdout(ARGS.result, "w", "") as f:
-        writer = csv.writer(f, "unix")
-        writer.writerow([best_objective, time(), optimal])
+with file_or_stdout(ARGS.result, "w", "") as f:
+    writer = csv.writer(f, "unix")
+    writer.writerow([best_objective, time(), optimal])
