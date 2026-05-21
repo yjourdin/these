@@ -84,7 +84,7 @@ with catchtime() as time, ThreadPoolExecutor(ARGS.nb_cpus) as thread_pool:
     results = list(thread_pool.map(mip_result, mips))
 
 for i, result in enumerate(results):
-    if result.best_model is None:
+    if result.best_objective is None:
         match sense:
             case SenseEnum.MIN:
                 placeholder = inf
@@ -105,7 +105,7 @@ with file_or_stdout(ARGS.output, "w") as f:
 with file_or_stdout(ARGS.result, "w", "") as f:
     writer = csv.writer(f, "unix")
     writer.writerow([
-        best_objective if best_objective != placeholder else None,
+        best_objective if best_objective != placeholder else None,  # pyright: ignore[reportPossiblyUnboundVariable]
         time(),
         optimal,
-    ])  # pyright: ignore[reportPossiblyUnboundVariable]
+    ])
