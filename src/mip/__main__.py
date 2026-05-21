@@ -1,6 +1,7 @@
 import csv
 from concurrent.futures import ThreadPoolExecutor
 from functools import reduce
+from math import inf
 from operator import attrgetter
 
 from mcda.relations import PreferenceStructure
@@ -14,7 +15,7 @@ from src.srmp.model import SRMPModel, SRMPParamFlag
 
 from ..utils import catchtime, file_or_stdout
 from .args import ARGS
-from .main import create_mip, mip_result
+from .main import SenseEnum, create_mip, mip_result
 
 # Import data
 A = NormalPerformanceTable(read_csv(ARGS.A, header=None))
@@ -82,6 +83,14 @@ mips, sense = create_mip(
 with catchtime() as time, ThreadPoolExecutor(ARGS.nb_cpus) as thread_pool:
     results = list(thread_pool.map(mip_result, mips))
 
+for i, result in enumerate(results):
+    if result.best_objective is None:
+        match sense:
+            case SenseEnum.MIN:
+                placeholder = inf
+            case SenseEnum.MAX:
+                placeholder = -inf
+        results[i] = result._replace(best_objective=placeholder)
 optimal = all(result.optimal for result in results)
 best_model, best_objective, _, _ = sense.value(
     results, key=attrgetter("best_objective")
