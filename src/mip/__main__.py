@@ -104,4 +104,8 @@ with file_or_stdout(ARGS.output, "w") as f:
 # Write results
 with file_or_stdout(ARGS.result, "w", "") as f:
     writer = csv.writer(f, "unix")
-    writer.writerow([best_objective, time(), optimal])
+    writer.writerow([
+        best_objective if best_objective != placeholder else None,
+        time(),
+        optimal,
+    ])  # pyright: ignore[reportPossiblyUnboundVariable]
