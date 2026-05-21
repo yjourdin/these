@@ -93,7 +93,7 @@ for i, result in enumerate(results):
         results[i] = result._replace(best_objective=placeholder)
 optimal = all(result.optimal for result in results)
 best_model, best_objective, _, _ = sense.value(
-    results, key=attrgetter("best_objective"), default=(None,) * 4
+    results, key=attrgetter("best_objective")
 )
 
 
