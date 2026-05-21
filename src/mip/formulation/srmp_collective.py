@@ -279,17 +279,17 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                 )
 
         # Constraint on accepted preferences
-        for r in self.preference_accepted:
-            self.vars["s"][self.preference_relations_union.index(r)][0].setInitialValue(
-                0
-            )
-            self.vars["s"][self.preference_relations_union.index(r)][0].fixValue()
+        # for r in self.preference_accepted:
+        #     self.vars["s"][self.preference_relations_union.index(r)][0].setInitialValue(
+        #         0
+        #     )
+        #     self.vars["s"][self.preference_relations_union.index(r)][0].fixValue()
 
-        for r in self.indifference_accepted:
-            self.vars["s_star"][
-                self.indifference_relations_union.index(r)
-            ].setInitialValue(0)
-            self.vars["s_star"][self.indifference_relations_union.index(r)].fixValue()
+        # for r in self.indifference_accepted:
+        #     self.vars["s_star"][
+        #         self.indifference_relations_union.index(r)
+        #     ].setInitialValue(0)
+        #     self.vars["s_star"][self.indifference_relations_union.index(r)].fixValue()
 
         # Constraint on refused preferences
         for r in self.preference_refused:

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from src.methods import MethodEnum
-from src.utils import filename_csv, filename_json
+from src.utils import filename_csv, filename_json, filename_log
 
 from ...directory import Directory
 from ..elicitation.config import Config, MIPConfig
@@ -221,7 +221,7 @@ class DirectoryGroupDecision(Directory):
         P_id: int,
         it: int,
     ):
-        return self.dirs["MIP_log"] / filename_json(locals())
+        return self.dirs["MIP_log"] / filename_log(locals())
 
     def Mc(
         self,

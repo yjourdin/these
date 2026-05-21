@@ -104,6 +104,7 @@ def pathname(dct: dict[str, Any], ext: str):
 dirname = partial(pathname, ext="")
 filename_csv = partial(pathname, ext=".csv")
 filename_json = partial(pathname, ext=".json")
+filename_log = partial(pathname, ext=".log")
 
 
 def max_weight(n: int) -> int:
