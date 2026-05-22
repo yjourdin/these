@@ -10,14 +10,13 @@ from pulp import (  # type: ignore
     LpProblem,
     LpVariable,
     lpSum,
-    value,
 )
 
 from src.constants import EPSILON
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.srmp.model import SRMPModel
 
-from ..mip import MIP, D, MIPParams, MIPVars
+from ..mip import MIP, D, MIPParams, MIPVars, value
 
 
 class MIPSRMPAcceptVars(MIPVars):

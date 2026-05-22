@@ -3,11 +3,25 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 from mcda.internal.core.interfaces import Learner
-from pulp import LpProblem, LpSolver, LpVariable, getSolver, listSolvers  # type: ignore
+from pulp import (  # pyright: ignore[reportMissingTypeStubs]
+    LpProblem,
+    LpSolver,
+    LpVariable,
+    getSolver,
+    listSolvers,
+)
+from pulp import value as value_pulp  # pyright: ignore[reportMissingTypeStubs]
 
 from src.constants import DEFAULT_MAX_TIME
 from src.dataclass import Dataclass, InitVar, dataclass, field
 from src.random import SeedLike, int_
+
+
+def value(x: Any):
+    if (v := value_pulp(x)) is None:
+        raise ValueError("None value")
+    return v
+
 
 type D[T: LpVariable | D] = dict[Any, T]
 
@@ -49,7 +63,7 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
         self.prob.solve(self.solver)
         try:
             self.create_solution()
-        except TypeError:
+        except ValueError:
             return None
         else:
             return self.sol

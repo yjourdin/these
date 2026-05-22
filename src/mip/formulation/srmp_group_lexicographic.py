@@ -11,7 +11,6 @@ from pulp import (  # type: ignore
     LpProblem,
     LpVariable,
     lpSum,
-    value,
 )
 
 from src.constants import EPSILON
@@ -25,7 +24,7 @@ from src.srmp.model import (
     srmp_group_model,
 )
 
-from ..mip import MIP, D, MIPParams, MIPVars
+from ..mip import MIP, D, MIPParams, MIPVars, value
 
 
 class MIPSRMPGroupLexicographicOrderVars(MIPVars):
