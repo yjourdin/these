@@ -33,7 +33,7 @@ class SenseEnum(Enum):
     MIN = member(min)
 
 
-class MIPResult[M: Model, O: float](NamedTuple):
+class MIPResult[M = Model, O = float](NamedTuple):
     best_model: M | None = None
     best_objective: O | None = None
     time: float = 0
@@ -302,7 +302,7 @@ def create_mip(
     #     return result
 
 
-def mip_result[M: Model](mip: MIP[M, Any, Any]):
+def mip_result[M](mip: MIP[M, Any, Any]):
     best_sol = mip.learn()
     best_objective = (
         cast(float, value(objective))
