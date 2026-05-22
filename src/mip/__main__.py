@@ -83,19 +83,17 @@ mips, sense = create_mip(
 with catchtime() as time, ThreadPoolExecutor(ARGS.nb_cpus) as thread_pool:
     results = list(thread_pool.map(mip_result, mips))
 
-for i, result in enumerate(results):
-    if result.best_objective is None:
-        match sense:
-            case SenseEnum.MIN:
-                placeholder = inf
-            case SenseEnum.MAX:
-                placeholder = -inf
-        results[i] = result._replace(best_objective=placeholder)
-optimal = all(result.optimal for result in results)
-best_model, best_objective, _, _ = sense.value(
-    results, key=attrgetter("best_objective")
-)
+filter(attrgetter("best_model"), results)
 
+optimal = all(result.optimal for result in results) if results else False
+
+placeholder = {SenseEnum.MIN: inf, SenseEnum.MAX: -inf}
+best_model, best_objective, _, _ = sense.value(
+    results,
+    key=lambda x: (
+        x.best_objective if x.best_objective is not None else placeholder[sense]
+    ),
+)
 
 # Write output
 with file_or_stdout(ARGS.output, "w") as f:
@@ -105,7 +103,7 @@ with file_or_stdout(ARGS.output, "w") as f:
 with file_or_stdout(ARGS.result, "w", "") as f:
     writer = csv.writer(f, "unix")
     writer.writerow([
-        best_objective if best_objective != placeholder else None,  # pyright: ignore[reportPossiblyUnboundVariable]
+        best_objective,
         time(),
         optimal,
     ])
