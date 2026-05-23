@@ -8,7 +8,6 @@ from mcda.relations import I, P, PreferenceStructure
 from pulp import value  # type: ignore
 
 from src.constants import DEFAULT_MAX_TIME
-from src.model import Model
 from src.models import GroupModelEnum
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.preference_structure.utils import divide_preferences
@@ -16,6 +15,7 @@ from src.random import RNGParam, SeedLike, rng_
 from src.rmp.permutation import all_max_adjacent_distance
 from src.srmp.model import SRMPModel, SRMPParamFlag
 
+from ..model import Model
 from ..utils import add_filename_suffix
 from .formulation.srmp import MIPSRMP
 from .formulation.srmp_accept import MIPSRMPAccept
@@ -33,11 +33,11 @@ class SenseEnum(Enum):
     MIN = member(min)
 
 
-class MIPResult[M = Model, O = float](NamedTuple):
-    best_model: M | None = None
-    best_objective: O | None = None
-    time: float = 0
-    optimal: bool = False
+class MIPResult[M, O](NamedTuple):
+    best_model: M
+    best_objective: O
+    time: float
+    optimal: bool
 
 
 def create_mip(
@@ -54,6 +54,7 @@ def create_mip(
     preferences_changes: list[int] | None = None,
     comparisons_refused: PreferenceStructure | None = None,
     comparisons_accepted: PreferenceStructure | None = None,
+    comparisons_past: list[PreferenceStructure] | None = None,
     reference_model: SRMPModel | None = None,
     profiles_amp: float | None = None,
     weights_amp: float | None = None,
@@ -227,6 +228,7 @@ def create_mip(
                     indifference_refused=indifference_refused_list,
                     preference_accepted=preference_accepted_list,
                     indifference_accepted=indifference_accepted_list,
+                    comparisons_past=comparisons_past or [],
                     time_limit=max_time,
                     seed=seed_mip,
                     nb_cpus=NB_CPUS_MIP,
@@ -302,14 +304,14 @@ def create_mip(
     #     return result
 
 
-def mip_result[M](mip: MIP[M, Any, Any]):
+def mip_result[M: Model](mip: MIP[M, Any, Any]):
     best_sol = mip.learn()
     best_objective = (
         cast(float, value(objective))
         if (objective := mip.prob.objective) is not None
         else None
     )
-    return MIPResult[M, float](
+    return MIPResult(
         best_sol,
         best_objective,
         mip.prob.solutionCpuTime,

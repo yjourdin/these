@@ -3,14 +3,14 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
 from math import inf
 from operator import attrgetter
-from typing import Any
+from typing import Any, cast
 
 from mcda.relations import PreferenceStructure
 from mcda.types import Relation
 from pandas import read_csv
 
 from src.methods import MethodEnum
-from src.mip.main import create_mip, mip_result
+from src.mip.main import MIPResult, create_mip, mip_result
 from src.models import GroupModelEnum, ModelEnum
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.preference_path.main import compute_model_paths, compute_preference_path
@@ -595,6 +595,11 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                 Mie = None
                 break
 
+        Dcs: list[PreferenceStructure] = []
+        for it in range(self.it):
+            with self.Dc_file_past(dir, it).open("r") as f:
+                Dcs.append(from_csv(f))
+
         seed_lex, seed_mip = self.seed(seed).spawn(2)
 
         seeds_mip = seed_mip.spawn(self.nb_Mcp) if self.nb_Mcp > 1 else [seed_mip]
@@ -618,6 +623,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                     C,
                     R,
                     ACC,
+                    Dcs,
                     reference_models=Mie,
                     gamma=self.config.gamma,
                     nb_cpus=self.config.nb_cpus // self.nb_Mcp,
@@ -631,13 +637,23 @@ class CollectiveMIPTask(AbstractCollectiveTask):
         ):
             results = list(thread_pool.map(mip_result, mips))
 
-        for i, result in enumerate(results):
-            if result.best_objective is None:
-                results[i] = result._replace(best_objective=inf)
-        optimal = all(result.optimal for result in results)
-        results.sort(key=attrgetter("best_objective"))
+        results = cast(
+            list[MIPResult[SRMPModel, float | None]],
+            list(filter(attrgetter("best_model"), results)),  # pyright: ignore[reportUnknownArgumentType]
+        )
 
-        if (best_model := results[0].best_model) is not None:
+        optimal = all(result.optimal for result in results) if results else False
+
+        best_model = None
+        best_objective = None
+        if results:
+            results.sort(
+                key=lambda x: x.best_objective if x.best_objective is not None else inf,
+            )
+
+            best_model = results[0].best_model
+            best_objective = results[0].best_objective
+
             with self.Mc_file(dir).open("w") as f:
                 f.write(best_model.to_json())
 
@@ -653,22 +669,23 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                     f,
                 )
 
-        for Mcp_id in range(self.nb_Mcp):
-            if (best_model := results[Mcp_id].best_model) is not None:
-                with self.Mcp_file(dir, Mcp_id).open("w") as f:
-                    f.write(best_model.to_json())
+        for Mcp_id, result in zip(range(self.nb_Mcp), results):
+            model = result.best_model
 
-                with self.Dcp_file(dir, Mcp_id).open("w") as f:
-                    to_csv(
-                        random_comparisons(
-                            A,
-                            best_model,
-                            pairs=set.union(
-                                *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
-                            ),
+            with self.Mcp_file(dir, Mcp_id).open("w") as f:
+                f.write(model.to_json())
+
+            with self.Dcp_file(dir, Mcp_id).open("w") as f:
+                to_csv(
+                    random_comparisons(
+                        A,
+                        model,
+                        pairs=set.union(
+                            *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
                         ),
-                        f,
-                    )
+                    ),
+                    f,
+                )
 
         csv_file = dir.csv_files["collective"]
         csv_file.writerow(
@@ -694,11 +711,11 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             P_id=self.P_id,
             It=self.it,
             Time=time(),
-            Objective=results[0].best_objective,
+            Objective=best_objective,
             Optimal=optimal,
         )
 
-        return results[0].best_model is not None
+        return best_model is not None
 
     def Mie_file(self, dir: DirectoryGroupDecision, dm_id: int):
         assert self.Mie_config
@@ -717,6 +734,30 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             self.Mie_config,
             self.Mie_id,
             dm_id,
+        )
+
+    def Dc_file_past(self, dir: DirectoryGroupDecision, it: int):
+        return dir.Dc(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.group,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.method,
+            self.config,
+            self.Mc_id,
+            self.Mie,
+            self.Mie_config,
+            self.Mie_id,
+            self.path,
+            self.P_id,
+            it,
         )
 
     def log_file(self, dir: DirectoryGroupDecision, id: int):

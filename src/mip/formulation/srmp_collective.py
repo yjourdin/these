@@ -4,7 +4,7 @@ from dataclasses import InitVar, dataclass, field
 from typing import Any, cast
 
 import numpy as np
-from mcda.relations import I, P
+from mcda.relations import I, P, PreferenceStructure
 from pulp import (  # type: ignore
     LpBinary,
     LpInteger,
@@ -18,6 +18,7 @@ from src.constants import EPSILON
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.srmp.model import SRMPModel
 
+from ...preference_structure.utils import complementary_preference, divide_preferences
 from ..mip import MIP, D, MIPParams, MIPVars, value
 
 
@@ -29,6 +30,7 @@ class MIPSRMPCollectiveVars(MIPVars):
     s: D[D[LpVariable]]
     s_star: D[LpVariable]
     S: LpVariable
+    R: D[LpVariable]
 
 
 @dataclass
@@ -58,6 +60,7 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
     indifference_refused: list[I]
     preference_accepted: list[P]
     indifference_accepted: list[I]
+    comparisons_past: list[PreferenceStructure]
     gamma: float = EPSILON
     best_objective: float | None = None
 
@@ -70,6 +73,15 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
         )
 
     def create_variables(self):
+        preference_past_list: list[list[P]] = []
+        indifference_past_list: list[list[I]] = []
+        for comp in self.comparisons_past:
+            preference_past, indifference_past = divide_preferences(
+                complementary_preference(comp)
+            )
+            preference_past_list.append(preference_past)
+            indifference_past_list.append(indifference_past)
+
         # Binary comparisons with preference
         self.preference_relations_union = list(
             set(
@@ -81,6 +93,11 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
             | {P(r.b, r.a) for r in self.preference_refused}
             | {P(r.a, r.b) for r in self.indifference_refused}
             | {P(r.b, r.a) for r in self.indifference_refused}
+            | set(
+                itertools.chain.from_iterable(
+                    preferences for preferences in preference_past_list
+                )
+            )
         )
         preference_relations_union_indices = range(len(self.preference_relations_union))
         # Binary comparisons with indifference
@@ -92,6 +109,11 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
             )
             | set(self.indifference_accepted)
             | {I(r.a, r.b) for r in self.preference_refused}
+            | set(
+                itertools.chain.from_iterable(
+                    indifferences for indifferences in indifference_past_list
+                )
+            )
         )
         indifference_relations_union_indices = range(
             len(self.indifference_relations_union)
@@ -131,12 +153,21 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                 cat=LpBinary,
             ),  # type: ignore
             S=LpVariable("MinimumPreferencesChanges", cat=LpInteger),
+            R=LpVariable.dicts(
+                "MinimumPreferencesChanges",
+                indices=self.preference_refused + self.indifference_refused,
+                cat=LpBinary,
+            ),  # type: ignore
         )
 
     def create_problem(self):
         self.prob = LpProblem("SRMP_Elicitation", LpMinimize)
 
-        self.prob += self.vars["S"]
+        # self.prob += self.vars["S"]
+        self.prob += self.vars["S"] + max(
+            len(self.preference_relations[dm]) for dm in self.params.DM
+        ) * lpSum(self.vars["R"].values())
+
         # self.prob += self.vars["S"] * max(len(self.preference_relations[dm]) + len(self.indifference_relations[dm]) for dm in self.params.DM) + (
         #     lpSum([self.preferences_changed[dm] for dm in self.params.DM])
         #     + sum(
@@ -297,14 +328,38 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                 + self.vars["s_star"][
                     self.indifference_relations_union.index(I(r.a, r.b))
                 ]
-                <= 1
+                <= 1 + self.vars["R"][r]
             )
 
         for r in self.indifference_refused:
             self.prob += (
                 self.vars["s"][self.preference_relations_union.index(P(r.a, r.b))][0]
                 + self.vars["s"][self.preference_relations_union.index(P(r.b, r.a))][0]
-                <= 1
+                <= 1 + self.vars["R"][r]
+            )
+
+        for comp in self.comparisons_past:
+            self.prob += (
+                lpSum(
+                    itertools.chain.from_iterable(
+                        [
+                            self.vars["s"][
+                                self.preference_relations_union.index(P(r.b, r.a))
+                            ][0],
+                            (
+                                self.vars["s_star"][
+                                    self.indifference_relations_union.index(I(r.a, r.b))
+                                ]
+                                if isinstance(r, P)
+                                else self.vars["s"][
+                                    self.preference_relations_union.index(P(r.a, r.b))
+                                ][0]
+                            ),
+                        ]
+                        for r in comp
+                    )
+                )
+                <= 2 * len(comp) - 1
             )
 
         # Constraints on minimum number of preferences changes

@@ -233,7 +233,9 @@ class MIPTask(AbstractElicitationTask):
 
         with (
             catchtime() as time,
-            ThreadPoolExecutor(min(len(mips), self.config.nb_cpus)) as thread_pool,
+            ThreadPoolExecutor(
+                min(len(list(mips)), self.config.nb_cpus)
+            ) as thread_pool,
         ):
             results = thread_pool.map(mip_result, mips)
 
@@ -289,7 +291,7 @@ class SATask(AbstractElicitationTask):
 
         rng_init, rng_sa = self.rng(seed).spawn(2)
 
-        sas, sense = create_sa(
+        sas, _ = create_sa(
             self.Me.value[0],
             self.ke,
             A,
@@ -312,7 +314,7 @@ class SATask(AbstractElicitationTask):
         ):
             results = process_pool.map(sa_result, sas)
 
-        best_model, best_objective, _, it = sense.value(
+        best_model, best_objective, _, it = min(
             results, key=attrgetter("best_objective")
         )
 

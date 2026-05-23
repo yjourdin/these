@@ -61,8 +61,8 @@ def compute_preference_path(
 ):
     path = preference_path(model_path, alternatives, start_preferences)
 
-    if refused:
-        remove_refused(path, refused)
+    # if refused:
+    #     remove_refused(path, refused)
     remove_reverted_changes(path)
 
     return path

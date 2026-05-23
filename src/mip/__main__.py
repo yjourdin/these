@@ -85,7 +85,7 @@ with catchtime() as time, ThreadPoolExecutor(ARGS.nb_cpus) as thread_pool:
     results = list(thread_pool.map(mip_result, mips))
 
 results = cast(
-    list[MIPResult[SRMPModel]],
+    list[MIPResult[SRMPModel, float | None]],
     list(filter(attrgetter("best_model"), results)),  # pyright: ignore[reportUnknownArgumentType]
 )
 
