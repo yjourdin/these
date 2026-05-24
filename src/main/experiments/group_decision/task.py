@@ -375,8 +375,8 @@ class AbstractCollectiveTask(AbstractDTask):
             self.it,
         )
 
-    def Dr_file(self, dir: DirectoryGroupDecision):
-        return dir.Dr(
+    def Cr_file(self, dir: DirectoryGroupDecision):
+        return dir.Cr(
             self.m,
             self.ntr,
             self.Atr_id,
@@ -397,6 +397,30 @@ class AbstractCollectiveTask(AbstractDTask):
             self.path,
             self.P_id,
             self.it,
+        )
+
+    def Dr_file(self, dir: DirectoryGroupDecision, it: int):
+        return dir.Dr(
+            self.m,
+            self.ntr,
+            self.Atr_id,
+            self.ko,
+            self.Mo_id,
+            self.group_size,
+            self.group,
+            self.Mi_id,
+            self.nbc,
+            self.same_alt,
+            self.D_id,
+            self.method,
+            self.config,
+            self.Mc_id,
+            self.Mie,
+            self.Mie_config,
+            self.Mie_id,
+            self.path,
+            self.P_id,
+            it,
         )
 
     def Mcp_file(self, dir: DirectoryGroupDecision, id: int):
@@ -580,11 +604,16 @@ class CollectiveMIPTask(AbstractCollectiveTask):
         #             with Dr_file.open("r") as f:
         #                 R.append(from_csv(f))
         R = PreferenceStructure()
-        if (Dr_file := self.Dr_file(dir)).exists():
-            with Dr_file.open("r") as f:
+        if (Cr_file := self.Cr_file(dir)).exists():
+            with Cr_file.open("r") as f:
                 R = from_csv(f)  # pyright: ignore[reportConstantRedefinition]
         else:
-            Dr_file.touch()
+            Cr_file.touch()
+
+        DR: list[PreferenceStructure] = []
+        for it in range(self.it):
+            with self.Dr_file(dir, it).open("r") as f:
+                DR.append(from_csv(f))
 
         Mie: list[SRMPModel] | None = []
         for dm_id in range(self.group_size):
@@ -594,11 +623,6 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             else:
                 Mie = None
                 break
-
-        Dcs: list[PreferenceStructure] = []
-        for it in range(self.it):
-            with self.Dc_file_past(dir, it).open("r") as f:
-                Dcs.append(from_csv(f))
 
         seed_lex, seed_mip = self.seed(seed).spawn(2)
 
@@ -623,7 +647,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                     C,
                     R,
                     ACC,
-                    Dcs,
+                    DR,
                     reference_models=Mie,
                     gamma=self.config.gamma,
                     nb_cpus=self.config.nb_cpus // self.nb_Mcp,
@@ -736,30 +760,6 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             dm_id,
         )
 
-    def Dc_file_past(self, dir: DirectoryGroupDecision, it: int):
-        return dir.Dc(
-            self.m,
-            self.ntr,
-            self.Atr_id,
-            self.ko,
-            self.Mo_id,
-            self.group_size,
-            self.group,
-            self.Mi_id,
-            self.nbc,
-            self.same_alt,
-            self.D_id,
-            self.method,
-            self.config,
-            self.Mc_id,
-            self.Mie,
-            self.Mie_config,
-            self.Mie_id,
-            self.path,
-            self.P_id,
-            it,
-        )
-
     def log_file(self, dir: DirectoryGroupDecision, id: int):
         return dir.MIP_log(
             self.m,
@@ -867,7 +867,7 @@ class CollectiveSATask(AbstractCollectiveTask):
         #             with Dr_file.open("r") as f:
         #                 R.append(from_csv(f))
         R = PreferenceStructure()
-        if (Dr_file := self.Dr_file(dir)).exists():
+        if (Dr_file := self.Dr_file(dir, self.it)).exists():
             with Dr_file.open("r") as f:
                 R = from_csv(f)  # pyright: ignore[reportConstantRedefinition]
         else:
@@ -1103,7 +1103,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
         result = True
         if self.path:
             R = PreferenceStructure()
-            if (Dr_file := self.Dr_file(dir)).exists():
+            if (Dr_file := self.Cr_file(dir)).exists():
                 with Dr_file.open("r") as f:
                     R = from_csv(f)  # pyright: ignore[reportConstantRedefinition]
 
@@ -1266,13 +1266,13 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             t,
         )
 
-    def Dr_file(
-        self,
-        dir: DirectoryGroupDecision,
-        dm_id: int | None = None,
-        it: int | None = None,
-    ):
-        return super().Dr_file(dir)
+    # def Dr_file(
+    #     self,
+    #     dir: DirectoryGroupDecision,
+    #     dm_id: int | None = None,
+    #     it: int | None = None,
+    # ):
+    #     return super().Dr_file(dir)
 
     def done(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any):
         return self.Dp_file(dir, 0).exists()
@@ -1299,13 +1299,16 @@ class AcceptPTask(PreferencePathTask):
         #     ACC = from_csv(f)
 
         for r1 in P:
-            if r2 := D.elements_pairs_relations[r1.elements]:
+            if r2 := D.elements_pairs_relations.get(r1.elements):
                 D -= r2  # pyright: ignore[reportConstantRedefinition]
 
         t = 0
         accept = True
         while accept and t < len(P):
-            D += P.relations[t]  # pyright: ignore[reportConstantRedefinition]
+            r1 = P.relations[t]
+            if r2 := D.elements_pairs_relations.get(r1.elements):
+                D -= r2  # pyright: ignore[reportConstantRedefinition]
+            D += r1  # pyright: ignore[reportConstantRedefinition]
 
             mips, _ = create_mip(
                 GroupModelEnum.SRMP,
@@ -1325,9 +1328,33 @@ class AcceptPTask(PreferencePathTask):
             accept = any(mip_result(mip).optimal for mip in mips)
             if accept:
                 t += 1
+            else:
+                with self.Dr_file(dir, self.it).open("w") as f:
+                    to_csv(D, f)
 
         if accept:
             t = -1
+        else:
+            rel = PreferenceStructure(P.relations[t])
+            mips, _ = create_mip(
+                GroupModelEnum.SRMP,
+                self.ko,
+                A,
+                [rel],
+                rng_(0),
+                0,
+                self.config.max_time,
+                self.lexicographic_order,
+                reference_model=Mi,
+                profiles_amp=self.group.accept.P,
+                weights_amp=self.group.accept.W,
+                lexicographic_order_distance=self.group.accept.L,
+            )
+
+            accept = any(mip_result(mip).optimal for mip in mips)
+            if not accept:
+                with self.Cr_file(dir).open("a") as f:
+                    to_csv(rel, f)
 
         csv_file = dir.csv_files["accept"]
         csv_file.writerow(

@@ -1,18 +1,18 @@
 from collections.abc import Sequence
 
 from src.dataclass import Dataclass, dataclass, field
-from src.random import Seed, SeedLike, rng_, seed_
+from src.random import SeedLike, int_, rng_
 
 
 @dataclass
 class Seeds(Dataclass):
-    A_tr: Sequence[Seed] = field(default_factory=list)
-    Mo: Sequence[Seed] = field(default_factory=list)
-    Mi: Sequence[Seed] = field(default_factory=list)
-    D: Sequence[Seed] = field(default_factory=list)
-    Mie: Sequence[Seed] = field(default_factory=list)
-    Mc: Sequence[Seed] = field(default_factory=list)
-    P: Sequence[Seed] = field(default_factory=list)
+    A_tr: Sequence[int] = field(default_factory=list)
+    Mo: Sequence[int] = field(default_factory=list)
+    Mi: Sequence[int] = field(default_factory=list)
+    D: Sequence[int] = field(default_factory=list)
+    Mie: Sequence[int] = field(default_factory=list)
+    Mc: Sequence[int] = field(default_factory=list)
+    P: Sequence[int] = field(default_factory=list)
 
     @classmethod
     def from_seed(
@@ -29,11 +29,11 @@ class Seeds(Dataclass):
         rng = rng_(seed)
 
         return cls(
-            seed_(rng).spawn(nb_Atr),
-            seed_(rng).spawn(nb_Mo),
-            seed_(rng).spawn(nb_Mi),
-            seed_(rng).spawn(nb_D),
-            seed_(rng).spawn(nb_Mie),
-            seed_(rng).spawn(nb_Mc),
-            seed_(rng).spawn(nb_P),
+            [int_(s) for s in rng.spawn(nb_Atr)],
+            [int_(s) for s in rng.spawn(nb_Mo)],
+            [int_(s) for s in rng.spawn(nb_Mi)],
+            [int_(s) for s in rng.spawn(nb_D)],
+            [int_(s) for s in rng.spawn(nb_Mie)],
+            [int_(s) for s in rng.spawn(nb_Mc)],
+            [int_(s) for s in rng.spawn(nb_P)],
         )

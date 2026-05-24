@@ -50,21 +50,21 @@ class CollectiveObjective(Objective[Model], Dataclass):
         ranks = sol.rank_series(self.performance_table).to_dict()
 
         if not_accepted := comparisons_ranking(self.comparisons_accepted, ranks):
-            result += len(not_accepted) * self.M ^ self.nb_DM
+            result += len(not_accepted) * self.M**self.nb_DM
 
         if set(self.comparisons_refused) != set(
             refused := comparisons_ranking(self.comparisons_refused, ranks)
         ):
             result += (
                 len(self.comparisons_refused) - len(refused)
-            ) * self.M ^ self.nb_DM
+            ) * self.M**self.nb_DM
 
         tup = sorted(
             self.preferences_changes[dm]
             + len(comparisons_ranking(self.comparisons[dm], ranks))
             for dm in range(self.nb_DM)
         )
-        result += sum(x * self.M ^ i for (i, x) in enumerate(tup))
+        result += sum(x * self.M**i for (i, x) in enumerate(tup))
 
         return result
 

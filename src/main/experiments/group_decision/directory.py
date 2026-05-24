@@ -35,6 +35,7 @@ class DirectoryGroupDecision(Directory):
         Dc: Path
         C: Path
         Da: Path
+        Cr: Path
         Dr: Path
         Dp: Path
         P: Path
@@ -69,6 +70,7 @@ class DirectoryGroupDecision(Directory):
             Dc=self.dirs["root"] / "Dc",
             C=self.dirs["root"] / "C",
             Da=self.dirs["root"] / "Da",
+            Cr=self.dirs["root"] / "Cr",
             Dr=self.dirs["root"] / "Dr",
             Dp=self.dirs["root"] / "Dp",
             P=self.dirs["root"] / "P",
@@ -348,6 +350,31 @@ class DirectoryGroupDecision(Directory):
         it: int,
     ):
         return self.dirs["Da"] / filename_csv(locals())
+
+    def Cr(
+        self,
+        m: int,
+        ntr: int,
+        Atr_id: int,
+        k: int,
+        Mo_id: int,
+        group_size: int,
+        group: GroupParameters,
+        Mi_id: int,
+        n: int,
+        same_alt: bool,
+        D_id: int,
+        method: MethodEnum,
+        config: Config,
+        Mc_id: int,
+        Mie: bool,
+        Mie_config: MIPConfig | None,
+        Mie_id: int,
+        path: bool,
+        P_id: int,
+        it: int,
+    ):
+        return self.dirs["Cr"] / filename_csv(locals())
 
     def Dr(
         self,

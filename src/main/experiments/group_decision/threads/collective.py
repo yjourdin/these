@@ -325,7 +325,7 @@ def collective_thread(
                 )
 
                 if new_task_Mc is not None:
-                    copy(task_Mc.Dr_file(DIR), new_task_Mc.Dr_file(DIR))  # pyright: ignore[reportUnknownArgumentType]
+                    copy(task_Mc.Cr_file(DIR), new_task_Mc.Cr_file(DIR))  # pyright: ignore[reportUnknownArgumentType]
 
                 for dm_id in DMS:
                     with tasks_accept[dm_id].Di_file(DIR).open("r") as f:
@@ -367,25 +367,35 @@ def collective_thread(
                     )
 
                     if new_task_Mc is not None:
+                        print(args["Atr_id"], it, 1)
                         for i in range(t_dm):
+                            print(args["Atr_id"], it, 2, t_dm)
                             new_relation = P.relations[i]
-                            old_relation = P.elements_pairs_relations[
-                                new_relation.a, new_relation.b
-                            ]
-                            if old_relation:
+                            print(args["Atr_id"], it, 3, t_dm)
+                            if old_relation := D.elements_pairs_relations.get(
+                                new_relation.elements
+                            ):
+                                print(args["Atr_id"], it, 4, t_dm)
                                 D -= old_relation  # pyright: ignore[reportConstantRedefinition]
+                                print(args["Atr_id"], it, 5, t_dm)
                             D += new_relation  # pyright: ignore[reportConstantRedefinition]
+                            print(args["Atr_id"], it, 6, t_dm)
 
                         with new_task_Mc.Di_file(DIR, dm_id=dm_id).open("w") as f:
+                            print(args["Atr_id"], it, 7)
                             to_csv(D, f)
+                            print(args["Atr_id"], it, 8)
 
                         with new_task_Mc.C_file(DIR).open("a", newline="") as f:
+                            print(args["Atr_id"], it, 9)
                             C_writer = csv.writer(f, dialect="unix")  # pyright: ignore[reportUnknownArgumentType]
+                            print(args["Atr_id"], it, 10)
                             C_writer.writerow([changes[dm_id]])
+                            print(args["Atr_id"], it, 11)
 
-                        if dm_id in dms_refusing:
-                            with new_task_Mc.Dr_file(DIR).open("a") as f:
-                                to_csv(PreferenceStructure(P.relations[t_dm]), f)
+                        # if dm_id in dms_refusing:
+                        #     with new_task_Mc.Dr_file(DIR).open("a") as f:
+                        #         to_csv(PreferenceStructure(P.relations[t_dm]), f)
 
                 if new_task_Mc is not None:
                     it = it + 1

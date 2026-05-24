@@ -66,7 +66,7 @@ class Task(FrozenDataclass, AbstractTask):
 @dataclass(frozen=True)
 class SeedTask(Task, SeedMixin):
     def seed(self, seed: SeedLike):
-        return seed_(abs(hash(seed)))
+        return seed_(abs(hash((self, seed))))
 
     def log(self, time: float, *args: Any, **kwargs: Any):
         seed = (
