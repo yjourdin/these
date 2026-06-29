@@ -7,20 +7,36 @@
 #### Délais obligatoires
 
 - Jury et rapporteurs **3 mois** avant la soutenance
-- Manuscrit **2 moins** avant la soutenance
+- Manuscrit **2 mois** avant la soutenance
+- Manuscrit pour **fin septembre** si soutenance dans l'année
 
 #### Souhaité
 
 - Soutenance avant la fin de 2026
 - Jury décidé avant vacances d'été
 
+#### Vacances
+
+- 10-16 juin
+- 17-30 août
+
 ### Résultat
 
-- **Mi-Février :** Fin rédaction article EJOR
-- **Avril :** Début rédaction manuscrit
+<!-- - **Mi-Février :** Fin rédaction article EJOR -->
+<!-- - **Avril :** Début rédaction manuscrit -->
 - **Juin :** Composition du jury
-- **Octobre :** Fin rédaction manuscrit
+- **Septembre (fin) :** Fin rédaction manuscrit
 - **Décembre :** Soutenance
+
+#### Manuscrit
+
+- **23 juin :** Recuit simulé
+- **30 juin :** Chemins de préférences
+- **7 juillet :** MCDA
+- **14 juillet :** Décision de groupe
+- **14 août :** Chemins pour RMP
+- **7 septembre :** Introduction
+- **15 septembre :** Conclusion
 
 <!-- ## Article
 

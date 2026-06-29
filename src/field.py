@@ -29,14 +29,14 @@ def field(fieldname: str):
 
         @classmethod
         def decode(cls: T, dct: dict[Any, Any]):
-            super().decode(dct)  # type: ignore
+            super().decode(dct)  # pyright: ignore[reportGeneralTypeIssues]
             if fieldname in dct:
                 dct[fieldname] = original_class.field_decode(dct[fieldname])
             return dct
 
         @classmethod
         def encode(cls: T, dct: dict[Any, Any]):
-            super().encode(dct)  # type: ignore
+            super().encode(dct)  # pyright: ignore[reportGeneralTypeIssues]
             if fieldname in dct:
                 dct[fieldname] = original_class.field_encode(dct[fieldname])
             return dct
@@ -66,7 +66,7 @@ def random_field(fieldname: str):
         def update_init_dict(
             cls: T, init_dict: dict[str, Any], *args: Any, **kwargs: Any
         ) -> dict[str, Any]:
-            init_dict = super().update_init_dict(*args, init_dict=init_dict, **kwargs)  # type: ignore
+            init_dict = super().update_init_dict(*args, init_dict=init_dict, **kwargs)  # pyright: ignore[reportGeneralTypeIssues]
             init_dict[fieldname] = original_class.field_random(*args, **kwargs)
             return init_dict
 
@@ -83,7 +83,7 @@ def group_field(fieldname: str, fieldclass: type[Field]):
 
         @classmethod
         def decode(cls: T, dct: dict[Any, Any]):
-            super().decode(dct)  # type: ignore
+            super().decode(dct)  # pyright: ignore[reportGeneralTypeIssues]
             if fieldname in dct:
                 dct[fieldname] = (
                     [fieldclass.field_decode(o) for o in dct[fieldname]]
@@ -94,7 +94,7 @@ def group_field(fieldname: str, fieldclass: type[Field]):
 
         @classmethod
         def encode(cls: T, dct: dict[Any, Any]):
-            super(original_class, original_class).encode(dct)  # type: ignore
+            super().encode(dct)  # pyright: ignore[reportGeneralTypeIssues]
             if fieldname in dct:
                 dct[fieldname] = (
                     [fieldclass.field_encode(o) for o in dct[fieldname]]
@@ -120,7 +120,7 @@ def random_group_field(fieldname: str, fieldclass: type[RandomField]):
             cls: T, init_dict: dict[str, Any] | None = None, *args: Any, **kwargs: Any
         ):
             init_dict = init_dict or {}
-            super().update_init_dict(  # type: ignore
+            super().update_init_dict(  # pyright: ignore[reportGeneralTypeIssues]
                 *args, init_dict=init_dict, **kwargs
             )
             init_dict[fieldname] = [
@@ -139,7 +139,7 @@ def group_group_field(fieldname: str, fieldclass: type[Field]):
     def decorator[T: type[Field]](original_class: T) -> T:
         @staticmethod
         def decode(dct: dict[Any, Any]):
-            super().decode(dct)  # type: ignore
+            super().decode(dct)  # pyright: ignore[reportGeneralTypeIssues]
             if fieldname in dct:
                 dct[fieldname] = (
                     [
@@ -153,7 +153,7 @@ def group_group_field(fieldname: str, fieldclass: type[Field]):
 
         @staticmethod
         def encode(dct: dict[Any, Any]):
-            super().encode(dct)  # type: ignore
+            super().encode(dct)  # pyright: ignore[reportGeneralTypeIssues]
             if fieldname in dct:
                 dct[fieldname] = (
                     [

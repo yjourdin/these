@@ -2,7 +2,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, TypedDict
 
 
-class _HomoTypedDict[T](TypedDict): ...  # type: ignore
+class _HomoTypedDict[T](TypedDict): ...   # pyright: ignore[reportRedeclaration]
 
 
 # Internal mypy fallback type for all typed dicts (does not exist at runtime)
@@ -33,23 +33,23 @@ if TYPE_CHECKING:
         def keys(self) -> dict_keys[str, T]: ...
         def values(self) -> dict_values[str, T]: ...
         @overload
-        def __or__(self, value: Self, /) -> Self: ...  # type: ignore
+        def __or__(self, value: Self, /) -> Self: ...   # pyright: ignore[reportNoOverloadImplementation]
         @overload
         def __or__(self, value: dict[str, Any], /) -> dict[str, object]: ...
         @overload
-        def __ror__(self, value: Self, /) -> Self: ...  # type: ignore
+        def __ror__(self, value: Self, /) -> Self: ...  # pyright: ignore[reportNoOverloadImplementation]
         @overload
         def __ror__(self, value: dict[str, Any], /) -> dict[str, object]: ...
         # supposedly incompatible definitions of __or__ and __ior__
-        def __ior__(self, value: Self, /) -> Self: ...  # type: ignore[misc]
+        def __ior__(self, value: Self, /) -> Self: ...  # pyright: ignore[reportNoOverloadImplementation]
 
 
-class HomoTypedDict[T](_HomoTypedDict[T], TypedDict):  # type: ignore
+class HomoTypedDict[T](_HomoTypedDict[T], TypedDict):   # pyright: ignore[reportGeneralTypeIssues]
     def __iter__(self) -> Iterator[str]:
-        return super().__iter__()  # type: ignore
+        return super().__iter__()   # pyright: ignore[reportGeneralTypeIssues, reportAbstractUsage]
 
     def __len__(self) -> int:
-        return super().__len__()  # type: ignore
+        return super().__len__()  # pyright: ignore[reportGeneralTypeIssues, reportAbstractUsage]
 
     def __getitem__(self, key: str) -> T:
-        return super().__getitem__(key)  # type: ignore
+        return super().__getitem__(key)  # pyright: ignore[reportGeneralTypeIssues, reportAbstractUsage]

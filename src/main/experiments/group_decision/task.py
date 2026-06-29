@@ -2,6 +2,7 @@ import csv
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
 from math import inf
+from multiprocessing.connection import Connection
 from operator import attrgetter
 from typing import Any, cast
 
@@ -13,15 +14,25 @@ from src.methods import MethodEnum
 from src.mip.main import MIPResult, create_mip, mip_result
 from src.models import GroupModelEnum, ModelEnum
 from src.performance_table.normal_performance_table import NormalPerformanceTable
-from src.preference_path.main import compute_model_paths, compute_preference_path
+from src.preference_path.main import compute_preference_path
+from src.preference_path.neighborhood import (
+    Neighborhood,
+    NeighborhoodCombined,
+    NeighborhoodLexOrder,
+    NeighborhoodProfile,
+    NeighborhoodWeight,
+)
 from src.preference_structure.generate import random_comparisons
 from src.preference_structure.io import from_csv, to_csv
 from src.preference_structure.utils import preference_structure_from_outranking
 from src.random import SeedLike, rng_
 from src.sa.main import create_sa, sa_result
-from src.srmp.model import SRMPModel
-from src.utils import catchtime, tolist
+from src.srmp.model import FrozenSRMPModel, SRMPModel
+from src.utils import CustomException, catchtime, tolist
 
+from ....constants import SENTINEL
+from ....preference_path.a_star import Astar
+from ....preference_structure.fitness import fitness_comparisons_ranking
 from ...task import SeedTask
 from ..elicitation.config import Config, MIPConfig, SAConfig
 from .directory import DirectoryGroupDecision
@@ -1079,6 +1090,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
         self,
         dir: DirectoryGroupDecision,
         seed: SeedLike,
+        connection: Connection,
         max_time: int | None = None,
         *args: Any,
         **kwargs: Any,
@@ -1097,7 +1109,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
 
         rng_path, rng_order = self.rng(seed).spawn(2)
 
-        model_paths = {}
+        model_path = []
         preference_path = []
         time = 0
         result = True
@@ -1107,23 +1119,49 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 with Dr_file.open("r") as f:
                     R = from_csv(f)  # pyright: ignore[reportConstantRedefinition]
 
-            model_paths, time = compute_model_paths(
-                Mcps,
-                D,
-                A,
-                rng_path,
+            A = A.subtable(D.elements)  # pyright: ignore[reportConstantRedefinition]
+
+            neighborhoods: list[Neighborhood[FrozenSRMPModel]] = [
+                NeighborhoodProfile(A, D),
+                NeighborhoodWeight(),
+            ]
+
+            if not self.fixed_lex_order:
+                neighborhoods.append(NeighborhoodLexOrder())
+
+            neighborhood = NeighborhoodCombined(neighborhoods, rng_path)
+
+            def heuristic(model: FrozenSRMPModel):
+                return 1 - fitness_comparisons_ranking(D, model.model.rank_series(A))
+
+            a_star = Astar(
+                neighborhood,
+                heuristic,
                 min(max_time, self.config.max_time)
                 if max_time is not None
                 else self.config.max_time,
-                self.fixed_lex_order,
             )
 
-            if model_paths:
-                preference_path = compute_preference_path(model_paths[0], D, A, R)
-            else:
-                result = False
-        if not model_paths:
-            model_paths = {i: [Mcp] for i, Mcp in enumerate(Mcps)}
+            a_star.init([model.frozen for model in Mcps])
+
+            paths: dict[int, list[FrozenSRMPModel]] = {}
+
+            while not connection.poll():
+                try:
+                    path = a_star.main_loop(60)
+                except CustomException:
+                    connection.send(SENTINEL)
+                    break
+                else:
+                    if path:
+                        paths |= path
+                        connection.send(set(paths.keys()))
+
+            if (Mcp := connection.recv()) != SENTINEL:
+                model_path = paths[Mcp]
+                preference_path = compute_preference_path(model_path, D, A, R)
+        if not model_path:
+            model_path = [Mcps[0]]
             preference_path = [
                 D,
                 random_comparisons(A, Mcps[0], pairs=D.elements_pairs_relations),
@@ -1141,7 +1179,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             to_csv(PreferenceStructure(comparisons_order, False), f)
 
         t = None
-        for t, model in enumerate(model_paths[0] if model_paths else []):
+        for t, model in enumerate(model_path):
             with self.Mp_file(dir, t).open("w") as f:
                 f.write(model.to_json())
 
@@ -1177,7 +1215,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 Dm_id=self.dm_id,
                 Time=time,
                 Length=t,
-                Model_Length=len(model_paths[0]) if model_paths else None,
+                Model_Length=len(model_path) if model_path else None,
                 Found=result,
             )
 

@@ -119,6 +119,8 @@ Exemple : fred gonsalves
 
 Titre de thèse : (objectif, partie avec recuit simulé réponse directe du titre de thèse)
 Méthodes d'élicitation SRMP (1 seul décideur recuit, multi avec chemins)
-champ lexical: opérationel, acceptable
+champ lexical: opérationnel, acceptable
 
-Propositions : **Multi-criteria group decision aiding based on the Ranking with Multiple reference Points (RMP) family of models, from single decision maker elicitation to group aggregation processes.**
+Proposition :
+**Multi-criteria decision aiding using RMP (Ranking with Multiple Reference Profiles) models, from elicitation for a single decision-maker to group aggregation process.**
+**Aide multicritère à la décision à l'aide de modèles RMP (Ranking with Multiple reference Profiles), de l'élicitation pour un seul décideur au processus d'agrégation de groupe.**

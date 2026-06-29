@@ -1,32 +1,28 @@
 import csv
 from pathlib import Path
-
-from src.homotypeddict import HomoTypedDict
+from typing import Literal
 
 from .csv_file import CSVFile
 from .csv_files import TaskCSVFile
 
 RESULTS_DIR = Path("results")
 
+DirectoryDirs = Literal["root"]
+DirectoryCSVFiles = Literal["tasks"]
+
 
 class Directory:
-    class Dirs(HomoTypedDict[Path]):
-        root: Path
-
-    class CSVFiles(HomoTypedDict[CSVFile]):
-        tasks: TaskCSVFile
-
     def __init__(self, name: str, dir: Path | None = None):
-        self.dirs = self.Dirs(root=(dir or Path.cwd()) / name)
+        self.dirs: dict[DirectoryDirs, Path] = {"root": (dir or Path.cwd()) / name}
 
         self.args = self.dirs["root"] / "args.json"
         self.log = self.dirs["root"] / "log.log"
         self.error = self.dirs["root"] / "error.log"
         self.run = self.dirs["root"] / "run.txt"
 
-        self.csv_files = self.CSVFiles(
-            tasks=TaskCSVFile(self.dirs["root"] / "tasks.csv"),
-        )
+        self.csv_files: dict[DirectoryCSVFiles, CSVFile] = {
+            "tasks": TaskCSVFile(self.dirs["root"] / "tasks.csv")
+        }
 
     def iterdir(self):
         return self.dirs.values()

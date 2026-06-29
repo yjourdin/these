@@ -1,47 +1,40 @@
 from pathlib import Path
+from typing import Literal
 
 from src.methods import MethodEnum
 from src.models import GroupModelEnum
 from src.utils import filename_csv, filename_json
 
-from ...directory import Directory
+from ...csv_file import CSVFile
+from ...directory import Directory, DirectoryCSVFiles, DirectoryDirs
 from .config import Config
 from .csv_files import ConfigCSVFile, TestCSVFile, TrainCSVFile
 
+DirectoryElicitationDirs = DirectoryDirs | Literal["A_train", "A_test", "Mo", "D", "Me"]
+DirectoryElicitationCSVFiles = DirectoryCSVFiles | Literal["train", "test", "configs"]
+
 
 class DirectoryElicitation(Directory):
-    class Dirs(Directory.Dirs):
-        A_train: Path
-        A_test: Path
-        Mo: Path
-        D: Path
-        Me: Path
-
-    class CSVFiles(Directory.CSVFiles):
-        train: TrainCSVFile
-        test: TestCSVFile
-        configs: ConfigCSVFile
-
     def __init__(self, name: str, dir: Path | None = None):
+        self.dirs: dict[DirectoryElicitationDirs, Path]
+        self.csv_files: dict[DirectoryElicitationCSVFiles, CSVFile]
         super().__init__(name, dir)
 
-        self.dirs = self.Dirs(
-            self.dirs,
-            A_train=self.dirs["root"] / "A_train",
-            A_test=self.dirs["root"] / "A_test",
-            Mo=self.dirs["root"] / "Mo",
-            D=self.dirs["root"] / "D",
-            Me=self.dirs["root"] / "Me",
-        )
+        self.dirs |= {  # pyright: ignore[reportIncompatibleVariableOverride]
+            "A_train": self.dirs["root"] / "A_train",
+            "A_test": self.dirs["root"] / "A_test",
+            "Mo": self.dirs["root"] / "Mo",
+            "D": self.dirs["root"] / "D",
+            "Me": self.dirs["root"] / "Me",
+        }
 
         self.seeds = self.dirs["root"] / "seeds.json"
 
-        self.csv_files = self.CSVFiles(
-            self.csv_files,
-            train=TrainCSVFile(self.dirs["root"] / "train_results.csv"),
-            test=TestCSVFile(self.dirs["root"] / "test_results.csv"),
-            configs=ConfigCSVFile(self.dirs["root"] / "configs.csv"),
-        )
+        self.csv_files = {  # pyright: ignore[reportIncompatibleVariableOverride]
+            "train": TrainCSVFile(self.dirs["root"] / "train_results.csv"),
+            "test": TestCSVFile(self.dirs["root"] / "test_results.csv"),
+            "configs": ConfigCSVFile(self.dirs["root"] / "configs.csv"),
+        }
 
     def A_train(self, m: int, n: int, id: int):
         return self.dirs["A_train"] / filename_csv(locals())

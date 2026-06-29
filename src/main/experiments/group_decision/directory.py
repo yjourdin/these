@@ -1,9 +1,11 @@
 from pathlib import Path
+from typing import Literal
 
 from src.methods import MethodEnum
 from src.utils import filename_csv, filename_json, filename_log
 
-from ...directory import Directory
+from ...csv_file import CSVFile
+from ...directory import Directory, DirectoryCSVFiles, DirectoryDirs
 from ..elicitation.config import Config, MIPConfig
 from ..elicitation.csv_files import ConfigCSVFile
 from .csv_files import (
@@ -18,80 +20,91 @@ from .csv_files import (
 )
 from .fields import GroupParameters
 
+DirectoryGroupDecisionDirs = (
+    DirectoryDirs
+    | Literal[
+        "A",
+        "Mo",
+        "Mi",
+        "D",
+        "Di",
+        "Mie",
+        "Mcp",
+        "MIP_log",
+        "Mc",
+        "Mp",
+        "Dcp",
+        "Dc",
+        "C",
+        "Da",
+        "Cr",
+        "Dr",
+        "Dp",
+        "P",
+    ]
+)
+
+DirectoryGroupDecisionCSVFiles = (
+    DirectoryCSVFiles
+    | Literal[
+        "accept",
+        "changes",
+        "clean",
+        "mie",
+        "collective",
+        "compromise",
+        "configs",
+        "group_parameters",
+        "path",
+    ]
+)
+
 
 class DirectoryGroupDecision(Directory):
-    class Dirs(Directory.Dirs):
-        A: Path
-        Mo: Path
-        Mi: Path
-        D: Path
-        Di: Path
-        Mie: Path
-        Mcp: Path
-        MIP_log: Path
-        Mc: Path
-        Mp: Path
-        Dcp: Path
-        Dc: Path
-        C: Path
-        Da: Path
-        Cr: Path
-        Dr: Path
-        Dp: Path
-        P: Path
-
-    class CSVFiles(Directory.CSVFiles):
-        accept: AcceptCSVFile
-        changes: ChangesCSVFile
-        clean: CleanCSVFile
-        mie: MieCSVFile
-        collective: CollectiveCSVFile
-        compromise: CompromiseCSVFile
-        configs: ConfigCSVFile
-        group_parameters: GroupParametersCSVFile
-        path: PathCSVFile
-
     def __init__(self, name: str, dir: Path | None = None):
+        self.dirs: dict[DirectoryGroupDecisionDirs, Path]
+        self.csv_files: dict[DirectoryGroupDecisionCSVFiles, CSVFile]
         super().__init__(name, dir)
-
-        self.dirs = self.Dirs(
-            self.dirs,
-            A=self.dirs["root"] / "A",
-            Mo=self.dirs["root"] / "Mo",
-            Mi=self.dirs["root"] / "Mi",
-            D=self.dirs["root"] / "D",
-            Di=self.dirs["root"] / "Di",
-            Mie=self.dirs["root"] / "Mie",
-            Mcp=self.dirs["root"] / "Mcp",
-            MIP_log=self.dirs["root"] / "MIP_log",
-            Mc=self.dirs["root"] / "Mc",
-            Mp=self.dirs["root"] / "Mp",
-            Dcp=self.dirs["root"] / "Dcp",
-            Dc=self.dirs["root"] / "Dc",
-            C=self.dirs["root"] / "C",
-            Da=self.dirs["root"] / "Da",
-            Cr=self.dirs["root"] / "Cr",
-            Dr=self.dirs["root"] / "Dr",
-            Dp=self.dirs["root"] / "Dp",
-            P=self.dirs["root"] / "P",
-        )
+        self.dirs |= {  # pyright: ignore[reportIncompatibleVariableOverride]
+            "A": self.dirs["root"] / "A",
+            "Mo": self.dirs["root"] / "Mo",
+            "Mi": self.dirs["root"] / "Mi",
+            "D": self.dirs["root"] / "D",
+            "Di": self.dirs["root"] / "Di",
+            "Mie": self.dirs["root"] / "Mie",
+            "Mcp": self.dirs["root"] / "Mcp",
+            "MIP_log": self.dirs["root"] / "MIP_log",
+            "Mc": self.dirs["root"] / "Mc",
+            "Mp": self.dirs["root"] / "Mp",
+            "Dcp": self.dirs["root"] / "Dcp",
+            "Dc": self.dirs["root"] / "Dc",
+            "C": self.dirs["root"] / "C",
+            "Da": self.dirs["root"] / "Da",
+            "Cr": self.dirs["root"] / "Cr",
+            "Dr": self.dirs["root"] / "Dr",
+            "Dp": self.dirs["root"] / "Dp",
+            "P": self.dirs["root"] / "P",
+        }
 
         self.seeds = self.dirs["root"] / "seeds.json"
 
-        self.csv_files = self.CSVFiles(
-            self.csv_files,
-            accept=AcceptCSVFile(self.dirs["root"] / "accept_results.csv"),
-            changes=ChangesCSVFile(self.dirs["root"] / "changes_results.csv"),
-            clean=CleanCSVFile(self.dirs["root"] / "clean_results.csv"),
-            mie=MieCSVFile(self.dirs["root"] / "mie_results.csv"),
-            collective=CollectiveCSVFile(self.dirs["root"] / "collective_results.csv"),
-            compromise=CompromiseCSVFile(self.dirs["root"] / "compromise_results.csv"),
-            configs=ConfigCSVFile(self.dirs["root"] / "configs.csv"),
-            group_parameters=GroupParametersCSVFile(
+        self.csv_files |= {  # pyright: ignore[reportIncompatibleVariableOverride]
+            "accept": AcceptCSVFile(self.dirs["root"] / "accept_results.csv"),
+            "changes": ChangesCSVFile(self.dirs["root"] / "changes_results.csv"),
+            "clean": CleanCSVFile(self.dirs["root"] / "clean_results.csv"),
+            "mie": MieCSVFile(self.dirs["root"] / "mie_results.csv"),
+            "collective": CollectiveCSVFile(
+                self.dirs["root"] / "collective_results.csv"
+            ),
+            "compromise": CompromiseCSVFile(
+                self.dirs["root"] / "compromise_results.csv"
+            ),
+            "configs": ConfigCSVFile(self.dirs["root"] / "configs.csv"),
+            "group_parameters": GroupParametersCSVFile(
                 self.dirs["root"] / "group_parameters.csv"
             ),
-            path=PathCSVFile(self.dirs["root"] / "path_results.csv"),
-        )
+            "path": PathCSVFile(self.dirs["root"] / "path_results.csv"),
+        }
 
     def A(self, m: int, n: int, id: int):
         return self.dirs["A"] / filename_csv(locals())

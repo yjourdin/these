@@ -82,7 +82,7 @@ class NeighborhoodProfile(Neighborhood[FrozenSRMPModel], Dataclass):
             for crit_ind, crit in self.midpoints.data.items():
                 crit = cast("Series[float]", crit)
                 crit_ind = cast(int, crit_ind)
-                crit_numpy: npt.NDArray[np.float64] = crit.to_numpy()
+                crit_numpy = crit.to_numpy()
 
                 relevant_bounds = (
                     np.max(

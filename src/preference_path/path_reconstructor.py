@@ -9,5 +9,9 @@ class Paths[T](Dataclass):
         result = {}
         parent = self.parent[v]
         for i, parent in self.parent[v].items():
-            result |= {i: [v] + l for (i, l) in self.paths(parent).items()} if parent is not None else {i: [v]}
+            result |= (
+                {j: [v] + l for (j, l) in self.paths(parent).items()}
+                if parent is not None
+                else {i: [v]}
+            )
         return result

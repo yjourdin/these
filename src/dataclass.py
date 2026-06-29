@@ -1,4 +1,4 @@
-from dataclasses import *  # type: ignore
+from dataclasses import *  # pyright: ignore[reportWildcardImportFromLibrary]
 from json import dumps, loads
 from operator import attrgetter
 from typing import Any

@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from itertools import combinations
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 from mcda.internal.core.relations import Relation
@@ -34,11 +34,13 @@ def preference_relation_generator(
     pairs: Iterable[tuple[Any, Any]] | None = None,
     rng: RNGParam = None,
 ):
-    pairs = pairs if pairs is not None else combinations(ranking.labels, 2)  # type: ignore
+    pairs = (
+        pairs if pairs is not None else combinations(cast(list[Any], ranking.labels), 2)
+    )
     ranks = ranking.data.to_dict()
 
     if rng:
-        pairs = rng_(rng).permutation(np.array(list(pairs)))  # type: ignore
+        pairs = rng_(rng).permutation(np.array(list(pairs)))
 
     for a, b in pairs:
         if ranks[a] < ranks[b]:

@@ -31,8 +31,7 @@ class Astar[T](Paths[T]):
     max_time: int = DEFAULT_MAX_TIME
 
     def init(self, sources: list[T]):
-        self.start_time = thread_time()
-        self.time = thread_time() - self.start_time
+        self.time = 0
         self.open_heap = cast(
             list[Node[T]],
             heapq.heapify([
@@ -40,9 +39,12 @@ class Astar[T](Paths[T]):
             ]),
         )
         self.parent = {source: {i: None} for i, source in enumerate(sources)}
+        self.found: dict[T, T] = {}
 
-    def main_loop(self) -> dict[int, list[T]]:
-        while (self.time < self.max_time) and self.open_heap:
+    def main_loop(self, max_time: int) -> dict[int, list[T]]:
+        while (self.time < min(max_time, self.max_time)) and self.open_heap:
+            time = thread_time()
+
             # Best node
             current_node = heapq.heappop(self.open_heap)
             current = current_node.item
@@ -68,7 +70,10 @@ class Astar[T](Paths[T]):
                     # Stop when target reached
                     if (heuristic_value := self.heuristic(neighbor)) == 0:
                         # print(len(closed_set))
-                        return self.paths(neighbor)
+                        paths = self.paths(neighbor)
+                        for path in paths.values():
+                            self.found[path[-1]] = neighbor
+                        return paths
                     else:
                         # Add neighbor to queue
                         heapq.heappush(
@@ -79,21 +84,27 @@ class Astar[T](Paths[T]):
                 elif (
                     neighbor_source_ids := frozenset(self.parent[neighbor].keys())
                 ) != (current_source_ids := frozenset(self.parent[current].keys())):
-                    # Remonte le path de neighbor
-                    if new_ids := current_source_ids - neighbor_source_ids:
-                        paths = self.paths(neighbor)
-                        for i in new_ids:
-                            for u, v in pairwise([current] + paths[i]):
-                                self.parent[v] |= {i: u}
                     # Remonte le path de current
                     if new_ids := neighbor_source_ids - current_source_ids:
                         paths = self.paths(current)
                         for i in new_ids:
                             for u, v in pairwise([neighbor] + paths[i]):
                                 self.parent[v] |= {i: u}
+                    # Remonte le path de neighbor
+                    if new_ids := current_source_ids - neighbor_source_ids:
+                        paths = self.paths(neighbor)
+                        for i in new_ids:
+                            for u, v in pairwise([current] + paths[i]):
+                                self.parent[v] |= {i: u}
+                        for i in new_ids:
+                            if (source := paths[i][-1]) in self.found:
+                                paths = self.paths(self.found[source])
+                                for path in paths.values():
+                                    self.found[path[-1]] = self.found[source]
+                                return paths
 
             # Update time
-            self.time = thread_time() - self.start_time
+            self.time += thread_time() - time
 
         if not self.open_heap:
             raise CustomException("Target unreachable")
@@ -103,4 +114,4 @@ class Astar[T](Paths[T]):
     def __call__(self, sources: list[T]):
         self.init(sources)
 
-        return self.main_loop()
+        return self.main_loop(self.max_time)
