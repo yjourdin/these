@@ -1,4 +1,5 @@
 import io
+from contextlib import redirect_stdout
 from math import log
 
 import numpy as np
@@ -21,21 +22,20 @@ def initial_temperature[S](
     max_time: int | None = None,
     max_it: int | None = None,
 ):
-    results = io.StringIO()
-
-    RandomWalk(
-        neighbor,
-        objective,
-        init_sol,
-        rng,
-        max_time or DEFAULT_MAX_TIME,
-        max_it,
-        log_file=results,
-    ).learn()
+    with redirect_stdout(io.StringIO()) as results:
+        RandomWalk(
+            neighbor,
+            objective,
+            init_sol,
+            rng,
+            max_time or DEFAULT_MAX_TIME,
+            max_it,
+            verbose=True,
+        ).learn()
 
     results.seek(0)
 
-    energy = pd.read_csv(results, dialect="unix")["Obj"]
+    energy = pd.read_csv(results, dialect="unix")["Current_obj"]
     transitions = np.diff(energy)
     positive_transitions = transitions[transitions >= 0]
     positive_transitions_mean = np.mean(positive_transitions)

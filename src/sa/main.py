@@ -60,6 +60,7 @@ def create_sa(
     preferences_changes: list[int] | None = None,
     comparisons_accepted: PreferenceStructure | None = None,
     comparisons_refused: PreferenceStructure | None = None,
+    comparisons_past: list[PreferenceStructure] | None = None,
     rng_init: RNGParam = None,
     rng_sa: RNGParam = None,
     nb_cpus: int = 1,
@@ -72,6 +73,7 @@ def create_sa(
     preferences_changes = preferences_changes or [0] * NB_DM
     comparisons_accepted = comparisons_accepted or PreferenceStructure()
     comparisons_refused = comparisons_refused or PreferenceStructure()
+    comparisons_past = comparisons_past or []
 
     # Alternatives
     alternatives = alternatives.subtable(
@@ -145,6 +147,7 @@ def create_sa(
             preferences_changes,
             comparisons_accepted,
             comparisons_refused,
+            comparisons_past,
         )
     )
 

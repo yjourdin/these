@@ -32,7 +32,10 @@ from src.utils import CustomException, catchtime, tolist
 
 from ....constants import SENTINEL
 from ....preference_path.a_star import Astar
-from ....preference_structure.fitness import fitness_comparisons_ranking
+from ....preference_structure.fitness import (
+    comparisons_ranking,
+    fitness_comparisons_ranking,
+)
 from ...task import SeedTask
 from ..elicitation.config import Config, MIPConfig, SAConfig
 from .directory import DirectoryGroupDecision
@@ -558,12 +561,12 @@ class CollectiveMIPTask(AbstractCollectiveTask):
         for dm_id in range(self.group_size):
             with self.Di_file(dir, dm_id).open("r") as f:
                 d = from_csv(f)
-
-                D.append(
-                    preference_structure_from_outranking(
-                        d.outranking_matrix.transitive_closure
-                    )
-                )
+                D.append(d)
+                # D.append(
+                #     preference_structure_from_outranking(
+                #         d.outranking_matrix.transitive_closure
+                #     )
+                # )
 
             # new_relations = True
             # while new_relations:
@@ -821,12 +824,12 @@ class CollectiveSATask(AbstractCollectiveTask):
         for dm_id in range(self.group_size):
             with self.Di_file(dir, dm_id).open("r") as f:
                 d = from_csv(f)
-
-                D.append(
-                    preference_structure_from_outranking(
-                        d.outranking_matrix.transitive_closure
-                    )
-                )
+                D.append(d)
+                # D.append(
+                #     preference_structure_from_outranking(
+                #         d.outranking_matrix.transitive_closure
+                #     )
+                # )
 
             # new_relations = True
             # while new_relations:
@@ -878,11 +881,16 @@ class CollectiveSATask(AbstractCollectiveTask):
         #             with Dr_file.open("r") as f:
         #                 R.append(from_csv(f))
         R = PreferenceStructure()
-        if (Dr_file := self.Dr_file(dir, self.it)).exists():
-            with Dr_file.open("r") as f:
+        if (Cr_file := self.Cr_file(dir)).exists():
+            with Cr_file.open("r") as f:
                 R = from_csv(f)  # pyright: ignore[reportConstantRedefinition]
         else:
-            Dr_file.touch()
+            Cr_file.touch()
+
+        DR: list[PreferenceStructure] = []
+        for it in range(self.it):
+            with self.Dr_file(dir, it).open("r") as f:
+                DR.append(from_csv(f))
 
         rng_init, rng_sa = self.rng(seed).spawn(2)
 
@@ -908,6 +916,7 @@ class CollectiveSATask(AbstractCollectiveTask):
             preferences_changes=C,
             comparisons_accepted=ACC,
             comparisons_refused=R,
+            comparisons_past=DR,
             rng_init=rng_init,
             rng_sa=rng_sa,
             nb_cpus=max(self.config.nb_cpus, self.nb_Mcp),
@@ -980,7 +989,11 @@ class CollectiveSATask(AbstractCollectiveTask):
             P_id=self.P_id,
             It=self.it,
             Time=time(),
-            Objective=results[0].best_objective,
+            Objective=max(
+                C[dm]
+                + len(comparisons_ranking(D[dm], best_model.rank_series(A).to_dict()))
+                for dm in range(self.group_size)
+            ),
             Optimal=False,
         )
 

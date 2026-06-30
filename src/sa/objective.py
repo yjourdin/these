@@ -37,6 +37,7 @@ class CollectiveObjective(Objective[Model], Dataclass):
     preferences_changes: list[int]
     comparisons_accepted: PreferenceStructure
     comparisons_refused: PreferenceStructure
+    comparisons_past: list[PreferenceStructure]
     M: int = field(init=False)
     nb_DM: int = field(init=False)
 
@@ -59,13 +60,17 @@ class CollectiveObjective(Objective[Model], Dataclass):
                 len(self.comparisons_refused) - len(refused)
             ) * self.M**self.nb_DM
 
+        for refused_set in self.comparisons_past:
+            if not comparisons_ranking(refused_set, ranks):
+                result += self.M**self.nb_DM
+
         tup = sorted(
             self.preferences_changes[dm]
             + len(comparisons_ranking(self.comparisons[dm], ranks))
             for dm in range(self.nb_DM)
         )
         result += sum(x * self.M**i for (i, x) in enumerate(tup))
-
+        # result = tup[-1]
         return result
 
     @property
