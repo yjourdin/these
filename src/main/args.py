@@ -33,4 +33,4 @@ with args_file.open("r") as file:
         case ExperimentEnum.GROUP_DECISION:
             ARGS = ArgumentsGroupDecision.from_json(file.read())  # pyright: ignore[reportConstantRedefinition]
 
-ARGS = replace(ARGS, **args)  # pyright: ignore[reportConstantRedefinition]
+ARGS = replace(ARGS, **{k: v for k, v in args.items() if v is not None})  # pyright: ignore[reportConstantRedefinition]
