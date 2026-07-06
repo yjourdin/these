@@ -12,7 +12,7 @@ parser.add_argument(
     "experiment", type=ExperimentEnum, choices=ExperimentEnum, help="Experiment"
 )
 parser.add_argument("args", type=Path, help="Arguments file")
-parser.add_argument("-d", "--dir", type=str, help="Results directory")
+parser.add_argument("-d", "--dir", type=Path, help="Results directory")
 parser.add_argument("-n", "--name", type=str, help="Experiment name")
 parser.add_argument("-j", "--jobs", type=int, help="Number of jobs")
 parser.add_argument("-s", "--stop-error", action="store_true", help="Stop on error")
