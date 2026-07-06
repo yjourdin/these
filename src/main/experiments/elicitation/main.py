@@ -121,73 +121,24 @@ def main(args: ArgumentsElicitation):
                                         ],
                                     )
 
-                                for Me, ke, method, Me_id in product(
-                                    args.Me if args.Me else [Mo],
-                                    args.Ke
-                                    if (not args.fixed_lex_order and args.Ke)
-                                    else [ko],
-                                    args.method,
-                                    range(args.nb_Me) if args.nb_Me else [D_id],
-                                ):
-                                    for config in (
-                                        config
-                                        for config in args.config
-                                        if config.method is method
+                                if args.method:
+                                    for Me, ke, method, Me_id in product(
+                                        args.Me if args.Me else [Mo],
+                                        args.Ke
+                                        if (not args.fixed_lex_order and args.Ke)
+                                        else [ko],
+                                        args.method,
+                                        range(args.nb_Me) if args.nb_Me else [D_id],
                                     ):
-                                        task_Me: Task
-                                        match method:
-                                            case MethodEnum.SA:
-                                                task_Me = SATask(
-                                                    m,
-                                                    n_tr,
-                                                    Atr_id,
-                                                    Mo,
-                                                    ko,
-                                                    group_size,
-                                                    args.fixed_lex_order,
-                                                    Mo_id,
-                                                    n_bc,
-                                                    same_alt,
-                                                    error,
-                                                    D_id,
-                                                    Me,
-                                                    ke,
-                                                    cast(SAConfig, config),
-                                                    Me_id,
-                                                )
-                                            case MethodEnum.MIP if (
-                                                Me.value[0] is ModelEnum.SRMP
-                                            ):
-                                                task_Me = MIPTask(
-                                                    m,
-                                                    n_tr,
-                                                    Atr_id,
-                                                    Mo,
-                                                    ko,
-                                                    group_size,
-                                                    args.fixed_lex_order,
-                                                    Mo_id,
-                                                    n_bc,
-                                                    same_alt,
-                                                    error,
-                                                    D_id,
-                                                    Me,
-                                                    ke,
-                                                    cast(MIPConfig, config),
-                                                    Me_id,
-                                                )
-                                            case _:
-                                                break
-                                        futures[task_Me] = thread_pool.submit(
-                                            task_thread,
-                                            task_Me,
-                                            {
-                                                "seed": seeds.Me[Me_id],
-                                                "nb_cpus": config.nb_cpus,
-                                            },
-                                            [
-                                                futures[
-                                                    DTask(
+                                        for config in (
+                                            config
+                                            for config in args.config
+                                            if config.method is method
+                                        ):
+                                            task_Me: Task
+                                            match method:
+                                                case MethodEnum.SA:
+                                                    task_Me = SATask(
                                                         m,
                                                         n_tr,
                                                         Atr_id,
@@ -200,49 +151,101 @@ def main(args: ArgumentsElicitation):
                                                         same_alt,
                                                         error,
                                                         D_id,
-                                                        dm_id,
+                                                        Me,
+                                                        ke,
+                                                        cast(SAConfig, config),
+                                                        Me_id,
                                                     )
-                                                ]
-                                                for dm_id in range(group_size)
-                                            ],
-                                        )
-
-                                        for n_te, Ate_id in product(
-                                            args.N_te if args.N_te else [n_tr],
-                                            range(args.nb_Ate)
-                                            if args.nb_Ate
-                                            else [Me_id],
-                                        ):
-                                            task = TestTask(
-                                                m,
-                                                n_tr,
-                                                Atr_id,
-                                                Mo,
-                                                ko,
-                                                group_size,
-                                                args.fixed_lex_order,
-                                                Mo_id,
-                                                n_bc,
-                                                same_alt,
-                                                error,
-                                                D_id,
-                                                Me,
-                                                ke,
-                                                method,
-                                                config,
-                                                Me_id,
-                                                n_te,
-                                                Ate_id,
-                                            )
-                                            futures[task] = thread_pool.submit(
+                                                case MethodEnum.MIP if (
+                                                    Me.value[0] is ModelEnum.SRMP
+                                                ):
+                                                    task_Me = MIPTask(
+                                                        m,
+                                                        n_tr,
+                                                        Atr_id,
+                                                        Mo,
+                                                        ko,
+                                                        group_size,
+                                                        args.fixed_lex_order,
+                                                        Mo_id,
+                                                        n_bc,
+                                                        same_alt,
+                                                        error,
+                                                        D_id,
+                                                        Me,
+                                                        ke,
+                                                        cast(MIPConfig, config),
+                                                        Me_id,
+                                                    )
+                                                case _:
+                                                    break
+                                            futures[task_Me] = thread_pool.submit(
                                                 task_thread,
-                                                task,
-                                                {},
+                                                task_Me,
+                                                {
+                                                    "seed": seeds.Me[Me_id],
+                                                    "nb_cpus": config.nb_cpus,
+                                                },
                                                 [
-                                                    futures[ATestTask(m, n_te, Ate_id)],
-                                                    futures[task_Me],
+                                                    futures[
+                                                        DTask(
+                                                            m,
+                                                            n_tr,
+                                                            Atr_id,
+                                                            Mo,
+                                                            ko,
+                                                            group_size,
+                                                            args.fixed_lex_order,
+                                                            Mo_id,
+                                                            n_bc,
+                                                            same_alt,
+                                                            error,
+                                                            D_id,
+                                                            dm_id,
+                                                        )
+                                                    ]
+                                                    for dm_id in range(group_size)
                                                 ],
                                             )
+
+                                            for n_te, Ate_id in product(
+                                                args.N_te if args.N_te else [n_tr],
+                                                range(args.nb_Ate)
+                                                if args.nb_Ate
+                                                else [Me_id],
+                                            ):
+                                                task = TestTask(
+                                                    m,
+                                                    n_tr,
+                                                    Atr_id,
+                                                    Mo,
+                                                    ko,
+                                                    group_size,
+                                                    args.fixed_lex_order,
+                                                    Mo_id,
+                                                    n_bc,
+                                                    same_alt,
+                                                    error,
+                                                    D_id,
+                                                    Me,
+                                                    ke,
+                                                    method,
+                                                    config,
+                                                    Me_id,
+                                                    n_te,
+                                                    Ate_id,
+                                                )
+                                                futures[task] = thread_pool.submit(
+                                                    task_thread,
+                                                    task,
+                                                    {},
+                                                    [
+                                                        futures[
+                                                            ATestTask(m, n_te, Ate_id)
+                                                        ],
+                                                        futures[task_Me],
+                                                    ],
+                                                )
 
         done, _ = wait(
             futures.values(),
