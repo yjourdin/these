@@ -39,9 +39,10 @@ def main(args: ArgumentsElicitation):
         f.write(seeds.to_json())
 
     # Add missing configs
-    for method in args.method:
-        if not any(config.method is method for config in args.config):
-            args.config.append(create_config(method=method))
+    if args.method:
+        for method in args.method:
+            if not any(config.method is method for config in args.config):
+                args.config.append(create_config(method=method))
 
     # Write configs
     for config in args.config:
