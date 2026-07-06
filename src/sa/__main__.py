@@ -39,6 +39,13 @@ if ARGS.accepted:
     with ARGS.accepted.open("r", newline="") as f:
         Accepted = from_csv(f)
 
+Past: list[PreferenceStructure] | None = None
+if ARGS.past:
+    Past = []
+    for p in ARGS.past:
+        with p.open("r", newline="") as f:
+            Past.append(from_csv(f))
+
 # Learn SA
 sas, sense = create_sa(
     ARGS.model,
@@ -60,7 +67,7 @@ sas, sense = create_sa(
     ARGS.changes,
     Accepted,
     Refused,
-    rng_init,
+    Past,
     rng_sa,
     ARGS.nb_cpus,
 )

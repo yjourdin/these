@@ -53,18 +53,19 @@
 
 ### Homme
 
+- Marc Pirlot (accepté)
 - Vincent Mousseau
 - Olivier Spanjaard
-- Marc Pirlot
 - Thierry Marchant
 - Patrice Perny
+
 - Olivier Cailloux (juste MC)
 - Olivier Sobrie
-- Brice Mayag (Pas MC)
+- Brice Mayag
 
 ### Femme
 
-- Nawal Benabbou (Mais elle a déjà travaillé avec l'équipe)
+- Nawal Benabbou (Mais elle a déjà travaillé avec l'équipe, pas HDR)
 - Meltem Oztürk
 - Anaëlle Wilczinski (Pas MCDA)
 - Marie-Hélène Abel (Pas MCDA)

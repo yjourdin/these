@@ -24,7 +24,6 @@ from src.preference_path.neighborhood import (
 )
 from src.preference_structure.generate import random_comparisons
 from src.preference_structure.io import from_csv, to_csv
-from src.preference_structure.utils import preference_structure_from_outranking
 from src.random import SeedLike, rng_
 from src.sa.main import create_sa, sa_result
 from src.srmp.model import FrozenSRMPModel, SRMPModel
@@ -948,22 +947,26 @@ class CollectiveSATask(AbstractCollectiveTask):
                     f,
                 )
 
-        if self.nb_Mcp == 1:
-            best_model = results[0].best_model
-            with self.Mc_file(dir).open("w") as f:
-                f.write(best_model.to_json())
+        best_model = (
+            results[0]
+            if self.nb_Mcp == 1
+            else min(results, key=attrgetter("best_objective"))
+        ).best_model
 
-            with self.Dc_file(dir).open("w") as f:
-                to_csv(
-                    random_comparisons(
-                        A,
-                        best_model,
-                        pairs=set.union(
-                            *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
-                        ),
+        with self.Mc_file(dir).open("w") as f:
+            f.write(best_model.to_json())
+
+        with self.Dc_file(dir).open("w") as f:
+            to_csv(
+                random_comparisons(
+                    A,
+                    best_model,
+                    pairs=set.union(
+                        *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
                     ),
-                    f,
-                )
+                ),
+                f,
+            )
 
         csv_file = dir.csv_files["collective"]
         csv_file.writerow(
