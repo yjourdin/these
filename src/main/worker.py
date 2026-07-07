@@ -38,12 +38,13 @@ class WorkerProcess(Process):
         self.logger.info("Start")
 
         for task, args in iter(self.connection.recv, SENTINEL):
+            self.logger.info(f"{'start':5} {task!s}")
             try:
-                self.logger.info(f"{'start':5} {task!s}")
                 self.connection.send(WorkerResult(task, task(self.dir, **args)))
-                self.logger.info(f"{'end':5} {task!s}")
             except Exception:
                 self.logger.exception(f"{'error':5} {task!s}")
                 self.connection.send(WorkerResult(task, SENTINEL))
+            else:
+                self.logger.info(f"{'end':5} {task!s}")
 
         self.logger.info("Kill")

@@ -1,3 +1,4 @@
+from contextlib import suppress
 from itertools import chain
 from multiprocessing.connection import wait
 from queue import Empty, LifoQueue, ShutDown
@@ -21,7 +22,9 @@ TASK_QUEUE: TaskQueue = LifoQueue()
 
 
 class TaskManager(Thread):
-    def __init__(self, connections: list[ManagerEndWorkerConnection], stop_on_error: bool):
+    def __init__(
+        self, connections: list[ManagerEndWorkerConnection], stop_on_error: bool
+    ):
         super().__init__(name="Task manager")
         self.worker_connections = {
             worker: connection for worker, connection in enumerate(connections)
@@ -70,12 +73,10 @@ class TaskManager(Thread):
         TASK_QUEUE.shutdown()
 
         # Get remaining tasks
-        try:
+        with suppress(ShutDown):
             while True:
                 task, _, _, connection = TASK_QUEUE.get()
                 self.task_connections[task] = connection
-        except ShutDown:
-            pass
 
         # Send sentinel signal
         for connection in chain(

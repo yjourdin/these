@@ -1,4 +1,5 @@
 from concurrent.futures import ALL_COMPLETED, FIRST_EXCEPTION, ThreadPoolExecutor, wait
+from contextlib import suppress
 from dataclasses import replace
 from itertools import product
 from queue import ShutDown
@@ -356,7 +357,5 @@ def main(args: ArgumentsGroupDecision):
     )
     thread_pool.shutdown(cancel_futures=args.stop_error)
     for future in done:
-        if ((exc := future.exception()) is not None) and (
-            not isinstance(exc, (TaskException, ShutDown))
-        ):
-            raise exc
+        with suppress(TaskException, ShutDown):
+            future.result()
