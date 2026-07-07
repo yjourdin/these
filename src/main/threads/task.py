@@ -16,7 +16,10 @@ def task_thread(
     if task.done(DIR, **args):
         return TaskResult(None, 0)
 
-    result_list(precede_futures)
+    try:
+        result_list(precede_futures)
+    except Exception:  # noqa: BLE001
+        raise TaskException(str(task))
 
     thread_connection, manager_connection = TaskPipe()
     TASK_QUEUE.put(
