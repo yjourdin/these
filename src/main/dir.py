@@ -23,3 +23,5 @@ if not ARGS.extend:
     # Write arguments
     with DIR.args.open("w") as f:
         f.write(ARGS.to_json())
+
+DIR.run.touch()

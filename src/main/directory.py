@@ -34,8 +34,6 @@ class Directory:
         for dir in self.iterdir():
             dir.mkdir()
 
-        self.run.touch()
-
         for file in self.itercsv():
             with file.path.open("w", newline="") as f:
                 writer = csv.DictWriter(f, file.fieldnames, dialect="unix")
