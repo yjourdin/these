@@ -1,8 +1,11 @@
 import random
+from warnings import catch_warnings
 
 import numpy as np
 import numpy.typing as npt
-from drs import drs  # pyright: ignore[reportMissingTypeStubs]
+
+with catch_warnings(action="ignore", category=DeprecationWarning):
+    from drs import drs  # pyright: ignore[reportMissingTypeStubs]
 
 from src.dataclass import Dataclass, dataclass
 from src.random import RNGParam, int_
