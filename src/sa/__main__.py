@@ -86,4 +86,4 @@ with file_or_stdout(ARGS.output, "w") as f:
 # Write results
 with file_or_stdout(ARGS.result, "w", "") as f:
     writer = csv.writer(f, "unix")
-    writer.writerow([1 - best_objective, time(), it])
+    writer.writerow([best_objective, time(), it])
