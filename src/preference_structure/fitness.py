@@ -13,11 +13,10 @@ from .utils import OutrankingMatrixClass, RankingSeries, outranking_numpy
 def comparisons_ranking(C: PreferenceStructure, R: Mapping[Any, int | float]):
     result: list[Relation] = []
     for r in C:
-        a, b = r.elements
         match r:
-            case P():
+            case P(a=a, b=b):
                 cond = R[a] < R[b]
-            case I():
+            case I(a=a, b=b):
                 cond = R[a] == R[b]
             case _:
                 cond = True
@@ -31,9 +30,9 @@ def comparisons_outranking(C: PreferenceStructure, O: OutrankingMatrix):
     for r in C:
         a, b = r.elements
         match r:
-            case P():
+            case P(a=a, b=b):
                 cond = O.cell[a, b] * (1 - O.cell[b, a])
-            case I():
+            case I(a=a, b=b):
                 cond = O.cell[a, b] * O.cell[b, a]
             case _:
                 cond = True
