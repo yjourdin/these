@@ -1,11 +1,10 @@
 from pathlib import Path
-from typing import cast
 
 from mcda.internal.core.values import Ranking
 from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
-from src.model import GroupModel, Model
+from src.model import is_group_model
 from src.models import model_from_json
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.random import rng_, seed_
@@ -21,7 +20,7 @@ with ARGS.model.open("r") as f:
 
 A = NormalPerformanceTable(read_csv(ARGS.A, header=None))
 
-NB_DM = model.group_size if isinstance(model, GroupModel) else 1
+NB_DM = model.group_size if is_group_model(model) else 1
 DMS = range(NB_DM)
 
 match ARGS.type:
@@ -37,9 +36,7 @@ match ARGS.type:
         D: list[PreferenceStructure] = []
         rng_shuffle = rng_(seed_shuffle)
         for dm in DMS:
-            model_dm = (
-                cast(Model, model[dm]) if isinstance(model, GroupModel) else model
-            )
+            model_dm = model[dm] if is_group_model(model) else model
             if ARGS.same:
                 rng_shuffle = seed_shuffle
             D.append(random_comparisons(A, model_dm, ARGS.n, rng=seed_shuffle))

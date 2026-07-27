@@ -10,7 +10,7 @@ def dominance_structure(performance_table: PerformanceTableType):
     result: list[Relation] = []
     alternatives_values = performance_table.alternatives_values
     values = {a: alternatives_values[a] for a in performance_table.alternatives}
-    for a, b in combinations(performance_table.alternatives, 2):  # type: ignore
+    for a, b in combinations(performance_table.alternatives, 2):  # pyright: ignore[reportUnknownArgumentType]
         if values[a].dominate(values[b]):
             result.append(P(a, b))
         if values[b].dominate(values[a]):

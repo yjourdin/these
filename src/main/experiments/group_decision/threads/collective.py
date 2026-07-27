@@ -6,12 +6,13 @@ from shutil import copy
 from src.methods import MethodEnum
 from src.preference_structure.io import from_csv, to_csv
 
+from .....models import ModelEnum
 from ....dir import DIR
 from ....task import FutureTask, TaskResult, result_dict, result_list
 from ....threads.task import task_thread
 from ...elicitation.config import Config, MIPConfig, SAConfig
 from ..directory import DirectoryGroupDecision
-from ..fields import GroupParameters
+from ..fields import GroupParametersT
 from ..seeds import Seeds
 from ..task import (
     # AcceptMcTask,
@@ -27,11 +28,12 @@ def collective_thread(
     m: int,
     n_tr: int,
     Atr_id: int,
+    model: ModelEnum,
     ko: int,
     fixed_lex_order: bool,
     Mo_id: int,
     group_size: int,
-    group: GroupParameters,
+    group: GroupParametersT,
     Mi_id: int,
     n_bc: int,
     same_alt: bool,
@@ -69,6 +71,7 @@ def collective_thread(
                 m,
                 n_tr,
                 Atr_id,
+                model,
                 ko,
                 fixed_lex_order,
                 Mo_id,
@@ -94,6 +97,7 @@ def collective_thread(
                 m,
                 n_tr,
                 Atr_id,
+                model,
                 ko,
                 fixed_lex_order,
                 Mo_id,
@@ -116,7 +120,7 @@ def collective_thread(
             copy(task_Mc.D_file(DIR, dm_id), task_Mc.Di_file(DIR, dm_id))
 
         with task_Mc.C_file(DIR).open("w", newline="") as f:
-            C_writer = csv.writer(f, dialect="unix")
+            C_writer = csv.writer(f, "unix")
             C_writer.writerows([[0]] * group_size)
 
         time_left = max_time - time_passed
@@ -149,7 +153,7 @@ def collective_thread(
             time_left_per_it -= time_Mc
             if time_left < 1:  # or (time_left_per_it < 1):
                 break
-            return TaskResult(result_Mc, max_time - time_left)
+            # return TaskResult(result_Mc, max_time - time_left)
 
             if not result_Mc:
                 break
@@ -237,6 +241,7 @@ def collective_thread(
                         m,
                         n_tr,
                         Atr_id,
+                        model,
                         ko,
                         fixed_lex_order,
                         Mo_id,
@@ -293,6 +298,7 @@ def collective_thread(
                         m,
                         n_tr,
                         Atr_id,
+                        model,
                         ko,
                         fixed_lex_order,
                         Mo_id,
@@ -412,7 +418,7 @@ def collective_thread(
 
                         with new_task_Mc.C_file(DIR).open("a", newline="") as f:
                             print(Atr_id, it, 9)
-                            C_writer = csv.writer(f, dialect="unix")  # pyright: ignore[reportUnknownArgumentType]
+                            C_writer = csv.writer(f, "unix")  # pyright: ignore[reportUnknownArgumentType]
                             print(Atr_id, it, 10)
                             C_writer.writerow([changes[dm_id]])
                             print(Atr_id, it, 11)

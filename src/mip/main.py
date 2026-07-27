@@ -5,7 +5,7 @@ from typing import Any, NamedTuple, cast
 
 import numpy as np
 from mcda.relations import I, P, PreferenceStructure
-from pulp import value  # type: ignore
+from pulp import value  # pyright: ignore[reportMissingTypeStubs]
 
 from src.constants import DEFAULT_MAX_TIME
 from src.models import GroupModelEnum
@@ -72,7 +72,7 @@ def create_mip(
     DMS = range(NB_DM)
 
     alternatives = alternatives.subtable(
-        list(set.union(*(set(comparisons[dm].elements) for dm in DMS)))  # type: ignore
+        list(set.union(*(set(comparisons[dm].elements) for dm in DMS)))  # pyright: ignore[reportUnknownArgumentType]
     )
 
     preference_relations_list: list[list[P]] = []

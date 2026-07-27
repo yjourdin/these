@@ -1,14 +1,14 @@
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
 from operator import attrgetter
-from typing import Any, cast
+from typing import Any
 
 from mcda.relations import PreferenceStructure
 from pandas import read_csv
 
 from src.methods import MethodEnum
 from src.mip.main import create_mip, mip_result
-from src.model import GroupModel, Model
+from src.model import GroupModel, is_group_model
 from src.models import GroupModelEnum, model
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.preference_structure.generate import noisy_comparisons, random_comparisons
@@ -152,7 +152,7 @@ class DTask(AbstractDTask):
 
         d = random_comparisons(
             A,
-            cast(Model, Mo[self.dm_id]) if isinstance(Mo, GroupModel) else Mo,
+            Mo[self.dm_id] if is_group_model(Mo) else Mo,
             self.nbc,
             rng=rng_shuffle,
         )
@@ -388,15 +388,15 @@ class TestTask(ATestTask, AbstractElicitationTask):
                 Value=value,
             )
 
-        def write_consensus(model: GroupModel[Model], prefix: str = ""):
+        def write_consensus(model: GroupModel[Any], prefix: str = ""):
             for name, value in test_consensus(model, A_test, distance):
                 put_in_queue("_".join([prefix, str(distance), name]), value)
 
         for distance in DistanceRankingEnum:
-            if isinstance(Mo, GroupModel):
+            if is_group_model(Mo):
                 write_consensus(Mo, "Mo")
             if Me:
-                if isinstance(Me, GroupModel):
+                if is_group_model(Me):
                     write_consensus(Me, "Me")
                 for name, value in test_distance(Mo, Me, A_test, distance):
                     put_in_queue(name, value)

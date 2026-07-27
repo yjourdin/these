@@ -14,7 +14,7 @@ type RankingSeries = Series[int]
 
 def preference_structure_from_outranking(outranking: OutrankingMatrix):
     relations: list[Relation] = []
-    for ii, i in enumerate(outranking.vertices):  # type: ignore
+    for ii, i in enumerate(outranking.vertices):  # pyright: ignore[reportUnknownArgumentType]
         for j in outranking.vertices[ii + 1 :]:
             if outranking.data.at[i, j]:
                 if outranking.data.at[j, i]:
@@ -33,7 +33,7 @@ def outranking_numpy_from_outranking(outranking: OutrankingMatrix):
 def outranking_numpy_from_ranking(ranking: RankingSeries):
     ranking_numpy = ranking.to_numpy()
 
-    return np.less_equal.outer(ranking_numpy, ranking_numpy).astype(np.bool, copy=False)  # type: ignore
+    return np.less_equal.outer(ranking_numpy, ranking_numpy).astype(np.bool, copy=False)
 
 
 def outranking_numpy(o: OutrankingMatrix | RankingSeries):
@@ -69,7 +69,9 @@ def divide_preferences(preferences: Iterable[Relation]):
 #     return result
 
 
-def preference_to_numeric(r: Relation):
+def preference_to_numeric(r: Relation | None):
+    if r is None:
+        raise ValueError(f"{r} is not a Relation")
     a, b = (r.a, r.b) if r.a < r.b else (r.b, r.a)
     if r == P(a, b):
         return 1
@@ -98,7 +100,7 @@ def complementary_preference(preferences: Iterable[Relation]) -> list[P | I]:
     result: list[P | I] = []
     for lst in relations.values():
         result.extend(
-            list(set.intersection(*[set(complementary_relation(r)) for r in lst]))  # type: ignore
+            list(set.intersection(*[set(complementary_relation(r)) for r in lst]))  # pyright: ignore[reportUnknownArgumentType]
         )
 
     return result

@@ -123,9 +123,9 @@ version = "0.7.8"
 
 [[deps.CommonMark]]
 deps = ["PrecompileTools"]
-git-tree-sha1 = "731edf630eb23140a3c7a2e74d4186f562996d76"
+git-tree-sha1 = "7e0e715804be2cfdc251d9a4bd10ace7a1b791e5"
 uuid = "a80b9123-70ca-4bc0-993e-6e3bcb318db6"
-version = "1.0.2"
+version = "1.0.3"
 
     [deps.CommonMark.extensions]
     CommonMarkMarkdownASTExt = "MarkdownAST"
@@ -136,9 +136,9 @@ version = "1.0.2"
     MarkdownAST = "d0879d2d-cac2-40c8-9cee-1863dc0c7391"
 
 [[deps.CommonSolve]]
-git-tree-sha1 = "99ee296f88c12485402e37c2fd025f95ae097637"
+git-tree-sha1 = "eeaad7cef88554c2fa56b5a3f71cfd5cb708c662"
 uuid = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
-version = "0.2.9"
+version = "0.2.11"
 
 [[deps.CommonSubexpressions]]
 deps = ["MacroTools"]
@@ -192,9 +192,9 @@ version = "1.16.0"
 
 [[deps.DataStructures]]
 deps = ["OrderedCollections"]
-git-tree-sha1 = "6fb53a69613a0b2b68a0d12671717d307ab8b24e"
+git-tree-sha1 = "b0bc6d2cad1fed8b7fd59a1551a991cb3d2809e6"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-version = "0.19.5"
+version = "0.19.6"
 
 [[deps.Dates]]
 deps = ["Printf"]
@@ -243,9 +243,9 @@ version = "1.7.0"
 
 [[deps.FileIO]]
 deps = ["Pkg", "Requires", "UUIDs"]
-git-tree-sha1 = "8e9c059d6857607253e837730dbf780b6b151acd"
+git-tree-sha1 = "6621fef488e496356c9c9625d0562c12a6070819"
 uuid = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
-version = "1.19.0"
+version = "1.20.0"
 
     [deps.FileIO.extensions]
     HTTPExt = "HTTP"
@@ -259,9 +259,9 @@ version = "1.11.0"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra"]
-git-tree-sha1 = "2f979084d1e13948a3352cf64a25df6bd3b4dca3"
+git-tree-sha1 = "5bad39456d9f0166184fce2248783dd9862645c1"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
-version = "1.16.0"
+version = "1.17.0"
 weakdeps = ["PDMats", "SparseArrays", "StaticArrays", "Statistics"]
 
     [deps.FillArrays.extensions]
@@ -328,15 +328,15 @@ version = "0.2.0"
 
 [[deps.HiGHS]]
 deps = ["HiGHS_jll", "LinearAlgebra", "MathOptIIS", "MathOptInterface", "OpenBLAS32_jll", "PrecompileTools", "SparseArrays"]
-git-tree-sha1 = "8b6c49e994b09d646c26ef2c41fabe95f4679b4c"
+git-tree-sha1 = "01a5241985559c08a5baadbcebd6d87daaf84a84"
 uuid = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
-version = "1.24.0"
+version = "1.24.1"
 
 [[deps.HiGHS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Zlib_jll", "libblastrampoline_jll"]
-git-tree-sha1 = "5b9e398d6e4ed7e1f9a801a6f50ecca92dab0e10"
+git-tree-sha1 = "2d9747b79d17c4320fe48048a3a768fe6d6d82de"
 uuid = "8fd58aa0-07eb-5a78-9b36-339c94fd15ea"
-version = "1.15.0+0"
+version = "1.15.1+1"
 
 [[deps.Hungarian]]
 deps = ["LinearAlgebra", "SparseArrays"]
@@ -410,9 +410,9 @@ version = "1.6.1"
 
 [[deps.JuMP]]
 deps = ["LinearAlgebra", "MacroTools", "MathOptInterface", "MutableArithmetics", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays"]
-git-tree-sha1 = "6941586d9cf3c0af718bc6e6250dcf24057d412e"
+git-tree-sha1 = "614b22ff014355192982b1f9a12c61298ce6a908"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
-version = "1.30.1"
+version = "1.31.1"
 
     [deps.JuMP.extensions]
     JuMPDimensionalDataExt = "DimensionalData"
@@ -422,9 +422,9 @@ version = "1.30.1"
 
 [[deps.JuliaFormatter]]
 deps = ["CommonMark", "Glob", "JuliaSyntax", "PrecompileTools", "TOML", "Test"]
-git-tree-sha1 = "878a99e9b2f2ac45efe9b384727134a9f1744071"
+git-tree-sha1 = "e421b4f670555ff650f1b77df47cd42c806d8372"
 uuid = "98e50ef6-434e-11e9-1051-2b60c6c9e899"
-version = "2.10.1"
+version = "2.12.3"
 
 [[deps.JuliaSyntax]]
 git-tree-sha1 = "0d4b3dab95018bcf3925204475693d9f09dc45b8"
@@ -508,9 +508,9 @@ version = "0.2.0"
 
 [[deps.MathOptInterface]]
 deps = ["CodecBzip2", "CodecZlib", "ForwardDiff", "JSON", "LinearAlgebra", "MutableArithmetics", "NaNMath", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays", "SpecialFunctions", "Test"]
-git-tree-sha1 = "9f23c8c1667bd0b0e611110aaf80aa91c1bdf274"
+git-tree-sha1 = "7b57dbe5d2c988a0c7a0ea977045e844e3d0b263"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-version = "1.51.1"
+version = "1.51.2"
 
     [deps.MathOptInterface.extensions]
     MathOptInterfaceBenchmarkToolsExt = "BenchmarkTools"
@@ -558,9 +558,9 @@ version = "1.3.0"
 
 [[deps.OpenBLAS32_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "libblastrampoline_jll"]
-git-tree-sha1 = "8b492aefdd20fb9dc1ebc377ff7e5fa1591c9acc"
+git-tree-sha1 = "30870d0f2dc0b2dba76b10df1c58c7f018413e56"
 uuid = "656ef2d0-ae68-5445-9ca0-591084a874a2"
-version = "0.3.33+2"
+version = "0.3.34+0"
 
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
@@ -696,9 +696,9 @@ version = "0.5.1+0"
 
 [[deps.Roots]]
 deps = ["Accessors", "CommonSolve", "Printf"]
-git-tree-sha1 = "46d2af536e1afe8f04cf31a59298adadf96e99e6"
+git-tree-sha1 = "7fb25a964849d90a0446366cdefca822e0e84900"
 uuid = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
-version = "3.0.2"
+version = "3.0.6"
 
     [deps.Roots.extensions]
     RootsChainRulesCoreExt = "ChainRulesCore"

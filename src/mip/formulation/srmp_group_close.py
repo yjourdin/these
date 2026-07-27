@@ -5,7 +5,7 @@ from typing import Any, cast
 
 import numpy as np
 from mcda.relations import I, P
-from pulp import (  # type: ignore
+from pulp import (  # pyright: ignore[reportMissingTypeStubs]
     LpBinary,
     LpMinimize,
     LpProblem,
@@ -65,8 +65,8 @@ class MIPSRMPGroupClose(
 
     def create_parameters(self):
         self.params = MIPSRMPGroupCloseParams(
-            A=self.alternatives.alternatives,  # type: ignore
-            M=self.alternatives.criteria,  # type: ignore
+            A=self.alternatives.alternatives,  # pyright: ignore[reportUnknownArgumentType]
+            M=self.alternatives.criteria,  # pyright: ignore[reportUnknownArgumentType]
             DM=range(len(self.preference_relations)),
             lexicographic_order=self.lexicographic_order,
         )
@@ -84,22 +84,22 @@ class MIPSRMPGroupClose(
         self.vars = MIPSRMPGroupCloseVars(
             w=LpVariable.dicts(
                 "Weight", (self.params.DM, self.params.M), lowBound=0, upBound=1
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             w_amp=LpVariable.dicts(
                 "WeightAmplitude", self.params.M, lowBound=0, upBound=1
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             p=LpVariable.dicts(
                 "Profile",
                 (self.params.DM, self.params.profile_indices, self.params.M),
                 lowBound=0,
                 upBound=1,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             p_amp=LpVariable.dicts(
                 "ProfileAmplitude",
                 (self.params.profile_indices, self.params.M),
                 lowBound=0,
                 upBound=1,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             delta=LpVariable.dicts(
                 "LocalConcordance",
                 (
@@ -109,7 +109,7 @@ class MIPSRMPGroupClose(
                     self.params.M,
                 ),
                 cat=LpBinary,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             omega=LpVariable.dicts(
                 "WeightedLocalConcordance",
                 (
@@ -120,7 +120,7 @@ class MIPSRMPGroupClose(
                 ),
                 lowBound=0,
                 upBound=1,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             s={
                 dm: LpVariable.dicts(
                     f"PreferenceRankingVariable_{dm}",

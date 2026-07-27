@@ -48,9 +48,9 @@ def remove_reverted_changes(preference_path: list[PreferenceStructure]):
     i = 1
     while i < len(preference_path):
         changes_i = np.array([
-            preference_to_numeric(preference_path[i].elements_pairs_relations[p])  # type: ignore
+            preference_to_numeric(preference_path[i].elements_pairs_relations[p])
             - preference_to_numeric(
-                preference_path[i - 1].elements_pairs_relations[p]  # type: ignore
+                preference_path[i - 1].elements_pairs_relations[p]
             )
             for p in pairs
         ])

@@ -17,6 +17,10 @@ parser.add_argument(
     choices=SRMPParamFlag,
     help="Parameters shared between decision makers",
 )
+parser.add_argument("--reference", type=Path, help="Reference model")
+parser.add_argument("--profile-amp", type=float, help="Profiles amplitude")
+parser.add_argument("--weight-amp", type=float, help="Weights amplitude")
+parser.add_argument("--lex-amp", type=int, help="Lex order amplitude")
 parser.add_argument(
     "-p", "--profiles-values", type=Path, help="Possible values for profiles"
 )
@@ -30,6 +34,10 @@ class Arguments(Dataclass):
     k: int
     m: int
     shared: list[SRMPParamFlag] = field(default_factory=list)
+    reference: Path | None = None
+    profile_amp: float | None = None
+    weight_amp: float | None = None
+    lex_amp: int | None = None
     profiles_values: Path | None = None
     seed: int | None = None
     output: Path | None = None

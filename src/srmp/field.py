@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -12,7 +12,7 @@ from src.field import (
 from src.random import RNGParam
 from src.utils import tolist
 
-from .weight import frozen_importance_relation_from_weights, random_weights
+from .weight import random_weights
 
 
 @random_field("weights")
@@ -25,7 +25,7 @@ class WeightsField(RandomField):
         return np.array(o)
 
     @staticmethod
-    def field_encode(o: Any):  # type: ignore
+    def field_encode(o: Any) -> list[float]:
         return tolist(o)
 
     @staticmethod
@@ -36,24 +36,24 @@ class WeightsField(RandomField):
 @random_field("weights")
 @dataclass(frozen=True)
 class FrozenWeightsField(RandomField):
-    weights: npt.NDArray[np.float64] = field(compare=False)
-    # weights: tuple[float, ...]
-    importance_relation: tuple[int, ...] = field(init=False)
+    # weights: npt.NDArray[np.float64] = field(compare=False)
+    weights: tuple[float, ...]
+    # importance_relation: tuple[int, ...] = field(init=False)
 
-    def __post_init__(self):
-        object.__setattr__(
-            self,
-            "importance_relation",
-            frozen_importance_relation_from_weights(self.weights),
-        )
+    # def __post_init__(self):
+    #     object.__setattr__(
+    #         self,
+    #         "importance_relation",
+    #         frozen_importance_relation_from_weights(self.weights),
+    #     )
 
     @staticmethod
     def field_decode(o: Any):
-        return np.array(o)
+        return tuple(o)
 
-    @staticmethod
-    def field_encode(o: Any):
-        return list(o)
+    # @staticmethod
+    # def field_encode(o: Any):
+    #     return list(o)
 
 
 @random_group_field(fieldname="weights", fieldclass=WeightsField)

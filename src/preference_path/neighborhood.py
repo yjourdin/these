@@ -17,6 +17,8 @@ from src.sa.neighbor import weights_local_change
 from src.srmp.model import FrozenSRMPModel
 from src.utils import midpoints
 
+from ..rmp.model import FrozenRMPModel
+
 
 class Neighborhood[S](ABC):
     @abstractmethod
@@ -37,12 +39,12 @@ class NeighborhoodCombined[S](Neighborhood[S], Dataclass):
                 neighborhood(sol) for neighborhood in self.neighborhoods
             )
         )
-        self._rng.shuffle(neighbors)  # type: ignore
+        self._rng.shuffle(neighbors)
         return neighbors
 
 
 @dataclass
-class NeighborhoodProfile(Neighborhood[FrozenSRMPModel], Dataclass):
+class NeighborhoodProfile(Neighborhood[FrozenRMPModel | FrozenSRMPModel], Dataclass):
     midpoints: PerformanceTableType = field(init=False)
     alternatives: PerformanceTableType
     target_preferences: PreferenceStructure
@@ -148,6 +150,46 @@ class NeighborhoodProfile(Neighborhood[FrozenSRMPModel], Dataclass):
 
 
 @dataclass
+class NeighborhoodImportanceRelation(Neighborhood[FrozenRMPModel]):
+    def __call__(self, sol: FrozenRMPModel):
+        result: set[FrozenRMPModel] = set()
+
+        for i, (key, value) in sol.importance_relation:
+            try:
+                m = max(v for k, v in sol.importance_relation if k < key)
+            except ValueError:
+                m = max(
+                    min({k: v for k, v in sol.importance_relation if k != key}.values())
+                    - 1,
+                    0,
+                )
+
+            try:
+                M = min(v for k, v in sol.importance_relation if key < k)
+            except ValueError:
+                M = min(  # pyright: ignore[reportConstantRedefinition]
+                    max({k: v for k, v in sol.importance_relation if k != key}.values())
+                    + 1,
+                    len(sol.importance_relation) - 1,
+                )
+
+            importance_relation_copy = list(sol.importance_relation)
+
+            if m < value:
+                importance_relation_copy[i] = (key, value - 1)
+                result.add(
+                    replace(sol, importance_relation=tuple(importance_relation_copy))
+                )
+            if value < M:
+                importance_relation_copy[i] = (key, value + 1)
+                result.add(
+                    replace(sol, importance_relation=tuple(importance_relation_copy))
+                )
+
+        return list(result)
+
+
+@dataclass
 class NeighborhoodWeight(Neighborhood[FrozenSRMPModel]):
     def __call__(self, sol: FrozenSRMPModel):
         result: list[FrozenSRMPModel] = []
@@ -156,14 +198,18 @@ class NeighborhoodWeight(Neighborhood[FrozenSRMPModel]):
             result.append(
                 replace(
                     sol,
-                    weights=weights_local_change(np.array(sol.weights), crit, increase),
+                    weights=tuple(
+                        weights_local_change(
+                            np.array(sol.weights), crit, increase
+                        ).tolist()
+                    ),
                 )
             )
 
         return result
 
 
-class NeighborhoodLexOrder(Neighborhood[FrozenSRMPModel]):
+class NeighborhoodLexOrder(Neighborhood[FrozenRMPModel | FrozenSRMPModel]):
     def __call__(self, sol: FrozenSRMPModel):
         result: list[FrozenSRMPModel] = []
 

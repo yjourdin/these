@@ -1,44 +1,51 @@
 import csv
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
+from functools import partial
 from math import inf
 from multiprocessing.connection import Connection
 from operator import attrgetter
 from typing import Any, cast
 
+import numpy as np
 from mcda.relations import PreferenceStructure
 from mcda.types import Relation
 from pandas import read_csv
 
+from src.constants import SENTINEL
 from src.methods import MethodEnum
 from src.mip.main import MIPResult, create_mip, mip_result
+from src.model import is_group_model
 from src.models import GroupModelEnum, ModelEnum
 from src.performance_table.normal_performance_table import NormalPerformanceTable
+from src.preference_path.a_star import Astar
+from src.preference_path.gbfs import GBFS
 from src.preference_path.main import compute_preference_path
 from src.preference_path.neighborhood import (
     Neighborhood,
     NeighborhoodCombined,
+    NeighborhoodImportanceRelation,
     NeighborhoodLexOrder,
     NeighborhoodProfile,
     NeighborhoodWeight,
 )
+from src.preference_structure.fitness import (
+    comparisons_ranking,
+    fitness_comparisons_ranking,
+)
 from src.preference_structure.generate import random_comparisons
 from src.preference_structure.io import from_csv, to_csv
 from src.random import SeedLike, rng_
+from src.rmp.model import FrozenRMPModel, RMPModel
+from src.rmp.permutation import all_max_adjacent_distance
 from src.sa.main import create_sa, sa_result
 from src.srmp.model import FrozenSRMPModel, SRMPModel
 from src.utils import CustomException, catchtime, tolist
 
-from ....constants import SENTINEL
-from ....preference_path.a_star import Astar
-from ....preference_structure.fitness import (
-    comparisons_ranking,
-    fitness_comparisons_ranking,
-)
 from ...task import SeedTask
 from ..elicitation.config import Config, MIPConfig, SAConfig
 from .directory import DirectoryGroupDecision
-from .fields import GroupParameters
+from .fields import GroupParametersT, RMPParametersDeviation, SRMPParametersDeviation
 
 
 @dataclass(frozen=True)
@@ -70,6 +77,7 @@ class ATask(AbstractMTask):
 @dataclass(frozen=True)
 class MoTask(AbstractMTask):
     name = "Mo"
+    model: ModelEnum
     ko: int
     fixed_lex_order: bool = field(hash=False)
     Mo_id: int = field(hash=False)
@@ -77,7 +85,9 @@ class MoTask(AbstractMTask):
     def task(
         self, dir: DirectoryGroupDecision, seed: SeedLike, *args: Any, **kwargs: Any
     ) -> Any:
-        Mo = SRMPModel.random(nb_profiles=self.ko, nb_crit=self.m, rng=self.rng(seed))
+        Mo = self.model.value.random(
+            nb_profiles=self.ko, nb_crit=self.m, rng=self.rng(seed)
+        )
 
         if self.fixed_lex_order:
             Mo.lexicographic_order = self.lexicographic_order
@@ -88,7 +98,7 @@ class MoTask(AbstractMTask):
     @property
     def lexicographic_order(self):
         return tolist(
-            MoTask(self.m, self.ko, True, self.Mo_id)
+            MoTask(self.m, self.model, self.ko, True, self.Mo_id)
             .rng(self.Mo_id)
             .permutation(self.ko)
         )
@@ -103,7 +113,7 @@ class MoTask(AbstractMTask):
 @dataclass(frozen=True)
 class AbstractMiTask(MoTask):
     group_size: int
-    group: GroupParameters
+    group: GroupParametersT
     Mi_id: int = field(hash=False)
 
     def Mi_file(self, dir: DirectoryGroupDecision, dm_id: int):
@@ -127,15 +137,29 @@ class MiTask(AbstractMiTask):
         self, dir: DirectoryGroupDecision, seed: SeedLike, *args: Any, **kwargs: Any
     ) -> Any:
         with self.Mo_file(dir).open("r") as f:
-            Mo = SRMPModel.from_json(f.read())
+            Mo = self.model.value.from_json(f.read())
 
-        Mi = SRMPModel.from_reference(
-            Mo,
-            self.group.gen.P,
-            self.group.gen.W,
-            self.group.gen.L if not self.fixed_lex_order else 0,
-            rng=self.rng(seed),
-        )
+        match self.model:
+            case ModelEnum.RMP:
+                assert isinstance(self.group.gen, RMPParametersDeviation)
+                Mi = self.model.value.from_reference(
+                    Mo,
+                    self.group.gen.P,
+                    self.group.gen.I,
+                    self.group.gen.L if not self.fixed_lex_order else 0,
+                    rng=self.rng(seed),
+                )
+            case ModelEnum.SRMP:
+                assert isinstance(self.group.gen, SRMPParametersDeviation)
+                Mi = self.model.value.from_reference(
+                    Mo,
+                    self.group.gen.P,
+                    self.group.gen.W,
+                    self.group.gen.L if not self.fixed_lex_order else 0,
+                    rng=self.rng(seed),
+                )
+            case ModelEnum.RANDOM:
+                raise ValueError("Random model is not accepted")
 
         with self.Mi_file(dir, self.dm_id).open("w") as f:
             f.write(Mi.to_json())
@@ -178,7 +202,7 @@ class DTask(AbstractDTask, MiTask):
             A = NormalPerformanceTable(read_csv(f, header=None))
 
         with self.Mi_file(dir, self.dm_id).open("r") as f:
-            Mi = SRMPModel.from_json(f.read())
+            Mi = self.model.value.from_json(f.read())
 
         if self.same_alt:
             rng = replace(self, dm_id=0).rng(seed)
@@ -254,10 +278,10 @@ class MieTask(AbstractDTask):
             results, key=attrgetter("best_objective")
         )
 
-        if (best_model is not None) and (optimal):
+        if (best_model is not None) and is_group_model(best_model) and (optimal):
             for dm_id in range(self.group_size):
                 with self.Mie_file(dir, dm_id).open("w") as f:
-                    f.write(best_model[dm_id].to_json())  # type: ignore
+                    f.write(best_model[dm_id].to_json())
 
         csv_file = dir.csv_files["mie"]
         csv_file.writerow(
@@ -700,8 +724,8 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                         A,
                         best_model,
                         pairs=set.union(
-                            *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
-                        ),
+                            *(set(d.elements_pairs_relations.keys()) for d in D)
+                        ),  # pyright: ignore[reportUnknownArgumentType]
                     ),
                     f,
                 )
@@ -718,8 +742,8 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                         A,
                         model,
                         pairs=set.union(
-                            *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
-                        ),
+                            *(set(d.elements_pairs_relations.keys()) for d in D)
+                        ),  # pyright: ignore[reportUnknownArgumentType]
                     ),
                     f,
                 )
@@ -894,7 +918,7 @@ class CollectiveSATask(AbstractCollectiveTask):
         rng_init, rng_sa = self.rng(seed).spawn(2)
 
         sas, _ = create_sa(
-            ModelEnum.SRMP,
+            self.model,
             self.ko,
             A,
             D,
@@ -941,8 +965,8 @@ class CollectiveSATask(AbstractCollectiveTask):
                         A,
                         best_model,
                         pairs=set.union(
-                            *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
-                        ),
+                            *(set(d.elements_pairs_relations.keys()) for d in D)
+                        ),  # pyright: ignore[reportUnknownArgumentType]
                     ),
                     f,
                 )
@@ -962,8 +986,8 @@ class CollectiveSATask(AbstractCollectiveTask):
                     A,
                     best_model,
                     pairs=set.union(
-                        *(set(d.elements_pairs_relations.keys()) for d in D)  # type: ignore
-                    ),
+                        *(set(d.elements_pairs_relations.keys()) for d in D)
+                    ),  # pyright: ignore[reportUnknownArgumentType]
                 ),
                 f,
             )
@@ -1117,10 +1141,10 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
         with self.Di_file(dir).open("r") as f:
             D = from_csv(f)
 
-        Mcps: list[SRMPModel] = []
+        Mcps: list[RMPModel | SRMPModel] = []
         for Mcp_id in range(self.nb_Mcp):
             with self.Mcp_file(dir, Mcp_id).open("r") as f:
-                Mcp = SRMPModel.from_json(f.read())
+                Mcp = self.model.value.from_json(f.read())
                 Mcps.append(Mcp)
 
         rng_path, rng_order = self.rng(seed).spawn(2)
@@ -1338,7 +1362,7 @@ class AcceptPTask(PreferencePathTask):
 
     def task(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any) -> Any:
         with self.Mi_file(dir).open("r") as f:
-            Mi = SRMPModel.from_json(f.read())
+            Mi = self.model.value.from_json(f.read())
 
         with self.A_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
@@ -1352,6 +1376,52 @@ class AcceptPTask(PreferencePathTask):
         # with self.Da_file(dir).open("r") as f:
         #     ACC = from_csv(f)
 
+        A = A.subtable(D.elements)  # pyright: ignore[reportConstantRedefinition]
+
+        neighborhoods: list[Neighborhood[FrozenRMPModel]] = [
+            NeighborhoodProfile(A, D),
+            NeighborhoodImportanceRelation(),
+        ]
+
+        if not self.fixed_lex_order:
+            neighborhoods.append(NeighborhoodLexOrder())
+
+        neighborhood = NeighborhoodCombined(neighborhoods, self.rng())
+
+        def heuristic(model: FrozenRMPModel, target_preferences: PreferenceStructure):
+            assert isinstance(self.group.gen, RMPParametersDeviation)
+
+            # profiles
+            if np.any(
+                abs(np.array(model.profiles) - Mi.profiles.data.to_numpy())  # pyright: ignore[reportUnknownArgumentType]
+                > self.group.gen.P
+            ):
+                return inf
+
+            # importance relation
+            if (
+                np.sum(
+                    abs(
+                        np.array([
+                            v - Mi.importance_relation.get(k, v)
+                            for k, v in model.importance_relation
+                        ])  # pyright: ignore[reportUnknownArgumentType]
+                    )
+                )
+                > self.group.gen.I
+            ):
+                return inf
+
+            # lexicographical order
+            if model.lexicographical_order not in all_max_adjacent_distance(
+                Mi.lexicographical_order, self.group.gen.L
+            ):
+                return inf
+
+            return 1 - fitness_comparisons_ranking(
+                target_preferences, model.model.rank_series(A)
+            )
+
         for r1 in P:
             if r2 := D.elements_pairs_relations.get(r1.elements):
                 D -= r2  # pyright: ignore[reportConstantRedefinition]
@@ -1364,22 +1434,34 @@ class AcceptPTask(PreferencePathTask):
                 D -= r2  # pyright: ignore[reportConstantRedefinition]
             D += r1  # pyright: ignore[reportConstantRedefinition]
 
-            mips, _ = create_mip(
-                GroupModelEnum.SRMP,
-                self.ko,
-                A,
-                [D],
-                rng_(0),
-                0,
-                self.config.max_time,
-                self.lexicographic_order,
-                reference_model=Mi,
-                profiles_amp=self.group.accept.P,
-                weights_amp=self.group.accept.W,
-                lexicographic_order_distance=self.group.accept.L,
-            )
+            match self.model:
+                case ModelEnum.SRMP:
+                    assert isinstance(self.group.accept, SRMPParametersDeviation)
+                    mips, _ = create_mip(
+                        GroupModelEnum.SRMP,
+                        self.ko,
+                        A,
+                        [D],
+                        rng_(0),
+                        0,
+                        self.config.max_time,
+                        self.lexicographic_order,
+                        reference_model=Mi,
+                        profiles_amp=self.group.accept.P,
+                        weights_amp=self.group.accept.W,
+                        lexicographic_order_distance=self.group.accept.L,
+                    )
 
-            accept = any(mip_result(mip).optimal for mip in mips)
+                    accept = any(mip_result(mip).optimal for mip in mips)
+                case ModelEnum.RMP:
+                    GBFS(
+                        neighborhood,
+                        partial(heuristic, target_preferences=D),
+                        self.config.max_time,
+                    )
+                case ModelEnum.RANDOM:
+                    raise ValueError("Random model is not accepted")
+
             if accept:
                 t += 1
             else:
@@ -1389,26 +1471,28 @@ class AcceptPTask(PreferencePathTask):
         if accept:
             t = -1
         else:
-            rel = PreferenceStructure(P.relations[t])
-            mips, _ = create_mip(
-                GroupModelEnum.SRMP,
-                self.ko,
-                A,
-                [rel],
-                rng_(0),
-                0,
-                self.config.max_time,
-                self.lexicographic_order,
-                reference_model=Mi,
-                profiles_amp=self.group.accept.P,
-                weights_amp=self.group.accept.W,
-                lexicographic_order_distance=self.group.accept.L,
-            )
+            if self.model is ModelEnum.SRMP:
+                assert isinstance(self.group.accept, SRMPParametersDeviation)
+                rel = PreferenceStructure(P.relations[t])
+                mips, _ = create_mip(
+                    GroupModelEnum.SRMP,
+                    self.ko,
+                    A,
+                    [rel],
+                    rng_(0),
+                    0,
+                    self.config.max_time,
+                    self.lexicographic_order,
+                    reference_model=Mi,
+                    profiles_amp=self.group.accept.P,
+                    weights_amp=self.group.accept.W,
+                    lexicographic_order_distance=self.group.accept.L,
+                )
 
-            accept = any(mip_result(mip).optimal for mip in mips)
-            if not accept:
-                with self.Cr_file(dir).open("a") as f:
-                    to_csv(rel, f)
+                accept = any(mip_result(mip).optimal for mip in mips)
+                if not accept:
+                    with self.Cr_file(dir).open("a") as f:
+                        to_csv(rel, f)
 
         csv_file = dir.csv_files["accept"]
         csv_file.writerow(

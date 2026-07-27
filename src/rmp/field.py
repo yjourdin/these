@@ -25,7 +25,7 @@ class ProfilesField(RandomField):
         return NormalPerformanceTable(o)
 
     @staticmethod
-    def field_encode(o: Any):  # type: ignore
+    def field_encode(o: Any) -> list[float]:
         return tolist(o.data.values)
 
     @staticmethod
@@ -80,6 +80,25 @@ class ImportanceRelationField(RandomField):
     @staticmethod
     def field_random(nb_crit: int, rng: RNGParam = None, *args: Any, **kwargs: Any):
         return ImportanceRelation.random(nb_crit, rng)
+
+
+@random_field("importance_relation")
+@dataclass(frozen=True)
+class FrozenImportanceRelationField(RandomField):
+    importance_relation: tuple[tuple[frozenset[int], int], ...]
+
+    @staticmethod
+    def field_decode(o: Any):
+        return tuple(
+            ImportanceRelation(
+                [int(x) for x in o.values()],
+                [frozenset(ast.literal_eval(label)) for label in o],
+            ).items()
+        )
+
+    @staticmethod
+    def field_encode(o: Any):
+        return {str(list(label)): int(score) for label, score in o}
 
 
 @random_group_field(fieldname="importance_relation", fieldclass=ImportanceRelationField)
