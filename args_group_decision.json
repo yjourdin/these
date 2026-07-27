@@ -1,24 +1,24 @@
 {
-    "name": "time_per_it_9",
-    "jobs": 10,
+    "name": "time_per_it_11",
+    "jobs": 75,
     "seed": 0,
-    "max_time": 300,
-    "time_per_it": 120,
+    "max_time": 3600,
+    "time_per_it": 300,
     "nb_Atr": 10,
     "group_size": [
-        2
+        2, 4, 6
     ],
     "N_tr": [
         100
     ],
     "M": [
-        3
+        3, 4, 5
     ],
     "Ko": [
-        2
+        1, 2, 3
     ],
     "N_bc": [
-        50
+        10, 20, 30, 40, 50
     ],
     "method": [
         "MIP"
@@ -26,27 +26,27 @@
     "config": [
         {
             "id": 0,
-            "max_time": 60,
             "nb_cpus": 6,
-            "gamma": 0.001,
+            "max_time": 120,
             "method": "MIP"
         }
     ],
     "group": [
         {
             "gen": {
-                "P": 0.1,
-                "W": 0.1,
-                "L": 0
+                "P": 0.5,
+                "W": 0.5,
+                "L": 1
             },
             "accept": {
-                "P": 0.1,
-                "W": 0.1,
-                "L": 0
+                "P": 0.5,
+                "W": 0.5,
+                "L": 1
             }
         }
     ],
     "path": [
+        false,
         true
     ],
     "Mie": [

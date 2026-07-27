@@ -1,6 +1,6 @@
 {
-    "name": "group_sa_2",
-    "jobs": 10,
+    "name": "group_sa",
+    "jobs": 70,
     "seed": 0,
     "max_time": 600,
     "time_per_it": 600,
