@@ -180,3 +180,4 @@ logs
 *.stdout
 nohup.out
 ruff.toml
+Manifest.toml
