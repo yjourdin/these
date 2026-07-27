@@ -1,6 +1,7 @@
 import heapq
 from collections.abc import Callable
 from itertools import count, pairwise
+from math import inf
 from time import thread_time
 
 from src.constants import DEFAULT_MAX_TIME
@@ -64,7 +65,7 @@ class GBFS[T](Paths[T]):
                         for path in paths.values():
                             self.found[path[-1]] = neighbor
                         return paths
-                    else:
+                    elif heuristic_value < inf:
                         # Add neighbor to queue
                         heapq.heappush(self.open_heap, Node(neighbor, heuristic_value))
                         # print("Nei", heuristic_value, neighbor.weights)

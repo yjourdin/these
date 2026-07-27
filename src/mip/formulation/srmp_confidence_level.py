@@ -4,7 +4,7 @@ from typing import Any, cast
 
 import numpy as np
 from mcda.relations import I, P
-from pulp import (  # type: ignore
+from pulp import (  # pyright: ignore[reportMissingTypeStubs]
     LpBinary,
     LpMaximize,
     LpProblem,
@@ -54,8 +54,8 @@ class MIPSRMPConfidence(MIP[SRMPModel, MIPSRMPConfidenceVars, MIPSRMPConfidenceP
 
     def create_parameters(self):
         self.params = MIPSRMPConfidenceParams(
-            A=self.alternatives.alternatives,  # type: ignore
-            M=self.alternatives.criteria,  # type: ignore
+            A=self.alternatives.alternatives,  # pyright: ignore[reportUnknownArgumentType]
+            M=self.alternatives.criteria,  # pyright: ignore[reportUnknownArgumentType]
             lexicographic_order=self.lexicographic_order,
         )
 
@@ -66,29 +66,29 @@ class MIPSRMPConfidence(MIP[SRMPModel, MIPSRMPConfidenceVars, MIPSRMPConfidenceP
         indifference_relations_indices = range(len(self.indifference_relations))
 
         self.vars = MIPSRMPConfidenceVars(
-            w=LpVariable.dicts("Weight", self.params.M, lowBound=0, upBound=1),  # type: ignore
+            w=LpVariable.dicts("Weight", self.params.M, lowBound=0, upBound=1),  # pyright: ignore[reportUnknownArgumentType]
             p=LpVariable.dicts(
                 "Profile",
                 (self.params.profile_indices, self.params.M),
                 lowBound=0,
                 upBound=1,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             delta=LpVariable.dicts(
                 "LocalConcordance",
                 (self.params.A, self.params.profile_indices, self.params.M),
                 cat=LpBinary,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             omega=LpVariable.dicts(
                 "WeightedLocalConcordance",
                 (self.params.A, self.params.profile_indices, self.params.M),
                 lowBound=0,
                 upBound=1,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             s=LpVariable.dicts(
                 "PreferenceRankingVariable",
                 (preference_relations_indices, [0] + self.params.profile_indices),
                 cat=LpBinary,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             s_star=(
                 LpVariable.dicts(
                     "IndifferenceRankingVariable",
@@ -96,7 +96,7 @@ class MIPSRMPConfidence(MIP[SRMPModel, MIPSRMPConfidenceVars, MIPSRMPConfidenceP
                     cat=LpBinary,
                 )
                 if self.inconsistencies
-                else {}  # type: ignore
+                else {}  # pyright: ignore[reportUnknownArgumentType]
             ),
             gamma=LpVariable(
                 "Gamma",

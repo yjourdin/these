@@ -83,8 +83,8 @@ def main(args: ArgumentsGroupDecision):
                 task_thread, task, {"seed": seeds.A_tr[Atr_id]}, []
             )
 
-        for ko, Mo_id in product(args.Ko, range(NB_MO)):
-            task = MoTask(m, ko, args.fixed_lex_order, Mo_id)
+        for model, ko, Mo_id in product(args.model, args.Ko, range(NB_MO)):
+            task = MoTask(m, model, ko, args.fixed_lex_order, Mo_id)
             futures[task] = thread_pool.submit(
                 task_thread, task, {"seed": seeds.Mo[Mo_id]}, []
             )
@@ -94,6 +94,7 @@ def main(args: ArgumentsGroupDecision):
                     for dm_id in range(group_size):
                         task = MiTask(
                             m,
+                            model,
                             ko,
                             args.fixed_lex_order,
                             Mo_id,
@@ -106,11 +107,12 @@ def main(args: ArgumentsGroupDecision):
                             task_thread,
                             task,
                             {"seed": seeds.Mi[Mi_id]},
-                            [futures[MoTask(m, ko, args.fixed_lex_order, Mo_id)]],
+                            [futures[MoTask(m, model, ko, args.fixed_lex_order, Mo_id)]],
                         )
 
-        for n_tr, ko, group_size, group, n_bc, same_alt in product(
+        for n_tr, model, ko, group_size, group, n_bc, same_alt in product(
             args.N_tr,
+            args.model,
             args.Ko,
             args.group_size,
             args.group,
@@ -126,6 +128,7 @@ def main(args: ArgumentsGroupDecision):
                                     m,
                                     n_tr,
                                     Atr_id,
+                                    model,
                                     ko,
                                     args.fixed_lex_order,
                                     Mo_id,
@@ -146,6 +149,7 @@ def main(args: ArgumentsGroupDecision):
                                         futures[
                                             MiTask(
                                                 m,
+                                                model,
                                                 ko,
                                                 args.fixed_lex_order,
                                                 Mo_id,
@@ -177,6 +181,7 @@ def main(args: ArgumentsGroupDecision):
                                                             m,
                                                             n_tr,
                                                             Atr_id,
+                                                            model,
                                                             ko,
                                                             args.fixed_lex_order,
                                                             Mo_id,
@@ -206,6 +211,7 @@ def main(args: ArgumentsGroupDecision):
                                                             m,
                                                             n_tr,
                                                             Atr_id,
+                                                            model,
                                                             ko,
                                                             args.fixed_lex_order,
                                                             Mo_id,
@@ -238,6 +244,7 @@ def main(args: ArgumentsGroupDecision):
                                                                     m,
                                                                     n_tr,
                                                                     Atr_id,
+                                                                    model,
                                                                     ko,
                                                                     args.fixed_lex_order,
                                                                     Mo_id,
@@ -272,6 +279,7 @@ def main(args: ArgumentsGroupDecision):
                                                                                 m,
                                                                                 n_tr,
                                                                                 Atr_id,
+                                                                                model,
                                                                                 ko,
                                                                                 args.fixed_lex_order,
                                                                                 Mo_id,
@@ -299,6 +307,7 @@ def main(args: ArgumentsGroupDecision):
                                                                                 m,
                                                                                 n_tr,
                                                                                 Atr_id,
+                                                                                model,
                                                                                 ko,
                                                                                 args.fixed_lex_order,
                                                                                 Mo_id,
@@ -324,6 +333,7 @@ def main(args: ArgumentsGroupDecision):
                                                                             collective_thread,
                                                                             m=m,
                                                                             n_tr=n_tr,
+                                                                            model=model,
                                                                             ko=ko,
                                                                             fixed_lex_order=args.fixed_lex_order,
                                                                             group_size=group_size,

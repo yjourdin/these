@@ -28,7 +28,7 @@ parser_distance.add_argument("model_A", type=Path, help="First model")
 parser_distance.add_argument("model_B", type=Path, help="Second model")
 
 parser_consensus = subparsers.add_parser(TestEnum.CONSENSUS, help="Consensus test")
-parser_consensus.add_argument("model", nargs="+", type=Path, help="Group model")
+parser_consensus.add_argument("model", type=Path, help="Group model")
 
 parser.add_argument("-r", "--result", type=Path, help="Result file")
 
@@ -38,10 +38,17 @@ class Arguments(Dataclass):
     A: Path
     distance: DistanceRankingEnum
     test: TestEnum
-    model_A: Path | None = None
-    model_B: Path | None = None
-    model: list[Path] | None = None
     result: Path | None = None
+
+
+class ArgumentsDistance(Arguments):
+    model_A: Path
+    model_B: Path
+
+
+@dataclass(init=False)
+class ArgumentsConsensus(Dataclass):
+    model: Path
 
 
 ARGS = parser.parse_args(namespace=Arguments())

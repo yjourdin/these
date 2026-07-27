@@ -5,7 +5,7 @@ from typing import Any, cast
 
 import numpy as np
 from mcda.relations import PreferenceStructure
-from pulp import (  # type: ignore
+from pulp import (  # pyright: ignore[reportMissingTypeStubs]
     LpBinary,
     LpInteger,
     LpMinimize,
@@ -49,7 +49,7 @@ class MIPSRMPCollectiveParams(MIPParams):
     Models: range = field(init=False)
 
     def __post_init__(self, lexicographic_order: Sequence[Sequence[int]]):
-        self.DM = range(self.c)  # type: ignore
+        self.DM = range(self.c)  # pyright: ignore[reportConstantRedefinition]
         self.Models = range(self.c + 1)
         self.k = len(lexicographic_order)
         self.profile_indices = list(range(1, self.k + 1))
@@ -75,8 +75,8 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
 
     def create_parameters(self):
         self.params = MIPSRMPCollectiveParams(
-            A=self.alternatives.alternatives,  # type: ignore
-            M=self.alternatives.criteria,  # type: ignore
+            A=self.alternatives.alternatives,  # pyright: ignore[reportUnknownArgumentType]
+            M=self.alternatives.criteria,  # pyright: ignore[reportUnknownArgumentType]
             c=len(self.preference_relations),
             lexicographic_order=self.lexicographic_order,
         )
@@ -120,13 +120,13 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                 (self.params.Models, self.params.M),
                 lowBound=0,
                 upBound=1,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             p=LpVariable.dicts(
                 "Profile",
                 (self.params.Models, self.params.profile_indices, self.params.M),
                 lowBound=0,
                 upBound=1,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             delta=LpVariable.dicts(
                 "LocalConcordance",
                 (
@@ -136,7 +136,7 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                     self.params.M,
                 ),
                 cat=LpBinary,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             omega=LpVariable.dicts(
                 "WeightedLocalConcordance",
                 (
@@ -147,7 +147,7 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                 ),
                 lowBound=0,
                 upBound=1,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             s=LpVariable.dicts(
                 "PreferenceRankingVariable",
                 (
@@ -156,26 +156,26 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                     [0] + self.params.profile_indices,
                 ),
                 cat=LpBinary,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             s_star=LpVariable.dicts(
                 "IndifferenceRankingVariable",
                 (indifference_relations_union_indices, self.params.Models),
                 cat=LpBinary,
-            ),  # type: ignore
-            S=LpVariable("MinimumPreferencesChanges", cat=LpInteger),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
+            S=LpVariable("MinimumPreferencesChanges", cat=LpInteger),  # pyright: ignore[reportUnknownArgumentType]
             R=LpVariable.dicts(
                 "Inconsistencies", range(len(self.preference_refused)), cat=LpBinary
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             W_abs=LpVariable.dicts(
                 "WeightAbsoluteDifference", (self.params.DM, self.params.M)
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             W=LpVariable(
                 "WeightDistance",
             ),
             P_abs=LpVariable.dicts(
                 "ProfileAbsoluteDifference",
                 (self.params.DM, self.params.profile_indices, self.params.M),
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             P=LpVariable("ProfileDistance"),
         )
 
@@ -188,7 +188,7 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
             + self.penalty
             + 2
             * (self.params.k + 1)
-            * len(self.params.M)  # type: ignore
+            * len(self.params.M)  # pyright: ignore[reportUnknownArgumentType]
             * (
                 self.vars["S"]
                 + 2

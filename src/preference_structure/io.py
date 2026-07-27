@@ -10,17 +10,15 @@ def from_csv(csvfile: Iterable[str]) -> PreferenceStructure:
     reader = csv.reader(csvfile, "unix")
     relations: list[Relation] = []
     for line in reader:
-        a, t, b = line
-        a_i, b_i = int(a), int(b)
-        match t:
-            case "P":
-                relations.append(P(a_i, b_i))
-            case "I":
-                relations.append(I(a_i, b_i))
-            case "R":
-                relations.append(R(a_i, b_i))
-            case _:
-                raise ValueError(f"Unknown relation {t}")
+        match line:
+            case a, "P", b:
+                relations.append(P(int(a), int(b)))
+            case a, "I", b:
+                relations.append(I(int(a), int(b)))
+            case a, "R", b:
+                relations.append(R(int(a), int(b)))
+            case l:
+                raise ValueError(f"Unknown line: {l}")
     return PreferenceStructure(relations, validate=False)
 
 

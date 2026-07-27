@@ -6,7 +6,7 @@ from typing import cast
 
 import numpy as np
 import numpy.typing as npt
-from numba import njit  # type: ignore
+from numba import njit  # pyright: ignore[reportMissingTypeStubs]
 
 from src.constants import EPSILON
 from src.dataclass import Dataclass, dataclass, replace
@@ -87,10 +87,10 @@ class NeighborProfileDiscretized[S: SRMPModel | RMPModel](Neighbor[S], Dataclass
             available_ind = []
             if profile_perf_ind > 0:
                 available_ind.append(profile_perf_ind - 1)
-            if profile_perf_ind < (len(self.values.alternatives) - 1):  # type: ignore
+            if profile_perf_ind < (len(self.values.alternatives) - 1):  # pyright: ignore[reportUnknownArgumentType]
                 available_ind.append(profile_perf_ind + 1)
         else:
-            available_ind = list(range(len(self.values.alternatives)))  # type: ignore
+            available_ind = list(range(len(self.values.alternatives)))  # pyright: ignore[reportUnknownArgumentType]
         profile_perf_ind = rng.choice(available_ind)
 
         profiles_values[profile_ind] = crit_values[crit_values.index[profile_perf_ind]]
@@ -196,7 +196,7 @@ def compute_subset_sum(weights: npt.NDArray[np.float64]):
     return np.concat((np.zeros(1), reduce(add_subset_sum, weights, np.empty(0))))
 
 
-@njit(fastmath=True)  # type: ignore
+@njit(fastmath=True)  # pyright: ignore[reportUntypedFunctionDecorator]
 def compute_alpha_increase(subset_sum: npt.NDArray[np.float64], weight: float):
     N = len(subset_sum)
     eq1 = False
@@ -215,7 +215,7 @@ def compute_alpha_increase(subset_sum: npt.NDArray[np.float64], weight: float):
     return 1 / best_denom, eq1
 
 
-@njit(fastmath=True)  # type: ignore
+@njit(fastmath=True)  # pyright: ignore[reportUntypedFunctionDecorator]
 def compute_alpha_decrease(subset_sum: npt.NDArray[np.float64], weight: float):
     N = len(subset_sum)
     eq1 = False

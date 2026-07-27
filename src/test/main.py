@@ -13,8 +13,8 @@ from .test import (
 
 
 def test_consensus(
-    model: GroupModel[Model], A: NormalPerformanceTable, distance: DistanceRankingEnum
-) -> Generator[Cell, Any, None]:
+    model: GroupModel[Any], A: NormalPerformanceTable, distance: DistanceRankingEnum
+) -> Generator[Cell]:
     result = consensus_group_model(model, A, distance)
     for attr, value in result._asdict().items():
         yield from add_str_to_list(value, prefix=[attr])
@@ -22,7 +22,7 @@ def test_consensus(
 
 def test_distance(
     Ma: Model, Mb: Model, A: NormalPerformanceTable, distance: DistanceRankingEnum
-) -> Generator[Cell | tuple[str, float], Any, None]:
+) -> Generator[Cell | tuple[str, float]]:
     match Ma, Mb:
         case GroupModel(), GroupModel():
             yield from add_str_to_list(

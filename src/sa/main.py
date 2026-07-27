@@ -77,11 +77,11 @@ def create_sa(
 
     # Alternatives
     alternatives = alternatives.subtable(
-        list(set.union(*(set(comparisons[dm].elements) for dm in DMS)))  # type: ignore
+        list(set.union(*(set(comparisons[dm].elements) for dm in DMS))) # pyright: ignore[reportUnknownArgumentType]
     )
 
     # Criteria
-    M = len(alternatives.criteria)  # type: ignore
+    M = len(alternatives.criteria) # pyright: ignore[reportUnknownArgumentType]
 
     # Initial solutions
     match model:

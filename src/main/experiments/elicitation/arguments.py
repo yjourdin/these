@@ -12,7 +12,7 @@ from .fields import (
 
 
 @dataclass(kw_only=True)
-class ArgumentsElicitation(
+class ArgumentsElicitation(  # pyright: ignore[reportIncompatibleMethodOverride]
     Arguments,
     GroupMethodField,
     GroupMoField,

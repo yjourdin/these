@@ -3,17 +3,23 @@ from dataclasses import dataclass, field
 from ....constants import DEFAULT_MAX_TIME
 from ...arguments import Arguments, ExperimentEnum
 from ..elicitation.fields import GroupConfigField, GroupMethodField
-from .fields import GroupGroupParametersField, GroupMieConfigField, SeedsField
+from .fields import (
+    GroupGroupParametersField,
+    GroupMieConfigField,
+    GroupModelField,
+    SeedsField,
+)
 
 
 @dataclass(kw_only=True)
-class ArgumentsGroupDecision(
+class ArgumentsGroupDecision(  # pyright: ignore[reportIncompatibleMethodOverride]
     Arguments,
+    GroupModelField,
     GroupMethodField,
     GroupConfigField,
     GroupMieConfigField,
     GroupGroupParametersField,
-    SeedsField
+    SeedsField,
 ):
     experiment: ExperimentEnum = field(
         default=ExperimentEnum.GROUP_DECISION, init=False

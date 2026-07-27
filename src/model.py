@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Flag
-from typing import Any, ClassVar, Self, SupportsIndex, overload
+from typing import Any, ClassVar, Self, SupportsIndex, TypeGuard, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -36,7 +36,7 @@ class Model(RandomDataclass):
     def rank_series(self, performance_table: PerformanceTableType):
         return Series(
             self.rank_list(performance_table),
-            performance_table.alternatives,  # type: ignore
+            performance_table.alternatives,  # pyright: ignore[reportUnknownArgumentType]
             dtype=int,
         )
 
@@ -127,8 +127,8 @@ class GroupModel[M: Model](Model, Sequence[M]):
                 )
 
 
-class Group[M: Model](list[M], GroupModel[M], Random):  # type: ignore
-    model: ClassVar[type[M]]  # type: ignore
+class Group[M: Model](list[M], GroupModel[M], Random):
+    model: ClassVar[type[M]]  # pyright: ignore[reportGeneralTypeIssues]
     dm_models: list[M]
 
     @overload
@@ -153,3 +153,7 @@ class Group[M: Model](list[M], GroupModel[M], Random):  # type: ignore
     @classmethod
     def from_reference(cls, other: M, rng: RNGParam = None, *args: Any, **kwargs: Any):
         return cls([cls.model.from_reference(other, rng, *args, **kwargs)])
+
+
+def is_group_model(model: Model) -> TypeGuard[GroupModel[Model]]:
+    return isinstance(model, GroupModel)

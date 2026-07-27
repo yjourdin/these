@@ -3,7 +3,7 @@ from enum import Enum, member
 from typing import Any, NamedTuple
 
 import numpy as np
-from scipy.stats import kendalltau, spearmanr
+from scipy.stats import kendalltau, spearmanr  # pyright: ignore[reportMissingTypeStubs]
 
 from ..model import GroupModel, Model
 from ..performance_table.type import PerformanceTableType
@@ -26,11 +26,11 @@ class DistanceRankingEnum(Enum):
 
     @member
     def KENDALL(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
-        return kendalltau(Ra, Rb).statistic
+        return kendalltau(Ra, Rb).statistic  # pyright: ignore[reportAttributeAccessIssue]
 
     @member
     def SPEARMAN(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
-        return float(spearmanr(Ra, Rb).statistic)
+        return float(spearmanr(Ra, Rb).statistic)  # pyright: ignore[reportUnknownArgumentType, reportAttributeAccessIssue]
 
     def __call__(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
         return self.value(self, Ra, Rb)

@@ -5,7 +5,7 @@ from typing import Any, cast
 
 import numpy as np
 from mcda.relations import I, P
-from pulp import (  # type: ignore
+from pulp import (  # pyright: ignore[reportMissingTypeStubs]
     LpBinary,
     LpInteger,
     LpMinimize,
@@ -66,8 +66,8 @@ class MIPSRMPCollectiveBound(
 
     def create_parameters(self):
         self.params = MIPSRMPCollectiveBoundParams(
-            A=self.alternatives.alternatives,  # type: ignore
-            M=self.alternatives.criteria,  # type: ignore
+            A=self.alternatives.alternatives,  # pyright: ignore[reportUnknownArgumentType]
+            M=self.alternatives.criteria,  # pyright: ignore[reportUnknownArgumentType]
             DM=range(len(self.preference_relations)),
             lexicographic_order=self.lexicographic_order,
         )
@@ -100,34 +100,34 @@ class MIPSRMPCollectiveBound(
         )
 
         self.vars = MIPSRMPCollectiveBoundVars(
-            w=LpVariable.dicts("Weight", self.params.M, lowBound=0, upBound=1),  # type: ignore
+            w=LpVariable.dicts("Weight", self.params.M, lowBound=0, upBound=1),  # pyright: ignore[reportUnknownArgumentType]
             p=LpVariable.dicts(
                 "Profile",
                 (self.params.profile_indices, self.params.M),
                 lowBound=0,
                 upBound=1,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             delta=LpVariable.dicts(
                 "LocalConcordance",
                 (self.params.A, self.params.profile_indices, self.params.M),
                 cat=LpBinary,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             omega=LpVariable.dicts(
                 "WeightedLocalConcordance",
                 (self.params.A, self.params.profile_indices, self.params.M),
                 lowBound=0,
                 upBound=1,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             s=LpVariable.dicts(
                 "PreferenceRankingVariable",
                 (preference_relations_union_indices, [0] + self.params.profile_indices),
                 cat=LpBinary,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             s_star=LpVariable.dicts(
                 "IndifferenceRankingVariable",
                 indifference_relations_union_indices,
                 cat=LpBinary,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             S=LpVariable("MinimumPreferencesChanges", cat=LpInteger),
         )
 
@@ -269,7 +269,9 @@ class MIPSRMPCollectiveBound(
             self.vars["s"][self.preference_relations_union.index(r)][0].fixValue()
 
         for r in self.indifference_accepted:
-            self.vars["s_star"][self.indifference_relations_union.index(r)].setInitialValue(0)
+            self.vars["s_star"][
+                self.indifference_relations_union.index(r)
+            ].setInitialValue(0)
             self.vars["s_star"][self.indifference_relations_union.index(r)].fixValue()
 
         # Constraint on refused preferences

@@ -5,7 +5,7 @@ from typing import Any, cast
 
 import numpy as np
 from mcda.relations import I, P
-from pulp import (  # type: ignore
+from pulp import (  # pyright: ignore[reportMissingTypeStubs]
     LpBinary,
     LpMaximize,
     LpProblem,
@@ -80,8 +80,8 @@ class MIPSRMPGroup(
         self.params = MIPSRMPGroupParams(
             profiles_shared=SRMPParamFlag.PROFILES in self.shared_params,
             weights_shared=SRMPParamFlag.WEIGHTS in self.shared_params,
-            A=self.alternatives.alternatives,  # type: ignore
-            M=self.alternatives.criteria,  # type: ignore
+            A=self.alternatives.alternatives,  # pyright: ignore[reportUnknownArgumentType]
+            M=self.alternatives.criteria,  # pyright: ignore[reportUnknownArgumentType]
             DM=range(len(self.preference_relations)),
             lexicographic_order=self.lexicographic_order,
         )
@@ -99,13 +99,13 @@ class MIPSRMPGroup(
         self.vars = MIPSRMPGroupVars(
             w=LpVariable.dicts(
                 "Weight", (self.params.DM, self.params.M), lowBound=0, upBound=1
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             p=LpVariable.dicts(
                 "Profile",
                 (self.params.DM, self.params.profile_indices, self.params.M),
                 lowBound=0,
                 upBound=1,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             delta=LpVariable.dicts(
                 "LocalConcordance",
                 (
@@ -115,7 +115,7 @@ class MIPSRMPGroup(
                     self.params.M,
                 ),
                 cat=LpBinary,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             omega=LpVariable.dicts(
                 "WeightedLocalConcordance",
                 (
@@ -126,7 +126,7 @@ class MIPSRMPGroup(
                 ),
                 lowBound=0,
                 upBound=1,
-            ),  # type: ignore
+            ),  # pyright: ignore[reportUnknownArgumentType]
             s={
                 dm: LpVariable.dicts(
                     f"PreferenceRankingVariable_{dm}",

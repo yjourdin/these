@@ -1,9 +1,8 @@
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from enum import auto
 from typing import Self, SupportsIndex
 
 import numpy as np
-import numpy.typing as npt
 
 from src.model import FrozenModel, GroupModel, Model, ParamFlag
 from src.performance_table.normal_performance_table import NormalPerformanceTable
@@ -77,9 +76,8 @@ class SRMPModel(
     @property
     def frozen(self):
         return FrozenSRMPModel(
-            profiles=tuple(tuple(x) for x in tolist(self.profiles.data.to_numpy())),  # type: ignore
-            # weights=tuple(tolist(self.weights)),
-            weights=self.weights,
+            profiles=tuple(tuple(x) for x in tolist(self.profiles.data.to_numpy())),  # pyright: ignore[reportUnknownArgumentType]
+            weights=tuple(tolist(self.weights)),  # pyright: ignore[reportUnknownArgumentType]
             lexicographic_order=tuple(self.lexicographic_order),
         )
 
@@ -98,10 +96,6 @@ class FrozenSRMPModel(
             weights=np.array(self.weights),
             lexicographic_order=list(self.lexicographic_order),
         )
-
-    def replace_weights(self, weights: npt.NDArray[np.float64]):
-        new = replace(self, weights=weights)
-        return new
 
 
 @dataclass

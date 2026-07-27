@@ -36,7 +36,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
         self.criteria_weights = criteria_weights
         self.profile = profile
 
-    def rank(self, **kwargs: Any):  # type: ignore
+    def rank_numpy(self, **kwargs: Any):
         """Construct an outranking matrix.
 
         :return:
@@ -73,7 +73,7 @@ class NormalSRMP(SRMP):
         self.lexicographic_order = lexicographic_order
 
     @property
-    def sub_srmp(self) -> Sequence[NormalProfileWiseOutranking]:  # type: ignore
+    def sub_srmp(self) -> Sequence[NormalProfileWiseOutranking]:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Return list of sub SRMP problems (one per category profile).
 
         :return:
@@ -89,7 +89,7 @@ class NormalSRMP(SRMP):
 
     def rank_numpy(self):
         profilewise_outranking_matrices = np.array([
-            sub_srmp.rank() for sub_srmp in self.sub_srmp
+            sub_srmp.rank_numpy() for sub_srmp in self.sub_srmp
         ])
         relations_ordered = profilewise_outranking_matrices[self.lexicographic_order]
         n = len(relations_ordered)

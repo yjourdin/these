@@ -42,7 +42,7 @@ class CollectiveObjective(Objective[Model], Dataclass):
     nb_DM: int = field(init=False)
 
     def __post_init__(self):
-        self.M = max(len(comp) for comp in self.comparisons)  # type: ignore
+        self.M = max(len(comp) for comp in self.comparisons)  # pyright: ignore[reportConstantRedefinition]
         self.nb_DM = len(self.comparisons)
 
     def __call__(self, sol: Model):
@@ -51,25 +51,27 @@ class CollectiveObjective(Objective[Model], Dataclass):
         ranks = sol.rank_series(self.performance_table).to_dict()
 
         if not_accepted := comparisons_ranking(self.comparisons_accepted, ranks):
-            result += len(not_accepted) * self.M**self.nb_DM
+            result += len(not_accepted)
 
         if set(self.comparisons_refused) != set(
             refused := comparisons_ranking(self.comparisons_refused, ranks)
         ):
-            result += (
-                len(self.comparisons_refused) - len(refused)
-            ) * self.M**self.nb_DM
+            result += len(self.comparisons_refused) - len(refused)
 
-        for refused_set in self.comparisons_past:
-            if not comparisons_ranking(refused_set, ranks):
-                result += self.M**self.nb_DM
+        result += sum(
+            not comparisons_ranking(refused_set, ranks)
+            for refused_set in self.comparisons_past
+        )
 
         tup = sorted(
-            self.preferences_changes[dm]
-            + len(comparisons_ranking(self.comparisons[dm], ranks))
-            for dm in range(self.nb_DM)
+            (
+                self.preferences_changes[dm]
+                + len(comparisons_ranking(self.comparisons[dm], ranks))
+                for dm in range(self.nb_DM)
+            ),
+            reverse=True,
         )
-        result += sum(x * self.M**i for (i, x) in enumerate(tup))
+        result += sum(x * self.M ** (-i - 1) for (i, x) in enumerate(tup))
         # result = tup[-1]
         return result
 

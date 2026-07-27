@@ -1,6 +1,7 @@
 import heapq
 from collections.abc import Callable
 from itertools import count, pairwise
+from math import inf
 from time import thread_time
 from typing import cast
 
@@ -74,7 +75,7 @@ class Astar[T](Paths[T]):
                         for path in paths.values():
                             self.found[path[-1]] = neighbor
                         return paths
-                    else:
+                    elif heuristic_value < inf:
                         # Add neighbor to queue
                         heapq.heappush(
                             self.open_heap,

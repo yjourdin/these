@@ -2,13 +2,16 @@ from dataclasses import dataclass
 from enum import auto
 from typing import Self, SupportsIndex
 
-from src.model import GroupModel, Model, ParamFlag
+from src.model import FrozenModel, GroupModel, Model, ParamFlag
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.performance_table.type import PerformanceTableType
 from src.random import RNGParam
-from src.utils import print_list
+from src.utils import print_list, tolist
 
 from .field import (
+    FrozenImportanceRelationField,
+    FrozenLexicographicOrderField,
+    FrozenProfilesField,
     GroupImportanceRelationField,
     GroupLexicographicOrderField,
     GroupProfilesField,
@@ -16,6 +19,7 @@ from .field import (
     LexicographicOrderField,
     ProfilesField,
 )
+from .importance_relation import ImportanceRelation
 from .perturbations import PerturbImportanceRelation, PerturbLexOrder, PerturbProfile
 from .rmp import NormalRMP
 
@@ -69,6 +73,32 @@ class RMPModel(
             lexicographic_order=PerturbLexOrder(
                 len(other.profiles.alternatives), nb_lex_order
             )(other.lexicographic_order, rng),
+        )
+
+    @property
+    def frozen(self):
+        return FrozenRMPModel(
+            profiles=tuple(tuple(x) for x in tolist(self.profiles.data.to_numpy())),  # pyright: ignore[reportUnknownArgumentType]
+            importance_relation=tuple(self.importance_relation.items()),
+            lexicographic_order=tuple(self.lexicographic_order),
+        )
+
+
+@dataclass(frozen=True)
+class FrozenRMPModel(
+    FrozenModel[RMPModel],
+    FrozenProfilesField,
+    FrozenImportanceRelationField,
+    FrozenLexicographicOrderField,
+):
+    @property
+    def model(self):
+        return RMPModel(
+            profiles=NormalPerformanceTable(self.profiles),
+            importance_relation=ImportanceRelation(
+                *zip(*((v, k) for k, v in self.importance_relation))  # pyright: ignore[reportArgumentType]
+            ),
+            lexicographic_order=list(self.lexicographic_order),
         )
 
 

@@ -1,11 +1,18 @@
-from enum import Enum, auto
+from enum import Enum
+from typing import Any
 
-from .case_insensitive_str_enum import CaseInsensitiveStrEnum
 from .dataclass import Dataclass
 from .model import Model, ParamFlag
 from .random_model.model import RandomGroup, RandomModel
-from .rmp.model import RMPParamFlag, rmp_group_model, rmp_model, rmp_model_from_name
+from .rmp.model import (
+    RMPModel,
+    RMPParamFlag,
+    rmp_group_model,
+    rmp_model,
+    rmp_model_from_name,
+)
 from .srmp.model import (
+    SRMPModel,
     SRMPParamFlag,
     srmp_group_model,
     srmp_model,
@@ -13,10 +20,22 @@ from .srmp.model import (
 )
 
 
-class ModelEnum(CaseInsensitiveStrEnum):
-    RMP = auto()
-    SRMP = auto()
-    RANDOM = auto()
+class ModelEnum(Enum):
+    RMP = RMPModel
+    SRMP = SRMPModel
+    RANDOM = RandomModel
+
+    @classmethod
+    def _missing_(cls, value: Any):
+        if isinstance(value, str):
+            value = value.upper()
+            for member in cls:
+                if member.name == value:
+                    return member
+        return None
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class GroupModelEnum(Enum):
