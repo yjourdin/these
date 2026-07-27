@@ -74,14 +74,14 @@ class SimulatedAnnealing[S](Iterative[S]):
 
                 if prob >= 1 or rng.random() < prob:
                     # Accepted
-                    current_sol = neighbor_sol
-                    current_obj = neighbor_obj
+                    self.current_sol = neighbor_sol
+                    self.current_obj = neighbor_obj
 
                     # New best
-                    if current_obj < self.best_obj:
+                    if self.current_obj < self.best_obj:
                         self.non_improving_it = 0
-                        self.best_sol = current_sol
-                        self.best_obj = current_obj
+                        self.best_sol = self.current_sol
+                        self.best_obj = self.current_obj
 
                         # Stop when optimum reached
                         if self.best_obj <= self.objective.optimum:
