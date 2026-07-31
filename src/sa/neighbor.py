@@ -5,8 +5,7 @@ from functools import reduce
 from typing import cast
 
 import numpy as np
-import numpy.typing as npt
-from numba import njit  # pyright: ignore[reportMissingTypeStubs]
+from numba import njit
 
 from src.constants import EPSILON
 from src.dataclass import Dataclass, dataclass, replace

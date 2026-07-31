@@ -4,7 +4,7 @@ from typing import Any, cast
 
 import numpy as np
 from mcda.relations import I, P
-from pulp import (  # pyright: ignore[reportMissingTypeStubs]
+from pulp import (
     LpBinary,
     LpMaximize,
     LpProblem,

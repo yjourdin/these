@@ -4,7 +4,7 @@ from typing import Any, cast
 
 import numpy as np
 from mcda.relations import I, P
-from pulp import (  # pyright: ignore[reportMissingTypeStubs]
+from pulp import (
     LpBinary,
     LpMinimize,
     LpProblem,
@@ -65,7 +65,7 @@ class MIPSRMPAccept(MIP[SRMPModel, MIPSRMPAcceptVars, MIPSRMPAcceptParams]):
         preference_relations_indices = range(len(self.preference_relations))
 
         self.vars = MIPSRMPAcceptVars(
-            w=LpVariable.dicts("Weight", self.params.M, lowBound=0, upBound=1), # pyright: ignore[reportUnknownArgumentType]
+            w=LpVariable.dicts("Weight", self.params.M, lowBound=0, upBound=1),  # pyright: ignore[reportUnknownArgumentType]
             p=LpVariable.dicts(
                 "Profile",
                 (self.params.profile_indices, self.params.M),

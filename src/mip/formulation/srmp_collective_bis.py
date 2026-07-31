@@ -5,7 +5,7 @@ from typing import Any, cast
 
 import numpy as np
 from mcda.relations import PreferenceStructure
-from pulp import (  # pyright: ignore[reportMissingTypeStubs]
+from pulp import (
     LpBinary,
     LpInteger,
     LpMinimize,
@@ -49,7 +49,7 @@ class MIPSRMPCollectiveParams(MIPParams):
     Models: range = field(init=False)
 
     def __post_init__(self, lexicographic_order: Sequence[Sequence[int]]):
-        self.DM = range(self.c)  # pyright: ignore[reportConstantRedefinition]
+        self.DM = range(self.c)
         self.Models = range(self.c + 1)
         self.k = len(lexicographic_order)
         self.profile_indices = list(range(1, self.k + 1))

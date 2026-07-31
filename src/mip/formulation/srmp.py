@@ -9,7 +9,7 @@ from typing import Any, cast
 
 import numpy as np
 from mcda.relations import I, P
-from pulp import (  # pyright: ignore[reportMissingTypeStubs]
+from pulp import (
     LpBinary,
     LpMaximize,
     LpProblem,
@@ -17,18 +17,18 @@ from pulp import (  # pyright: ignore[reportMissingTypeStubs]
     lpSum,
 )
 
-# from pyomo.core.base.param import (  # pyright: ignore[reportMissingTypeStubs]  # pyright: ignore[reportMissingTypeStubs]
+# from pyomo.core.base.param import (
 #     IndexedParam,
 #     ScalarParam,
 # )
-# from pyomo.core.base.set import (  # pyright: ignore[reportMissingTypeStubs]  # pyright: ignore[reportMissingTypeStubs]
+# from pyomo.core.base.set import (
 #     FiniteScalarRangeSet,
 #     IndexedSet,
 # )
-# from pyomo.core.base.var import (  # pyright: ignore[reportMissingTypeStubs]  # pyright: ignore[reportMissingTypeStubs]
+# from pyomo.core.base.var import (
 #     IndexedVar,
 # )
-# from pyomo.environ import (  # pyright: ignore[reportMissingTypeStubs]
+# from pyomo.environ import (
 #     AbstractModel,
 #     Binary,
 #     Constraint,

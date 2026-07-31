@@ -3,14 +3,14 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 from mcda.internal.core.interfaces import Learner
-from pulp import (  # pyright: ignore[reportMissingTypeStubs]
+from pulp import (
     LpProblem,
     LpSolver,
     LpVariable,
     getSolver,
     listSolvers,
 )
-from pulp import value as value_pulp  # pyright: ignore[reportMissingTypeStubs]
+from pulp import value as value_pulp
 
 from src.constants import DEFAULT_MAX_TIME
 from src.dataclass import Dataclass, InitVar, dataclass, field

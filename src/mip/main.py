@@ -5,7 +5,7 @@ from typing import Any, NamedTuple, cast
 
 import numpy as np
 from mcda.relations import I, P, PreferenceStructure
-from pulp import value  # pyright: ignore[reportMissingTypeStubs]
+from pulp import value
 
 from src.constants import DEFAULT_MAX_TIME
 from src.models import GroupModelEnum

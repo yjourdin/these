@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 
 with catch_warnings(action="ignore", category=DeprecationWarning):
-    from drs import drs  # pyright: ignore[reportMissingTypeStubs]
+    from drs import drs
 
 from src.dataclass import Dataclass, dataclass
 from src.random import RNGParam, int_

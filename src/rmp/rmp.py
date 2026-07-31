@@ -32,7 +32,7 @@ from mcda.scales import DiscreteQuantitativeScale, PreferenceDirection
 from mcda.transformers import ClosestTransformer
 from mcda.values import CommensurableValues, Values
 from pandas import DataFrame, Index, Series, concat
-from scipy.stats import rankdata  # pyright: ignore[reportMissingTypeStubs]
+from scipy.stats import rankdata
 
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.performance_table.type import PerformanceTableType
