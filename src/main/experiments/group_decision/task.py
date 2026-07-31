@@ -45,7 +45,7 @@ from src.utils import catchtime, kendalltau_distance, tolist
 from ...task import SeedTask
 from ..elicitation.config import Config, MIPConfig, SAConfig
 from .directory import DirectoryGroupDecision
-from .fields import GroupParametersT, RMPParametersDeviation, SRMPParametersDeviation
+from .fields import GroupParameters
 
 
 @dataclass(frozen=True)
@@ -113,7 +113,7 @@ class MoTask(AbstractMTask):
 @dataclass(frozen=True)
 class AbstractMiTask(MoTask):
     group_size: int
-    group: GroupParametersT
+    group: GroupParameters
     Mi_id: int = field(hash=False)
 
     def Mi_file(self, dir: DirectoryGroupDecision, dm_id: int):
@@ -142,7 +142,6 @@ class MiTask(AbstractMiTask):
 
         match self.model:
             case ModelEnum.RMP:
-                assert isinstance(self.group.gen, RMPParametersDeviation)
                 Mi = self.model.value.from_reference(
                     Mo,
                     self.group.gen.P,
@@ -151,7 +150,6 @@ class MiTask(AbstractMiTask):
                     rng=self.rng(seed),
                 )
             case ModelEnum.SRMP:
-                assert isinstance(self.group.gen, SRMPParametersDeviation)
                 Mi = self.model.value.from_reference(
                     Mo,
                     self.group.gen.P,
@@ -1449,8 +1447,6 @@ class AcceptPTask(PreferencePathTask):
         neighborhood = NeighborhoodCombined(neighborhoods, rng_(0))
 
         def heuristic(model: FrozenRMPModel, target_preferences: PreferenceStructure):
-            assert isinstance(self.group.accept, RMPParametersDeviation)
-
             # profiles
             if np.any(
                 abs(np.array(model.profiles) - Mi.profiles.data.to_numpy())  # pyright: ignore[reportUnknownArgumentType]
@@ -1498,7 +1494,6 @@ class AcceptPTask(PreferencePathTask):
 
             match self.model:
                 case ModelEnum.SRMP:
-                    assert isinstance(self.group.accept, SRMPParametersDeviation)
                     mips, _ = create_mip(
                         GroupModelEnum.SRMP,
                         self.ko,
@@ -1534,7 +1529,6 @@ class AcceptPTask(PreferencePathTask):
             t = -1
         else:
             if self.model is ModelEnum.SRMP:
-                assert isinstance(self.group.accept, SRMPParametersDeviation)
                 rel = PreferenceStructure(P.relations[t])
                 mips, _ = create_mip(
                     GroupModelEnum.SRMP,

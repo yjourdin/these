@@ -18,7 +18,7 @@ from ....task import FutureTask, TaskResult, result_dict, result_list
 from ....threads.task import task_thread
 from ...elicitation.config import Config, MIPConfig, SAConfig
 from ..directory import DirectoryGroupDecision
-from ..fields import GroupParametersT
+from ..fields import GroupParameters
 from ..seeds import Seeds
 from ..task import (
     # AcceptMcTask,
@@ -40,7 +40,7 @@ def collective_thread(
     fixed_lex_order: bool,
     Mo_id: int,
     group_size: int,
-    group: GroupParametersT,
+    group: GroupParameters,
     Mi_id: int,
     n_bc: int,
     same_alt: bool,

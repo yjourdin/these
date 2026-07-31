@@ -5,14 +5,14 @@ from src.methods import MethodEnum
 
 from ...csv_file import CSVFields, CSVFile
 from ..elicitation.config import Config, MIPConfig
-from .fields import GroupParametersT, SRMPParametersDeviation
+from .fields import GroupParameters, ParametersDeviation
 
 
 # Group parameters
 class GroupParametersFields(CSVFields):
     Id: int
-    Gen: SRMPParametersDeviation
-    Accept: SRMPParametersDeviation
+    Gen: ParametersDeviation
+    Accept: ParametersDeviation
 
 
 class GroupParametersCSVFile(CSVFile):
@@ -32,7 +32,7 @@ class ExperimentFields(CSVFields):
     Ko: int
     Mo_id: int
     Group_size: int
-    Group: GroupParametersT
+    Group: GroupParameters
     Mi_id: int
     N_bc: int
     Same_alt: bool
@@ -56,7 +56,7 @@ class MieFields(CSVFields):
     Ko: int
     Mo_id: int
     Group_size: int
-    Group: GroupParametersT
+    Group: GroupParameters
     Mi_id: int
     N_bc: int
     Same_alt: bool

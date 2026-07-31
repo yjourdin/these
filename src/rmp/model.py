@@ -61,13 +61,13 @@ class RMPModel(
         cls,
         other: Self,
         amp_profiles: float,
-        nb_importance_relation: int,
+        amp_importance_relation: float,
         nb_lex_order: int,
         rng: RNGParam = None,
     ):
         return cls(
             profiles=PerturbProfile(amp_profiles)(other.profiles, rng),
-            importance_relation=PerturbImportanceRelation(nb_importance_relation)(
+            importance_relation=PerturbImportanceRelation(amp_importance_relation)(
                 other.importance_relation, rng
             ),
             lexicographic_order=PerturbLexOrder(

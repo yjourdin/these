@@ -31,13 +31,13 @@ class PerturbProfile(Dataclass):
 
 @dataclass
 class PerturbImportanceRelation(Dataclass):
-    nb: int
+    amp: float
 
     def __call__(self, importance_relation: ImportanceRelation, rng: RNGParam = None):
         rng = rng_(rng)
         importance_relation = deepcopy(importance_relation)
 
-        for _ in range(self.nb):
+        for _ in range(int(self.amp * len(importance_relation))):
             keys = list(importance_relation)
             min_score = max_score = 0
 

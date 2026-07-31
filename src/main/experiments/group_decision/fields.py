@@ -7,75 +7,50 @@ from src.field import Field, group_field
 from src.field import field as custom_field
 
 from ....models import ModelEnum
-from ....utils import CustomException
 from ..elicitation.config import MIPConfig, create_config
 from .seeds import Seeds
 
 
 @dataclass(frozen=True)
-class ParametersDeviation(FrozenDataclass): ...
-
-
-@dataclass(frozen=True)
-class RMPParametersDeviation(ParametersDeviation):
+class ParametersDeviation(FrozenDataclass):
     P: float
-    I: int
-    L: int
-
-
-@dataclass(frozen=True)
-class SRMPParametersDeviation(ParametersDeviation):
-    P: float
+    I: float
     W: float
     L: int
 
 
-def parameters_deviation_from_dict(o: Any):
-    if "I" in o:
-        return RMPParametersDeviation.from_dict(o)
-    elif "W" in o:
-        return SRMPParametersDeviation.from_dict(o)
-    else:
-        raise CustomException("Unknown parameters deviation")
-
-
 @custom_field("gen")
 @dataclass(frozen=True)
-class GenField[T: ParametersDeviation](Field):
-    gen: T
+class GenField(Field):
+    gen: ParametersDeviation
 
     @staticmethod
     def field_decode(o: Any):
-        return parameters_deviation_from_dict(o)
+        return ParametersDeviation.from_dict(o)
 
 
 @custom_field("accept")
 @dataclass(frozen=True)
-class AcceptField[T: ParametersDeviation](Field):
-    accept: T
+class AcceptField(Field):
+    accept: ParametersDeviation
 
     @staticmethod
     def field_decode(o: Any):
-        return parameters_deviation_from_dict(o)
+        return ParametersDeviation.from_dict(o)
 
 
 @dataclass(frozen=True)
-class GroupParameters[T: ParametersDeviation](
-    GenField[T], AcceptField[T], FrozenDataclass
-):
+class GroupParameters(GenField, AcceptField, FrozenDataclass):
     id: int = field(default_factory=count().__next__, init=False, hash=False)
 
     def __str__(self) -> str:
         return str(self.id)
 
 
-GroupParametersT = GroupParameters[ParametersDeviation]
-
-
 @custom_field("group")
 @dataclass
 class GroupParametersField(Field):
-    group: GroupParametersT
+    group: GroupParameters
 
     @staticmethod
     def field_decode(o: Any):
@@ -85,7 +60,7 @@ class GroupParametersField(Field):
 @group_field(fieldname="group", fieldclass=GroupParametersField)
 @dataclass
 class GroupGroupParametersField(Field):
-    group: list[GroupParametersT] = field(default_factory=list)
+    group: list[GroupParameters] = field(default_factory=list)
 
 
 @custom_field("Mie_config")
