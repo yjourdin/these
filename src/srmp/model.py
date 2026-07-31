@@ -77,7 +77,7 @@ class SRMPModel(
     def frozen(self):
         return FrozenSRMPModel(
             profiles=tuple(tuple(x) for x in tolist(self.profiles.data.to_numpy())),  # pyright: ignore[reportUnknownArgumentType]
-            weights=tuple(tolist(self.weights)),  # pyright: ignore[reportUnknownArgumentType]
+            weights=self.weights,
             lexicographic_order=tuple(self.lexicographic_order),
         )
 

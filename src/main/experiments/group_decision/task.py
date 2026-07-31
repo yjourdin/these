@@ -159,7 +159,7 @@ class MiTask(AbstractMiTask):
                     rng=self.rng(seed),
                 )
             case ModelEnum.RANDOM:
-                raise ValueError("Random model is not accepted")
+                raise TypeError("Random model is not accepted")
 
         with self.Mi_file(dir, self.dm_id).open("w") as f:
             f.write(Mi.to_json())
@@ -688,7 +688,6 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                     reference_models=Mie,
                     gamma=self.config.gamma,
                     nb_cpus=self.config.nb_cpus // self.nb_Mcp,
-                    verbose=True,
                     log_path=self.log_file(dir, Mcp_id),
                 )[0]
             )
@@ -1506,7 +1505,7 @@ class AcceptPTask(PreferencePathTask):
                         self.config.max_time,
                     )
                 case ModelEnum.RANDOM:
-                    raise ValueError("Random model is not accepted")
+                    raise TypeError("Random model is not accepted")
 
             if accept:
                 t += 1

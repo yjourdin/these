@@ -46,23 +46,6 @@ class SimulatedAnnealing[S](Iterative[S]):
                 neighbor_sol = self.neighbor(self.current_sol, rng)
                 neighbor_obj = self.objective(neighbor_sol)
 
-                if self.verbose:
-                    with self.log_writer() as log_writer:
-                        log_writer.writerow(
-                            self.LogFields(
-                                It=self.it,
-                                Non_improving_it=self.non_improving_it,
-                                Time=self.time,
-                                Temp=self.temp,
-                                Neighbor_sol=neighbor_sol,
-                                Current_sol=self.current_sol,
-                                Best_sol=self.best_sol,
-                                Neighbor_obj=neighbor_obj,
-                                Current_obj=self.current_obj,
-                                Best_obj=self.best_obj,
-                            )
-                        )
-
                 prob: float
                 if neighbor_obj <= self.current_obj:
                     prob = 1
@@ -83,9 +66,26 @@ class SimulatedAnnealing[S](Iterative[S]):
                         self.best_sol = self.current_sol
                         self.best_obj = self.current_obj
 
-                        # Stop when optimum reached
-                        if self.best_obj <= self.objective.optimum:
-                            return self.best_sol
+                if self.verbose:
+                    with self.log_writer() as log_writer:
+                        log_writer.writerow(
+                            self.LogFields(
+                                It=self.it,
+                                Non_improving_it=self.non_improving_it,
+                                Time=self.time,
+                                Temp=self.temp,
+                                Neighbor_sol=neighbor_sol,
+                                Current_sol=self.current_sol,
+                                Best_sol=self.best_sol,
+                                Neighbor_obj=neighbor_obj,
+                                Current_obj=self.current_obj,
+                                Best_obj=self.best_obj,
+                            )
+                        )
+
+                # Stop when optimum reached
+                if self.best_obj <= self.objective.optimum:
+                    return self.best_sol
 
                 # Update time
                 self.time = thread_time() - self.start_time

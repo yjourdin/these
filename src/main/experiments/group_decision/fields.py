@@ -13,8 +13,7 @@ from .seeds import Seeds
 
 
 @dataclass(frozen=True)
-class ParametersDeviation(FrozenDataclass):
-    ...
+class ParametersDeviation(FrozenDataclass): ...
 
 
 @dataclass(frozen=True)
@@ -23,11 +22,13 @@ class RMPParametersDeviation(ParametersDeviation):
     I: int
     L: int
 
+
 @dataclass(frozen=True)
 class SRMPParametersDeviation(ParametersDeviation):
     P: float
     W: float
     L: int
+
 
 def parameters_deviation_from_dict(o: Any):
     if "I" in o:
@@ -45,7 +46,7 @@ class GenField[T: ParametersDeviation](Field):
 
     @staticmethod
     def field_decode(o: Any):
-        return parameters_deviation_from_dict(0)
+        return parameters_deviation_from_dict(o)
 
 
 @custom_field("accept")
@@ -55,11 +56,13 @@ class AcceptField[T: ParametersDeviation](Field):
 
     @staticmethod
     def field_decode(o: Any):
-        return parameters_deviation_from_dict(0)
+        return parameters_deviation_from_dict(o)
 
 
 @dataclass(frozen=True)
-class GroupParameters[T: ParametersDeviation](GenField[T], AcceptField[T], FrozenDataclass):
+class GroupParameters[T: ParametersDeviation](
+    GenField[T], AcceptField[T], FrozenDataclass
+):
     id: int = field(default_factory=count().__next__, init=False, hash=False)
 
     def __str__(self) -> str:

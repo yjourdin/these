@@ -113,10 +113,10 @@ def model_from_json(s: str) -> Model:
     if not dct:
         raise ValueError("Empty json")
     classname = Dataclass.pop_class_name(dct)
-    lower_classname = classname.lower()
-    if ModelEnum.SRMP in lower_classname:
+    upper_classname = classname.upper()
+    if "SRMP" in upper_classname:
         cls = srmp_model_from_name(classname)
-    elif ModelEnum.RMP in lower_classname:
+    elif "RMP" in upper_classname:
         cls = rmp_model_from_name(classname)
     else:
         cls = RandomModel

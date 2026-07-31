@@ -9,9 +9,9 @@ from .julia.function import generate_weak_order
 from .random import Random, RNGParam, int_
 
 
-class WeakOrder[Element](MutableMapping[Element, int], Random):
+class WeakOrder[Element](MutableMapping[Element, float], Random):
     def __init__(
-        self, scores: Sequence[int] | None = None, labels: list[Element] | None = None
+        self, scores: Sequence[float] | None = None, labels: list[Element] | None = None
     ) -> None:
         if scores and labels:
             self.dict = dict(zip(labels, scores))
@@ -19,7 +19,7 @@ class WeakOrder[Element](MutableMapping[Element, int], Random):
     def __getitem__(self, key: Element):
         return self.dict[key]
 
-    def __setitem__(self, key: Element, value: int):
+    def __setitem__(self, key: Element, value: float):
         self.dict[key] = value
 
     def __delitem__(self, key: Element):
