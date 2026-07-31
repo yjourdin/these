@@ -16,6 +16,7 @@ class Node[T](Dataclass):
     item: T = field(compare=False)
     # entry_count: int = field(default_factory=count().__next__, init=False)
 
+
 @dataclass
 class Paths[T, N: Node[Any]](Dataclass):
     neighborhood: Neighborhood[T]
@@ -23,8 +24,6 @@ class Paths[T, N: Node[Any]](Dataclass):
     max_time: int = DEFAULT_MAX_TIME
     verbose: bool = False
     log_path: Path | None = None
-    parent: dict[T, dict[int, T | None]] = field(default_factory=dict)
-    paths: dict[int, list[T]] = field(default_factory=dict)
 
     class LogFields[S](TypedDict):
         Item: S
@@ -55,8 +54,10 @@ class Paths[T, N: Node[Any]](Dataclass):
     def init(self, sources: list[T]):
         self.time = 0
         self.open_heap: list[N] = []
-        self.parent = {source: {i: None} for i, source in enumerate(sources)}
-        self.found: dict[T, T] = {}
+        self.parent: dict[T, dict[int, T | None]] = {
+            source: {i: None} for i, source in enumerate(sources)
+        }
+        self.paths: dict[int, list[T]] = {}
 
         if self.verbose:
             with self.log_writer() as log_writer:

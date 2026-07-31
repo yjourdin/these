@@ -54,8 +54,6 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
                     if (heuristic_value := self.heuristic(neighbor)) == 0:
                         paths = self.paths_from(neighbor)
                         self.paths |= paths
-                        for path in paths.values():
-                            self.found[path[-1]] = neighbor
                         return self.paths
                     elif heuristic_value < inf:
                         # Add neighbor to queue
@@ -64,8 +62,8 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
                         )
 
                 elif (
-                    neighbor_source_ids := frozenset(self.parent[neighbor].keys())
-                ) != (current_source_ids := frozenset(self.parent[current].keys())):
+                    neighbor_source_ids := set(self.parent[neighbor].keys())
+                ) != (current_source_ids := set(self.parent[current].keys())):
                     # Remonte le path de current
                     if new_ids := neighbor_source_ids - current_source_ids:
                         paths = self.paths_from(current)
@@ -80,12 +78,14 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
                             for path in paths.values():
                                 for u, v in pairwise([current] + path):
                                     self.parent[v] |= {i: u}
-                        for i in new_ids:
-                            if (source := paths[i][-1]) in self.found:
-                                paths = self.paths_from(self.found[source])
-                                for path in paths.values():
-                                    self.found[path[-1]] = self.found[source]
-                                return paths
+                        if neighbors_source_found_ids := (
+                            neighbor_source_ids & self.paths.keys()
+                        ):
+                            paths = self.paths_from(
+                                self.paths[neighbors_source_found_ids.pop()][0]
+                            )
+                            self.paths |= paths
+                            return self.paths
 
             # Update time
             self.time += thread_time() - time

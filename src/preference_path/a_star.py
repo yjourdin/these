@@ -60,8 +60,8 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                     if (heuristic_value := self.heuristic(neighbor)) == 0:
                         paths = self.paths_from(neighbor)
                         self.paths |= paths
-                        for path in paths.values():
-                            self.found[path[-1]] = neighbor
+                        # for path in paths.values():
+                        #     self.found[path[-1]] = neighbor
                         return self.paths
                     elif heuristic_value < inf:
                         # Add neighbor to queue
@@ -69,29 +69,31 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                             self.open_heap,
                             NodeAstar(neighbor, current_node.cost + 1, heuristic_value),
                         )
-                elif (
-                    neighbor_source_ids := frozenset(self.parent[neighbor].keys())
-                ) != (current_source_ids := frozenset(self.parent[current].keys())):
+                elif (neighbor_source_ids := set(self.parent[neighbor].keys())) != (
+                    current_source_ids := set(self.parent[current].keys())
+                ):
                     # Remonte le path de current
                     if new_ids := neighbor_source_ids - current_source_ids:
                         paths = self.paths_from(current)
-                        for i in new_ids:
-                            for path in paths.values():
-                                for u, v in pairwise([neighbor] + path):
+                        for path in paths.values():
+                            for u, v in pairwise([neighbor] + path):
+                                for i in new_ids:
                                     self.parent[v] |= {i: u}
                     # Remonte le path de neighbor
                     if new_ids := current_source_ids - neighbor_source_ids:
                         paths = self.paths_from(neighbor)
-                        for i in new_ids:
-                            for path in paths.values():
+                        for path in paths.values():
+                            for i in new_ids:
                                 for u, v in pairwise([current] + path):
                                     self.parent[v] |= {i: u}
-                        for i in new_ids:
-                            if (source := paths[i][-1]) in self.found:
-                                paths = self.paths_from(self.found[source])
-                                for path in paths.values():
-                                    self.found[path[-1]] = self.found[source]
-                                return paths
+                        if neighbors_source_found_ids := (
+                            neighbor_source_ids & self.paths.keys()
+                        ):
+                            paths = self.paths_from(
+                                self.paths[neighbors_source_found_ids.pop()][0]
+                            )
+                            self.paths |= paths
+                            return self.paths
 
             # Update time
             self.time += thread_time() - time
