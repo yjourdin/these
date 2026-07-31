@@ -76,14 +76,16 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                     if new_ids := neighbor_source_ids - current_source_ids:
                         paths = self.paths_from(current)
                         for i in new_ids:
-                            for u, v in pairwise([neighbor] + paths[i]):
-                                self.parent[v] |= {i: u}
+                            for path in paths.values():
+                                for u, v in pairwise([neighbor] + path):
+                                    self.parent[v] |= {i: u}
                     # Remonte le path de neighbor
                     if new_ids := current_source_ids - neighbor_source_ids:
                         paths = self.paths_from(neighbor)
                         for i in new_ids:
-                            for u, v in pairwise([current] + paths[i]):
-                                self.parent[v] |= {i: u}
+                            for path in paths.values():
+                                for u, v in pairwise([current] + path):
+                                    self.parent[v] |= {i: u}
                         for i in new_ids:
                             if (source := paths[i][-1]) in self.found:
                                 paths = self.paths_from(self.found[source])
