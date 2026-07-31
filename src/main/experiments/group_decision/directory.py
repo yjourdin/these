@@ -4,6 +4,7 @@ from typing import Literal
 from src.methods import MethodEnum
 from src.utils import filename_csv, filename_json, filename_log
 
+from ....models import ModelEnum
 from ...csv_file import CSVFile
 from ...directory import Directory, DirectoryCSVFiles, DirectoryDirs
 from ..elicitation.config import Config, MIPConfig
@@ -112,12 +113,13 @@ class DirectoryGroupDecision(Directory):
     def A(self, m: int, n: int, id: int):
         return self.dirs["A"] / filename_csv(locals())
 
-    def Mo(self, m: int, k: int, id: int):
+    def Mo(self, m: int, model: ModelEnum, k: int, id: int):
         return self.dirs["Mo"] / filename_json(locals())
 
     def Mi(
         self,
         m: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -132,6 +134,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -149,6 +152,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -175,6 +179,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -194,6 +199,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -220,6 +226,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -246,6 +253,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -271,6 +279,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -297,6 +306,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -322,6 +332,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -347,6 +358,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -372,6 +384,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -397,6 +410,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -422,6 +436,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -449,6 +464,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
@@ -476,6 +492,7 @@ class DirectoryGroupDecision(Directory):
         m: int,
         ntr: int,
         Atr_id: int,
+        model: ModelEnum,
         k: int,
         Mo_id: int,
         group_size: int,
