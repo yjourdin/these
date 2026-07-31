@@ -6,7 +6,6 @@ from enum import Flag
 from typing import Any, ClassVar, Self, SupportsIndex, TypeGuard, overload
 
 import numpy as np
-import numpy.typing as npt
 from mcda.internal.core.scales import DiscreteQuantitativeScale, PreferenceDirection
 from mcda.internal.core.values import CommensurableValues, Ranking
 from mcda.relations import PreferenceStructure
@@ -28,7 +27,7 @@ class Model(RandomDataclass):
     @abstractmethod
     def rank_numpy(
         self, performance_table: PerformanceTableType
-    ) -> npt.NDArray[np.int_]: ...
+    ) -> np.ndarray[tuple[int], np.dtype[np.int_]]: ...
 
     def rank_list(self, performance_table: PerformanceTableType):
         return tolist(self.rank_numpy(performance_table))

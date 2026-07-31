@@ -2,7 +2,6 @@ from collections.abc import Sequence
 from typing import Any
 
 import numpy as np
-import numpy.typing as npt
 from mcda.internal.core.scales import NormalScale
 from mcda.outranking.srmp import SRMP, ProfileWiseOutranking
 from mcda.values import Values
@@ -10,7 +9,7 @@ from scipy.stats import rankdata
 
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 
-OutrankingMatrix = npt.NDArray[np.bool]
+OutrankingMatrix = np.ndarray[tuple[int, int], np.dtype[np.bool]]
 
 
 class NormalProfileWiseOutranking(ProfileWiseOutranking):
@@ -29,7 +28,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
     def __init__(
         self,
         performance_table: NormalPerformanceTable,
-        criteria_weights: npt.NDArray[np.float64],
+        criteria_weights: np.ndarray[tuple[int], np.dtype[np.float64]],
         profile: Values[NormalScale],
     ):
         self.performance_table = performance_table
@@ -41,7 +40,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
 
         :return:
         """
-        conditional_weighted_sum: npt.NDArray[np.float64] = np.dot(
+        conditional_weighted_sum: np.ndarray[tuple[int], np.dtype[np.float64]] = np.dot(
             self.performance_table.data.values >= self.profile.data.values,
             self.criteria_weights,
         )
@@ -63,7 +62,7 @@ class NormalSRMP(SRMP):
     def __init__(
         self,
         performance_table: NormalPerformanceTable,
-        criteria_weights: npt.NDArray[np.float64],
+        criteria_weights: np.ndarray[tuple[int], np.dtype[np.float64]],
         profiles: NormalPerformanceTable,
         lexicographic_order: list[int],
     ):
@@ -97,4 +96,4 @@ class NormalSRMP(SRMP):
         score = np.sum(relations_ordered * power[:, None, None], 0)
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
-        return rankdata(-scores, method="dense").astype(np.int_)
+        return np.array(rankdata(-scores, method="dense")).astype(np.int_)  # pyright: ignore[reportUnknownArgumentType]

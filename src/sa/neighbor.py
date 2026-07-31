@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from copy import deepcopy
 from functools import reduce
-from typing import cast
+from typing import Literal, cast
 
 import numpy as np
 from numba import njit
@@ -151,15 +151,15 @@ class NeighborWeightDiscretized[S: SRMPModel](Neighbor[S]):
 
 
 def weights_local_change(
-    weights: npt.NDArray[np.float64],
+    weights: np.ndarray[tuple[int], np.dtype[np.float64]],
     crit_ind: int,
     increase: bool = True,
 ):
     subset_sum = compute_subset_sum(np.delete(weights, crit_ind))
 
-    weight = weights[crit_ind]
+    weight: float = weights[crit_ind]
 
-    if weight == 1:
+    if weight >= 1 - EPSILON:
         return np.full_like(weights, 1 / len(weights))
 
     alpha, eq1 = compute_alpha(subset_sum, weight, increase)
@@ -174,66 +174,73 @@ def weights_local_change(
 
     if new[crit_ind] < EPSILON:
         new[crit_ind] = 0
-        new /= new.sum()
+        new /= np.sum(new)
+
+    mask = (float(new[crit_ind]) - EPSILON < new) & (
+        new < float(new[crit_ind]) + EPSILON
+    )
+    new[mask] = np.sum(new[mask]) / np.sum(mask)
 
     return new
 
 
-# def compute_subset_sum(weights: npt.NDArray[np.float64]):
-#     if len(weights) == 1:
-#         return weights
-#     weight = weights[-1]
-#     subset_sums = compute_subset_sum(weights[:-1])
-#     return np.concat((subset_sums, np.array([weight]), subset_sums + weight))
-
-
-def add_subset_sum(subset_sums: npt.NDArray[np.float64], weight: float):
+def add_subset_sum(
+    subset_sums: np.ndarray[tuple[int], np.dtype[np.float64]], weight: float
+):
     return np.concat((subset_sums, np.array([weight]), subset_sums + weight))
 
 
-def compute_subset_sum(weights: npt.NDArray[np.float64]):
+def compute_subset_sum(weights: np.ndarray[tuple[int], np.dtype[np.float64]]):
     return np.concat((np.zeros(1), reduce(add_subset_sum, weights, np.empty(0))))
 
 
-@njit(fastmath=True)  # pyright: ignore[reportUntypedFunctionDecorator]
-def compute_alpha_increase(subset_sum: npt.NDArray[np.float64], weight: float):
+@njit
+def compute_alpha_increase(
+    subset_sum: np.ndarray[tuple[int], np.dtype[np.float64]], weight: float
+):
     N = len(subset_sum)
     eq1 = False
     best_denom = np.inf
     for i in range(N):
-        w1 = subset_sum[i]
-        if w1 > 1e-10:
+        w1: float = subset_sum[i]
+        if w1 > EPSILON:
             denom1 = 2 * w1
             if denom1 < best_denom:
                 for j in range(N):
                     if (i & j) == 0:
-                        denom2 = denom1 + subset_sum[j]
+                        denom2: float = denom1 + subset_sum[j]
                         eq1 |= denom2 == 1
                         if 1 < denom2 < best_denom:
                             best_denom = denom2
     return 1 / best_denom, eq1
 
 
-@njit(fastmath=True)  # pyright: ignore[reportUntypedFunctionDecorator]
-def compute_alpha_decrease(subset_sum: npt.NDArray[np.float64], weight: float):
+@njit
+def compute_alpha_decrease(
+    subset_sum: np.ndarray[tuple[int], np.dtype[np.float64]], weight: float
+):
     N = len(subset_sum)
     eq1 = False
     best_denom = 1 - weight
     for i in range(N):
-        w1 = subset_sum[i]
-        if w1 > 1e-10:
+        w1: float = subset_sum[i]
+        if w1 > EPSILON:
             denom1 = 2 * w1
             if denom1 < 1:
                 for j in range(N):
                     if (i & j) == 0:
-                        denom2 = denom1 + subset_sum[j]
+                        denom2: float = denom1 + subset_sum[j]
                         eq1 |= denom2 == 1
                         if best_denom < denom2 < 1:
                             best_denom = denom2
     return 1 / best_denom, eq1
 
 
-def compute_alpha(subset_sum: npt.NDArray[np.float64], weight: float, increase: bool):
+def compute_alpha(
+    subset_sum: np.ndarray[tuple[int], np.dtype[np.float64]],
+    weight: float,
+    increase: bool,
+):
     f = compute_alpha_increase if increase else compute_alpha_decrease
     return f(subset_sum, weight)
 
@@ -275,7 +282,7 @@ class NeighborWeight[S: SRMPModel](Neighbor[S]):
 
             crit_ind = rng.choice(len(sol.weights))
 
-            weight = sol.weights[crit_ind]
+            weight: float = sol.weights[crit_ind]
 
             subset_sum = compute_subset_sum(np.delete(sol.weights, crit_ind))
 
@@ -283,7 +290,7 @@ class NeighborWeight[S: SRMPModel](Neighbor[S]):
 
             eps = np.min(diffs, initial=1, where=diffs != 0)
 
-            d = rng.choice([-1, 0, 1])
+            d: Literal[-1, 0, 1] = rng.choice([-1, 0, 1])
 
             s = rng.integers(1, len(subset_sum))
 
@@ -295,7 +302,7 @@ class NeighborWeight[S: SRMPModel](Neighbor[S]):
 
             s_min, s_max = (
                 (s1, s2)
-                if (s1 := subset_sum[j1]) <= (s2 := subset_sum[j2])
+                if (s1 := float(subset_sum[j1])) <= (s2 := float(subset_sum[j2]))
                 else (s2, s1)
             )
 
@@ -307,6 +314,15 @@ class NeighborWeight[S: SRMPModel](Neighbor[S]):
 
             new_weights = alpha * sol.weights
             new_weights[crit_ind] = weight + delta
+
+            if new_weights[crit_ind] < EPSILON:
+                new_weights[crit_ind] = 0
+                new_weights /= np.sum(new_weights)
+
+            mask = (float(new_weights[crit_ind]) - EPSILON < new_weights) & (
+                new_weights < float(new_weights[crit_ind]) + EPSILON
+            )
+            new_weights[mask] = np.sum(new_weights[mask]) / np.sum(mask)
 
         return replace(sol, weights=new_weights)
 
@@ -328,18 +344,27 @@ class NeighborImportanceRelation[S: RMPModel](Neighbor[S]):
             min_score = importance_relation.min(coalition)
             max_score = importance_relation.max(coalition)
 
+        score = importance_relation[coalition]
         if self.local:
-            score = importance_relation[coalition]
-            available_score = []
+            available_score = np.array([])
             if score > min_score:
-                available_score.append(score - 1)
+                np.append(available_score, score - 1)
             if score < max_score:
-                available_score.append(score + 1)
+                np.append(available_score, score + 1)
         else:
-            available_score = list(range(min_score, max_score + 1))
+            scores = np.unique(np.array(importance_relation.values(), dtype=np.float64))
+            possible_scores = scores[(min_score <= scores) & (scores <= max_score)]
+            available_score = np.concat((
+                possible_scores,
+                possible_scores[1:] - 1,
+                possible_scores[:-1] + 1,
+            ))
 
-        score = rng.choice(available_score)
+        while score == importance_relation[coalition]:
+            score = rng.choice(available_score)
         importance_relation[coalition] = score
+
+        importance_relation.rerank()
 
         return replace(sol, importance_relation=importance_relation)
 

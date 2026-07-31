@@ -3,7 +3,6 @@ from functools import partial
 from typing import Any
 
 import numpy as np
-import numpy.typing as npt
 from numpy import mean
 
 agg_float_func = min
@@ -15,6 +14,6 @@ def agg_float(data: Iterable[float], **kwargs: Any) -> float:
 
 
 def agg_rank(
-    data: Iterable[npt.NDArray[np.int_]], **kwargs: Any
-) -> npt.NDArray[np.int_]:
+    data: Iterable[np.ndarray[tuple[int], np.dtype[np.int_]]], **kwargs: Any
+) -> np.ndarray[tuple[int], np.dtype[np.int_]]:
     return agg_rank_func(np.stack(list(data)))

@@ -2,7 +2,6 @@ import random
 from warnings import catch_warnings
 
 import numpy as np
-import numpy.typing as npt
 
 with catch_warnings(action="ignore", category=DeprecationWarning):
     from drs import drs
@@ -15,7 +14,11 @@ from src.random import RNGParam, int_
 class PerturbWeight(Dataclass):
     amp: float
 
-    def __call__(self, weights: npt.NDArray[np.float64], rng: RNGParam = None):
+    def __call__(
+        self,
+        weights: np.ndarray[tuple[int], np.dtype[np.float64]],
+        rng: RNGParam = None,
+    ):
         random.seed(int_(rng))
 
         return np.array(

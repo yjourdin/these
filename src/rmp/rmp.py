@@ -11,7 +11,6 @@ from collections.abc import Sequence
 from typing import Any
 
 import numpy as np
-import numpy.typing as npt
 from mcda import PerformanceTable
 from mcda.internal.core.interfaces import Ranker
 from mcda.internal.core.matrices import OutrankingMatrix
@@ -581,7 +580,7 @@ class NormalRMP(RMP):
             for profile in self.profiles.alternatives
         ]
 
-    def rank_numpy(self, **kwargs: Any) -> npt.NDArray[np.int_]:
+    def rank_numpy(self, **kwargs: Any):
         """Compute the RMP algorithm
 
         :return:
@@ -596,4 +595,4 @@ class NormalRMP(RMP):
         score = np.sum(relations_ordered * power[:, None, None], 0)
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
-        return rankdata(-scores, method="dense").astype(np.int_)
+        return np.array(rankdata(-scores, method="dense")).astype(np.int_)

@@ -2,7 +2,6 @@ from collections.abc import Mapping
 from typing import Any
 
 import numpy as np
-import numpy.typing as npt
 from mcda.internal.core.matrices import OutrankingMatrix
 from mcda.internal.core.relations import Relation
 from mcda.relations import I, P, PreferenceStructure
@@ -68,7 +67,10 @@ def fitness_outranking_comparisons(Oo: OutrankingMatrix, Ce: PreferenceStructure
     return 1 - (len(comparisons_outranking(Ce, Oo)) / (n * (n - 1) / 2))
 
 
-def fitness_outranking_numpy(Oo: npt.NDArray[np.bool], Oe: npt.NDArray[np.bool]):
+def fitness_outranking_numpy(
+    Oo: np.ndarray[tuple[int, int], np.dtype[np.bool]],
+    Oe: np.ndarray[tuple[int, int], np.dtype[np.bool]],
+):
     ind = np.triu_indices(Oo.shape[0], 1)
 
     Or = np.logical_not(np.logical_xor(Oo, Oe))

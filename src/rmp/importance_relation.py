@@ -2,7 +2,7 @@ import numpy as np
 
 from src.julia.function import generate_weak_order_ext
 from src.random import RNGParam, int_
-from src.utils import tolist
+from src.utils import rerank, tolist
 from src.weak_order import WeakOrder
 
 
@@ -12,15 +12,20 @@ class ImportanceRelation(WeakOrder[frozenset[int]]):
         weak_order_ext = generate_weak_order_ext(nb_crit, int_(rng))
 
         labels = np.arange(nb_crit)
-        dct: dict[frozenset[int], int] = {}
+        dct: dict[frozenset[int], float] = {}
 
         for i, block in enumerate(weak_order_ext):
             for subset in block:
                 dct[frozenset(tolist(labels[subset]))] = i
 
+        dct = rerank(dct)  # pyright: ignore[reportUnknownArgumentType]
+
         we = cls()
         we.dict = dct
         return we
+
+    def rerank(self):
+        self.dict = rerank(self.dict)
 
     def max(self, key: frozenset[int]):
         try:

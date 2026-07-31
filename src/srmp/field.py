@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
-import numpy.typing as npt
 
 from src.field import (
     RandomField,
@@ -18,7 +17,7 @@ from .weight import frozen_importance_relation_from_weights, random_weights
 @random_field("weights")
 @dataclass
 class WeightsField(RandomField):
-    weights: npt.NDArray[np.float64]
+    weights: np.ndarray[tuple[int], np.dtype[np.float64]]
 
     @staticmethod
     def field_decode(o: Any):
@@ -59,4 +58,4 @@ class FrozenWeightsField(RandomField):
 @random_group_field(fieldname="weights", fieldclass=WeightsField)
 @dataclass
 class GroupWeightsField(RandomField):
-    weights: list[npt.NDArray[np.float64]]
+    weights: list[np.ndarray[tuple[int], np.dtype[np.float64]]]

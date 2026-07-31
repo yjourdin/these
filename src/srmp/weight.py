@@ -1,5 +1,4 @@
 import numpy as np
-import numpy.typing as npt
 from more_itertools import powerset
 from scipy.stats import rankdata
 
@@ -13,16 +12,18 @@ def random_weights(nb_crit: int, rng: RNGParam = None):
     )
 
 
-def normalize_weights(weights: npt.NDArray[np.float64]):
+def normalize_weights(weights: np.ndarray[tuple[int], np.dtype[np.float64]]):
     weights[-1] = 1 - weights[:-1].sum()
     return weights
 
 
-def frozen_importance_relation_from_weights(w: npt.NDArray[np.float64]):
+def frozen_importance_relation_from_weights(
+    w: np.ndarray[tuple[int], np.dtype[np.float64]],
+):
     power_sets = powerset(range(len(w)))
     result: list[float] = []
 
     for set in power_sets:
         result.append(w[list(set)].sum())
 
-    return tuple(tolist(rankdata(result, "dense").astype(np.int_)))
+    return tuple(tolist(np.array(rankdata(result)).astype(np.int_)))  # pyright: ignore[reportUnknownArgumentType]
