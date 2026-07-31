@@ -15,7 +15,7 @@ from src.preference_structure.generate import noisy_comparisons, random_comparis
 from src.preference_structure.io import from_csv, to_csv
 from src.random import SeedLike
 from src.sa.main import create_sa, sa_result
-from src.test.main import test_consensus, test_distance
+from src.test.main import test_consensus, test_distance_ranking
 from src.test.test import DistanceRankingEnum
 from src.utils import catchtime, tolist
 
@@ -398,7 +398,7 @@ class TestTask(ATestTask, AbstractElicitationTask):
             if Me:
                 if is_group_model(Me):
                     write_consensus(Me, "Me")
-                for name, value in test_distance(Mo, Me, A_test, distance):
+                for name, value in test_distance_ranking(Mo, Me, A_test, distance):
                     put_in_queue(name, value)
 
     def done(self, *args: Any, **kwargs: Any):

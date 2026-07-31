@@ -37,10 +37,10 @@ from src.preference_structure.generate import random_comparisons
 from src.preference_structure.io import from_csv, to_csv
 from src.random import SeedLike, rng_
 from src.rmp.model import FrozenRMPModel, RMPModel
-from src.rmp.permutation import all_max_adjacent_distance
 from src.sa.main import create_sa, sa_result
 from src.srmp.model import FrozenSRMPModel, SRMPModel
-from src.utils import CustomException, catchtime, tolist
+from src.test.test import distance_parameter_model
+from src.utils import catchtime, kendalltau_distance, tolist
 
 from ...task import SeedTask
 from ..elicitation.config import Config, MIPConfig, SAConfig
@@ -1027,6 +1027,54 @@ class CollectiveSATask(AbstractCollectiveTask):
         return True
 
 
+@dataclass(frozen=True)
+class DistanceTask(AbstractCollectiveTask):
+    name = "Distance"
+    Mcp_id_a: int
+    Mcp_id_b: int
+
+    def task(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any) -> Any:
+        with self.A_file(dir).open("r") as f:
+            A = NormalPerformanceTable(read_csv(f, header=None))
+
+        with self.Mcp_file(dir, self.Mcp_id_a).open("r") as f:
+            Ma = self.model.value.from_json(f.read())
+
+        with self.Mcp_file(dir, self.Mcp_id_b).open("r") as f:
+            Mb = self.model.value.from_json(f.read())
+
+        csv_file = dir.csv_files["distance"]
+        csv_file.writerow(
+            M=self.m,
+            N_tr=self.ntr,
+            Atr_id=self.Atr_id,
+            Ko=self.ko,
+            Mo_id=self.Mo_id,
+            Group_size=self.group_size,
+            Group=self.group,
+            Mi_id=self.Mi_id,
+            N_bc=self.nbc,
+            Same_alt=self.same_alt,
+            D_id=self.D_id,
+            Method=self.method,
+            Config=self.config,
+            Mie=self.Mie,
+            Mie_config=self.Mie_config,
+            Mie_id=self.Mie_id,
+            Mc_id=self.Mc_id,
+            Nb_Mcp=self.nb_Mcp,
+            Path=self.path,
+            P_id=self.P_id,
+            It=self.it,
+            i=self.Mcp_id_a,
+            j=self.Mcp_id_b,
+            Value=distance_parameter_model(Ma, Mb, A),
+        )
+
+    def done(self, *args: Any, **kwargs: Any):
+        return False
+
+
 # @dataclass(frozen=True)
 # class AcceptMcTask(AbstractCollectiveTask, MiTask):
 #     name = "AcceptMc"
@@ -1184,18 +1232,14 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
 
             a_star.init([model.frozen for model in Mcps])
 
-            paths: dict[int, list[FrozenSRMPModel]] = {}
-
+            paths = {}
             while not connection.poll():
-                try:
-                    path = a_star.main_loop(60)
-                except CustomException:
+                paths = a_star.main_loop(60)
+                if paths:
+                    connection.send(set(paths.keys()))
+                elif not a_star.open_heap:
                     connection.send(SENTINEL)
                     break
-                else:
-                    if path:
-                        paths |= path
-                        connection.send(set(paths.keys()))
 
             if (Mcp := connection.recv()) != SENTINEL:
                 model_path = paths[Mcp]
@@ -1386,35 +1430,37 @@ class AcceptPTask(PreferencePathTask):
         if not self.fixed_lex_order:
             neighborhoods.append(NeighborhoodLexOrder())
 
-        neighborhood = NeighborhoodCombined(neighborhoods, self.rng())
+        neighborhood = NeighborhoodCombined(neighborhoods, rng_(0))
 
         def heuristic(model: FrozenRMPModel, target_preferences: PreferenceStructure):
-            assert isinstance(self.group.gen, RMPParametersDeviation)
+            assert isinstance(self.group.accept, RMPParametersDeviation)
 
             # profiles
             if np.any(
                 abs(np.array(model.profiles) - Mi.profiles.data.to_numpy())  # pyright: ignore[reportUnknownArgumentType]
-                > self.group.gen.P
+                > self.group.accept.P
             ):
                 return inf
 
             # importance relation
             if (
-                np.sum(
-                    abs(
-                        np.array([
-                            v - Mi.importance_relation.get(k, v)
+                kendalltau_distance(
+                    *zip(
+                        *(
+                            (v, Mi.importance_relation.get(k, v))
                             for k, v in model.importance_relation
-                        ])  # pyright: ignore[reportUnknownArgumentType]
+                        )
                     )
                 )
-                > self.group.gen.I
+                > self.group.accept.I
             ):
                 return inf
 
-            # lexicographical order
-            if model.lexicographical_order not in all_max_adjacent_distance(
-                Mi.lexicographical_order, self.group.gen.L
+            if (
+                kendalltau_distance(
+                    model.lexicographical_order, Mi.lexicographical_order
+                )
+                > self.group.accept.L
             ):
                 return inf
 

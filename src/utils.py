@@ -10,6 +10,7 @@ from typing import Any, NamedTuple, TypeGuard, overload
 import numpy as np
 import numpy.typing as npt
 from mcda import PerformanceTable
+from scipy.stats import kendalltau, rankdata
 
 from .constants import EPSILON
 
@@ -166,3 +167,15 @@ def file_or_stdout(path: Path | None, mode: str, newline: str | None = None):
 
     with path.open(mode, newline=newline) if path else nullcontext(stdout) as f:
         yield f
+
+
+def kendalltau_distance(x: Sequence[Any], y: Sequence[Any]):
+    N = len(x)
+    K = float(kendalltau(x, y).statistic)  # pyright: ignore[reportUnknownArgumentType, reportAttributeAccessIssue]
+    return (1 - K) * (N * (N - 1)) / 4
+
+
+def rerank(dct: dict[Any, Any]):
+    keys, values = zip(*dct.items())
+    ranks = rankdata(values)
+    return dict(zip(keys, ranks))  # pyright: ignore[reportUnknownArgumentType]

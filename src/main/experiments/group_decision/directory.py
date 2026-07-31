@@ -14,6 +14,7 @@ from .csv_files import (
     CleanCSVFile,
     CollectiveCSVFile,
     CompromiseCSVFile,
+    DistanceCSVFile,
     GroupParametersCSVFile,
     MieCSVFile,
     PathCSVFile,
@@ -56,6 +57,7 @@ DirectoryGroupDecisionCSVFiles = (
         "configs",
         "group_parameters",
         "path",
+        "distance",
     ]
 )
 
@@ -104,6 +106,7 @@ class DirectoryGroupDecision(Directory):
                 self.dirs["root"] / "group_parameters.csv"
             ),
             "path": PathCSVFile(self.dirs["root"] / "path_results.csv"),
+            "distance": DistanceCSVFile(self.dirs["root"] / "distance.csv")
         }
 
     def A(self, m: int, n: int, id: int):
@@ -149,7 +152,7 @@ class DirectoryGroupDecision(Directory):
         k: int,
         Mo_id: int,
         group_size: int,
-        group: GroupGroupParametersTParameters,
+        group: GroupParametersT,
         dm_id: int,
         Mi_id: int,
         n: int,

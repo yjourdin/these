@@ -1,12 +1,18 @@
 import csv
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
+from itertools import combinations
+from multiprocessing import Pipe
+from multiprocessing.connection import Connection, wait
 from shutil import copy
+from typing import cast
 
+from src.constants import SENTINEL
 from src.methods import MethodEnum
+from src.models import ModelEnum
 from src.preference_structure.io import from_csv, to_csv
 
-from .....models import ModelEnum
+from .....utils import catchtime
 from ....dir import DIR
 from ....task import FutureTask, TaskResult, result_dict, result_list
 from ....threads.task import task_thread
@@ -20,6 +26,7 @@ from ..task import (
     # CleanTask,
     CollectiveMIPTask,
     CollectiveSATask,
+    DistanceTask,
     PreferencePathTask,
 )
 
@@ -190,6 +197,36 @@ def collective_thread(
 
                 # result_list(futures_clean)
             else:
+                for a, b in combinations(range(nb_Mcp), 2):
+                    task = DistanceTask(
+                        m,
+                        n_tr,
+                        Atr_id,
+                        model,
+                        ko,
+                        fixed_lex_order,
+                        Mo_id,
+                        group_size,
+                        group,
+                        Mi_id,
+                        n_bc,
+                        same_alt,
+                        D_id,
+                        Mie,
+                        Mie_config,
+                        Mie_id,
+                        method,
+                        config,
+                        nb_Mcp,
+                        Mc_id,
+                        path,
+                        P_id,
+                        it,
+                        a,
+                        b,
+                    )
+                    thread_pool.submit(task_thread, task)
+
                 # futures_accept: dict[int, FutureTask] = {}
                 # for dm_id in DMS:
                 #     tasks_accept = AcceptMcTask(
@@ -228,12 +265,62 @@ def collective_thread(
 
                 # compromise_found = not dms_refusing
 
-                t = 0
+                # tasks_P: dict[int, PreferencePathTask] = {}
+                # futures_P: dict[int, FutureTask] = {}
+                # for dm_id in DMS:
+                #     tasks_P[dm_id] = PreferencePathTask(
+                #         m,
+                #         n_tr,
+                #         Atr_id,
+                #         model,
+                #         ko,
+                #         fixed_lex_order,
+                #         Mo_id,
+                #         group_size,
+                #         group,
+                #         Mi_id,
+                #         dm_id,
+                #         n_bc,
+                #         same_alt,
+                #         D_id,
+                #         Mie,
+                #         Mie_config,
+                #         Mie_id,
+                #         method,
+                #         config,
+                #         nb_Mcp,
+                #         Mc_id,
+                #         path,
+                #         P_id,
+                #         it,
+                #     )
 
-                tasks_P: dict[int, PreferencePathTask] = {}
+                #     futures_P[dm_id] = thread_pool.submit(
+                #         task_thread,
+                #         tasks_P[dm_id],
+                #         {
+                #             "seed": seeds.P[P_id],
+                #             "max_time": min(time_left, time_left_per_it),
+                #         },
+                #         [],
+                #     )
+
+                # results_P = result_list(list(futures_P.values()))
+
+                # time_left -= max(result.time for result in results_P)
+                # time_left_per_it -= max(result.time for result in results_P)
+                # if time_left < 1:  # or (time_left_per_it < 1):
+                #     break
+                # if not all(result.res for result in results_P):
+                #     break
+
                 futures_P: dict[int, FutureTask] = {}
+                sources: dict[Connection, set[int]] = {}
+
                 for dm_id in DMS:
-                    tasks_P[dm_id] = PreferencePathTask(
+                    main_connection, worker_connection = Pipe()
+                    sources[main_connection] = set()
+                    task = PreferencePathTask(
                         m,
                         n_tr,
                         Atr_id,
@@ -259,35 +346,47 @@ def collective_thread(
                         P_id,
                         it,
                     )
-
                     futures_P[dm_id] = thread_pool.submit(
                         task_thread,
                         task,
                         seed=seeds.P[P_id],
                         max_time=min(time_left, time_left_per_it),
                         connection=worker_connection,
+                    )
+
+                working_connections = list(sources.keys())
+
+                with catchtime() as time:
+                    while working_connections and not set.intersection(
+                        *sources.values()
+                    ):
+                        for connection in cast(
+                            list[Connection], wait(working_connections)
+                        ):
+                            if (source := connection.recv()) != SENTINEL:
+                                sources[connection] |= source
+                            else:
+                                working_connections.remove(connection)
+
+                    for connection in sources:
+                        connection.send(
+                            set.intersection(*sources.values()).pop()
+                            if working_connections
+                            else SENTINEL
                         )
 
-                results_P = result_list(list(futures_P.values()))
+                    results_P = result_list(list(futures_P.values()))
 
-                time_left -= max(result.time for result in results_P)
-                time_left_per_it -= max(result.time for result in results_P)
+                time_left -= time()
+                time_left_per_it -= time()
                 if time_left < 1:  # or (time_left_per_it < 1):
                     break
                 if not all(result.res for result in results_P):
                     break
 
-                t = 1
-                dms = range(group_size)
-
-                # dms_refusing: list[int] = []
-
-                # while dms := [
-                #     dm_id for dm_id in dms if tasks_P[dm_id].Dp_file(DIR, t).exists()
-                # ]:
                 tasks_accept: dict[int, AcceptPTask] = {}
                 futures_accept: dict[int, FutureTask] = {}
-                for dm_id in dms:
+                for dm_id in DMS:
                     tasks_accept[dm_id] = AcceptPTask(
                         m,
                         n_tr,
@@ -393,31 +492,20 @@ def collective_thread(
                     )
 
                     if new_task_Mc is not None:
-                        print(Atr_id, it, 1)
                         for i in range(t_dm):
-                            print(Atr_id, it, 2, t_dm)
                             new_relation = P.relations[i]
-                            print(Atr_id, it, 3, t_dm)
                             if old_relation := D.elements_pairs_relations.get(
                                 new_relation.elements
                             ):
-                                print(Atr_id, it, 4, t_dm)
-                                D -= old_relation  # pyright: ignore[reportConstantRedefinition]
-                                print(Atr_id, it, 5, t_dm)
-                            D += new_relation  # pyright: ignore[reportConstantRedefinition]
-                            print(Atr_id, it, 6, t_dm)
+                                D -= old_relation
+                            D += new_relation
 
                         with new_task_Mc.Di_file(DIR, dm_id=dm_id).open("w") as f:
-                            print(Atr_id, it, 7)
                             to_csv(D, f)
-                            print(Atr_id, it, 8)
 
                         with new_task_Mc.C_file(DIR).open("a", newline="") as f:
-                            print(Atr_id, it, 9)
                             C_writer = csv.writer(f, "unix")  # pyright: ignore[reportUnknownArgumentType]
-                            print(Atr_id, it, 10)
                             C_writer.writerow([changes[dm_id]])
-                            print(Atr_id, it, 11)
 
                         # if dm_id in dms_refusing:
                         #     with new_task_Mc.Dr_file(DIR).open("a") as f:

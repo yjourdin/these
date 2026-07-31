@@ -102,6 +102,22 @@ class CollectiveCSVFile(CSVFile):
         return super().writerow(**kwargs)
 
 
+# Distance
+class DistanceFields(IterationFields):
+    i: int
+    j: int
+    Value: float
+
+
+class DistanceCSVFile(CSVFile):
+    @cached_property
+    def fieldnames(self):
+        return list(DistanceFields.__annotations__.keys())
+
+    def writerow(self, **kwargs: Unpack[DistanceFields]):
+        return super().writerow(**kwargs)
+
+
 # Path
 class PathFields(DMFields):
     Time: float

@@ -3,12 +3,26 @@ from enum import Enum, member
 from typing import Any, NamedTuple
 
 import numpy as np
-from scipy.stats import kendalltau, spearmanr  # pyright: ignore[reportMissingTypeStubs]
+from scipy.stats import kendalltau, spearmanr
 
-from ..model import GroupModel, Model
-from ..performance_table.type import PerformanceTableType
-from ..preference_structure.fitness import fitness_outranking
-from ..preference_structure.utils import RankingSeries
+from src.model import GroupModel, Model
+from src.performance_table.type import PerformanceTableType
+from src.preference_path.neighborhood import (
+    Neighborhood,
+    NeighborhoodCombined,
+    NeighborhoodImportanceRelation,
+    NeighborhoodLexOrder,
+    NeighborhoodProfile,
+    NeighborhoodWeight,
+)
+from src.preference_structure.fitness import fitness_outranking
+from src.preference_structure.utils import RankingSeries
+from src.rmp.model import FrozenRMPModel, RMPModel
+from src.srmp.model import FrozenSRMPModel, SRMPModel
+
+from ..preference_path.a_star import Astar
+from ..random import rng_
+from ..utils import kendalltau_distance
 
 
 class ConsensusResult(NamedTuple):
@@ -46,25 +60,25 @@ def rccd(distance: DistanceRankingEnum):
     return func if distance is not DistanceRankingEnum.FITNESS else distance
 
 
-def distance_model(
+def distance_ranking_model(
     Ma: Model,
     Mb: Model,
     performance_table: PerformanceTableType,
     distance: DistanceRankingEnum,
-) -> float:
+):
     return distance(
         Ma.rank_series(performance_table), Mb.rank_series(performance_table)
     )
 
 
-def distance_group_model(
+def distance_ranking_group_model(
     Ma: GroupModel[Any],
     Mb: GroupModel[Any],
     performance_table: PerformanceTableType,
     distance: DistanceRankingEnum,
-) -> list[float]:
+):
     return [
-        distance_model(Ma[dm], Mb[dm], performance_table, distance)
+        distance_ranking_model(Ma[dm], Mb[dm], performance_table, distance)
         for dm in range(Ma.group_size)
     ]
 
@@ -97,3 +111,58 @@ def consensus_group_model(
         between_individual_and_collective,
         collective,
     )
+
+
+def distance_parameter_model(
+    Ma: RMPModel | SRMPModel,
+    Mb: RMPModel | SRMPModel,
+    performance_table: PerformanceTableType,
+):
+    Ma_frozen = Ma.frozen
+    Mb_frozen = Mb.frozen
+
+    neighborhoods: list[Neighborhood[FrozenRMPModel | FrozenSRMPModel]] = [
+        NeighborhoodProfile(performance_table),
+    ]
+
+    if isinstance(Ma, RMPModel) and isinstance(Mb, RMPModel):
+        neighborhoods.append(NeighborhoodImportanceRelation())
+    if isinstance(Ma, SRMPModel) and isinstance(Mb, SRMPModel):
+        neighborhoods.append(NeighborhoodWeight())
+
+    if len(Ma.lexicographic_order) == len(Mb.lexicographic_order) > 1:
+        neighborhoods.append(NeighborhoodLexOrder())
+
+    neighborhood = NeighborhoodCombined(neighborhoods, rng_(0))
+
+    def heuristic(model: FrozenRMPModel | FrozenSRMPModel):
+        result: float = 0
+
+        for prof_ind, profile in enumerate(model.profiles):
+            for crit_ind in range(len(profile)):
+                alt = performance_table.data.to_numpy()[:, crit_ind]
+                if (prof_a := profile[crit_ind]) < (
+                    prof_b := Mb_frozen.profiles[prof_ind][crit_ind]
+                ):
+                    result += np.sum((prof_a < alt) & (alt < prof_b))
+                elif prof_b < prof_a:
+                    result += np.sum((prof_b < alt) & (alt < prof_a))
+
+        result += float(
+            np.sum(
+                abs(
+                    np.array(model.importance_relation)
+                    - np.array(Mb_frozen.importance_relation)
+                )
+            )
+        )
+
+        if len(model.lexicographic_order) > 1:
+            result += kendalltau_distance(
+                model.lexicographic_order, Mb_frozen.lexicographic_order
+            )
+
+        return result
+
+    a_star = Astar(neighborhood, heuristic)
+    return len(a_star([Ma_frozen])[0]) - 1
