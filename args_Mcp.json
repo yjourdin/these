@@ -1,0 +1,72 @@
+{
+    "name": "test_Mcp",
+    "jobs": 10,
+    "seed": 0,
+    "max_time": 3600,
+    "time_per_it": 3600,
+    "nb_Atr": 10,
+    "group_size": [
+        2, 4, 6
+    ],
+    "N_tr": [
+        100
+    ],
+    "M": [
+        3
+    ],
+    "model": [
+        "SRMP", "RMP"
+    ],
+    "nb_Mcp": [
+        1, 2, 3, 6
+    ],
+    "Ko": [
+        1
+    ],
+    "N_bc": [
+        100
+    ],
+    "method": [
+        "MIP", "SA"
+    ],
+    "config": [
+        {
+            "id": 0,
+            "max_time": 300,
+            "nb_cpus": 6,
+            "gamma": 0.001,
+            "method": "MIP"
+        },
+        {
+            "id": 1,
+            "max_time": 300,
+            "accept": 0.5,
+            "alpha": 0.9999,
+            "amp": 2,
+            "max_it": null,
+            "max_it_non_improving": null,
+            "__class": "SAConfig"
+        }
+    ],
+    "group": [
+        {
+            "gen": {
+                "P": 0.1,
+                "W": 0.1,
+                "L": 0
+            },
+            "accept": {
+                "P": 0.1,
+                "W": 0.1,
+                "L": 0
+            }
+        }
+    ],
+    "path": [
+        true
+    ],
+    "Mie": [
+        false
+    ],
+    "fixed_lex_order": false
+}
