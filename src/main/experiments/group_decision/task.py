@@ -643,7 +643,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
         R = PreferenceStructure()
         if (Cr_file := self.Cr_file(dir)).exists():
             with Cr_file.open("r") as f:
-                R = from_csv(f)  # pyright: ignore[reportConstantRedefinition]
+                R = from_csv(f)
         else:
             Cr_file.touch()
 
@@ -906,7 +906,7 @@ class CollectiveSATask(AbstractCollectiveTask):
         R = PreferenceStructure()
         if (Cr_file := self.Cr_file(dir)).exists():
             with Cr_file.open("r") as f:
-                R = from_csv(f)  # pyright: ignore[reportConstantRedefinition]
+                R = from_csv(f)
         else:
             Cr_file.touch()
 
