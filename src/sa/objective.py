@@ -42,7 +42,7 @@ class CollectiveObjective(Objective[Model], Dataclass):
     nb_DM: int = field(init=False)
 
     def __post_init__(self):
-        self.M = max(len(comp) for comp in self.comparisons)  # pyright: ignore[reportConstantRedefinition]
+        self.M = max(len(comp) for comp in self.comparisons)
         self.nb_DM = len(self.comparisons)
 
     def __call__(self, sol: Model):

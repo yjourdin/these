@@ -1157,9 +1157,9 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             R = PreferenceStructure()
             if (Dr_file := self.Cr_file(dir)).exists():
                 with Dr_file.open("r") as f:
-                    R = from_csv(f)  # pyright: ignore[reportConstantRedefinition]
+                    R = from_csv(f)
 
-            A = A.subtable(D.elements)  # pyright: ignore[reportConstantRedefinition]
+            A = A.subtable(D.elements)
 
             neighborhoods: list[Neighborhood[FrozenSRMPModel]] = [
                 NeighborhoodProfile(A, D),
@@ -1213,7 +1213,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             changes = list(set(D2) - set(D1))  # pyright: ignore[reportUnknownArgumentType]
             for i in rng_order.permutation(len(changes)):
                 comparisons_order.append(changes[int(i)])
-            D1 = D2  # pyright: ignore[reportConstantRedefinition]
+            D1 = D2
 
         with self.P_file(dir).open("w") as f:
             to_csv(PreferenceStructure(comparisons_order, False), f)
@@ -1376,7 +1376,7 @@ class AcceptPTask(PreferencePathTask):
         # with self.Da_file(dir).open("r") as f:
         #     ACC = from_csv(f)
 
-        A = A.subtable(D.elements)  # pyright: ignore[reportConstantRedefinition]
+        A = A.subtable(D.elements)
 
         neighborhoods: list[Neighborhood[FrozenRMPModel]] = [
             NeighborhoodProfile(A, D),
@@ -1424,15 +1424,15 @@ class AcceptPTask(PreferencePathTask):
 
         for r1 in P:
             if r2 := D.elements_pairs_relations.get(r1.elements):
-                D -= r2  # pyright: ignore[reportConstantRedefinition]
+                D -= r2
 
         t = 0
         accept = True
         while accept and t < len(P):
             r1 = P.relations[t]
             if r2 := D.elements_pairs_relations.get(r1.elements):
-                D -= r2  # pyright: ignore[reportConstantRedefinition]
-            D += r1  # pyright: ignore[reportConstantRedefinition]
+                D -= r2
+            D += r1
 
             match self.model:
                 case ModelEnum.SRMP:

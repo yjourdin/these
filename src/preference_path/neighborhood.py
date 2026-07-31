@@ -167,7 +167,7 @@ class NeighborhoodImportanceRelation(Neighborhood[FrozenRMPModel]):
             try:
                 M = min(v for k, v in sol.importance_relation if key < k)
             except ValueError:
-                M = min(  # pyright: ignore[reportConstantRedefinition]
+                M = min(
                     max({k: v for k, v in sol.importance_relation if k != key}.values())
                     + 1,
                     len(sol.importance_relation) - 1,

@@ -10,4 +10,4 @@ match ARGS.experiment:
     case ExperimentEnum.ELICITATION:
         MAIN = main_elicitation
     case ExperimentEnum.GROUP_DECISION:
-        MAIN = main_group_decision  # pyright: ignore[reportConstantRedefinition]
+        MAIN = main_group_decision
