@@ -4,7 +4,6 @@ from itertools import chain, product
 from typing import cast
 
 import numpy as np
-import numpy.typing as npt
 from mcda.relations import PreferenceStructure
 from pandas import Series
 
@@ -47,7 +46,7 @@ class NeighborhoodCombined[S](Neighborhood[S], Dataclass):
 class NeighborhoodProfile(Neighborhood[FrozenRMPModel | FrozenSRMPModel], Dataclass):
     midpoints: PerformanceTableType = field(init=False)
     alternatives: PerformanceTableType
-    target_preferences: PreferenceStructure
+    target_preferences: PreferenceStructure | None = None
 
     def __post_init__(self):
         self.midpoints = midpoints(self.alternatives)
@@ -55,16 +54,20 @@ class NeighborhoodProfile(Neighborhood[FrozenRMPModel | FrozenSRMPModel], Datacl
     def __call__(self, sol: FrozenSRMPModel):
         result: list[FrozenSRMPModel] = []
 
-        relevant_values = np.sort(
+        relevant_alternatives = np.sort(
             cast(
-                npt.NDArray[np.float64],
-                self.alternatives.subtable(
-                    PreferenceStructure(
-                        comparisons_ranking(
-                            self.target_preferences,
-                            sol.model.rank_series(self.alternatives).to_dict(),
-                        )
-                    ).elements
+                np.ndarray[tuple[int, int], np.dtype[np.float64]],
+                (
+                    self.alternatives.subtable(
+                        PreferenceStructure(
+                            comparisons_ranking(
+                                self.target_preferences,
+                                sol.model.rank_series(self.alternatives).to_dict(),
+                            )
+                        ).elements
+                    )
+                    if self.target_preferences is not None
+                    else self.alternatives
                 ).data.to_numpy(),
             ),
             0,
@@ -88,23 +91,24 @@ class NeighborhoodProfile(Neighborhood[FrozenRMPModel | FrozenSRMPModel], Datacl
 
                 relevant_bounds = (
                     np.max(
-                        relevant_values[:, crit_ind][
-                            relevant_values[:, crit_ind] < profile[crit_ind]
+                        relevant_alternatives[:, crit_ind][
+                            relevant_alternatives[:, crit_ind] < profile[crit_ind]
                         ],
-                        initial=0,
+                        initial=-1,
                     ),
                     np.min(
-                        relevant_values[:, crit_ind][
-                            relevant_values[:, crit_ind] > profile[crit_ind]
+                        relevant_alternatives[:, crit_ind][
+                            relevant_alternatives[:, crit_ind] > profile[crit_ind]
                         ],
-                        initial=1,
+                        initial=2,
                     ),
                 )
 
-                new_values = (
-                    np.max(crit_numpy[crit_numpy <= relevant_bounds[0]], initial=-1),
-                    np.min(crit_numpy[crit_numpy >= relevant_bounds[1]], initial=2),
-                )
+                new_values: list[np.floating] = []
+                if np.any(relevant_mask := (crit_numpy <= relevant_bounds[0])):
+                    new_values.append(np.max(crit_numpy[relevant_mask]))
+                if np.any(relevant_mask := (crit_numpy >= relevant_bounds[1])):
+                    new_values.append(np.min(crit_numpy[relevant_mask]))
 
                 profile_bounds = (
                     sol.profiles[profile_ind - 1][crit_ind] if profile_ind > 0 else 0,
@@ -198,11 +202,7 @@ class NeighborhoodWeight(Neighborhood[FrozenSRMPModel]):
             result.append(
                 replace(
                     sol,
-                    weights=tuple(
-                        weights_local_change(
-                            np.array(sol.weights), crit, increase
-                        ).tolist()
-                    ),
+                    weights=weights_local_change(np.array(sol.weights), crit, increase),
                 )
             )
 
