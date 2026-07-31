@@ -61,8 +61,8 @@ def WorkerPipe():
 class TaskQueueElement(NamedTuple):
     task: Task
     nb_cpus: int
-    args: Args
     connection: ManagerEndTaskConnection
+    args: Args
 
 
 type TaskQueue = LifoQueue[TaskQueueElement]

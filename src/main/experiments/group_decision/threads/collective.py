@@ -48,7 +48,6 @@ def collective_thread(
     path: bool,
     P_id: int,
     seeds: Seeds,
-    nb_cpus: int,
     max_time: int,
     time_per_it: int,
     precede_futures: list[FutureTask],
@@ -140,12 +139,9 @@ def collective_thread(
             future_Mc = thread_pool.submit(
                 task_thread,
                 task_Mc,  # pyright: ignore[reportUnknownArgumentType]
-                {
-                    "seed": seeds.Mc[Mc_id],
-                    "max_time": min(time_left, time_left_per_it),
-                    "nb_cpus": nb_cpus,
-                },
-                [],
+                seed=seeds.Mc[Mc_id],
+                max_time=min(time_left, time_left_per_it),
+                nb_cpus=config.nb_cpus,
             )
 
             result_Mc, time_Mc = future_Mc.result()
@@ -266,13 +262,11 @@ def collective_thread(
 
                     futures_P[dm_id] = thread_pool.submit(
                         task_thread,
-                        tasks_P[dm_id],
-                        {
-                            "seed": seeds.P[P_id],
-                            "max_time": min(time_left, time_left_per_it),
-                        },
-                        [],
-                    )
+                        task,
+                        seed=seeds.P[P_id],
+                        max_time=min(time_left, time_left_per_it),
+                        connection=worker_connection,
+                        )
 
                 results_P = result_list(list(futures_P.values()))
 
@@ -321,7 +315,9 @@ def collective_thread(
                         it,
                     )
                     futures_accept[dm_id] = thread_pool.submit(
-                        task_thread, tasks_accept[dm_id], {}, [futures_P[dm_id]]
+                        task_thread,
+                        tasks_accept[dm_id],
+                        precede_futures=[futures_P[dm_id]],
                     )
 
                 results_accept = result_dict(futures_accept)

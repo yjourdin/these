@@ -59,7 +59,7 @@ def main(args: ArgumentsElicitation):
         for n_tr, Atr_id in product(args.N_tr, range(NB_ATR)):
             task = ATrainTask(m, n_tr, Atr_id)
             futures[task] = thread_pool.submit(
-                task_thread, task, {"seed": seeds.A_tr[Atr_id]}, []
+                task_thread, task, seed=seeds.A_tr[Atr_id]
             )
 
         for n_te, Ate_id in product(
@@ -67,16 +67,14 @@ def main(args: ArgumentsElicitation):
         ):
             task = ATestTask(m, n_te, Ate_id)
             futures[task] = thread_pool.submit(
-                task_thread, task, {"seed": seeds.A_te[Ate_id]}, []
+                task_thread, task, seed=seeds.A_te[Ate_id]
             )
 
         for Mo, ko, group_size, Mo_id in product(
             args.Mo, args.Ko, args.group_size, range(NB_MO)
         ):
             task = MoTask(m, Mo, ko, group_size, args.fixed_lex_order, Mo_id)
-            futures[task] = thread_pool.submit(
-                task_thread, task, {"seed": seeds.Mo[Mo_id]}, []
-            )
+            futures[task] = thread_pool.submit(task_thread, task, seed=seeds.Mo[Mo_id])
 
         for n_tr, Mo, group_size in product(args.N_tr, args.Mo, args.group_size):
             for ko, n_bc, same_alt, error in product(
@@ -107,8 +105,8 @@ def main(args: ArgumentsElicitation):
                                 futures[task] = thread_pool.submit(
                                     task_thread,
                                     task,
-                                    {"seed": seeds.D[D_id]},
-                                    [
+                                    seed=seeds.D[D_id],
+                                    precede_futures=[
                                         futures[ATrainTask(m, n_tr, Atr_id)],
                                         futures[
                                             MoTask(
@@ -184,11 +182,9 @@ def main(args: ArgumentsElicitation):
                                         futures[task_Me] = thread_pool.submit(
                                             task_thread,
                                             task_Me,
-                                            {
-                                                "seed": seeds.Me[Me_id],
-                                                "nb_cpus": config.nb_cpus,
-                                            },
-                                            [
+                                            seed=seeds.Me[Me_id],
+                                            nb_cpus=config.nb_cpus,
+                                            precede_futures=[
                                                 futures[
                                                     DTask(
                                                         m,
@@ -240,8 +236,7 @@ def main(args: ArgumentsElicitation):
                                             futures[task] = thread_pool.submit(
                                                 task_thread,
                                                 task,
-                                                {},
-                                                [
+                                                precede_futures=[
                                                     futures[ATestTask(m, n_te, Ate_id)],
                                                     futures[task_Me],
                                                 ],
@@ -253,5 +248,5 @@ def main(args: ArgumentsElicitation):
     )
     thread_pool.shutdown(cancel_futures=args.stop_error)
     for future in done:
-            with suppress(TaskException, ShutDown):
-                future.result()
+        with suppress(TaskException, ShutDown):
+            future.result()

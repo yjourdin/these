@@ -36,7 +36,7 @@ class TaskManager(Thread):
         self.start()
 
     def send_task(self, element: TaskQueueElement):
-        task, nb_cpus, args, connection = element
+        task, nb_cpus, connection, args = element
         self.task_connections[task] = connection
 
         if len(self.worker_connections) < nb_cpus:
@@ -75,7 +75,7 @@ class TaskManager(Thread):
         # Get remaining tasks
         with suppress(ShutDown):
             while True:
-                task, _, _, connection = TASK_QUEUE.get()
+                task, _, connection, _ = TASK_QUEUE.get()
                 self.task_connections[task] = connection
 
         # Send sentinel signal

@@ -80,14 +80,12 @@ def main(args: ArgumentsGroupDecision):
         for n_tr, Atr_id in product(args.N_tr, range(NB_ATR)):
             task = ATask(m, n_tr, Atr_id)
             futures[task] = thread_pool.submit(
-                task_thread, task, {"seed": seeds.A_tr[Atr_id]}, []
+                task_thread, task, seed=seeds.A_tr[Atr_id]
             )
 
         for model, ko, Mo_id in product(args.model, args.Ko, range(NB_MO)):
             task = MoTask(m, model, ko, args.fixed_lex_order, Mo_id)
-            futures[task] = thread_pool.submit(
-                task_thread, task, {"seed": seeds.Mo[Mo_id]}, []
-            )
+            futures[task] = thread_pool.submit(task_thread, task, seed=seeds.Mo[Mo_id])
 
             for group_size, group in product(args.group_size, args.group):
                 for Mi_id in range(args.nb_Mi) if args.nb_Mi else [Mo_id]:
@@ -106,8 +104,12 @@ def main(args: ArgumentsGroupDecision):
                         futures[task] = thread_pool.submit(
                             task_thread,
                             task,
-                            {"seed": seeds.Mi[Mi_id]},
-                            [futures[MoTask(m, model, ko, args.fixed_lex_order, Mo_id)]],
+                            seed=seeds.Mi[Mi_id],
+                            precede_futures=[
+                                futures[
+                                    MoTask(m, model, ko, args.fixed_lex_order, Mo_id)
+                                ]
+                            ],
                         )
 
         for n_tr, model, ko, group_size, group, n_bc, same_alt in product(
@@ -143,8 +145,8 @@ def main(args: ArgumentsGroupDecision):
                                 futures[task] = thread_pool.submit(
                                     task_thread,
                                     task,
-                                    {"seed": seeds.D[D_id]},
-                                    [
+                                    seed=seeds.D[D_id],
+                                    precede_futures=[
                                         futures[ATask(m, n_tr, Atr_id)],
                                         futures[
                                             MiTask(
@@ -229,12 +231,8 @@ def main(args: ArgumentsGroupDecision):
                                                             thread_pool.submit(
                                                                 task_thread,
                                                                 task,
-                                                                {
-                                                                    "seed": seeds.Mie[
-                                                                        Mie_id
-                                                                    ]
-                                                                },
-                                                                precede_futures,
+                                                                seed=seeds.Mie[Mie_id],
+                                                                precede_futures=precede_futures,
                                                             )
                                                         )
 
@@ -354,7 +352,6 @@ def main(args: ArgumentsGroupDecision):
                                                                             Mc_id=Mc_id,
                                                                             P_id=P_id,
                                                                             seeds=seeds,
-                                                                            nb_cpus=config.nb_cpus,
                                                                             max_time=args.max_time,
                                                                             time_per_it=args.time_per_it,
                                                                             precede_futures=precede_futures,
