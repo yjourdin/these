@@ -382,6 +382,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.D_id,
             self.method,
             self.config,
+            self.nb_Mcp,
             self.Mc_id,
             self.Mie,
             self.Mie_config,
@@ -407,6 +408,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.D_id,
             self.method,
             self.config,
+            self.nb_Mcp,
             self.Mc_id,
             self.Mie,
             self.Mie_config,
@@ -432,6 +434,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.D_id,
             self.method,
             self.config,
+            self.nb_Mcp,
             self.Mc_id,
             self.Mie,
             self.Mie_config,
@@ -457,6 +460,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.D_id,
             self.method,
             self.config,
+            self.nb_Mcp,
             self.Mc_id,
             self.Mie,
             self.Mie_config,
@@ -482,6 +486,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.D_id,
             self.method,
             self.config,
+            self.nb_Mcp,
             self.Mie,
             self.Mie_config,
             self.Mie_id,
@@ -508,6 +513,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.D_id,
             self.method,
             self.config,
+            self.nb_Mcp,
             self.Mie,
             self.Mie_config,
             self.Mie_id,
@@ -534,6 +540,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.D_id,
             self.method,
             self.config,
+            self.nb_Mcp,
             self.Mie,
             self.Mie_config,
             self.Mie_id,
@@ -559,6 +566,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.D_id,
             self.method,
             self.config,
+            self.nb_Mcp,
             self.Mc_id,
             self.Mie,
             self.Mie_config,
@@ -823,6 +831,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             self.D_id,
             self.method,
             self.config,
+            self.nb_Mcp,
             self.Mie,
             self.Mie_config,
             self.Mie_id,
@@ -1245,12 +1254,17 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
 
             paths = {}
             while not connection.poll():
-                paths = a_star.main_loop(60)
-                if paths:
-                    connection.send(set(paths.keys()))
-                elif not a_star.open_heap:
-                    connection.send(SENTINEL)
-                    break
+                if len(paths) < self.nb_Mcp:
+                    with catchtime() as time_it:
+                        paths = a_star.main_loop(60)
+                        if paths:
+                            connection.send(set(paths.keys()))
+                        elif not a_star.open_heap:
+                            connection.send(SENTINEL)
+                            break
+                    time += time_it()
+                else:
+                    connection.poll(60)
 
             if (Mcp := connection.recv()) != SENTINEL:
                 model_path = paths[Mcp]
@@ -1339,6 +1353,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             self.D_id,
             self.method,
             self.config,
+            self.nb_Mcp,
             self.Mc_id,
             self.Mie,
             self.Mie_config,
@@ -1365,6 +1380,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             self.D_id,
             self.method,
             self.config,
+            self.nb_Mcp,
             self.Mc_id,
             self.Mie,
             self.Mie_config,
@@ -1392,6 +1408,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             self.D_id,
             self.method,
             self.config,
+            self.nb_Mcp,
             self.Mc_id,
             self.Mie,
             self.Mie_config,
