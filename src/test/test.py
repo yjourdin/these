@@ -138,24 +138,36 @@ def distance_parameter_model(
     def heuristic(model: FrozenRMPModel | FrozenSRMPModel):
         result: float = 0
 
-        for prof_ind, profile in enumerate(model.profiles):
-            for crit_ind in range(len(profile)):
-                alt = performance_table.data.to_numpy()[:, crit_ind]
-                if (prof_a := profile[crit_ind]) < (
-                    prof_b := Mb_frozen.profiles[prof_ind][crit_ind]
-                ):
-                    result += np.sum((prof_a < alt) & (alt < prof_b))
-                elif prof_b < prof_a:
-                    result += np.sum((prof_b < alt) & (alt < prof_a))
+        # for prof_ind, profile in enumerate(model.profiles):
+        #     for crit_ind in range(len(profile)):
+        #         alt = performance_table.data.to_numpy()[:, crit_ind]
+        #         if (prof_a := profile[crit_ind]) < (
+        #             prof_b := Mb_frozen.profiles[prof_ind][crit_ind]
+        #         ):
+        #             result += np.sum((prof_a < alt) & (alt < prof_b))
+        #         elif prof_b < prof_a:
+        #             result += np.sum((prof_b < alt) & (alt < prof_a))
 
-        result += float(
-            np.sum(
-                abs(
-                    np.array(model.importance_relation)
-                    - np.array(Mb_frozen.importance_relation)
+        result += sum(abs(model[prof_ind][crit_ind] - Mb_frozen[prof_ind][crit_ind]) for crit_ind in range(len(model.profiles[0])) for profile_ind in range(len(model.profiles)))
+
+        if isinstance(model, FrozenRMPModel):
+            result += float(
+                np.sum(
+                    abs(
+                        np.array(model.importance_relation)
+                        - np.array(Mb_frozen.importance_relation)
+                    )
                 )
             )
-        )
+        else:
+            result += float(
+                np.sum(
+                    abs(
+                        np.array(model.weights)
+                        - np.array(Mb_frozen.weights)
+                    )
+                )
+            )
 
         if len(model.lexicographic_order) > 1:
             result += kendalltau_distance(
@@ -164,5 +176,5 @@ def distance_parameter_model(
 
         return result
 
-    a_star = Astar(neighborhood, heuristic)
+    a_star = Astar(neighborhood, heuristic, latest=True)
     return len(a_star([Ma_frozen])[0]) - 1

@@ -1,6 +1,6 @@
 drs
 gurobipy
-mcda
+mcda[all]
 more-itertools
 numba
 typing_extensions

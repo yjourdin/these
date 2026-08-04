@@ -155,10 +155,12 @@ def collective_thread(
             time_left -= time_Mc
             time_left_per_it -= time_Mc
             if time_left < 1:  # or (time_left_per_it < 1):
+                # raise ValueError("Time left")
                 break
             # return TaskResult(result_Mc, max_time - time_left)
 
             if not result_Mc:
+                # raise ValueError("Mc")
                 break
                 # if Mie and it == 0:
                 #     break
@@ -197,35 +199,35 @@ def collective_thread(
 
                 # result_list(futures_clean)
             else:
-                for a, b in combinations(range(nb_Mcp), 2):
-                    task = DistanceTask(
-                        m,
-                        n_tr,
-                        Atr_id,
-                        model,
-                        ko,
-                        fixed_lex_order,
-                        Mo_id,
-                        group_size,
-                        group,
-                        Mi_id,
-                        n_bc,
-                        same_alt,
-                        D_id,
-                        Mie,
-                        Mie_config,
-                        Mie_id,
-                        method,
-                        config,
-                        nb_Mcp,
-                        Mc_id,
-                        path,
-                        P_id,
-                        it,
-                        a,
-                        b,
-                    )
-                    thread_pool.submit(task_thread, task)
+                # for a, b in combinations(range(nb_Mcp), 2):
+                #     task = DistanceTask(
+                #         m,
+                #         n_tr,
+                #         Atr_id,
+                #         model,
+                #         ko,
+                #         fixed_lex_order,
+                #         Mo_id,
+                #         group_size,
+                #         group,
+                #         Mi_id,
+                #         n_bc,
+                #         same_alt,
+                #         D_id,
+                #         Mie,
+                #         Mie_config,
+                #         Mie_id,
+                #         method,
+                #         config,
+                #         nb_Mcp,
+                #         Mc_id,
+                #         path,
+                #         P_id,
+                #         it,
+                #         a,
+                #         b,
+                #     )
+                #     thread_pool.submit(task_thread, task)
 
                 # futures_accept: dict[int, FutureTask] = {}
                 # for dm_id in DMS:
@@ -364,9 +366,11 @@ def collective_thread(
                             list[Connection], wait(working_connections)
                         ):
                             if (source := connection.recv()) != SENTINEL:
-                                sources[connection] |= source
+                                sources[connection] = sources[connection] | source
                             else:
                                 working_connections.remove(connection)
+                                if not set.intersection(*[sources[connection] for connection in sources if connection not in working_connections]):
+                                    working_connections = []
 
                     for connection in sources:
                         connection.send(
@@ -380,8 +384,10 @@ def collective_thread(
                 time_left -= time()
                 time_left_per_it -= time()
                 if time_left < 1:  # or (time_left_per_it < 1):
+                    # raise ValueError("Time left 2")
                     break
                 if not all(result.res for result in results_P):
+                    # raise ValueError("Preference path")
                     break
 
                 tasks_accept: dict[int, AcceptPTask] = {}

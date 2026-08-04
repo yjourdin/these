@@ -352,7 +352,7 @@ class NeighborImportanceRelation[S: RMPModel](Neighbor[S]):
             if score < max_score:
                 np.append(available_score, score + 1)
         else:
-            scores = np.unique(np.array(importance_relation.values(), dtype=np.float64))
+            scores = np.unique(np.array(list(importance_relation.values()), dtype=np.float64))
             possible_scores = scores[(min_score <= scores) & (scores <= max_score)]
             available_score = np.concat((
                 possible_scores,

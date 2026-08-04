@@ -1013,6 +1013,8 @@ class CollectiveSATask(AbstractCollectiveTask):
             )
 
         csv_file = dir.csv_files["collective"]
+        if len(C) != self.group_size:
+            raise ValueError(C)
         csv_file.writerow(
             M=self.m,
             N_tr=self.ntr,
@@ -1063,6 +1065,9 @@ class DistanceTask(AbstractCollectiveTask):
         with self.Mcp_file(dir, self.Mcp_id_b).open("r") as f:
             Mb = self.model.value.from_json(f.read())
 
+        with catchtime() as time:
+            value = distance_parameter_model(Ma, Mb, A)
+
         csv_file = dir.csv_files["distance"]
         csv_file.writerow(
             M=self.m,
@@ -1088,7 +1093,8 @@ class DistanceTask(AbstractCollectiveTask):
             It=self.it,
             i=self.Mcp_id_a,
             j=self.Mcp_id_b,
-            Value=distance_parameter_model(Ma, Mb, A),
+            Value=value,
+            Time=time(),
         )
 
     def done(self, *args: Any, **kwargs: Any):
@@ -1219,7 +1225,6 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
 
         model_path = []
         preference_path = []
-        time = 0
         result = True
         if self.path:
             R = PreferenceStructure()
@@ -1245,26 +1250,19 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             a_star = Astar(
                 neighborhood,
                 heuristic,
-                min(max_time, self.config.max_time)
-                if max_time is not None
-                else self.config.max_time,
+                max_time,
             )
 
             a_star.init([model.frozen for model in Mcps])
 
             paths = {}
             while not connection.poll():
-                if len(paths) < self.nb_Mcp:
-                    with catchtime() as time_it:
-                        paths = a_star.main_loop(60)
-                        if paths:
-                            connection.send(set(paths.keys()))
-                        elif not a_star.open_heap:
-                            connection.send(SENTINEL)
-                            break
-                    time += time_it()
-                else:
-                    connection.poll(60)
+                if (a_star.time >= a_star.max_time) or (not a_star.open_heap) or (len(paths) == self.nb_Mcp):
+                    connection.send(SENTINEL)
+                    break
+                elif paths.keys() != (new_paths := a_star.main_loop(60)).keys():
+                    paths = new_paths.copy()
+                    connection.send(set(paths.keys()))
 
             if (Mcp := connection.recv()) != SENTINEL:
                 model_path = paths[Mcp]
@@ -1322,7 +1320,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 P_id=self.P_id,
                 It=self.it,
                 Dm_id=self.dm_id,
-                Time=time,
+                Time=a_star.time,
                 Length=t,
                 Model_Length=len(model_path) if model_path else None,
                 Found=result,
