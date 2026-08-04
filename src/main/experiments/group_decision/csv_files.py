@@ -3,6 +3,7 @@ from typing import Unpack
 
 from src.methods import MethodEnum
 
+from ....models import ModelEnum
 from ...csv_file import CSVFields, CSVFile
 from ..elicitation.config import Config, MIPConfig
 from .fields import GroupParameters, ParametersDeviation
@@ -29,6 +30,7 @@ class ExperimentFields(CSVFields):
     M: int
     N_tr: int
     Atr_id: int
+    Model: ModelEnum
     Ko: int
     Mo_id: int
     Group_size: int
@@ -53,6 +55,7 @@ class MieFields(CSVFields):
     M: int
     N_tr: int
     Atr_id: int
+    Model: ModelEnum
     Ko: int
     Mo_id: int
     Group_size: int

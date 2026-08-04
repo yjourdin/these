@@ -52,7 +52,7 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                     )
 
             # Explore neighborhood
-            for neighbor in self.neighborhood(current):
+            for neighbor, neighbor_cost  in self.neighborhood(current):
                 if neighbor not in self.parent:
                     self.parent[neighbor] = {id: current for id in self.parent[current]}
 
@@ -67,7 +67,7 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                         # Add neighbor to queue
                         heapq.heappush(
                             self.open_heap,
-                            NodeAstar(neighbor, current_node.cost + 1, heuristic_value),
+                            NodeAstar(neighbor, current_node.cost + neighbor_cost, heuristic_value),
                         )
                 elif (neighbor_source_ids := set(self.parent[neighbor].keys())) != (
                     current_source_ids := set(self.parent[current].keys())

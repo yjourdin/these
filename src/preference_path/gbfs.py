@@ -46,7 +46,7 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
                     )
 
             # Explore neighborhood
-            for neighbor in self.neighborhood(current_node.item):
+            for neighbor, _ in self.neighborhood(current_node.item):
                 if neighbor not in self.parent:
                     self.parent[neighbor] = {id: current for id in self.parent[current]}
 
