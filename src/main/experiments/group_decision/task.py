@@ -1239,10 +1239,13 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
 
             A = A.subtable(D.elements)
 
-            neighborhoods: list[Neighborhood[FrozenSRMPModel]] = [
+            neighborhoods: list[Neighborhood[FrozenRMPModel | FrozenSRMPModel]] = [
                 NeighborhoodProfile(A, D),
-                NeighborhoodWeight(),
             ]
+            if self.model is ModelEnum.RMP:
+                neighborhoods.append(NeighborhoodWeight())
+            else:
+                neighborhoods.append(NeighborhoodImportanceRelation())
 
             if not self.fixed_lex_order:
                 neighborhoods.append(NeighborhoodLexOrder())
@@ -1271,7 +1274,14 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                     break
                 elif paths.keys() != (new_paths := a_star.main_loop(60)).keys():
                     paths = new_paths.copy()
-                    print(self.Atr_id, self.group_size, self.method, self.nb_Mcp, self.dm_id, paths.keys())
+                    print(
+                        self.Atr_id,
+                        self.group_size,
+                        self.method,
+                        self.nb_Mcp,
+                        self.dm_id,
+                        paths.keys(),
+                    )
                     connection.send(set(paths.keys()))
 
             if (Mcp := connection.recv()) != SENTINEL:
@@ -1484,17 +1494,10 @@ class AcceptPTask(PreferencePathTask):
                 return inf
 
             # importance relation
-            if (
-                kendalltau_distance(
-                    *zip(
-                        *(
-                            (v, Mi.importance_relation.get(k, v))
-                            for k, v in model.importance_relation
-                        )
-                    )
-                )
-                > self.group.accept.I
-            ):
+            if sum(
+                abs(v - Mi.importance_relation.get(k, v))
+                for k, v in model.importance_relation
+            ) > self.group.accept.I * len(model.importance_relation):
                 return inf
 
             if (

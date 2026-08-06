@@ -150,14 +150,13 @@ def distance_parameter_model(
         return result
 
     def heuristic_importance_relation(model: FrozenRMPModel | FrozenSRMPModel):
-        return float(
-            np.sum(
-                abs(
-                    np.array(model.importance_relation)
-                    - np.array(Mb_frozen.importance_relation)
-                )
-            )
-        )
+        if isinstance(model, FrozenRMPModel):
+            Ia = [v for _, v in model.importance_relation]
+            Ib = [v for _, v in Mb_frozen.importance_relation]
+        else:
+            Ia = model.importance_relation
+            Ib = Mb_frozen.importance_relation
+        return float(np.sum(abs(np.array(Ia) - np.array(Ib))))
 
     def heuristic_lexicographic_order(model: FrozenRMPModel | FrozenSRMPModel):
         return (
