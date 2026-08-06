@@ -199,35 +199,35 @@ def collective_thread(
 
                 # result_list(futures_clean)
             else:
-                # for a, b in combinations(range(nb_Mcp), 2):
-                #     task = DistanceTask(
-                #         m,
-                #         n_tr,
-                #         Atr_id,
-                #         model,
-                #         ko,
-                #         fixed_lex_order,
-                #         Mo_id,
-                #         group_size,
-                #         group,
-                #         Mi_id,
-                #         n_bc,
-                #         same_alt,
-                #         D_id,
-                #         Mie,
-                #         Mie_config,
-                #         Mie_id,
-                #         method,
-                #         config,
-                #         nb_Mcp,
-                #         Mc_id,
-                #         path,
-                #         P_id,
-                #         it,
-                #         a,
-                #         b,
-                #     )
-                #     thread_pool.submit(task_thread, task)
+                for a, b in combinations(range(nb_Mcp), 2):
+                    task = DistanceTask(
+                        m,
+                        n_tr,
+                        Atr_id,
+                        model,
+                        ko,
+                        fixed_lex_order,
+                        Mo_id,
+                        group_size,
+                        group,
+                        Mi_id,
+                        n_bc,
+                        same_alt,
+                        D_id,
+                        Mie,
+                        Mie_config,
+                        Mie_id,
+                        method,
+                        config,
+                        nb_Mcp,
+                        Mc_id,
+                        path,
+                        P_id,
+                        it,
+                        a,
+                        b,
+                    )
+                    thread_pool.submit(task_thread, task)
 
                 # futures_accept: dict[int, FutureTask] = {}
                 # for dm_id in DMS:
