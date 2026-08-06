@@ -110,6 +110,7 @@ class DistanceFields(IterationFields):
     i: int
     j: int
     Value: float
+    Time: float
 
 
 class DistanceCSVFile(CSVFile):

@@ -2,6 +2,8 @@ import heapq
 from itertools import pairwise
 from math import inf
 from time import thread_time
+from itertools import count
+from dataclasses import InitVar
 
 from src.dataclass import dataclass, field
 
@@ -13,9 +15,13 @@ class NodeAstar[T](Node[T]):
     cost: float = field(compare=False)
     heuristic: float = field(compare=False)
     f: float = field(init=False)
+    entry_count: int = field(default_factory=count().__next__, init=False)
+    latest: InitVar[bool] = False
 
-    def __post_init__(self):
+    def __post_init__(self, latest):
         self.f = self.cost + self.heuristic
+        if latest:
+            self.entry_count = -self.entry_count
 
     def __str__(self) -> str:
         return f"{self.item} {self.cost} {self.heuristic}"
@@ -23,17 +29,20 @@ class NodeAstar[T](Node[T]):
 
 @dataclass
 class Astar[T](Paths[T, NodeAstar[T]]):
+    latest: bool = False
+
     def init(self, sources: list[T]):
         super().init(sources)
         for i, source in enumerate(sources):
             if heuristic_value := self.heuristic(source):
-                self.open_heap.append(NodeAstar(source, 0, heuristic_value))
+                self.open_heap.append(NodeAstar(source, 0, heuristic_value, self.latest))
             else:
                 self.paths |= {i: [source]}
         heapq.heapify(self.open_heap)
 
-    def main_loop(self, max_time: int):
-        while (self.time < min(max_time, self.max_time)) and self.open_heap:
+    def main_loop(self, max_time_loop: int):
+        time_loop = 0
+        while (time_loop < max_time_loop) and (self.time < self.max_time) and self.open_heap:
             time = thread_time()
 
             # Best node
@@ -47,12 +56,12 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                             Item=current,
                             Heuristic=current_node.heuristic,
                             Cost=current_node.cost,
-                            Time=self.time,
+                            Time=current_node.entry_count,
                         )
                     )
 
             # Explore neighborhood
-            for neighbor, neighbor_cost  in self.neighborhood(current):
+            for neighbor  in self.neighborhood(current):
                 if neighbor not in self.parent:
                     self.parent[neighbor] = {id: current for id in self.parent[current]}
 
@@ -67,7 +76,7 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                         # Add neighbor to queue
                         heapq.heappush(
                             self.open_heap,
-                            NodeAstar(neighbor, current_node.cost + neighbor_cost, heuristic_value),
+                            NodeAstar(neighbor, current_node.cost + 1, heuristic_value, self.latest),
                         )
                 elif (neighbor_source_ids := set(self.parent[neighbor].keys())) != (
                     current_source_ids := set(self.parent[current].keys())
@@ -96,6 +105,7 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                             return self.paths
 
             # Update time
+            time_loop += thread_time() - time
             self.time += thread_time() - time
 
         return self.paths
