@@ -160,19 +160,33 @@ def distance_parameter_model(
         )
 
     def heuristic_lexicographic_order(model: FrozenRMPModel | FrozenSRMPModel):
-        return kendalltau_distance(
+        return (
+            kendalltau_distance(
                 model.lexicographic_order, Mb_frozen.lexicographic_order
-            ) if len(model.lexicographic_order) > 1 else 0
+            )
+            if len(model.lexicographic_order) > 1
+            else 0
+        )
 
-    a_star_profile = Astar(NeighborhoodProfile(performance_table), heuristic_profile, latest=True)
+    a_star_profile = Astar(
+        NeighborhoodProfile[FrozenRMPModel | FrozenSRMPModel](performance_table),
+        heuristic_profile,
+        latest=True,
+    )
 
     if isinstance(Ma, RMPModel) and isinstance(Mb, RMPModel):
         neighborhood = NeighborhoodImportanceRelation()
     if isinstance(Ma, SRMPModel) and isinstance(Mb, SRMPModel):
         neighborhood = NeighborhoodWeight()
-    a_star_importance_relation = Astar(neighborhood, heuristic_importance_relation, latest=True)
+    a_star_importance_relation = Astar(
+        neighborhood, heuristic_importance_relation, latest=True
+    )
 
-    a_star_lexicographic_order = Astar(NeighborhoodLexOrder(), heuristic_lexicographic_order, latest=True)
+    a_star_lexicographic_order = Astar(
+        NeighborhoodLexOrder[FrozenRMPModel | FrozenSRMPModel](),
+        heuristic_lexicographic_order,
+        latest=True,
+    )
 
     result = 0
 

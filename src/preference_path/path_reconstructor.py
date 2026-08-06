@@ -66,7 +66,7 @@ class Paths[T, N: Node[Any]](Dataclass):
             with self.log_writer() as log_writer:
                 log_writer.writeheader()
 
-    def main_loop(self, max_time_it: int) -> dict[int, list[T]]: ...
+    def main_loop(self, max_time_loop: int) -> dict[int, list[T]]: ...
 
     def __call__(self, sources: list[T]):
         self.init(sources)

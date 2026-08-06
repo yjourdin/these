@@ -27,8 +27,13 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
                 self.paths |= {i: [source]}
         heapq.heapify(self.open_heap)
 
-    def main_loop(self, max_time: int):
-        while (self.time < min(max_time, self.max_time)) and self.open_heap:
+    def main_loop(self, max_time_loop: int):
+        time_loop = 0
+        while (
+            (time_loop < max_time_loop)
+            and (self.time < self.max_time)
+            and self.open_heap
+        ):
             time = thread_time()
 
             # Best node
@@ -88,6 +93,7 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
                             return self.paths
 
             # Update time
+            time_loop += thread_time() - time
             self.time += thread_time() - time
 
         return self.paths

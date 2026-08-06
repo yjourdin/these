@@ -1,9 +1,8 @@
 import heapq
-from itertools import pairwise
+from dataclasses import InitVar
+from itertools import count, pairwise
 from math import inf
 from time import thread_time
-from itertools import count
-from dataclasses import InitVar
 
 from src.dataclass import dataclass, field
 
@@ -18,7 +17,7 @@ class NodeAstar[T](Node[T]):
     entry_count: int = field(default_factory=count().__next__, init=False)
     latest: InitVar[bool] = False
 
-    def __post_init__(self, latest):
+    def __post_init__(self, latest: bool):
         self.f = self.cost + self.heuristic
         if latest:
             self.entry_count = -self.entry_count
@@ -35,14 +34,20 @@ class Astar[T](Paths[T, NodeAstar[T]]):
         super().init(sources)
         for i, source in enumerate(sources):
             if heuristic_value := self.heuristic(source):
-                self.open_heap.append(NodeAstar(source, 0, heuristic_value, self.latest))
+                self.open_heap.append(
+                    NodeAstar(source, 0, heuristic_value, self.latest)
+                )
             else:
                 self.paths |= {i: [source]}
         heapq.heapify(self.open_heap)
 
     def main_loop(self, max_time_loop: int):
         time_loop = 0
-        while (time_loop < max_time_loop) and (self.time < self.max_time) and self.open_heap:
+        while (
+            (time_loop < max_time_loop)
+            and (self.time < self.max_time)
+            and self.open_heap
+        ):
             time = thread_time()
 
             # Best node
@@ -61,7 +66,7 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                     )
 
             # Explore neighborhood
-            for neighbor  in self.neighborhood(current):
+            for neighbor in self.neighborhood(current):
                 if neighbor not in self.parent:
                     self.parent[neighbor] = {id: current for id in self.parent[current]}
 
@@ -76,7 +81,12 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                         # Add neighbor to queue
                         heapq.heappush(
                             self.open_heap,
-                            NodeAstar(neighbor, current_node.cost + 1, heuristic_value, self.latest),
+                            NodeAstar(
+                                neighbor,
+                                current_node.cost + 1,
+                                heuristic_value,
+                                self.latest,
+                            ),
                         )
                 elif (neighbor_source_ids := set(self.parent[neighbor].keys())) != (
                     current_source_ids := set(self.parent[current].keys())

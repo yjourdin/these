@@ -14,7 +14,6 @@ from src.random import RNGParam, rng_
 from src.rmp.permutation import adjacent_swap
 from src.sa.neighbor import weights_local_change
 from src.srmp.model import FrozenSRMPModel
-from src.srmp.weight import frozen_importance_relation_from_weights
 from src.utils import midpoints
 
 from ..rmp.model import FrozenRMPModel
@@ -55,7 +54,7 @@ class NeighborhoodProfile[T: FrozenRMPModel | FrozenSRMPModel](
         self.midpoints = midpoints(self.alternatives)
 
     def __call__(self, sol: T):
-        result: list[tuple[T, float]] = []
+        result: list[T] = []
 
         relevant_alternatives = np.sort(
             cast(
@@ -159,7 +158,7 @@ class NeighborhoodProfile[T: FrozenRMPModel | FrozenSRMPModel](
 @dataclass
 class NeighborhoodImportanceRelation(Neighborhood[FrozenRMPModel]):
     def __call__(self, sol: FrozenRMPModel):
-        result: list[tuple[FrozenRMPModel, float]] = []
+        result: list[FrozenRMPModel] = []
 
         for i, (key, value) in sol.importance_relation:
             try:
@@ -184,10 +183,9 @@ class NeighborhoodImportanceRelation(Neighborhood[FrozenRMPModel]):
 
             if m < value:
                 importance_relation_copy[i] = (key, value - 1)
-                result.append((
-                    replace(sol, importance_relation=tuple(importance_relation_copy)),
-                    1,
-                ))
+                result.append(
+                    replace(sol, importance_relation=tuple(importance_relation_copy))
+                )
             if value < M:
                 importance_relation_copy[i] = (key, value + 1)
                 result.append(
@@ -200,16 +198,14 @@ class NeighborhoodImportanceRelation(Neighborhood[FrozenRMPModel]):
 @dataclass
 class NeighborhoodWeight(Neighborhood[FrozenSRMPModel]):
     def __call__(self, sol: FrozenSRMPModel):
-        result: list[tuple[FrozenSRMPModel, float]] = []
+        result: list[FrozenSRMPModel] = []
 
         for crit, increase in product(range(len(sol.weights)), [False, True]):
             result.append(
                 replace(
                     sol,
                     weights=(
-                        new_weights := weights_local_change(
-                            np.array(sol.weights), crit, increase
-                        )
+                        weights_local_change(np.array(sol.weights), crit, increase)
                     ),
                 )
             )
@@ -219,7 +215,7 @@ class NeighborhoodWeight(Neighborhood[FrozenSRMPModel]):
 
 class NeighborhoodLexOrder[T: FrozenRMPModel | FrozenSRMPModel](Neighborhood[T]):
     def __call__(self, sol: T):
-        result: list[tuple[T, float]] = []
+        result: list[T] = []
 
         for i in range(len(sol.lexicographic_order) - 1):
             result.append(

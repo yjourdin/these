@@ -88,7 +88,7 @@ Social choice theory (maybe IIA), game theory, GDS, consensus, cooperative behav
 
 ##  6.1. Preference path + simulated annealing
 
-##  6.2. Incremental
+##  6.2. Multiple possible collective models
 
 <!-- Conclusion -->
 
@@ -99,6 +99,8 @@ Social choice theory (maybe IIA), game theory, GDS, consensus, cooperative behav
 ##  7.2. Perspectives
 
 ###     7.2.1. Other preference models considered
+
+###     7.2.2 Incrémental ?
 
 ###     7.2.2. Interprétabilité ?
 

@@ -11,6 +11,22 @@
 - max 2 invités
 - émérite non prof
 
+
+- Arwa
+- Patrick (prof)
+- Alex (prof)
+- Vincent (prof)
+- Marc (émérite ?)
+- Nawal ?
+
+
+
+
+
+
+
+
+
 ## Noms
 
 ### Centrale
