@@ -33,12 +33,11 @@ class Astar[T](Paths[T, NodeAstar[T]]):
     def init(self, sources: list[T]):
         super().init(sources)
         for i, source in enumerate(sources):
+            self.paths |= {i: [source]}
             if heuristic_value := self.heuristic(source):
                 self.open_heap.append(
                     NodeAstar(source, 0, heuristic_value, self.latest)
                 )
-            else:
-                self.paths |= {i: [source]}
         heapq.heapify(self.open_heap)
 
     def main_loop(self, max_time_loop: int):

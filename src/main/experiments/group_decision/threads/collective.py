@@ -369,15 +369,23 @@ def collective_thread(
                                 sources[connection] = sources[connection] | source
                             else:
                                 working_connections.remove(connection)
-                                if not set.intersection(*[sources[connection] for connection in sources if connection not in working_connections]):
+                                if not set.intersection(*[
+                                    sources[connection]
+                                    for connection in sources
+                                    if connection not in working_connections
+                                ]):
                                     working_connections = []
 
-                    for connection in sources:
-                        connection.send(
-                            set.intersection(*sources.values()).pop()
-                            if working_connections
-                            else SENTINEL
+                    source = (
+                        intersect.pop()
+                        if (
+                            working_connections
+                            and (intersect := set.intersection(*sources.values()))
                         )
+                        else SENTINEL
+                    )
+                    for connection in sources:
+                        connection.send(source)
 
                     results_P = result_list(list(futures_P.values()))
 

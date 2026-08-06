@@ -12,7 +12,7 @@ from mcda.relations import PreferenceStructure
 from mcda.types import Relation
 from pandas import read_csv
 
-from src.constants import SENTINEL
+from src.constants import DEFAULT_MAX_TIME, SENTINEL
 from src.methods import MethodEnum
 from src.mip.main import MIPResult, create_mip, mip_result
 from src.model import is_group_model
@@ -1230,6 +1230,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
         model_path = []
         preference_path = []
         result = True
+        time = 0
         if self.path:
             R = PreferenceStructure()
             if (Dr_file := self.Cr_file(dir)).exists():
@@ -1254,23 +1255,31 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             a_star = Astar(
                 neighborhood,
                 heuristic,
-                max_time,
+                max_time or DEFAULT_MAX_TIME,
             )
 
             a_star.init([model.frozen for model in Mcps])
 
             paths = {}
             while not connection.poll():
-                if (a_star.time >= a_star.max_time) or (not a_star.open_heap) or (len(paths) == self.nb_Mcp):
+                if (
+                    (a_star.time >= a_star.max_time)
+                    or (not a_star.open_heap)
+                    or (len(paths) == self.nb_Mcp)
+                ):
                     connection.send(SENTINEL)
                     break
                 elif paths.keys() != (new_paths := a_star.main_loop(60)).keys():
                     paths = new_paths.copy()
+                    print(self.Atr_id, self.group_size, self.method, self.nb_Mcp, self.dm_id, paths.keys())
                     connection.send(set(paths.keys()))
 
             if (Mcp := connection.recv()) != SENTINEL:
                 model_path = paths[Mcp]
                 preference_path = compute_preference_path(model_path, D, A, R)
+            else:
+                result = False
+            time = a_star.time
         if not model_path:
             model_path = [Mcps[0]]
             preference_path = [
@@ -1325,7 +1334,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 P_id=self.P_id,
                 It=self.it,
                 Dm_id=self.dm_id,
-                Time=a_star.time,
+                Time=time,
                 Length=t,
                 Model_Length=len(model_path) if model_path else None,
                 Found=result,
