@@ -14,6 +14,7 @@ from src.random import RNGParam, rng_
 from src.rmp.permutation import adjacent_swap
 from src.sa.neighbor import weights_local_change
 from src.srmp.model import FrozenSRMPModel
+from src.srmp.weight import frozen_importance_relation_from_weights
 from src.utils import midpoints
 
 from ..rmp.model import FrozenRMPModel
@@ -21,7 +22,7 @@ from ..rmp.model import FrozenRMPModel
 
 class Neighborhood[S](ABC):
     @abstractmethod
-    def __call__(self, sol: S) -> list[tuple[S, float]]: ...
+    def __call__(self, sol: S) -> list[S]: ...
 
 
 @dataclass
@@ -124,7 +125,7 @@ class NeighborhoodProfile[T: FrozenRMPModel | FrozenSRMPModel](
 
                 for new_value in new_values:
                     if profile_bounds[0] <= new_value <= profile_bounds[1]:
-                        result.append((
+                        result.append(
                             replace(
                                 sol,
                                 profiles=tuple(
@@ -138,9 +139,8 @@ class NeighborhoodProfile[T: FrozenRMPModel | FrozenSRMPModel](
                                     )
                                     for i in range(len(sol.profiles))
                                 ),
-                            ),
-                            abs(new_value - sol.profiles[profile_ind][crit_ind]),
-                        ))
+                            )
+                        )
 
         # print(
         #     PreferenceStructure(
@@ -190,10 +190,9 @@ class NeighborhoodImportanceRelation(Neighborhood[FrozenRMPModel]):
                 ))
             if value < M:
                 importance_relation_copy[i] = (key, value + 1)
-                result.append((
+                result.append(
                     replace(sol, importance_relation=tuple(importance_relation_copy)),
-                    1,
-                ))
+                )
 
         return result
 
@@ -204,7 +203,7 @@ class NeighborhoodWeight(Neighborhood[FrozenSRMPModel]):
         result: list[tuple[FrozenSRMPModel, float]] = []
 
         for crit, increase in product(range(len(sol.weights)), [False, True]):
-            result.append((
+            result.append(
                 replace(
                     sol,
                     weights=(
@@ -212,9 +211,8 @@ class NeighborhoodWeight(Neighborhood[FrozenSRMPModel]):
                             np.array(sol.weights), crit, increase
                         )
                     ),
-                ),
-                np.sum(abs(new_weights - sol.weights)),
-            ))
+                )
+            )
 
         return result
 
@@ -224,14 +222,13 @@ class NeighborhoodLexOrder[T: FrozenRMPModel | FrozenSRMPModel](Neighborhood[T])
         result: list[tuple[T, float]] = []
 
         for i in range(len(sol.lexicographic_order) - 1):
-            result.append((
+            result.append(
                 replace(
                     sol,
                     lexicographic_order=tuple(
                         adjacent_swap(list(sol.lexicographic_order), i)
                     ),
                 ),
-                1,
-            ))
+            )
 
         return result

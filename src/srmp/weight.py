@@ -26,4 +26,4 @@ def frozen_importance_relation_from_weights(
     for set in power_sets:
         result.append(w[list(set)].sum())
 
-    return tuple(tolist(np.array(rankdata(result)).astype(np.int_)))  # pyright: ignore[reportUnknownArgumentType]
+    return tuple(tolist(np.array(rankdata(result)).astype(np.float64)))  # pyright: ignore[reportUnknownArgumentType]

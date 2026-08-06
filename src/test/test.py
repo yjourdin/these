@@ -135,46 +135,56 @@ def distance_parameter_model(
 
     neighborhood = NeighborhoodCombined(neighborhoods, rng_(0))
 
-    def heuristic(model: FrozenRMPModel | FrozenSRMPModel):
-        result: float = 0
-
-        # for prof_ind, profile in enumerate(model.profiles):
-        #     for crit_ind in range(len(profile)):
-        #         alt = performance_table.data.to_numpy()[:, crit_ind]
-        #         if (prof_a := profile[crit_ind]) < (
-        #             prof_b := Mb_frozen.profiles[prof_ind][crit_ind]
-        #         ):
-        #             result += np.sum((prof_a < alt) & (alt < prof_b))
-        #         elif prof_b < prof_a:
-        #             result += np.sum((prof_b < alt) & (alt < prof_a))
-
-        result += sum(abs(model[prof_ind][crit_ind] - Mb_frozen[prof_ind][crit_ind]) for crit_ind in range(len(model.profiles[0])) for profile_ind in range(len(model.profiles)))
-
-        if isinstance(model, FrozenRMPModel):
-            result += float(
-                np.sum(
-                    abs(
-                        np.array(model.importance_relation)
-                        - np.array(Mb_frozen.importance_relation)
-                    )
-                )
-            )
-        else:
-            result += float(
-                np.sum(
-                    abs(
-                        np.array(model.weights)
-                        - np.array(Mb_frozen.weights)
-                    )
-                )
-            )
-
-        if len(model.lexicographic_order) > 1:
-            result += kendalltau_distance(
-                model.lexicographic_order, Mb_frozen.lexicographic_order
-            )
-
+    def heuristic_profile(model: FrozenRMPModel | FrozenSRMPModel):
+        # result += sum(abs(model.profiles[prof_ind][crit_ind] - Mb_frozen.profiles[prof_ind][crit_ind]) for crit_ind in range(len(model.profiles[0])) for prof_ind in range(len(model.profiles)))
+        result = 0
+        for prof_ind, profile in enumerate(model.profiles):
+            for crit_ind in range(len(profile)):
+                alt = performance_table.data.to_numpy()[:, crit_ind]
+                if (prof_a := profile[crit_ind]) < (
+                    prof_b := Mb_frozen.profiles[prof_ind][crit_ind]
+                ):
+                    result += np.sum((prof_a < alt) & (alt < prof_b))
+                elif prof_b < prof_a:
+                    result += np.sum((prof_b < alt) & (alt < prof_a))
         return result
 
-    a_star = Astar(neighborhood, heuristic, latest=True)
-    return len(a_star([Ma_frozen])[0]) - 1
+    def heuristic_importance_relation(model: FrozenRMPModel | FrozenSRMPModel):
+        return float(
+            np.sum(
+                abs(
+                    np.array(model.importance_relation)
+                    - np.array(Mb_frozen.importance_relation)
+                )
+            )
+        )
+
+    def heuristic_lexicographic_order(model: FrozenRMPModel | FrozenSRMPModel):
+        return kendalltau_distance(
+                model.lexicographic_order, Mb_frozen.lexicographic_order
+            ) if len(model.lexicographic_order) > 1 else 0
+
+    a_star_profile = Astar(NeighborhoodProfile(performance_table), heuristic_profile, latest=True)
+
+    if isinstance(Ma, RMPModel) and isinstance(Mb, RMPModel):
+        neighborhood = NeighborhoodImportanceRelation()
+    if isinstance(Ma, SRMPModel) and isinstance(Mb, SRMPModel):
+        neighborhood = NeighborhoodWeight()
+    a_star_importance_relation = Astar(neighborhood, heuristic_importance_relation, latest=True)
+
+    a_star_lexicographic_order = Astar(NeighborhoodLexOrder(), heuristic_lexicographic_order, latest=True)
+
+    result = 0
+
+    path_profile = a_star_profile([Ma_frozen])[0]
+    result += len(path_profile) - 1
+    M_profile = path_profile[0]
+
+    path_importance_relation = a_star_importance_relation([M_profile])[0]
+    result += len(path_importance_relation) - 1
+    M_importance_relation = path_importance_relation[0]
+
+    path_lexicographic_order = a_star_lexicographic_order([M_importance_relation])[0]
+    result += len(path_lexicographic_order) - 1
+
+    return result
