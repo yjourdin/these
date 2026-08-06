@@ -361,7 +361,7 @@ class NeighborImportanceRelation[S: RMPModel](Neighbor[S]):
                 scores + 1,
             ))
             available_score = possible_scores[
-                (min_score <= scores) & (scores <= max_score)
+                (min_score <= possible_scores) & (possible_scores <= max_score)
             ]
 
         while score == importance_relation[coalition]:
