@@ -355,11 +355,11 @@ class NeighborImportanceRelation[S: RMPModel](Neighbor[S]):
             scores = np.unique(
                 np.array(list(importance_relation.values()), dtype=np.float64)
             )
-            possible_scores = np.concat((
+            possible_scores = np.unique([
                 scores,
                 scores - 1,
                 scores + 1,
-            ))
+            ])
             available_score = possible_scores[
                 (min_score <= possible_scores) & (possible_scores <= max_score)
             ]
