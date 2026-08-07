@@ -33,7 +33,7 @@ class ImportanceRelation(WeakOrder[frozenset[int]]):
         except ValueError:
             return min(
                 max({k: v for k, v in self.items() if k != key}.values()) + 1,
-                len(self) - 1,
+                len(self),
             )
 
     def min(self, key: frozenset[int]):
@@ -42,5 +42,5 @@ class ImportanceRelation(WeakOrder[frozenset[int]]):
         except ValueError:
             return max(
                 min({k: v for k, v in self.items() if k != key}.values()) - 1,
-                0,
+                1,
             )

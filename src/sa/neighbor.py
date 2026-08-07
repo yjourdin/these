@@ -357,6 +357,9 @@ class NeighborImportanceRelation[S: RMPModel](Neighbor[S]):
                 np.clip([scores, scores - 1, scores + 1], min_score, max_score)
             )
 
+        if len(available_score) < 2:
+            print(min_score, scores, max_score, available_score, flush=True)
+
         while score == importance_relation[coalition]:
             score = rng.choice(available_scores)
         importance_relation[coalition] = score

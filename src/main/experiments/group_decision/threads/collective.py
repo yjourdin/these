@@ -59,6 +59,7 @@ def collective_thread(
     time_per_it: int,
     precede_futures: list[FutureTask],
 ):
+    print(model, method, "Collective", flush=True)
     assert isinstance(DIR, DirectoryGroupDecision)
     precede_results = result_list(precede_futures)
 

@@ -1,38 +1,38 @@
 {
-    "name": "test_Mcp",
+    "name": "test_Mcp_5",
     "jobs": 72,
     "seed": 0,
     "max_time": 3600,
     "time_per_it": 600,
-    "nb_Atr": 5,
+    "nb_Atr": 10,
     "group_size": [
-        2, 4
+        2
     ],
     "N_tr": [
         100
     ],
     "M": [
-        3
+        6
     ],
     "model": [
-        "SRMP", "RMP"
+        "RMP", "SRMP"
     ],
     "nb_Mcp": [
-        1, 2, 4
+        2
     ],
     "Ko": [
-        1
+        3
     ],
     "N_bc": [
         100
     ],
     "method": [
-        "MIP", "SA"
+        "SA"
     ],
     "config": [
         {
             "id": 0,
-            "max_time": 60,
+            "max_time": 300,
             "nb_cpus": 1,
             "gamma": 0.001,
             "method": "MIP"
@@ -46,7 +46,7 @@
             "amp": 2,
             "max_it": null,
             "max_it_non_improving": null,
-            "__class": "SAConfig"
+            "method": "SA"
         }
     ],
     "group": [
