@@ -1243,9 +1243,9 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 NeighborhoodProfile(A, D),
             ]
             if self.model is ModelEnum.RMP:
-                neighborhoods.append(NeighborhoodWeight())
-            else:
                 neighborhoods.append(NeighborhoodImportanceRelation())
+            else:
+                neighborhoods.append(NeighborhoodWeight())
 
             if not self.fixed_lex_order:
                 neighborhoods.append(NeighborhoodLexOrder())
