@@ -160,7 +160,7 @@ class NeighborhoodImportanceRelation(Neighborhood[FrozenRMPModel]):
     def __call__(self, sol: FrozenRMPModel):
         result: list[FrozenRMPModel] = []
 
-        for i, (key, value) in sol.importance_relation:
+        for i, (key, value) in enumerate(sol.importance_relation):
             try:
                 m = max(v for k, v in sol.importance_relation if k < key)
             except ValueError:
