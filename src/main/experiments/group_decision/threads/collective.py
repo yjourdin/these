@@ -535,6 +535,7 @@ def collective_thread(
         M=m,
         N_tr=n_tr,
         Atr_id=Atr_id,
+        Model=model,
         Ko=ko,
         Mo_id=Mo_id,
         Group_size=group_size,
