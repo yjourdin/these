@@ -1274,14 +1274,6 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                     break
                 elif paths.keys() != (new_paths := a_star.main_loop(60)).keys():
                     paths = new_paths.copy()
-                    print(
-                        self.Atr_id,
-                        self.group_size,
-                        self.method,
-                        self.nb_Mcp,
-                        self.dm_id,
-                        paths.keys(),
-                    )
                     connection.send(set(paths.keys()))
 
             if (Mcp := connection.recv()) != SENTINEL:
