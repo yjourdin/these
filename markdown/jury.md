@@ -1,23 +1,31 @@
+<!-- markdownlint-disable MD012 -->
 # Jury
 
 ## Règles de composition du jury
 
 - Entre 4 et 8
-- +50% personnes extérieures
-- 50/50 hommes/femmes
-- +50% prof
+- >= 50% personnes extérieures
+- ~ 50/50 hommes/femmes
+- >= 50% prof
 - CSI non rapporteur (examinateur OK)
 - rapporteurs extérieurs
 - max 2 invités
 - émérite non prof
+- émérite non rapporteur
 
+
+
+## Composition
 
 - Arwa
 - Patrick (prof)
-- Alex (prof)
-- Vincent (prof)
-- Marc (émérite ?)
-- Nawal ?
+- Alex
+- Vincent (prof) (rapporteur)
+- Yves De Smet (prof) (rapporteur)
+- Meltem (prof) (examinatrice)
+- Marc ? (examinateur)
+- Nawal ? (examinatrice)
+
 
 
 
@@ -28,6 +36,13 @@
 
 
 ## Noms
+
+### Nouveaux noms
+
+- Lyes BENYOUCEF (MCDA pour supply chain, Aix-Marseille)
+- Nicolas Maudet (Choix social computationnel, argumentation collective, explication, LIP6)
+- Laurent PERRUSSEL (choix social, théorie des jeux, Toulouse)
+
 
 ### Centrale
 
@@ -65,12 +80,15 @@
 - Marc Pirlot (ELECTRE-TRI, NCS, RMP)
 - Olivier Sobrie (ELECTRE-TRI, NCS, RMP, MR-Sort)
 
+
+
 ## Ordre
 
 ### Homme
 
-- Marc Pirlot (accepté)
-- Vincent Mousseau
+- Marc Pirlot (accepté, mais émérite TT)
+- Vincent Mousseau (accepté)
+- Yves de Smet (en cours)
 - Olivier Spanjaard
 - Thierry Marchant
 - Patrice Perny
@@ -87,8 +105,3 @@
 - Marie-Hélène Abel (Pas MCDA)
 - Imène BRIGUI (Pas MCDA)
 - Wassila Ouerdane
-
-
-
-Marc Pirlot
-Meltem Oztürk
