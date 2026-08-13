@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Any
 
 from .dataclass import Dataclass
-from .model import Model, ParamFlag
+from .model import ParamFlag
 from .random_model.model import RandomGroup, RandomModel
 from .rmp.model import (
     RMPModel,
@@ -34,7 +34,7 @@ class ModelEnum(Enum):
                     return member
         return None
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.name
 
 
@@ -80,7 +80,7 @@ class GroupModelEnum(Enum):
         self.model = model
         self.shared_params = shared_params
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.name
 
 
@@ -108,7 +108,7 @@ def model(
             return RandomModel
 
 
-def model_from_json(s: str) -> Model:
+def model_from_json(s: str):
     dct = Dataclass.json_to_dict(s)
     if not dct:
         raise ValueError("Empty json")

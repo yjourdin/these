@@ -38,11 +38,11 @@ class RMPModel(
     ImportanceRelationField,
     LexicographicOrderField,
 ):
-    def __str__(self) -> str:
+    def __str__(self):
         return (
             print_list(self.profiles.data.to_numpy()[0])
             + "\t"
-            + self.lexicographic_order.__str__()
+            + str(self.lexicographic_order.__str__())
         )
 
     def rank_numpy(self, performance_table: PerformanceTableType):
@@ -117,7 +117,7 @@ class RMPGroupModelImportanceProfilesLexicographic(
         )
 
     @property
-    def collective_model(self) -> Model:
+    def collective_model(self):
         return RMPModel(
             profiles=self.profiles,
             importance_relation=self.importance_relation,

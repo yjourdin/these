@@ -83,7 +83,7 @@ def preference_to_numeric(r: Relation | None):
         raise ValueError(f"Relation {r} not recognized")
 
 
-def complementary_relation(r: P | I) -> list[P | I]:
+def complementary_relation(r: P | I):
     match r:
         case P(a=a, b=b):
             return [I(a, b), P(b, a)]
@@ -91,7 +91,7 @@ def complementary_relation(r: P | I) -> list[P | I]:
             return [P(a, b), P(b, a)]
 
 
-def complementary_preference(preferences: Iterable[Relation]) -> list[P | I]:
+def complementary_preference(preferences: Iterable[Relation]):
     relations: defaultdict[frozenset[Any], list[P | I]] = defaultdict(list)
     for r in preferences:
         if isinstance(r, P | I):

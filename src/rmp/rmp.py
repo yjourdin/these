@@ -63,7 +63,7 @@ class ProfileWiseOutranking(Ranker):
         self.importance_relation = importance_relation
         self.profile = profile
 
-    def rank(self, **kwargs: Any) -> OutrankingMatrix:
+    def rank(self, **kwargs: Any):
         """Construct an outranking matrix.
 
         :return:
@@ -169,7 +169,7 @@ class RMP(Ranker):
             for profile in self.profiles.alternatives
         ]
 
-    def construct(self) -> list[OutrankingMatrix]:
+    def construct(self):
         """Construct one outranking matrix per category profile.
 
         :return:
@@ -217,7 +217,7 @@ class RMP(Ranker):
             ),
         )
 
-    def rank(self, **kwargs: Any) -> Ranking:
+    def rank(self, **kwargs: Any):
         """Compute the RMP algorithm
 
         :return:

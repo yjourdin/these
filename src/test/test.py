@@ -46,15 +46,15 @@ class DistanceRankingEnum(Enum):
     def SPEARMAN(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
         return float(spearmanr(Ra, Rb).statistic)  # pyright: ignore[reportUnknownArgumentType, reportAttributeAccessIssue]
 
-    def __call__(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
+    def __call__(self, Ra: RankingSeries, Rb: RankingSeries):
         return self.value(self, Ra, Rb)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.name
 
 
 def rccd(distance: DistanceRankingEnum):
-    def func(ra: RankingSeries, rb: RankingSeries) -> float:
+    def func(ra: RankingSeries, rb: RankingSeries):
         return 0.5 * (1 + distance(ra, rb))
 
     return func if distance is not DistanceRankingEnum.FITNESS else distance

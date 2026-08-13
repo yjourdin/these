@@ -12,7 +12,7 @@ from .path_reconstructor import Node, Paths
 class NodeGBFS[T](Node[T]):
     heuristic: float
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f"{self.item} {self.heuristic}"
 
 

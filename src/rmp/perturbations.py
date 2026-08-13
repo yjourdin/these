@@ -70,7 +70,7 @@ class PerturbLexOrder(Dataclass):
     def __post_init__(self, k: int, nb: int):
         self.all_permutations = all_max_adjacent_distance(list(range(k)), nb)
 
-    def __call__(self, lex_order: list[int], rng: RNGParam = None) -> list[int]:
+    def __call__(self, lex_order: list[int], rng: RNGParam = None):
         lex_order_numpy = np.array(lex_order, dtype=np.int_)
 
         permutation = list(

@@ -94,7 +94,7 @@ class MoTask(AbstractMTask):
             f.write(Mo.to_json())
 
     @property
-    def lexicographic_order(self) -> list[int]:
+    def lexicographic_order(self):
         return tolist(
             MoTask(self.m, self.Mo, self.ko, self.group_size, True, self.Mo_id)
             .rng(self.Mo_id)

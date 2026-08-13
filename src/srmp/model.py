@@ -38,7 +38,7 @@ class SRMPModel(
     WeightsField,
     LexicographicOrderField,
 ):
-    def __str__(self) -> str:
+    def __str__(self):
         return "\t".join([
             print_list(list(self.weights)),
             # print_list(self.profiles.data.to_numpy()[0]),

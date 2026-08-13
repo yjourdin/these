@@ -12,7 +12,7 @@ from .random import Random, RNGParam, int_
 class WeakOrder[Element](MutableMapping[Element, float], Random):
     def __init__(
         self, scores: Sequence[float] | None = None, labels: list[Element] | None = None
-    ) -> None:
+    ):
         if scores and labels:
             self.dict = dict(zip(labels, scores))
 

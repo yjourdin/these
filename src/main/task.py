@@ -24,15 +24,11 @@ class TaskException(Exception):
 type FutureTask = Future[TaskResult]
 
 
-def result_list(
-    futures: list[FutureTask],
-) -> list[TaskResult]:
+def result_list(futures: list[FutureTask]):
     return [future.result() for future in futures]
 
 
-def result_dict[T](
-    futures: dict[T, FutureTask],
-) -> dict[T, TaskResult]:
+def result_dict[T](futures: dict[T, FutureTask]):
     return {k: future.result() for k, future in futures.items()}
 
 
@@ -40,7 +36,7 @@ def result_dict[T](
 class Task(FrozenDataclass, AbstractTask):
     name: ClassVar[str]
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f"{self.name:13} ({', '.join(f'{field.name}: {getattr(self, field.name)!s}' for field in fields(self))})"
 
     def __call__(self, dir: Directory, *args: Any, **kwargs: Any):

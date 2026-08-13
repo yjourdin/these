@@ -178,4 +178,4 @@ def kendalltau_distance(x: Sequence[Any], y: Sequence[Any]):
 def rerank(dct: dict[Any, Any]):
     keys, values = zip(*dct.items())
     ranks = rankdata(values)
-    return dict(zip(keys, ranks))  # pyright: ignore[reportUnknownArgumentType]
+    return dict(zip(keys, ranks))

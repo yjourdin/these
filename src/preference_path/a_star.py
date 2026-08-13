@@ -22,7 +22,7 @@ class NodeAstar[T](Node[T]):
         if latest:
             self.entry_count = -self.entry_count
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f"{self.item} {self.cost} {self.heuristic}"
 
 

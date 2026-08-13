@@ -7,19 +7,19 @@ from .utils import compose
 
 class Field(ABC):
     @classmethod
-    def decode(cls, dct: dict[Any, Any]) -> dict[Any, Any]:
+    def decode(cls, dct: dict[Any, Any]):
         return dct
 
     @classmethod
-    def encode(cls, dct: dict[Any, Any]) -> dict[Any, Any]:
+    def encode(cls, dct: dict[Any, Any]):
         return dct
 
     @staticmethod
-    def field_decode(o: Any) -> Any:
+    def field_decode(o: Any):
         return o
 
     @staticmethod
-    def field_encode(o: Any) -> Any:
+    def field_encode(o: Any):
         return o
 
 

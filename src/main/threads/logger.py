@@ -7,7 +7,7 @@ from ..logging import LoggingQueue
 
 
 class LoggerThread(Thread):
-    def __init__(self, queue: LoggingQueue) -> None:
+    def __init__(self, queue: LoggingQueue):
         super().__init__(name="Logging")
         self.queue = queue
         self.start()

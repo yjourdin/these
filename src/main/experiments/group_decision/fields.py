@@ -43,7 +43,7 @@ class AcceptField(Field):
 class GroupParameters(GenField, AcceptField, FrozenDataclass):
     id: int = field(default_factory=count().__next__, init=False, hash=False)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return str(self.id)
 
 

@@ -6,7 +6,7 @@ from mcda.internal.core.relations import Relation
 from mcda.relations import I, P, PreferenceStructure, R
 
 
-def from_csv(csvfile: Iterable[str]) -> PreferenceStructure:
+def from_csv(csvfile: Iterable[str]):
     reader = csv.reader(csvfile, "unix")
     relations: list[Relation] = []
     for line in reader:

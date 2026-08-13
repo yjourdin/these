@@ -5,7 +5,7 @@ from ..csv_file import CSVFile
 
 
 class CSVFileThread(Thread):
-    def __init__(self, file: CSVFile) -> None:
+    def __init__(self, file: CSVFile):
         self.path = file.path
         self.fieldnames = file.fieldnames
         self.queue = file.queue

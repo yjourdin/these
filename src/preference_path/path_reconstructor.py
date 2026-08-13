@@ -40,10 +40,10 @@ class Paths[T, N: Node[Any]](Dataclass):
                 dialect="unix",
             )
 
-    def paths_from(self, v: T, seen: set[T] | None = None) -> dict[int, list[T]]:
+    def paths_from(self, v: T, seen: set[T] | None = None):
         seen = seen or set()
         seen.add(v)
-        result = {}
+        result: dict[int, list[T]] = {}
         parent = self.parent[v]
         for i, parent in self.parent[v].items():
             if parent and parent not in seen:

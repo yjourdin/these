@@ -14,7 +14,7 @@ class Config(FrozenDataclass):
     max_time: int = field(default=DEFAULT_MAX_TIME, hash=False)
     nb_cpus: int = field(default=1, hash=False)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return str(self.id)
 
 
@@ -34,7 +34,7 @@ class SAConfig(Config):
     max_it_non_improving: int | None = None
 
 
-def create_config(**kwargs: Any) -> Config:
+def create_config(**kwargs: Any):
     kwargs.pop("id", None)
     if kwargs.get("method"):
         method = kwargs["method"]
