@@ -8,8 +8,6 @@ from scipy.stats import kendalltau, spearmanr
 from src.model import GroupModel, Model
 from src.performance_table.type import PerformanceTableType
 from src.preference_path.neighborhood import (
-    Neighborhood,
-    NeighborhoodCombined,
     NeighborhoodImportanceRelation,
     NeighborhoodLexOrder,
     NeighborhoodProfile,
@@ -21,7 +19,6 @@ from src.rmp.model import FrozenRMPModel, RMPModel
 from src.srmp.model import FrozenSRMPModel, SRMPModel
 
 from ..preference_path.a_star import Astar
-from ..random import rng_
 from ..utils import kendalltau_distance
 
 
@@ -121,20 +118,6 @@ def distance_parameter_model(
     Ma_frozen = Ma.frozen
     Mb_frozen = Mb.frozen
 
-    neighborhoods: list[Neighborhood[FrozenRMPModel | FrozenSRMPModel]] = [
-        NeighborhoodProfile(performance_table),
-    ]
-
-    if isinstance(Ma, RMPModel) and isinstance(Mb, RMPModel):
-        neighborhoods.append(NeighborhoodImportanceRelation())
-    if isinstance(Ma, SRMPModel) and isinstance(Mb, SRMPModel):
-        neighborhoods.append(NeighborhoodWeight())
-
-    if len(Ma.lexicographic_order) == len(Mb.lexicographic_order) > 1:
-        neighborhoods.append(NeighborhoodLexOrder())
-
-    neighborhood = NeighborhoodCombined(neighborhoods, rng_(0))
-
     def heuristic_profile(model: FrozenRMPModel | FrozenSRMPModel):
         # result += sum(abs(model.profiles[prof_ind][crit_ind] - Mb_frozen.profiles[prof_ind][crit_ind]) for crit_ind in range(len(model.profiles[0])) for prof_ind in range(len(model.profiles)))
         result = 0
@@ -178,8 +161,10 @@ def distance_parameter_model(
 
     if isinstance(Ma, RMPModel) and isinstance(Mb, RMPModel):
         neighborhood = NeighborhoodImportanceRelation()
-    if isinstance(Ma, SRMPModel) and isinstance(Mb, SRMPModel):
+    elif isinstance(Ma, SRMPModel) and isinstance(Mb, SRMPModel):
         neighborhood = NeighborhoodWeight()
+    else:
+        raise TypeError("different models")
     a_star_importance_relation = Astar(
         neighborhood, heuristic_importance_relation, latest=True
     )

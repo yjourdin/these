@@ -1253,7 +1253,10 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             neighborhood = NeighborhoodCombined(neighborhoods, rng_path)
 
             def heuristic(model: FrozenSRMPModel):
-                return 1 - fitness_comparisons_ranking(D, model.model.rank_series(A))
+                return round(
+                    (1 - fitness_comparisons_ranking(D, model.model.rank_series(A)))
+                    * len(D)
+                )
 
             a_star = Astar(
                 neighborhood,
@@ -1535,11 +1538,13 @@ class AcceptPTask(PreferencePathTask):
 
                     accept = any(mip_result(mip).optimal for mip in mips)
                 case ModelEnum.RMP:
-                    GBFS(
+                    gbfs = GBFS(
                         neighborhood,
                         partial(heuristic, target_preferences=D),
                         self.config.max_time,
                     )
+
+                    accept = bool(gbfs([Mi.frozen]))
                 case ModelEnum.RANDOM:
                     raise TypeError("Random model is not accepted")
 
