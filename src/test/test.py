@@ -137,12 +137,12 @@ def distance_parameter_model(
             Ia_dict = dict(model.importance_relation)
             Ib_dict = dict(Mb_frozen.importance_relation)
             keys = Ia_dict.keys() & Ib_dict.keys()
-            Ia = [Ia_dict[k] for k in keys]
-            Ib = [Ib_dict[k] for k in keys]
+            Ia = rankdata([Ia_dict[k] for k in keys])
+            Ib = rankdata([Ib_dict[k] for k in keys])
         else:
             Ia = rankdata(model.importance_relation)
             Ib = rankdata(Mb_frozen.importance_relation)
-        return float(np.sum(abs(np.array(Ia) - np.array(Ib))))  # pyright: ignore[reportUnknownArgumentType]
+        return float(np.sum(abs(Ia - Ib)))  # pyright: ignore[reportUnknownArgumentType]
 
     def heuristic_lexicographic_order(model: FrozenRMPModel | FrozenSRMPModel):
         return (
