@@ -185,16 +185,16 @@ class NeighborhoodImportanceRelation(Neighborhood[FrozenRMPModel]):
             if m < value:
                 importance_relation_copy[i] = (key, value - 1)
                 new_ranks = rankdata([v for _, v in importance_relation_copy])
-                for k in range(len(new_ranks)):
-                    importance_relation_copy[k] = new_ranks[k]
+                for j, (k, _) in enumerate(importance_relation_copy):
+                    importance_relation_copy[j] = (k, new_ranks[k])
                 result.append(
                     replace(sol, importance_relation=tuple(importance_relation_copy))
                 )
             if value < M:
                 importance_relation_copy[i] = (key, value + 1)
                 new_ranks = rankdata([v for _, v in importance_relation_copy])
-                for k in range(len(new_ranks)):
-                    importance_relation_copy[k] = new_ranks[k]
+                for j, (k, _) in enumerate(importance_relation_copy):
+                    importance_relation_copy[j] = (k, new_ranks[k])
                 result.append(
                     replace(sol, importance_relation=tuple(importance_relation_copy)),
                 )
