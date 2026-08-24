@@ -151,8 +151,11 @@ def distance_parameter_model(
 
     def heuristic_importance_relation(model: FrozenRMPModel | FrozenSRMPModel):
         if isinstance(model, FrozenRMPModel):
-            Ia = [v for _, v in model.importance_relation]
-            Ib = [v for _, v in Mb_frozen.importance_relation]
+            Ia_dict = dict(model.importance_relation)
+            Ib_dict = dict(Mb_frozen.importance_relation)
+            keys = Ia_dict.keys() & Ib_dict.keys()
+            Ia = [Ia_dict[k] for k in keys]
+            Ib = [Ib_dict[k] for k in keys]
         else:
             Ia = model.importance_relation
             Ib = Mb_frozen.importance_relation
