@@ -6,6 +6,7 @@ from typing import cast
 import numpy as np
 from mcda.relations import PreferenceStructure
 from pandas import Series
+from scipy.stats import rankdata
 
 from src.dataclass import Dataclass, dataclass, field, replace
 from src.performance_table.type import PerformanceTableType
@@ -183,11 +184,17 @@ class NeighborhoodImportanceRelation(Neighborhood[FrozenRMPModel]):
 
             if m < value:
                 importance_relation_copy[i] = (key, value - 1)
+                new_ranks = rankdata([v for _, v in importance_relation_copy])
+                for k in range(len(new_ranks)):
+                    importance_relation_copy[k] = new_ranks[k]
                 result.append(
                     replace(sol, importance_relation=tuple(importance_relation_copy))
                 )
             if value < M:
                 importance_relation_copy[i] = (key, value + 1)
+                new_ranks = rankdata([v for _, v in importance_relation_copy])
+                for k in range(len(new_ranks)):
+                    importance_relation_copy[k] = new_ranks[k]
                 result.append(
                     replace(sol, importance_relation=tuple(importance_relation_copy)),
                 )
