@@ -3,7 +3,7 @@ from enum import Enum, member
 from typing import Any, NamedTuple
 
 import numpy as np
-from scipy.stats import kendalltau, spearmanr
+from scipy.stats import kendalltau, rankdata, spearmanr
 
 from src.model import GroupModel, Model
 from src.performance_table.type import PerformanceTableType
@@ -140,9 +140,9 @@ def distance_parameter_model(
             Ia = [Ia_dict[k] for k in keys]
             Ib = [Ib_dict[k] for k in keys]
         else:
-            Ia = model.importance_relation
-            Ib = Mb_frozen.importance_relation
-        return float(np.sum(abs(np.array(Ia) - np.array(Ib))))
+            Ia = rankdata(model.importance_relation)
+            Ib = rankdata(Mb_frozen.importance_relation)
+        return float(np.sum(abs(np.array(Ia) - np.array(Ib))))  # pyright: ignore[reportUnknownArgumentType]
 
     def heuristic_lexicographic_order(model: FrozenRMPModel | FrozenSRMPModel):
         return (
