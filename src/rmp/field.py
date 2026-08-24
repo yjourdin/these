@@ -85,13 +85,13 @@ class ImportanceRelationField(RandomField):
 @random_field("importance_relation")
 @dataclass(frozen=True)
 class FrozenImportanceRelationField(RandomField):
-    importance_relation: tuple[tuple[frozenset[int], int], ...]
+    importance_relation: tuple[tuple[frozenset[int], float], ...]
 
     @staticmethod
     def field_decode(o: Any):
         return tuple(
             ImportanceRelation(
-                [int(x) for x in o.values()],
+                [x for x in o.values()],
                 [frozenset(ast.literal_eval(label)) for label in o],
             ).items()
         )
