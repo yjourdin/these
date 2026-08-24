@@ -1,13 +1,11 @@
 import csv
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
-from functools import partial
 from math import inf
 from multiprocessing.connection import Connection
 from operator import attrgetter
 from typing import Any, cast
 
-import numpy as np
 from mcda.relations import PreferenceStructure
 from mcda.types import Relation
 from pandas import read_csv
@@ -39,9 +37,8 @@ from src.rmp.model import FrozenRMPModel, RMPModel
 from src.sa.main import create_sa, sa_result
 from src.srmp.model import FrozenSRMPModel, SRMPModel
 from src.test.test import distance_parameter_model
-from src.utils import catchtime, kendalltau_distance, tolist
+from src.utils import catchtime, tolist
 
-from ....preference_path.gbfs import GBFS
 from ...task import SeedTask
 from ..elicitation.config import Config, MIPConfig, SAConfig
 from .directory import DirectoryGroupDecision
@@ -1470,43 +1467,6 @@ class AcceptPTask(PreferencePathTask):
 
         A = A.subtable(D.elements)
 
-        neighborhoods: list[Neighborhood[FrozenRMPModel]] = [
-            NeighborhoodProfile(A, D),
-            NeighborhoodImportanceRelation(),
-        ]
-
-        if not self.fixed_lex_order:
-            neighborhoods.append(NeighborhoodLexOrder())
-
-        neighborhood = NeighborhoodCombined(neighborhoods, rng_(0))
-
-        def heuristic(model: FrozenRMPModel, target_preferences: PreferenceStructure):
-            # profiles
-            if np.any(
-                abs(np.array(model.profiles) - Mi.profiles.data.to_numpy())  # pyright: ignore[reportUnknownArgumentType]
-                > self.group.accept.P
-            ):
-                return inf
-
-            # importance relation
-            if sum(
-                abs(v - Mi.importance_relation.get(k, v))
-                for k, v in model.importance_relation
-            ) > self.group.accept.I * len(model.importance_relation):
-                return inf
-
-            if (
-                kendalltau_distance(
-                    model.lexicographical_order, Mi.lexicographical_order
-                )
-                > self.group.accept.L
-            ):
-                return inf
-
-            return 1 - fitness_comparisons_ranking(
-                target_preferences, model.model.rank_series(A)
-            )
-
         for r1 in P:
             if r2 := D.elements_pairs_relations.get(r1.elements):
                 D -= r2
@@ -1538,13 +1498,26 @@ class AcceptPTask(PreferencePathTask):
 
                     accept = any(mip_result(mip).optimal for mip in mips)
                 case ModelEnum.RMP:
-                    gbfs = GBFS(
-                        neighborhood,
-                        partial(heuristic, target_preferences=D),
-                        self.config.max_time,
+                    assert isinstance(self.config, SAConfig)
+                    sas, _ = create_sa(
+                        self.model,
+                        self.ko,
+                        A,
+                        [D],
+                        self.config.alpha,
+                        self.config.amp,
+                        self.lexicographic_order if self.fixed_lex_order else None,
+                        accept=self.config.accept,
+                        max_time=min(300, self.config.max_time),
+                        max_it=self.config.max_it,
+                        max_it_non_improving=self.config.max_it_non_improving,
+                        rng_init=0,
+                        rng_sa=0,
+                        reference=Mi,
+                        accept_deviation=self.group.accept,
                     )
 
-                    accept = bool(gbfs([Mi.frozen]))
+                    accept = any(not sa_result(sa).best_objective for sa in sas)
                 case ModelEnum.RANDOM:
                     raise TypeError("Random model is not accepted")
 
