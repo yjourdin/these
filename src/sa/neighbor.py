@@ -10,11 +10,13 @@ from numba import njit
 from src.constants import EPSILON
 from src.dataclass import Dataclass, dataclass, replace
 from src.performance_table.type import PerformanceTableType
-from src.random import RNGParam, rng_
+from src.random import RNGParam, rng_, seed_
 from src.rmp.importance_relation import ImportanceRelation
 from src.rmp.model import RMPModel
 from src.rmp.permutation import swap
 from src.srmp.model import SRMPModel
+
+from ..utils import kendalltau_distance
 
 
 class Neighbor[S](ABC):
@@ -39,6 +41,49 @@ class RandomNeighbor[S](Neighbor[S]):
         rng = rng_(rng)
         i = rng.choice(len(self.neighbors), p=self.prob)
         return self.neighbors[i](sol, rng)
+
+
+@dataclass
+class NeighborAccept[S: SRMPModel | RMPModel](Neighbor[S], Dataclass):
+    neighbor: Neighbor[S]
+    reference: S
+    profile_amp: float
+    importance_relation_amp: float
+    lexicographic_amp: float
+
+    def profile_accept(self, sol: S):
+        return np.all(
+            abs(
+                np.array(sol.profiles.data.to_numpy())
+                - self.reference.profiles.data.to_numpy()
+            )  # pyright: ignore[reportUnknownArgumentType]
+            <= self.profile_amp
+        )
+
+    def importance_relation_accept(self, sol: S):
+        return sum(
+            abs(v - self.reference.importance_relation.get(k, v))
+            for k, v in sol.importance_relation.items()
+        ) <= self.importance_relation_amp * len(sol.importance_relation)
+
+    def lexicographic_order_accept(self, sol: S):
+        return (
+            kendalltau_distance(
+                sol.lexicographic_order, self.reference.lexicographic_order
+            )
+            <= self.lexicographic_amp
+        )
+
+    def __call__(self, sol: S, rng: RNGParam = None):
+        rng = rng_(rng)
+        new = self.neighbor(sol, seed_(rng))
+        while (
+            (not self.profile_accept(new))
+            or (not self.importance_relation_accept(new))
+            or (not self.lexicographic_order_accept(new))
+        ):
+            new = self.neighbor(sol, seed_(rng))
+        return new
 
 
 @dataclass

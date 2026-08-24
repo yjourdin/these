@@ -12,11 +12,13 @@ from src.rmp.model import RMPModel
 from src.srmp.model import SRMPModel
 from src.utils import midpoints
 
+from ..main.experiments.group_decision.fields import ParametersDeviation
 from ..model import Model
 from .cooling_schedule import GeometricSchedule
 from .initial_temperature import initial_temperature
 from .neighbor import (
     Neighbor,
+    NeighborAccept,
     NeighborImportanceRelation,
     NeighborLexOrder,
     NeighborProfileDiscretized,
@@ -64,6 +66,8 @@ def create_sa(
     rng_init: RNGParam = None,
     rng_sa: RNGParam = None,
     nb_cpus: int = 1,
+    reference: RMPModel | None = None,
+    accept_deviation: ParametersDeviation | None = None
 ):
     # DMs
     NB_DM = len(comparisons)
@@ -136,6 +140,10 @@ def create_sa(
         prob.append(k)
 
     neighbor = RandomNeighbor(neighbors, prob)
+
+    if reference:
+        assert accept_deviation
+        neighbor = NeighborAccept(neighbor, reference, accept_deviation.P, accept_deviation.I, accept_deviation.L)
 
     # Objective
     objective = (
