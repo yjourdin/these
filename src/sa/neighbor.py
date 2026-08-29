@@ -54,9 +54,9 @@ class NeighborAccept[S: SRMPModel | RMPModel](Neighbor[S], Dataclass):
     def profile_accept(self, sol: S):
         return np.all(
             abs(
-                np.array(sol.profiles.data.to_numpy())
+                sol.profiles.data.to_numpy()
                 - self.reference.profiles.data.to_numpy()
-            )  # pyright: ignore[reportUnknownArgumentType]
+            )
             <= self.profile_amp
         )
 
@@ -393,9 +393,9 @@ class NeighborImportanceRelation[S: RMPModel](Neighbor[S]):
         if self.local:
             available_scores = np.array([])
             if score > min_score:
-                np.append(available_scores, score - 1)
+                available_scores = np.append(available_scores, score - 1)
             if score < max_score:
-                np.append(available_scores, score + 1)
+                available_scores = np.append(available_scores, score + 1)
         else:
             scores = np.array(list(importance_relation.values()), dtype=np.float64)
             available_scores = np.unique(

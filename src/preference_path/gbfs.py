@@ -1,5 +1,6 @@
 import heapq
-from itertools import pairwise
+from dataclasses import InitVar, field
+from itertools import count, pairwise
 from math import inf
 from time import thread_time
 
@@ -11,6 +12,12 @@ from .path_reconstructor import Node, Paths
 @dataclass(order=True, slots=True)
 class NodeGBFS[T](Node[T]):
     heuristic: float
+    entry_count: int = field(default_factory=count().__next__, init=False)
+    latest: InitVar[bool] = False
+
+    def __post_init__(self, latest: bool):
+        if latest:
+            self.entry_count = -self.entry_count
 
     def __str__(self):
         return f"{self.item} {self.heuristic}"
@@ -18,11 +25,13 @@ class NodeGBFS[T](Node[T]):
 
 @dataclass
 class GBFS[T](Paths[T, NodeGBFS[T]]):
+    latest: bool = False
+
     def init(self, sources: list[T]):
         super().init(sources)
         for i, source in enumerate(sources):
             if heuristic_value := self.heuristic(source):
-                self.open_heap.append(NodeGBFS(source, heuristic_value))
+                self.open_heap.append(NodeGBFS(source, heuristic_value, self.latest))
             else:
                 self.paths |= {i: [source]}
         heapq.heapify(self.open_heap)
@@ -41,6 +50,9 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
             current = current_node.item
 
             if self.verbose:
+                # print(
+                #     set(self.parent[current].keys()), current_node.heuristic, flush=True
+                # )
                 with self.log_writer() as log_writer:
                     log_writer.writerow(
                         self.LogFields(
@@ -63,12 +75,13 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
                     elif heuristic_value < inf:
                         # Add neighbor to queue
                         heapq.heappush(
-                            self.open_heap, NodeGBFS(neighbor, heuristic_value)
+                            self.open_heap,
+                            NodeGBFS(neighbor, heuristic_value, self.latest),
                         )
 
-                elif (
-                    neighbor_source_ids := set(self.parent[neighbor].keys())
-                ) != (current_source_ids := set(self.parent[current].keys())):
+                elif (neighbor_source_ids := set(self.parent[neighbor].keys())) != (
+                    current_source_ids := set(self.parent[current].keys())
+                ):
                     # Remonte le path de current
                     if new_ids := neighbor_source_ids - current_source_ids:
                         paths = self.paths_from(current)

@@ -148,7 +148,7 @@ def collective_thread(
                 task_Mc,  # pyright: ignore[reportUnknownArgumentType]
                 seed=seeds.Mc[Mc_id],
                 max_time=min(time_left, time_left_per_it),
-                nb_cpus=config.nb_cpus,
+                nb_cpus=max(config.nb_cpus, nb_Mcp),
             )
 
             result_Mc, time_Mc = future_Mc.result()

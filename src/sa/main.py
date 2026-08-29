@@ -21,6 +21,7 @@ from .neighbor import (
     NeighborAccept,
     NeighborImportanceRelation,
     NeighborLexOrder,
+    NeighborProfile,
     NeighborProfileDiscretized,
     NeighborWeight,
     NeighborWeightAmp,
@@ -88,29 +89,18 @@ def create_sa(
     M = len(alternatives.criteria) # pyright: ignore[reportUnknownArgumentType]
 
     # Initial solutions
-    match model:
-        case ModelEnum.RMP:
-            init_sols = [
-                RMPModel.random(
-                    nb_profiles=k,
-                    nb_crit=M,
-                    rng=rng,
-                    profiles_values=midpoints(alternatives),
-                )
-                for rng in rng_(rng_init).spawn(nb_cpus)
-            ]
-        case ModelEnum.SRMP:
-            init_sols = [
-                SRMPModel.random(
-                    nb_profiles=k,
-                    nb_crit=M,
-                    rng=rng,
-                    profiles_values=midpoints(alternatives),
-                )
-                for rng in rng_(rng_init).spawn(nb_cpus)
-            ]
-        case _:
-            raise ValueError(f"{model} model not compatible")
+    if reference:
+        init_sols = [reference for _ in range(nb_cpus)]
+    else:
+        init_sols = [
+            model.value.random(
+                nb_profiles=k,
+                nb_crit=M,
+                rng=rng,
+                profiles_values=midpoints(alternatives),
+            )
+            for rng in rng_(rng_init).spawn(nb_cpus)
+        ]
     if lex_order:
         for init_sol in init_sols:
             init_sol.lexicographic_order = lex_order
@@ -119,14 +109,17 @@ def create_sa(
     neighbors: list[Neighbor[SRMPModel | RMPModel]] = []
     prob: list[int] = []
 
-    neighbors.append(
-        NeighborProfileDiscretized(NormalPerformanceTable(midpoints(alternatives).data))
-    )
+    if accept_deviation:
+        neighbors.append(NeighborProfile(accept_deviation.P))
+    else:
+        neighbors.append(
+            NeighborProfileDiscretized(NormalPerformanceTable(midpoints(alternatives).data))
+        )
     prob.append(k * M)
 
     match model:
         case ModelEnum.RMP:
-            neighbors.append(NeighborImportanceRelation(False))
+            neighbors.append(NeighborImportanceRelation(bool(reference)))
             prob.append(2**M)
         case ModelEnum.SRMP:
             if amp > 1:
@@ -134,6 +127,8 @@ def create_sa(
             else:
                 neighbors.append(NeighborWeightAmp(amp))
             prob.append(M)
+        case _:
+            raise ValueError(f"{model} model not compatible")
 
     if (not lex_order) and (k >= 2):
         neighbors.append(NeighborLexOrder(False))

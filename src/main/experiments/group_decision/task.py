@@ -17,6 +17,7 @@ from src.model import is_group_model
 from src.models import GroupModelEnum, ModelEnum
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.preference_path.a_star import Astar
+from src.preference_path.gbfs import GBFS
 from src.preference_path.main import compute_preference_path
 from src.preference_path.neighborhood import (
     Neighborhood,
@@ -946,12 +947,12 @@ class CollectiveSATask(AbstractCollectiveTask):
             self.lexicographic_order if self.fixed_lex_order else None,
             accept=self.config.accept,
             max_time=int(
-                (
-                    min(max_time, self.config.max_time)
-                    if max_time is not None
-                    else self.config.max_time
-                )
-                / self.nb_Mcp
+                # (
+                min(max_time, self.config.max_time)
+                if max_time is not None
+                else self.config.max_time
+                # )
+                # / self.nb_Mcp
             ),
             max_it=self.config.max_it,
             max_it_non_improving=self.config.max_it_non_improving,
@@ -966,7 +967,7 @@ class CollectiveSATask(AbstractCollectiveTask):
 
         with (
             catchtime() as time,
-            ProcessPoolExecutor(self.config.nb_cpus) as process_pool,
+            ProcessPoolExecutor(max(self.config.nb_cpus, self.nb_Mcp)) as process_pool,
         ):
             results = list(process_pool.map(sa_result, sas))
 
@@ -1255,24 +1256,26 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                     * len(D)
                 )
 
-            a_star = Astar(
+            gbfs = GBFS(
                 neighborhood,
                 heuristic,
                 max_time or DEFAULT_MAX_TIME,
+                # verbose=True,
+                latest=True,
             )
 
-            a_star.init([model.frozen for model in Mcps])
+            gbfs.init([model.frozen for model in Mcps])
 
             paths = {}
             while not connection.poll():
                 if (
-                    (a_star.time >= a_star.max_time)
-                    or (not a_star.open_heap)
+                    (gbfs.time >= gbfs.max_time)
+                    or (not gbfs.open_heap)
                     or (len(paths) == self.nb_Mcp)
                 ):
                     connection.send(SENTINEL)
                     break
-                elif paths.keys() != (new_paths := a_star.main_loop(60)).keys():
+                elif paths.keys() != (new_paths := gbfs.main_loop(60)).keys():
                     paths = new_paths.copy()
                     connection.send(set(paths.keys()))
 
@@ -1281,7 +1284,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 preference_path = compute_preference_path(model_path, D, A, R)
             else:
                 result = False
-            time = a_star.time
+            time = gbfs.time
         if not model_path:
             model_path = [Mcps[0]]
             preference_path = [
@@ -1480,25 +1483,25 @@ class AcceptPTask(PreferencePathTask):
             D += r1
 
             match self.model:
-                case ModelEnum.SRMP:
-                    mips, _ = create_mip(
-                        GroupModelEnum.SRMP,
-                        self.ko,
-                        A,
-                        [D],
-                        rng_(0),
-                        0,
-                        self.config.max_time,
-                        self.lexicographic_order,
-                        reference_model=Mi,
-                        profiles_amp=self.group.accept.P,
-                        weights_amp=self.group.accept.W,
-                        lexicographic_order_distance=self.group.accept.L,
-                    )
+                # case ModelEnum.SRMP:
+                #     mips, _ = create_mip(
+                #         GroupModelEnum.SRMP,
+                #         self.ko,
+                #         A,
+                #         [D],
+                #         rng_(0),
+                #         0,
+                #         self.config.max_time,
+                #         self.lexicographic_order,
+                #         reference_model=Mi,
+                #         profiles_amp=self.group.accept.P,
+                #         weights_amp=self.group.accept.W,
+                #         lexicographic_order_distance=self.group.accept.L,
+                #     )
 
-                    accept = any(mip_result(mip).optimal for mip in mips)
-                case ModelEnum.RMP:
-                    assert isinstance(self.config, SAConfig)
+                #     accept = any(mip_result(mip).optimal for mip in mips)
+                case ModelEnum.RMP | ModelEnum.SRMP:
+                    # assert isinstance(self.config, SAConfig)
                     sas, _ = create_sa(
                         self.model,
                         self.ko,
@@ -1529,29 +1532,29 @@ class AcceptPTask(PreferencePathTask):
 
         if accept:
             t = -1
-        else:
-            if self.model is ModelEnum.SRMP:
-                rel = PreferenceStructure(P.relations[t])
-                mips, _ = create_mip(
-                    GroupModelEnum.SRMP,
-                    self.ko,
-                    A,
-                    [rel],
-                    rng_(0),
-                    0,
-                    self.config.max_time,
-                    self.lexicographic_order,
-                    reference_model=Mi,
-                    profiles_amp=self.group.accept.P,
-                    weights_amp=self.group.accept.W,
-                    lexicographic_order_distance=self.group.accept.L,
-                )
+        # else:
+        #     if self.model is ModelEnum.SRMP:
+        #         rel = PreferenceStructure(P.relations[t])
+        #         mips, _ = create_mip(
+        #             GroupModelEnum.SRMP,
+        #             self.ko,
+        #             A,
+        #             [rel],
+        #             rng_(0),
+        #             0,
+        #             self.config.max_time,
+        #             self.lexicographic_order,
+        #             reference_model=Mi,
+        #             profiles_amp=self.group.accept.P,
+        #             weights_amp=self.group.accept.W,
+        #             lexicographic_order_distance=self.group.accept.L,
+        #         )
 
-                accept = any(mip_result(mip).optimal for mip in mips)
+        #         accept = any(mip_result(mip).optimal for mip in mips)
 
-                if not accept:
-                    with self.Cr_file(dir).open("a") as f:
-                        to_csv(rel, f)
+        #         if not accept:
+        #             with self.Cr_file(dir).open("a") as f:
+        #                 to_csv(rel, f)
 
         csv_file = dir.csv_files["accept"]
         csv_file.writerow(

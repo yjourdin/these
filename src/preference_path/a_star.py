@@ -33,11 +33,12 @@ class Astar[T](Paths[T, NodeAstar[T]]):
     def init(self, sources: list[T]):
         super().init(sources)
         for i, source in enumerate(sources):
-            self.paths |= {i: [source]}
             if heuristic_value := self.heuristic(source):
                 self.open_heap.append(
                     NodeAstar(source, 0, heuristic_value, self.latest)
                 )
+            else:
+                self.paths |= {i: [source]}
         heapq.heapify(self.open_heap)
 
     def main_loop(self, max_time_loop: int):
@@ -54,6 +55,12 @@ class Astar[T](Paths[T, NodeAstar[T]]):
             current = current_node.item
 
             if self.verbose:
+                # print(
+                #     set(self.parent[current].keys()),
+                #     current_node.heuristic,
+                #     current_node.cost,
+                #     flush=True,
+                # )
                 with self.log_writer() as log_writer:
                     log_writer.writerow(
                         self.LogFields(
@@ -118,8 +125,3 @@ class Astar[T](Paths[T, NodeAstar[T]]):
             self.time += thread_time() - time
 
         return self.paths
-
-    def __call__(self, sources: list[T]):
-        self.init(sources)
-
-        return self.main_loop(self.max_time)

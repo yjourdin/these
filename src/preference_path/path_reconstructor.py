@@ -41,18 +41,32 @@ class Paths[T, N: Node[Any]](Dataclass):
             )
 
     def paths_from(self, v: T, seen: set[T] | None = None):
-        seen = seen or set()
-        seen.add(v)
-        result: dict[int, list[T]] = {}
-        parent = self.parent[v]
-        for i, parent in self.parent[v].items():
-            if parent and parent not in seen:
-                result |= {
-                    j: [v] + l for (j, l) in self.paths_from(parent, seen).items()
-                }
-            else:
-                result |= {i: [v]}
+        seen = {v}
+        result: dict[int, list[T]] = {i: [v] for i in self.parent[v]}
+        finished = set()
+        while continuing := (result.keys() - finished):
+            for i in continuing:
+                path = result[i]
+                x = path[-1]
+                for j, y in self.parent[x].items():
+                    if not y:
+                        finished.add(j)
+                    elif y not in seen:
+                        seen.add(y)
+                        result[j] = path + [y]
         return result
+
+        # seen = seen or set()
+        # seen.add(v)
+        # result: dict[int, list[T]] = {}
+        # for i, parent in self.parent[v].items():
+        #     if parent and parent not in seen:
+        #         result |= {
+        #             j: [v] + l for (j, l) in self.paths_from(parent, seen).items()
+        #         }
+        #     else:
+        #         result |= {i: [v]}
+        # return result
 
     def init(self, sources: list[T]):
         self.time = 0
