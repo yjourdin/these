@@ -971,7 +971,8 @@ class CollectiveSATask(AbstractCollectiveTask):
         ):
             results = list(process_pool.map(sa_result, sas))
 
-        results.sort(key=attrgetter("best_objective"))
+        # results.sort(key=attrgetter("best_objective"))
+        results = [res for res in results if res.best_objective == min(results, key=attrgetter("best_objective"))]
 
         for Mcp_id in range(self.nb_Mcp):
             best_model = results[Mcp_id].best_model
