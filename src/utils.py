@@ -171,6 +171,8 @@ def file_or_stdout(path: Path | None, mode: str, newline: str | None = None):
 
 def kendalltau_distance(x: Sequence[Any], y: Sequence[Any]):
     N = len(x)
+    if N < 2:
+        return 0
     K = float(kendalltau(x, y).statistic)  # pyright: ignore[reportUnknownArgumentType, reportAttributeAccessIssue]
     return (1 - K) * (N * (N - 1)) / 4
 
