@@ -974,7 +974,7 @@ class CollectiveSATask(AbstractCollectiveTask):
         # results.sort(key=attrgetter("best_objective"))
         results = [res for res in results if res.best_objective == min(results, key=attrgetter("best_objective"))]
 
-        for Mcp_id in range(self.nb_Mcp):
+        for Mcp_id in range(len(results)):
             best_model = results[Mcp_id].best_model
 
             with self.Mcp_file(dir, Mcp_id).open("w") as f:
@@ -1220,9 +1220,10 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
 
         Mcps: list[RMPModel | SRMPModel] = []
         for Mcp_id in range(self.nb_Mcp):
-            with self.Mcp_file(dir, Mcp_id).open("r") as f:
-                Mcp = self.model.value.from_json(f.read())
-                Mcps.append(Mcp)
+            if (file := self.Mcp_file(dir, Mcp_id)).exists():
+                with file.open("r") as f:
+                    Mcp = self.model.value.from_json(f.read())
+                    Mcps.append(Mcp)
 
         rng_path, rng_order = self.rng(seed).spawn(2)
 
@@ -1272,7 +1273,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 if (
                     (gbfs.time >= gbfs.max_time)
                     or (not gbfs.open_heap)
-                    or (len(paths) == self.nb_Mcp)
+                    or (len(paths) == len(Mcps))
                 ):
                     connection.send(SENTINEL)
                     break
