@@ -1,3 +1,4 @@
+from collections import defaultdict
 import csv
 from collections.abc import Callable
 from contextlib import contextmanager
@@ -70,7 +71,7 @@ class Paths[T, N: Node[Any]](Dataclass):
 
     def init(self, sources: list[T]):
         self.time = 0
-        self.open_heap: list[N] = []
+        self.open_heaps: dict[int, list[N]] = defaultdict(list)
         self.parent: dict[T, dict[int, T | None]] = {
             source: {i: None} for i, source in enumerate(sources)
         }

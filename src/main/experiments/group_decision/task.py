@@ -33,7 +33,7 @@ from src.preference_structure.fitness import (
 )
 from src.preference_structure.generate import random_comparisons
 from src.preference_structure.io import from_csv, to_csv
-from src.random import SeedLike, rng_
+from src.random import SeedLike
 from src.rmp.model import FrozenRMPModel, RMPModel
 from src.sa.main import create_sa, sa_result
 from src.srmp.model import FrozenSRMPModel, SRMPModel
@@ -1062,44 +1062,46 @@ class DistanceTask(AbstractCollectiveTask):
         with self.A_file(dir).open("r") as f:
             A = NormalPerformanceTable(read_csv(f, header=None))
 
-        with self.Mcp_file(dir, self.Mcp_id_a).open("r") as f:
-            Ma = self.model.value.from_json(f.read())
+        if (file_a := self.Mcp_file(dir, self.Mcp_id_a)).exists():
+            with file_a.open("r") as f:
+                Ma = self.model.value.from_json(f.read())
 
-        with self.Mcp_file(dir, self.Mcp_id_b).open("r") as f:
-            Mb = self.model.value.from_json(f.read())
+            if (file_b := self.Mcp_file(dir, self.Mcp_id_b)).exists():
+                with file_b.open("r") as f:
+                    Mb = self.model.value.from_json(f.read())
 
-        with catchtime() as time:
-            value = distance_parameter_model(Ma, Mb, A)
+                with catchtime() as time:
+                    value = distance_parameter_model(Ma, Mb, A)
 
-        csv_file = dir.csv_files["distance"]
-        csv_file.writerow(
-            M=self.m,
-            N_tr=self.ntr,
-            Atr_id=self.Atr_id,
-            Model=self.model,
-            Ko=self.ko,
-            Mo_id=self.Mo_id,
-            Group_size=self.group_size,
-            Group=self.group,
-            Mi_id=self.Mi_id,
-            N_bc=self.nbc,
-            Same_alt=self.same_alt,
-            D_id=self.D_id,
-            Method=self.method,
-            Config=self.config,
-            Mie=self.Mie,
-            Mie_config=self.Mie_config,
-            Mie_id=self.Mie_id,
-            Mc_id=self.Mc_id,
-            Nb_Mcp=self.nb_Mcp,
-            Path=self.path,
-            P_id=self.P_id,
-            It=self.it,
-            i=self.Mcp_id_a,
-            j=self.Mcp_id_b,
-            Value=value,
-            Time=time(),
-        )
+                csv_file = dir.csv_files["distance"]
+                csv_file.writerow(
+                    M=self.m,
+                    N_tr=self.ntr,
+                    Atr_id=self.Atr_id,
+                    Model=self.model,
+                    Ko=self.ko,
+                    Mo_id=self.Mo_id,
+                    Group_size=self.group_size,
+                    Group=self.group,
+                    Mi_id=self.Mi_id,
+                    N_bc=self.nbc,
+                    Same_alt=self.same_alt,
+                    D_id=self.D_id,
+                    Method=self.method,
+                    Config=self.config,
+                    Mie=self.Mie,
+                    Mie_config=self.Mie_config,
+                    Mie_id=self.Mie_id,
+                    Mc_id=self.Mc_id,
+                    Nb_Mcp=self.nb_Mcp,
+                    Path=self.path,
+                    P_id=self.P_id,
+                    It=self.it,
+                    i=self.Mcp_id_a,
+                    j=self.Mcp_id_b,
+                    Value=value,
+                    Time=time(),
+                )
 
     def done(self, *args: Any, **kwargs: Any):
         return False
@@ -1273,7 +1275,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             while not connection.poll():
                 if (
                     (gbfs.time >= gbfs.max_time)
-                    or (not gbfs.open_heap)
+                    or (not any(gbfs.open_heaps.values()))
                     or (len(paths) == len(Mcps))
                 ):
                     connection.send(SENTINEL)
