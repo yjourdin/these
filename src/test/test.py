@@ -130,7 +130,7 @@ def distance_parameter_model(
                     result += np.sum((prof_a < alt) & (alt < prof_b))
                 elif prof_b < prof_a:
                     result += np.sum((prof_b < alt) & (alt < prof_a))
-        return result
+        return float(result)
 
     def heuristic_importance_relation(model: FrozenRMPModel | FrozenSRMPModel):
         if isinstance(model, FrozenRMPModel):
