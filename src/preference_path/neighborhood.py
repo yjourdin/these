@@ -282,7 +282,6 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             model = self.replace_bounds(
                                 model, i_b, max(value_a, bounds_b[0])
                             )
-                            result.append(model)
                         if value_b < value_a:
                             model = self.replace_bounds(
                                 model, i_a, max(value_b, bounds_a[0])
@@ -290,26 +289,26 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             model = self.replace_bounds(
                                 model, i_b, min(value_a, bounds_b[1])
                             )
-                            result.append(model)
                     else:
                         value_median = (value_a + value_b) / 2
                         for i, (key, value) in enumerate(sol.importance_relation):
                             if value_a < value_b:
                                 if a <= key and value < value_median:
-                                    self.replace(model, i, value_median)
+                                    model = self.replace(model, i, value_median)
                                 if key <= b and value_median < value:
-                                    self.replace(model, i, value_median)
+                                    model = self.replace(model, i, value_median)
                             else:
                                 if b <= key and value < value_median:
-                                    self.replace(model, i, value_median)
+                                    model = self.replace(model, i, value_median)
                                 if key <= a and value_median < value:
-                                    self.replace(model, i, value_median)
-        else:
-            for i, (key, value) in enumerate(sol.importance_relation):
-                if (res := self.replace_bounds(sol, i, value - 1)) is not None:
-                    result.append(res)
-                if (res := self.replace_bounds(sol, i, value + 1)) is not None:
-                    result.append(res)
+                                    model = self.replace(model, i, value_median)
+                    result.append(model)
+
+        for i, (key, value) in enumerate(sol.importance_relation):
+            if (res := self.replace_bounds(sol, i, value - 1)) is not None:
+                result.append(res)
+            if (res := self.replace_bounds(sol, i, value + 1)) is not None:
+                result.append(res)
 
         return result
 
