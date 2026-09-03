@@ -1,10 +1,10 @@
 {
-    "name": "test_Mcp_5",
+    "name": "test_Mcp_13",
     "jobs": 72,
     "seed": 0,
     "max_time": 3600,
     "time_per_it": 600,
-    "nb_Atr": 10,
+    "nb_Atr": 5,
     "group_size": [
         2
     ],
@@ -12,19 +12,19 @@
         100
     ],
     "M": [
-        6
+        3, 6
     ],
     "model": [
-        "RMP", "SRMP"
+        "RMP"
     ],
     "nb_Mcp": [
-        2
+        1, 2, 3
     ],
     "Ko": [
-        3
+        1, 2, 3
     ],
     "N_bc": [
-        100
+        100, 200, 500
     ],
     "method": [
         "SA"
@@ -39,7 +39,7 @@
         },
         {
             "id": 1,
-            "max_time": 60,
+            "max_time": 300,
             "nb_cpus": 1,
             "accept": 0.5,
             "alpha": 0.9999,
