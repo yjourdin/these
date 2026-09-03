@@ -1275,7 +1275,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
             while not connection.poll():
                 if (
                     (gbfs.time >= gbfs.max_time)
-                    or (not any(gbfs.open_heaps.values()))
+                    # or (not any(gbfs.open_heaps.values()))
                     or (len(paths) == len(Mcps))
                 ):
                     connection.send(SENTINEL)
