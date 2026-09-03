@@ -91,10 +91,10 @@ class FrozenRMPModel(
     FrozenImportanceRelationField,
     FrozenLexicographicOrderField,
 ):
-    profiles: tuple[tuple[float, ...], ...] = field(init=False, compare=False)
-    importance_relation: tuple[tuple[frozenset[int], float], ...] = field(init=False, compare=False)
-    lexicographic_order: tuple[int, ...] = field(init=False, compare=False)
-    
+    profiles: tuple[tuple[float, ...], ...]# = field(init=False, compare=False)
+    importance_relation: tuple[tuple[frozenset[int], float], ...]# = field(init=False, compare=False)
+    lexicographic_order: tuple[int, ...]# = field(init=False, compare=False)
+
     @property
     def model(self):
         return RMPModel(
