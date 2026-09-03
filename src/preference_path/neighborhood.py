@@ -194,12 +194,16 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
 
     def replace(self, sol: FrozenRMPModel, i: int, value: float):
         key = sol.importance_relation[i][0]
+        importance_relation_copy = list(sol.importance_relation)
+        importance_relation_copy[i] = (key, value)
+        return replace(sol, importance_relation=tuple(importance_relation_copy))
+
+    def replace_bounds(self, sol: FrozenRMPModel, i: int, value: float):
+        key = sol.importance_relation[i][0]
         m, M = self.bounds(sol.importance_relation, key)
 
         if m <= value <= M:
-            importance_relation_copy = list(sol.importance_relation)
-            importance_relation_copy[i] = (key, value)
-            return replace(sol, importance_relation=tuple(importance_relation_copy))
+            return self.replace(sol, i, value)
         else:
             return None
 
@@ -211,7 +215,7 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
         if differences := self.different_preferences(sol):
             for rel in differences:
                 a = self.alternatives.alternatives_values[rel.a]
-                b = self.alternatives.alternatives_values[rel.a]
+                b = self.alternatives.alternatives_values[rel.b]
 
                 profile_ind = 0
                 profile = sol.profiles[profile_ind]
@@ -226,8 +230,12 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                     eq = True
                     profile_ind += 1
                     profile = sol.profiles[profile_ind]
-                    coalition_a = frozenset([a[crit] > profile[crit] for crit in crits])
-                    coalition_b = frozenset([a[crit] > profile[crit] for crit in crits])
+                    coalition_a = frozenset([
+                        crit for crit in crits if a[crit] > profile[crit]
+                    ])
+                    coalition_b = frozenset([
+                        crit for crit in crits if b[crit] > profile[crit]
+                    ])
                     if coalition_a != coalition_b:
                         coalition_pair = (coalition_a, coalition_b)
                         eq = False
@@ -236,40 +244,65 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                 if eq:
                     for i, (key, value) in enumerate(sol.importance_relation):
                         if key in coalition_pair:
-                            if (res := self.replace(sol, i, value - 1)) is not None:
+                            if (
+                                res := self.replace_bounds(sol, i, value - 1)
+                            ) is not None:
                                 result.append(res)
-                            if (res := self.replace(sol, i, value + 1)) is not None:
+                            if (
+                                res := self.replace_bounds(sol, i, value + 1)
+                            ) is not None:
                                 result.append(res)
                 else:
                     a, b = coalition_pair
                     bounds_a = self.bounds(sol.importance_relation, a)
                     bounds_b = self.bounds(sol.importance_relation, b)
+                    i_a = -1
+                    value_a = -1
+                    i_b = -1
+                    value_b = -1
+                    for i, (key, value) in enumerate(sol.importance_relation):
+                        if key == a:
+                            i_a = i
+                            value_a = value
+                        if key == b:
+                            i_b = i
+                            value_b = value
+                    model = sol
                     if (bounds_b[0] < bounds_a[1]) or (bounds_a[0] < bounds_b[1]):
-                        i_a = -1
-                        value_a = -1
-                        i_b = -1
-                        value_b = -1
-                        for i, (key, value) in enumerate(sol.importance_relation):
-                            if key == a:
-                                i_a = i
-                                value_a = value
-                            if key == b:
-                                i_b = i
-                                value_b = value
-                        model = sol
                         if value_a < value_b:
-                            model = self.replace(model, i_a, min(value_b, bounds_a[1]))
-                            model = self.replace(model, i_b, max(value_a, bounds_b[0]))
+                            model = self.replace_bounds(
+                                model, i_a, min(value_b, bounds_a[1])
+                            )
+                            model = self.replace_bounds(
+                                model, i_b, max(value_a, bounds_b[0])
+                            )
                             result.append(model)
                         if value_b < value_a:
-                            model = self.replace(model, i_a, max(value_b, bounds_a[0]))
-                            model = self.replace(model, i_b, min(value_a, bounds_b[1]))
+                            model = self.replace_bounds(
+                                model, i_a, max(value_b, bounds_a[0])
+                            )
+                            model = self.replace_bounds(
+                                model, i_b, min(value_a, bounds_b[1])
+                            )
                             result.append(model)
+                    else:
+                        value_median = (value_a + value_b) / 2
+                        for i, (key, value) in enumerate(sol.importance_relation):
+                            if value_a < value_b:
+                                if a <= key and value < value_median:
+                                    self.replace(model, i, value_median)
+                                if key <= b and value_median < value:
+                                    self.replace(model, i, value_median)
+                            else:
+                                if b <= key and value < value_median:
+                                    self.replace(model, i, value_median)
+                                if key <= a and value_median < value:
+                                    self.replace(model, i, value_median)
         else:
             for i, (key, value) in enumerate(sol.importance_relation):
-                if (res := self.replace(sol, i, value - 1)) is not None:
+                if (res := self.replace_bounds(sol, i, value - 1)) is not None:
                     result.append(res)
-                if (res := self.replace(sol, i, value + 1)) is not None:
+                if (res := self.replace_bounds(sol, i, value + 1)) is not None:
                     result.append(res)
 
         return result
