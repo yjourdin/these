@@ -157,6 +157,7 @@ def distance_parameter_model(
         NeighborhoodProfile[FrozenRMPModel | FrozenSRMPModel](performance_table),
         heuristic_profile,
         latest=True,
+        max_time=60
     )
 
     if isinstance(Ma, RMPModel) and isinstance(Mb, RMPModel):
@@ -166,32 +167,36 @@ def distance_parameter_model(
     else:
         raise TypeError("different models")
     a_star_importance_relation = Astar(
-        neighborhood, heuristic_importance_relation, latest=True
+        neighborhood, heuristic_importance_relation, latest=True, max_time=60
     )
 
     a_star_lexicographic_order = Astar(
         NeighborhoodLexOrder[FrozenRMPModel | FrozenSRMPModel](),
         heuristic_lexicographic_order,
         latest=True,
+        max_time=60
     )
 
     result = 0
 
-    path_profile = a_star_profile([Ma_frozen])[0]
-    if a_star_profile.time >= a_star_profile.max_time:
-        return -1
-    result += len(path_profile) - 1
-    M_profile = path_profile[0]
+    try:
+        path_profile = a_star_profile([Ma_frozen])[0]
+        result += len(path_profile) - 1
+        M_profile = path_profile[0]
+    except KeyError:
+        M_profile = Ma_frozen
 
-    path_importance_relation = a_star_importance_relation([M_profile])[0]
-    if a_star_importance_relation.time >= a_star_importance_relation.max_time:
-        return -1
-    result += len(path_importance_relation) - 1
-    M_importance_relation = path_importance_relation[0]
+    try:
+        path_importance_relation = a_star_importance_relation([M_profile])[0]
+        result += len(path_importance_relation) - 1
+        M_importance_relation = path_importance_relation[0]
+    except KeyError:
+        M_importance_relation = M_profile
 
-    path_lexicographic_order = a_star_lexicographic_order([M_importance_relation])[0]
-    if a_star_lexicographic_order.time >= a_star_lexicographic_order.max_time:
-        return -1
-    result += len(path_lexicographic_order) - 1
+    try:
+        path_lexicographic_order = a_star_lexicographic_order([M_importance_relation])[0]
+        result += len(path_lexicographic_order) - 1
+    except KeyError:
+        pass
 
     return result
