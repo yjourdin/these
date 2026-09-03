@@ -270,10 +270,14 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             value_b = value
                     model = sol
                     if (
-                        (bounds_a[0] <= bounds_b[0] <= bounds_a[1])
-                        or (bounds_a[0] <= bounds_b[1] <= bounds_a[1])
-                        or (bounds_b[0] <= bounds_a[0] <= bounds_b[1])
-                        or (bounds_b[0] <= bounds_a[1] <= bounds_b[1])
+                        (not (a <= b))
+                        and (not (b <= a))
+                        and (
+                            (bounds_a[0] <= bounds_b[0] <= bounds_a[1])
+                            or (bounds_a[0] <= bounds_b[1] <= bounds_a[1])
+                            or (bounds_b[0] <= bounds_a[0] <= bounds_b[1])
+                            or (bounds_b[0] <= bounds_a[1] <= bounds_b[1])
+                        )
                     ):
                         if value_a < value_b:
                             model = self.replace_bounds(
