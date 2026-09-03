@@ -1246,12 +1246,12 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 NeighborhoodProfile(A, D),
             ]
             if self.model is ModelEnum.RMP:
-                neighborhoods.append(NeighborhoodImportanceRelation())
+                neighborhoods.append(NeighborhoodImportanceRelation(A, D))
             else:
-                neighborhoods.append(NeighborhoodWeight())
+                neighborhoods.append(NeighborhoodWeight(A, D))
 
             if not self.fixed_lex_order:
-                neighborhoods.append(NeighborhoodLexOrder())
+                neighborhoods.append(NeighborhoodLexOrder(A, D))
 
             neighborhood = NeighborhoodCombined(neighborhoods, rng_path)
 

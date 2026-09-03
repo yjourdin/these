@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import auto
 from typing import Self, SupportsIndex
 
@@ -91,6 +91,10 @@ class FrozenRMPModel(
     FrozenImportanceRelationField,
     FrozenLexicographicOrderField,
 ):
+    profiles: tuple[tuple[float, ...], ...] = field(init=False, compare=False)
+    importance_relation: tuple[tuple[frozenset[int], float], ...] = field(init=False, compare=False)
+    lexicographic_order: tuple[int, ...] = field(init=False, compare=False)
+    
     @property
     def model(self):
         return RMPModel(

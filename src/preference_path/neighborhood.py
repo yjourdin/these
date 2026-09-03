@@ -43,12 +43,30 @@ class NeighborhoodCombined[S](Neighborhood[S], Dataclass):
 
 
 @dataclass
-class NeighborhoodProfile[T: FrozenRMPModel | FrozenSRMPModel](
+class NeighborhoodModel[T: FrozenRMPModel | FrozenSRMPModel](
     Neighborhood[T], Dataclass
 ):
-    midpoints: PerformanceTableType = field(init=False)
     alternatives: PerformanceTableType
     target_preferences: PreferenceStructure | None = None
+
+    def different_preferences(self, sol: T):
+        return (
+            PreferenceStructure(
+                comparisons_ranking(
+                    self.target_preferences,
+                    sol.model.rank_series(self.alternatives).to_dict(),
+                )
+            )
+            if self.target_preferences
+            else None
+        )
+
+
+@dataclass
+class NeighborhoodProfile[T: FrozenRMPModel | FrozenSRMPModel](
+    NeighborhoodModel[T], Dataclass
+):
+    midpoints: PerformanceTableType = field(init=False)
 
     def __post_init__(self):
         self.midpoints = midpoints(self.alternatives)
@@ -60,15 +78,8 @@ class NeighborhoodProfile[T: FrozenRMPModel | FrozenSRMPModel](
             cast(
                 np.ndarray[tuple[int, int], np.dtype[np.float64]],
                 (
-                    self.alternatives.subtable(
-                        PreferenceStructure(
-                            comparisons_ranking(
-                                self.target_preferences,
-                                sol.model.rank_series(self.alternatives).to_dict(),
-                            )
-                        ).elements
-                    )
-                    if self.target_preferences is not None
+                    self.alternatives.subtable(differences.elements)
+                    if (differences := self.different_preferences(sol)) is not None
                     else self.alternatives
                 ).data.to_numpy(),
             ),
@@ -85,7 +96,6 @@ class NeighborhoodProfile[T: FrozenRMPModel | FrozenSRMPModel](
         #     print((self.midpoints.data.to_numpy(), relevant_values))
 
         for profile_ind, profile in enumerate(sol.profiles):
-            profile = cast(tuple[float, ...], profile)
             for crit_ind, crit in self.midpoints.data.items():
                 crit = cast("Series[float]", crit)
                 crit_ind = cast(int, crit_ind)
@@ -156,47 +166,117 @@ class NeighborhoodProfile[T: FrozenRMPModel | FrozenSRMPModel](
 
 
 @dataclass
-class NeighborhoodImportanceRelation(Neighborhood[FrozenRMPModel]):
+class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
+    def bounds(
+        self,
+        importance_relation: tuple[tuple[frozenset[int], float], ...],
+        coalition: frozenset[int],
+    ):
+        try:
+            m = max(v for k, v in importance_relation if k < coalition)
+        except ValueError:
+            m = max(
+                min({k: v for k, v in importance_relation if k != coalition}.values())
+                - 1,
+                0,
+            )
+
+        try:
+            M = min(v for k, v in importance_relation if coalition < k)
+        except ValueError:
+            M = min(
+                max({k: v for k, v in importance_relation if k != coalition}.values())
+                + 1,
+                len(importance_relation) - 1,
+            )
+
+        return (m, M)
+
+    def replace(self, sol: FrozenRMPModel, i: int, value: float):
+        key = sol.importance_relation[i][0]
+        m, M = self.bounds(sol.importance_relation, key)
+
+        if m <= value <= M:
+            importance_relation_copy = list(sol.importance_relation)
+            importance_relation_copy[i] = (key, value)
+            return replace(sol, importance_relation=tuple(importance_relation_copy))
+        else:
+            return None
+
     def __call__(self, sol: FrozenRMPModel):
         result: list[FrozenRMPModel] = []
 
-        for i, (key, value) in enumerate(sol.importance_relation):
-            try:
-                m = max(v for k, v in sol.importance_relation if k < key)
-            except ValueError:
-                m = max(
-                    min({k: v for k, v in sol.importance_relation if k != key}.values())
-                    - 1,
-                    0,
-                )
+        crits = list(range(len(self.alternatives.criteria)))  # pyright: ignore[reportUnknownArgumentType]
 
-            try:
-                M = min(v for k, v in sol.importance_relation if key < k)
-            except ValueError:
-                M = min(
-                    max({k: v for k, v in sol.importance_relation if k != key}.values())
-                    + 1,
-                    len(sol.importance_relation) - 1,
-                )
+        if differences := self.different_preferences(sol):
+            for rel in differences:
+                a = self.alternatives.alternatives_values[rel.a]
+                b = self.alternatives.alternatives_values[rel.a]
 
-            importance_relation_copy = list(sol.importance_relation)
+                profile_ind = 0
+                profile = sol.profiles[profile_ind]
+                coalition_a = frozenset([a[crit] > profile[crit] for crit in crits])
+                coalition_b = frozenset([b[crit] > profile[crit] for crit in crits])
+                coalition_pair = (coalition_a, coalition_b)
+                eq = False
 
-            if m < value:
-                importance_relation_copy[i] = (key, value - 1)
-                result.append(
-                    replace(sol, importance_relation=tuple(importance_relation_copy))
-                )
-            if value < M:
-                importance_relation_copy[i] = (key, value + 1)
-                result.append(
-                    replace(sol, importance_relation=tuple(importance_relation_copy)),
-                )
+                while (coalition_a == coalition_b) and (
+                    profile_ind < len(sol.profiles) - 1
+                ):
+                    eq = True
+                    profile_ind += 1
+                    profile = sol.profiles[profile_ind]
+                    coalition_a = frozenset([a[crit] > profile[crit] for crit in crits])
+                    coalition_b = frozenset([a[crit] > profile[crit] for crit in crits])
+                    if coalition_a != coalition_b:
+                        coalition_pair = (coalition_a, coalition_b)
+                        eq = False
+                        break
+
+                if eq:
+                    for i, (key, value) in enumerate(sol.importance_relation):
+                        if key in coalition_pair:
+                            if (res := self.replace(sol, i, value - 1)) is not None:
+                                result.append(res)
+                            if (res := self.replace(sol, i, value + 1)) is not None:
+                                result.append(res)
+                else:
+                    a, b = coalition_pair
+                    bounds_a = self.bounds(sol.importance_relation, a)
+                    bounds_b = self.bounds(sol.importance_relation, b)
+                    if (bounds_b[0] < bounds_a[1]) or (bounds_a[0] < bounds_b[1]):
+                        i_a = -1
+                        value_a = -1
+                        i_b = -1
+                        value_b = -1
+                        for i, (key, value) in enumerate(sol.importance_relation):
+                            if key == a:
+                                i_a = i
+                                value_a = value
+                            if key == b:
+                                i_b = i
+                                value_b = value
+                        model = sol
+                        if value_a < value_b:
+                            model = self.replace(model, i_a, min(value_b, bounds_a[1]))
+                            model = self.replace(model, i_b, max(value_a, bounds_b[0]))
+                            result.append(model)
+                        if value_b < value_a:
+                            model = self.replace(model, i_a, max(value_b, bounds_a[0]))
+                            model = self.replace(model, i_b, min(value_a, bounds_b[1]))
+                            result.append(model)
+        else:
+            for i, (key, value) in enumerate(sol.importance_relation):
+                if (res := self.replace(sol, i, value - 1)) is not None:
+                    result.append(res)
+                if (res := self.replace(sol, i, value + 1)) is not None:
+                    result.append(res)
 
         return result
 
 
 @dataclass
-class NeighborhoodWeight(Neighborhood[FrozenSRMPModel]):
+class NeighborhoodWeight(NeighborhoodModel[FrozenSRMPModel]):
     def __call__(self, sol: FrozenSRMPModel):
         result: list[FrozenSRMPModel] = []
 
@@ -213,7 +293,7 @@ class NeighborhoodWeight(Neighborhood[FrozenSRMPModel]):
         return result
 
 
-class NeighborhoodLexOrder[T: FrozenRMPModel | FrozenSRMPModel](Neighborhood[T]):
+class NeighborhoodLexOrder[T: FrozenRMPModel | FrozenSRMPModel](NeighborhoodModel[T]):
     def __call__(self, sol: T):
         result: list[T] = []
 
