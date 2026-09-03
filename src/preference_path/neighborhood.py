@@ -46,7 +46,7 @@ class NeighborhoodCombined[S](Neighborhood[S], Dataclass):
 class NeighborhoodModel[T: FrozenRMPModel | FrozenSRMPModel](
     Neighborhood[T], Dataclass
 ):
-    alternatives: PerformanceTableType
+    alternatives: PerformanceTableType | None = None
     target_preferences: PreferenceStructure | None = None
 
     def different_preferences(self, sol: T):
@@ -57,7 +57,7 @@ class NeighborhoodModel[T: FrozenRMPModel | FrozenSRMPModel](
                     sol.model.rank_series(self.alternatives).to_dict(),
                 )
             )
-            if self.target_preferences
+            if self.alternatives and self.target_preferences
             else None
         )
 
@@ -69,10 +69,13 @@ class NeighborhoodProfile[T: FrozenRMPModel | FrozenSRMPModel](
     midpoints: PerformanceTableType = field(init=False)
 
     def __post_init__(self):
+        assert self.alternatives
         self.midpoints = midpoints(self.alternatives)
 
     def __call__(self, sol: T):
         result: list[T] = []
+
+        assert self.alternatives
 
         relevant_alternatives = np.sort(
             cast(
@@ -210,9 +213,10 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
     def __call__(self, sol: FrozenRMPModel):
         result: list[FrozenRMPModel] = []
 
-        crits = list(range(len(self.alternatives.criteria)))  # pyright: ignore[reportUnknownArgumentType]
 
         if differences := self.different_preferences(sol):
+            assert self.alternatives
+            crits = list(range(len(self.alternatives.criteria)))  # pyright: ignore[reportUnknownArgumentType]
             for rel in differences:
                 a = self.alternatives.alternatives_values[rel.a]
                 b = self.alternatives.alternatives_values[rel.b]
