@@ -213,7 +213,6 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
     def __call__(self, sol: FrozenRMPModel):
         result: list[FrozenRMPModel] = []
 
-
         if differences := self.different_preferences(sol):
             assert self.alternatives
             crits = list(range(len(self.alternatives.criteria)))  # pyright: ignore[reportUnknownArgumentType]
@@ -272,7 +271,12 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             i_b = i
                             value_b = value
                     model = sol
-                    if (bounds_b[0] < bounds_a[1]) or (bounds_a[0] < bounds_b[1]):
+                    if (
+                        (bounds_a[0] <= bounds_b[0] <= bounds_a[1])
+                        or (bounds_a[0] <= bounds_b[1] <= bounds_a[1])
+                        or (bounds_b[0] <= bounds_a[0] <= bounds_b[1])
+                        or (bounds_b[0] <= bounds_a[1] <= bounds_b[1])
+                    ):
                         if value_a < value_b:
                             model = self.replace_bounds(
                                 model, i_a, min(value_b, bounds_a[1])
