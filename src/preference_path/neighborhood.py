@@ -179,8 +179,7 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
             m = max(v for k, v in importance_relation if k < coalition)
         except ValueError:
             m = max(
-                min({k: v for k, v in importance_relation if k != coalition}.values())
-                - 1,
+                min(v for _, v in importance_relation) - 1,
                 0,
             )
 
@@ -188,9 +187,8 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
             M = min(v for k, v in importance_relation if coalition < k)
         except ValueError:
             M = min(
-                max({k: v for k, v in importance_relation if k != coalition}.values())
-                + 1,
-                len(importance_relation) - 1,
+                max(v for _, v in importance_relation) + 1,
+                len(importance_relation),
             )
 
         return (m, M)
