@@ -55,17 +55,17 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
                     current = current_node.item
 
                     if self.verbose:
-                        # print(
-                        #     set(self.parent[current].keys()), current_node.heuristic, flush=True
-                        # )
-                        with self.log_writer() as log_writer:
-                            log_writer.writerow(
-                                self.LogFields(
-                                    Item=current,
-                                    Heuristic=current_node.heuristic,
-                                    Time=self.time,
-                                )
-                            )
+                        print(
+                            set(self.parent[current].keys()), current_node.heuristic, flush=True
+                        )
+                        # with self.log_writer() as log_writer:
+                        #     log_writer.writerow(
+                        #         self.LogFields(
+                        #             Item=current,
+                        #             Heuristic=current_node.heuristic,
+                        #             Time=self.time,
+                        #         )
+                        #     )
 
                     # Explore neighborhood
                     for neighbor in self.neighborhood(current_node.item):

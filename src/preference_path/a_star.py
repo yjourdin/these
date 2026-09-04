@@ -18,7 +18,8 @@ class NodeAstar[T](Node[T]):
     latest: InitVar[bool] = False
 
     def __post_init__(self, latest: bool):
-        self.f = self.cost + self.heuristic
+        # self.f = self.cost + self.heuristic
+        self.f = self.heuristic
         if latest:
             self.entry_count = -self.entry_count
 
@@ -60,21 +61,22 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                     current = current_node.item
 
                     if self.verbose:
-                        # print(
-                        #     set(self.parent[current].keys()),
-                        #     current_node.heuristic,
-                        #     current_node.cost,
-                        #     flush=True,
-                        # )
-                        with self.log_writer() as log_writer:
-                            log_writer.writerow(
-                                self.LogFields(
-                                    Item=current,
-                                    Heuristic=current_node.heuristic,
-                                    Cost=current_node.cost,
-                                    Time=current_node.entry_count,
-                                )
-                            )
+                        print(
+                            set(self.parent[current].keys()),
+                            current_node.heuristic,
+                            current_node.cost,
+                            flush=True,
+                        )
+                        print(self.heuristic(current, test=True))
+                        # with self.log_writer() as log_writer:
+                        #     log_writer.writerow(
+                        #         self.LogFields(
+                        #             Item=current,
+                        #             Heuristic=current_node.heuristic,
+                        #             Cost=current_node.cost,
+                        #             Time=current_node.entry_count,
+                        #         )
+                        #     )
 
                     # Explore neighborhood
                     for neighbor in self.neighborhood(current):
