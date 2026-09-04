@@ -298,6 +298,8 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             model = self.replace_bounds(model, i_a, value_median)
                             model = self.replace_bounds(model, i_b, value_median)
                             result.append(model)
+                            # if model is None:
+                            #     print(bounds_a[0], value_a, bounds_a[1], bounds_b[0], value_b, bounds_b[1], flush=True)
 
                         if value_b < value_a:
                             model = sol
@@ -314,6 +316,8 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             model = self.replace_bounds(model, i_a, value_median)
                             model = self.replace_bounds(model, i_b, value_median)
                             result.append(model)
+                            # if model is None:
+                            #     print(bounds_a[0], value_a, bounds_a[1], bounds_b[0], value_b, bounds_b[1], flush=True)
 
                     else:
                         model = sol
