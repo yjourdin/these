@@ -294,7 +294,7 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             result.append(model)
 
                             model = sol
-                            value_mean = value_a + value_b / 2
+                            value_mean = (value_a + value_b) / 2
                             value = (
                                 value_mean
                                 if bounds_b[0] <= value_mean <= bounds_a[1]
@@ -317,7 +317,7 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             result.append(model)
 
                             model = sol
-                            value_mean = value_a + value_b / 2
+                            value_mean = (value_a + value_b) / 2
                             value = (
                                 value_mean
                                 if bounds_b[0] <= value_mean <= bounds_a[1]
