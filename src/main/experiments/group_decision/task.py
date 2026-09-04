@@ -793,7 +793,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             Optimal=optimal,
         )
 
-        return best_model is not None
+        return best_model is not None, time()
 
     def Mie_file(self, dir: DirectoryGroupDecision, dm_id: int):
         assert self.Mie_config
@@ -966,13 +966,13 @@ class CollectiveSATask(AbstractCollectiveTask):
         )
 
         with (
-            catchtime() as time,
             ProcessPoolExecutor(max(self.config.nb_cpus, self.nb_Mcp)) as process_pool,
         ):
             results = list(process_pool.map(sa_result, sas))
 
         # results.sort(key=attrgetter("best_objective"))
         min_obj = min(res.best_objective for res in results)
+        time = max(res.time for res in results)
         results = [res for res in results if res.best_objective == min_obj]
 
         for Mcp_id in range(len(results)):
@@ -1040,7 +1040,7 @@ class CollectiveSATask(AbstractCollectiveTask):
             Path=self.path,
             P_id=self.P_id,
             It=self.it,
-            Time=time(),
+            Time=time,
             Objective=max(
                 C[dm]
                 + len(comparisons_ranking(D[dm], best_model.rank_series(A).to_dict()))
@@ -1049,7 +1049,7 @@ class CollectiveSATask(AbstractCollectiveTask):
             Optimal=False,
         )
 
-        return True
+        return True, time
 
 
 @dataclass(frozen=True)
@@ -1282,8 +1282,9 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 elif paths.keys() != (new_paths := gbfs.main_loop(60)).keys():
                     paths = new_paths.copy()
                     connection.send(set(paths.keys()))
+                    time = gbfs.time
 
-            time = gbfs.time
+            time = time or gbfs.time
             Mcp_id = connection.recv()
         if model_path := paths.get(Mcp_id, None):
             result = True
