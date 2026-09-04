@@ -191,9 +191,9 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                 len(importance_relation),
             )
 
-        for i, (k, v) in enumerate(importance_relation):
-            if (k == coalition) and ((v < m) or (M < v)):
-                print(importance_relation, flush=True)
+        # for i, (k, v) in enumerate(importance_relation):
+        #     if (k == coalition) and ((v < m) or (M < v)):
+        #         print(importance_relation, flush=True)
 
         return (m, M)
 
@@ -210,7 +210,7 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
         if m <= value <= M:
             return self.replace(sol, i, value)
         else:
-            print(m, value, M, flush=True)
+            # print(m, value, M, flush=True)
             return None
 
     def __call__(self, sol: FrozenRMPModel):
