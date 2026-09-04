@@ -4,7 +4,7 @@ from enum import Enum
 from functools import partial, reduce
 from itertools import chain, count
 from pathlib import Path
-from time import process_time
+from time import perf_counter
 from typing import Any, NamedTuple, TypeGuard, overload
 
 import numpy as np
@@ -156,9 +156,9 @@ def none_guard[T](x: T | None) -> TypeGuard[T]:
 
 @contextmanager
 def catchtime():
-    t1 = t2 = process_time()
-    yield lambda: t2 - t1
-    t2 = process_time()
+    t1 = t2 = perf_counter()
+    yield lambda: t2 - t1  # ruff: ignore[fallible-context-manager]
+    t2 = perf_counter()
 
 
 @contextmanager

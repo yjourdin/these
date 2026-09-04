@@ -153,7 +153,7 @@ def collective_thread(
                 nb_cpus=max(config.nb_cpus, nb_Mcp),
             )
 
-            result_Mc, time_Mc = future_Mc.result()
+            (result_Mc, time_Mc), _ = future_Mc.result()
             time_left -= time_Mc
             time_left_per_it -= time_Mc
             if time_left < 1:  # or (time_left_per_it < 1):
