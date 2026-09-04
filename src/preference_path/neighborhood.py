@@ -219,7 +219,7 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                 b = self.alternatives.alternatives_values[rel.b]
 
                 profile_ind = 0
-                profile = sol.profiles[profile_ind]
+                profile = sol.profiles[sol.lexicographic_order[profile_ind]]
                 coalition_a = frozenset([c for c in crits if a[c].value >= profile[c]])
                 coalition_b = frozenset([c for c in crits if b[c].value >= profile[c]])
                 coalition_pair = (coalition_a, coalition_b)
@@ -230,7 +230,7 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                 ):
                     eq = True
                     profile_ind += 1
-                    profile = sol.profiles[profile_ind]
+                    profile = sol.profiles[sol.lexicographic_order[profile_ind]]
                     coalition_a = frozenset([
                         c for c in crits if a[c].value >= profile[c]
                     ])
