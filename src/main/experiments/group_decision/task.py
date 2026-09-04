@@ -1230,9 +1230,9 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
 
         rng_path, rng_order = self.rng(seed).spawn(2)
 
-        model_path = []
-        preference_path = []
-        result = True
+        Mcp_id = 0
+        paths = {}
+        result = False
         time = 0
         if self.path:
             R = PreferenceStructure()
@@ -1271,7 +1271,6 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
 
             gbfs.init([model.frozen for model in Mcps])
 
-            paths = {}
             while not connection.poll():
                 if (
                     (gbfs.time >= gbfs.max_time)
@@ -1284,17 +1283,16 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                     paths = new_paths.copy()
                     connection.send(set(paths.keys()))
 
-            if (Mcp := connection.recv()) != SENTINEL:
-                model_path = paths[Mcp]
-                preference_path = compute_preference_path(model_path, D, A, R)
-            else:
-                result = False
             time = gbfs.time
-        if not model_path:
-            model_path = [Mcps[0]]
+            Mcp_id = connection.recv()
+        if model_path := paths.get(Mcp_id, None):
+            result = True
+            preference_path = compute_preference_path(model_path, D, A, R)
+        else:
+            model_path = [Mcps[Mcp_id]]
             preference_path = [
                 D,
-                random_comparisons(A, Mcps[0], pairs=D.elements_pairs_relations),
+                random_comparisons(A, Mcps[Mcp_id], pairs=D.elements_pairs_relations),
             ]
 
         comparisons_order: list[Relation] = []

@@ -7,6 +7,8 @@ from multiprocessing.connection import Connection, wait
 from shutil import copy
 from typing import cast
 
+import numpy as np
+
 from src.constants import SENTINEL
 from src.methods import MethodEnum
 from src.models import ModelEnum
@@ -199,35 +201,35 @@ def collective_thread(
 
                 # result_list(futures_clean)
             else:
-                for a, b in combinations(range(nb_Mcp), 2):
-                    task = DistanceTask(
-                        m,
-                        n_tr,
-                        Atr_id,
-                        model,
-                        ko,
-                        fixed_lex_order,
-                        Mo_id,
-                        group_size,
-                        group,
-                        Mi_id,
-                        n_bc,
-                        same_alt,
-                        D_id,
-                        Mie,
-                        Mie_config,
-                        Mie_id,
-                        method,
-                        config,
-                        nb_Mcp,
-                        Mc_id,
-                        path,
-                        P_id,
-                        it,
-                        a,
-                        b,
-                    )
-                    thread_pool.submit(task_thread, task)
+                # for a, b in combinations(range(nb_Mcp), 2):
+                #     task = DistanceTask(
+                #         m,
+                #         n_tr,
+                #         Atr_id,
+                #         model,
+                #         ko,
+                #         fixed_lex_order,
+                #         Mo_id,
+                #         group_size,
+                #         group,
+                #         Mi_id,
+                #         n_bc,
+                #         same_alt,
+                #         D_id,
+                #         Mie,
+                #         Mie_config,
+                #         Mie_id,
+                #         method,
+                #         config,
+                #         nb_Mcp,
+                #         Mc_id,
+                #         path,
+                #         P_id,
+                #         it,
+                #         a,
+                #         b,
+                #     )
+                #     thread_pool.submit(task_thread, task)
 
                 # futures_accept: dict[int, FutureTask] = {}
                 # for dm_id in DMS:
@@ -362,6 +364,7 @@ def collective_thread(
                     while working_connections and not set.intersection(
                         *sources.values()
                     ):
+                        # while working_connections and not all(*sources.values()):
                         for connection in cast(
                             list[Connection], wait(working_connections)
                         ):
@@ -377,13 +380,25 @@ def collective_thread(
                                     working_connections = []
 
                     source = (
-                        intersect.pop()
-                        if (
-                            working_connections
-                            and (intersect := set.intersection(*sources.values()))
-                        )
-                        else SENTINEL
+                        sources_union[
+                            np.argmax([
+                                sum(s in val for val in sources.values())
+                                for s in sources_union
+                            ])
+                        ]
+                        if (sources_union := list(set.union(*sources.values())))  # pyright: ignore[reportUnknownArgumentType]
+                        else 0
                     )
+
+                    # source = (
+                    #     intersect.pop()
+                    #     if (
+                    #         working_connections
+                    #         and (intersect := set.intersection(*sources.values()))
+                    #         # and (intersect := set.union(*sources.values()))
+                    #     )
+                    #     else SENTINEL
+                    # )
                     for connection in sources:
                         connection.send(source)
 
