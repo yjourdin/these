@@ -46,6 +46,7 @@ class Astar[T](Paths[T, NodeAstar[T]]):
         while (
             (time_loop < max_time_loop)
             and (self.time < self.max_time)
+            and self.open_heaps
             and any(self.open_heaps.values())
         ):
             time = thread_time()
@@ -87,6 +88,8 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                                 self.paths |= paths
                                 # for path in paths.values():
                                 #     self.found[path[-1]] = neighbor
+                                for source in self.paths:
+                                    self.open_heaps.pop(source, None)
                                 return self.paths
                             elif heuristic_value < inf:
                                 # Add neighbor to queue
@@ -123,6 +126,8 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                                         self.paths[neighbors_source_found_ids.pop()][0]
                                     )
                                     self.paths |= paths
+                                    for source in self.paths:
+                                        self.open_heaps.pop(source, None)
                                     return self.paths
 
             # Update time
