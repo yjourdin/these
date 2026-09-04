@@ -289,14 +289,9 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             result.append(model)
 
                             model = sol
-                            value_mean = (value_a + value_b) / 2
-                            value = (
-                                value_mean
-                                if bounds_b[0] <= value_mean <= bounds_a[1]
-                                else (bounds_b[0] + bounds_a[1]) / 2
-                            )
-                            model = self.replace_bounds(model, i_a, value)
-                            model = self.replace_bounds(model, i_b, value)
+                            value_median = max(min((value_a + value_b) / 2, bounds_a[1]), bounds_b[0])
+                            model = self.replace_bounds(model, i_a, value_median)
+                            model = self.replace_bounds(model, i_b, value_median)
                             result.append(model)
 
                         if value_b < value_a:
@@ -310,14 +305,9 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             result.append(model)
 
                             model = sol
-                            value_mean = (value_a + value_b) / 2
-                            value = (
-                                value_mean
-                                if bounds_b[0] <= value_mean <= bounds_a[1]
-                                else (bounds_a[0] + bounds_b[1]) / 2
-                            )
-                            model = self.replace_bounds(model, i_a, value)
-                            model = self.replace_bounds(model, i_b, value)
+                            value_median = min(max((value_a + value_b) / 2, bounds_a[0]), bounds_b[1])
+                            model = self.replace_bounds(model, i_a, value_median)
+                            model = self.replace_bounds(model, i_b, value_median)
                             result.append(model)
 
                     else:
