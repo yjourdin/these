@@ -286,6 +286,13 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             model = self.replace_bounds(
                                 model, i_b, max(value_a, bounds_b[0])
                             )
+                            result.append(model)
+
+                            value_median = (bounds_b[0] + bounds_a[1]) / 2
+                            model = self.replace_bounds(model, i_a, value_median)
+                            model = self.replace_bounds(model, i_b, value_median)
+                            result.append(model)
+
                         if value_b < value_a:
                             model = self.replace_bounds(
                                 model, i_a, max(value_b, bounds_a[0])
@@ -293,6 +300,13 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             model = self.replace_bounds(
                                 model, i_b, min(value_a, bounds_b[1])
                             )
+                            result.append(model)
+
+                            value_median = (bounds_a[0] + bounds_b[1]) / 2
+                            model = self.replace_bounds(model, i_a, value_median)
+                            model = self.replace_bounds(model, i_b, value_median)
+                            result.append(model)
+
                     else:
                         value_median = (value_a + value_b) / 2
                         for i, (key, value) in enumerate(sol.importance_relation):
@@ -306,7 +320,7 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                                     model = self.replace(model, i, value_median)
                                 if key <= a and value_median < value:
                                     model = self.replace(model, i, value_median)
-                    result.append(model)
+                        result.append(model)
 
         for i, (key, value) in enumerate(sol.importance_relation):
             if (res := self.replace_bounds(sol, i, value - 1)) is not None:
