@@ -273,7 +273,6 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                         if key == b:
                             i_b = i
                             value_b = value
-                    model = sol
                     if (
                         (not (a <= b))
                         and (not (b <= a))
@@ -285,6 +284,7 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                         )
                     ):
                         if value_a < value_b:
+                            model = sol
                             model = self.replace_bounds(
                                 model, i_a, min(value_b, bounds_a[1])
                             )
@@ -293,12 +293,14 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             )
                             result.append(model)
 
+                            model = sol
                             value_median = (bounds_b[0] + bounds_a[1]) / 2
                             model = self.replace_bounds(model, i_a, value_median)
                             model = self.replace_bounds(model, i_b, value_median)
                             result.append(model)
 
                         if value_b < value_a:
+                            model = sol
                             model = self.replace_bounds(
                                 model, i_a, max(value_b, bounds_a[0])
                             )
@@ -307,12 +309,14 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                             )
                             result.append(model)
 
+                            model = sol
                             value_median = (bounds_a[0] + bounds_b[1]) / 2
                             model = self.replace_bounds(model, i_a, value_median)
                             model = self.replace_bounds(model, i_b, value_median)
                             result.append(model)
 
                     else:
+                        model = sol
                         value_median = (value_a + value_b) / 2
                         for i, (key, value) in enumerate(sol.importance_relation):
                             if value_a < value_b:
