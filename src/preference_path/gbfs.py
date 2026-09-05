@@ -46,7 +46,7 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
         ):
             time = thread_time()
 
-            min_heuristic = min(heap[0].heuristic for heap in self.open_heaps.values())
+            min_heuristic = min(heap[0].heuristic for heap in self.open_heaps.values() if heap)
             for source_id, heap in self.open_heaps.items():
                 if heap[0].heuristic == min_heuristic:
                     current_node = heapq.heappop(heap)
