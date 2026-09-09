@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import auto
 from typing import Self, SupportsIndex
 
@@ -38,6 +38,10 @@ class SRMPModel(
     WeightsField,
     LexicographicOrderField,
 ):
+    profiles: NormalPerformanceTable
+    weights: np.ndarray[tuple[int], np.dtype[np.float64]]
+    lexicographic_order: list[int]
+
     def __str__(self):
         return "\t".join([
             print_list(list(self.weights)),
@@ -69,14 +73,15 @@ class SRMPModel(
             profiles=PerturbProfile(amp_profiles)(other.profiles, rng),
             weights=PerturbWeight(amp_weights)(other.weights, rng),
             lexicographic_order=PerturbLexOrder(
-                len(other.profiles.alternatives), nb_lex_order
+                len(other.profiles.alternatives),  # pyright: ignore[reportUnknownArgumentType]
+                nb_lex_order,
             )(other.lexicographic_order, rng),
         )
 
     @property
     def frozen(self):
         return FrozenSRMPModel(
-            profiles=tuple(tuple(x) for x in tolist(self.profiles.data.to_numpy())),  # pyright: ignore[reportUnknownArgumentType]
+            profiles=tuple(tuple(x) for x in tolist(self.profiles.data.to_numpy())),  # pyright: ignore[reportArgumentType, reportUnknownArgumentType]
             weights=self.weights,
             lexicographic_order=tuple(self.lexicographic_order),
         )
@@ -89,6 +94,11 @@ class FrozenSRMPModel(
     FrozenWeightsField,
     FrozenLexicographicOrderField,
 ):
+    profiles: tuple[tuple[float, ...], ...]
+    weights: np.ndarray[tuple[int], np.dtype[np.float64]] = field(compare=False)
+    importance_relation: tuple[int, ...] = field(init=False)
+    lexicographic_order: tuple[int, ...]
+
     @property
     def model(self):
         return SRMPModel(

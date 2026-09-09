@@ -38,7 +38,7 @@ def midpoints(performance_table: PerformanceTable[Any]) -> PerformanceTable[Any]
     return PerformanceTable(df, scales=performance_table.scales)
 
 
-def print_list(lst: Iterable[str | int]):
+def print_list(lst: Iterable[str | float]):
     result = ""
     for x in lst:
         if isinstance(x, str):
