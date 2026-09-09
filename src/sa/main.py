@@ -68,7 +68,7 @@ def create_sa(
     rng_sa: RNGParam = None,
     nb_cpus: int = 1,
     reference: RMPModel | None = None,
-    accept_deviation: ParametersDeviation | None = None
+    accept_deviation: ParametersDeviation | None = None,
 ):
     # DMs
     NB_DM = len(comparisons)
@@ -82,11 +82,11 @@ def create_sa(
 
     # Alternatives
     alternatives = alternatives.subtable(
-        list(set.union(*(set(comparisons[dm].elements) for dm in DMS))) # pyright: ignore[reportUnknownArgumentType]
+        list(set.union(*(set(comparisons[dm].elements) for dm in DMS)))  # pyright: ignore[reportUnknownArgumentType]
     )
 
     # Criteria
-    M = len(alternatives.criteria) # pyright: ignore[reportUnknownArgumentType]
+    M = len(alternatives.criteria)  # pyright: ignore[reportUnknownArgumentType]
 
     # Initial solutions
     if reference:
@@ -113,7 +113,9 @@ def create_sa(
         neighbors.append(NeighborProfile(accept_deviation.P))
     else:
         neighbors.append(
-            NeighborProfileDiscretized(NormalPerformanceTable(midpoints(alternatives).data))
+            NeighborProfileDiscretized(
+                NormalPerformanceTable(midpoints(alternatives).data)
+            )
         )
     prob.append(k * M)
 
@@ -138,7 +140,14 @@ def create_sa(
 
     if reference:
         assert accept_deviation
-        neighbor = NeighborAccept(neighbor, reference, accept_deviation.P, accept_deviation.I, accept_deviation.L)
+        neighbor = NeighborAccept(
+            neighbor,
+            reference,
+            accept_deviation.P,
+            accept_deviation.W,
+            accept_deviation.I,
+            accept_deviation.L,
+        )
 
     # Objective
     objective = (
