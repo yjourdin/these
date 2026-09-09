@@ -31,7 +31,9 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
         super().init(sources)
         for i, source in enumerate(sources):
             if heuristic_value := self.heuristic(source):
-                self.open_heaps[i].append(NodeGBFS(source, heuristic_value, self.latest))
+                self.open_heaps[i].append(
+                    NodeGBFS(source, heuristic_value, self.latest)
+                )
             else:
                 self.paths |= {i: [source]}
             heapq.heapify(self.open_heaps[i])
@@ -46,9 +48,11 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
         ):
             time = thread_time()
 
-            min_heuristic = min(heap[0].heuristic for heap in self.open_heaps.values() if heap)
+            min_heuristic = min(
+                heap[0].heuristic for heap in self.open_heaps.values() if heap
+            )
             for source_id, heap in self.open_heaps.items():
-                if heap[0].heuristic == min_heuristic:
+                if heap and (heap[0].heuristic == min_heuristic):
                     current_node = heapq.heappop(heap)
 
                     # Best node
@@ -71,7 +75,9 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
                     # Explore neighborhood
                     for neighbor in self.neighborhood(current_node.item):
                         if neighbor not in self.parent:
-                            self.parent[neighbor] = dict.fromkeys(self.parent[current], current)
+                            self.parent[neighbor] = dict.fromkeys(
+                                self.parent[current], current
+                            )
 
                             # Stop when target reached
                             if (heuristic_value := self.heuristic(neighbor)) == 0:
@@ -87,9 +93,9 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
                                     NodeGBFS(neighbor, heuristic_value, self.latest),
                                 )
 
-                        elif (neighbor_source_ids := set(self.parent[neighbor].keys())) != (
-                            current_source_ids := set(self.parent[current].keys())
-                        ):
+                        elif (
+                            neighbor_source_ids := set(self.parent[neighbor].keys())
+                        ) != (current_source_ids := set(self.parent[current].keys())):
                             # Remonte le path de current
                             if new_ids := neighbor_source_ids - current_source_ids:
                                 paths = self.paths_from(current)

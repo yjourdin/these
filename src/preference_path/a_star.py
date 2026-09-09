@@ -51,9 +51,9 @@ class Astar[T](Paths[T, NodeAstar[T]]):
         ):
             time = thread_time()
 
-            min_f = min(heap[0].f for heap in self.open_heaps.values())
+            min_f = min(heap[0].f for heap in self.open_heaps.values() if heap)
             for source_id, heap in self.open_heaps.items():
-                if heap[0].f == min_f:
+                if heap and (heap[0].f == min_f):
                     current_node = heapq.heappop(heap)
 
                     # Best node
@@ -80,7 +80,9 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                     # Explore neighborhood
                     for neighbor in self.neighborhood(current):
                         if neighbor not in self.parent:
-                            self.parent[neighbor] = dict.fromkeys(self.parent[current], current)
+                            self.parent[neighbor] = dict.fromkeys(
+                                self.parent[current], current
+                            )
 
                             # Stop when target reached
                             if (heuristic_value := self.heuristic(neighbor)) == 0:
@@ -102,9 +104,9 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                                         self.latest,
                                     ),
                                 )
-                        elif (neighbor_source_ids := set(self.parent[neighbor].keys())) != (
-                            current_source_ids := set(self.parent[current].keys())
-                        ):
+                        elif (
+                            neighbor_source_ids := set(self.parent[neighbor].keys())
+                        ) != (current_source_ids := set(self.parent[current].keys())):
                             # Remonte le path de current
                             if new_ids := neighbor_source_ids - current_source_ids:
                                 paths = self.paths_from(current)
