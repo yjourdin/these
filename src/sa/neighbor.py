@@ -48,23 +48,33 @@ class NeighborAccept[S: SRMPModel | RMPModel](Neighbor[S], Dataclass):
     neighbor: Neighbor[S]
     reference: S
     profile_amp: float
+    weight_amp: float
     importance_relation_amp: float
     lexicographic_amp: float
 
     def profile_accept(self, sol: S):
         return np.all(
-            abs(
-                sol.profiles.data.to_numpy()
-                - self.reference.profiles.data.to_numpy()
-            )
+            abs(sol.profiles.data.to_numpy() - self.reference.profiles.data.to_numpy())
             <= self.profile_amp
         )
 
     def importance_relation_accept(self, sol: S):
-        return sum(
-            abs(v - self.reference.importance_relation.get(k, v))
-            for k, v in sol.importance_relation.items()
-        ) <= self.importance_relation_amp * len(sol.importance_relation)
+        return (
+            sum(
+                abs(v - self.reference.importance_relation.get(k, v))
+                for k, v in sol.importance_relation.items()
+            )
+            <= self.importance_relation_amp * len(sol.importance_relation)
+            if isinstance(sol, RMPModel)
+            else True
+        )
+
+    def weight_accept(self, sol: S):
+        return (
+            np.all(abs(sol.weights - self.reference.weights) <= self.weight_amp)
+            if isinstance(sol, SRMPModel)
+            else True
+        )
 
     def lexicographic_order_accept(self, sol: S):
         return (
@@ -80,6 +90,7 @@ class NeighborAccept[S: SRMPModel | RMPModel](Neighbor[S], Dataclass):
         while (
             (not self.profile_accept(new))
             or (not self.importance_relation_accept(new))
+            or (not self.weight_accept(new))
             or (not self.lexicographic_order_accept(new))
         ):
             new = self.neighbor(sol, seed_(rng))
@@ -94,8 +105,8 @@ class NeighborProfile[S: SRMPModel | RMPModel](Neighbor[S], Dataclass):
         rng = rng_(rng)
         profiles = deepcopy(sol.profiles)
 
-        crit_ind = rng.choice(len(profiles.criteria))
-        profile_ind = rng.choice(len(profiles.alternatives))
+        crit_ind = rng.choice(len(profiles.criteria))  # pyright: ignore[reportUnknownArgumentType]
+        profile_ind = rng.choice(len(profiles.alternatives))  # pyright: ignore[reportUnknownArgumentType]
         profile_perf = cast(float, profiles.cell[profile_ind, crit_ind])
 
         profile_perf = rng.uniform(
@@ -118,12 +129,12 @@ class NeighborProfileDiscretized[S: SRMPModel | RMPModel](Neighbor[S], Dataclass
         rng = rng_(rng)
         profiles = deepcopy(sol.profiles)
 
-        crit_ind = rng.choice(len(profiles.criteria))
+        crit_ind = rng.choice(len(profiles.criteria))  # pyright: ignore[reportUnknownArgumentType]
         crit_values = self.values.data.iloc[:, crit_ind]
 
         profiles_values = sol.profiles.data.iloc[:, crit_ind].to_list()
 
-        profile_ind = rng.choice(len(profiles.alternatives))
+        profile_ind = rng.choice(len(profiles.alternatives))  # pyright: ignore[reportUnknownArgumentType]
         profile_perf = cast(float, profiles.cell[profile_ind, crit_ind])
         profile_perf_ind = cast(int, crit_values[crit_values == profile_perf].index[0])
 

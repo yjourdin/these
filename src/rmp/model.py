@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import auto
 from typing import Self, SupportsIndex
 
@@ -38,6 +38,10 @@ class RMPModel(
     ImportanceRelationField,
     LexicographicOrderField,
 ):
+    profiles: NormalPerformanceTable
+    importance_relation: ImportanceRelation
+    lexicographic_order: list[int]
+
     def __str__(self):
         return (
             print_list(self.profiles.data.to_numpy()[0])
@@ -71,14 +75,15 @@ class RMPModel(
                 other.importance_relation, rng
             ),
             lexicographic_order=PerturbLexOrder(
-                len(other.profiles.alternatives), nb_lex_order
+                len(other.profiles.alternatives),  # pyright: ignore[reportUnknownArgumentType]
+                nb_lex_order,
             )(other.lexicographic_order, rng),
         )
 
     @property
     def frozen(self):
         return FrozenRMPModel(
-            profiles=tuple(tuple(x) for x in tolist(self.profiles.data.to_numpy())),  # pyright: ignore[reportUnknownArgumentType]
+            profiles=tuple(tuple(x) for x in tolist(self.profiles.data.to_numpy())),  # pyright: ignore[reportArgumentType, reportUnknownArgumentType]
             importance_relation=tuple(self.importance_relation.items()),
             lexicographic_order=tuple(self.lexicographic_order),
         )
@@ -91,9 +96,9 @@ class FrozenRMPModel(
     FrozenImportanceRelationField,
     FrozenLexicographicOrderField,
 ):
-    profiles: tuple[tuple[float, ...], ...]# = field(init=False, compare=False)
-    importance_relation: tuple[tuple[frozenset[int], float], ...]# = field(init=False, compare=False)
-    lexicographic_order: tuple[int, ...]# = field(init=False, compare=False)
+    profiles: tuple[tuple[float, ...], ...]
+    importance_relation: tuple[tuple[frozenset[int], float], ...]
+    lexicographic_order: tuple[int, ...]
 
     @property
     def model(self):
