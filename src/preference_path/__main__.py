@@ -8,6 +8,7 @@ from src.preference_structure.io import from_csv, to_csv
 from src.srmp.model import SRMPModel
 from src.utils import add_filename_suffix, file_or_stdout
 
+from ..models import model_from_json
 from .args import ARGS
 from .main import compute_model_paths, compute_preference_path
 
@@ -15,7 +16,7 @@ from .main import compute_model_paths, compute_preference_path
 Mc: list[SRMPModel] = []
 for model in ARGS.models:
     with model.open("r") as f:
-        Mc.append(SRMPModel.from_json(f.read()))
+        Mc.append(model_from_json(f.read()))
 
 A = NormalPerformanceTable(read_csv(ARGS.A, header=None))
 
