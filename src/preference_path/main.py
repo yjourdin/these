@@ -9,12 +9,14 @@ from src.preference_structure.fitness import (
     fitness_comparisons_ranking,
 )
 from src.random import RNGParam
+from src.rmp.model import FrozenRMPModel, RMPModel
 from src.srmp.model import FrozenSRMPModel, SRMPModel
 
 from .gbfs import GBFS
 from .neighborhood import (
     Neighborhood,
     NeighborhoodCombined,
+    NeighborhoodImportanceRelation,
     NeighborhoodLexOrder,
     NeighborhoodProfile,
     NeighborhoodWeight,
@@ -23,7 +25,7 @@ from .preference_path import preference_path, remove_refused, remove_reverted_ch
 
 
 def compute_model_paths(
-    start_models: list[SRMPModel],
+    start_models: list[RMPModel | SRMPModel],
     target_preferences: PreferenceStructure,
     alternatives: PerformanceTableType,
     rng: RNGParam = None,
@@ -32,17 +34,21 @@ def compute_model_paths(
 ):
     alternatives = alternatives.subtable(target_preferences.elements)
 
-    neighborhoods: list[Neighborhood[FrozenSRMPModel]] = [
+    neighborhoods: list[Neighborhood[FrozenRMPModel | FrozenSRMPModel]] = [
         NeighborhoodProfile(alternatives, target_preferences),
-        NeighborhoodWeight(),
     ]
+
+    if isinstance(start_models[0], RMPModel):
+        neighborhoods.append(NeighborhoodImportanceRelation(alternatives, target_preferences))
+    else:
+        neighborhoods.append(NeighborhoodWeight(alternatives, target_preferences))
 
     if not fixed_lex_order:
         neighborhoods.append(NeighborhoodLexOrder())
 
     neighborhood = NeighborhoodCombined(neighborhoods, rng)
 
-    def heuristic(model: FrozenSRMPModel):
+    def heuristic(model: FrozenRMPModel | FrozenSRMPModel):
         return 1 - fitness_comparisons_ranking(
             target_preferences, model.model.rank_series(alternatives)
         )

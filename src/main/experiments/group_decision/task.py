@@ -1255,7 +1255,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
 
             neighborhood = NeighborhoodCombined(neighborhoods, rng_path)
 
-            def heuristic(model: FrozenSRMPModel):
+            def heuristic(model: FrozenRMPModel | FrozenSRMPModel):
                 return round(
                     (1 - fitness_comparisons_ranking(D, model.model.rank_series(A)))
                     * len(D)
