@@ -2,7 +2,7 @@ module Bit
 
 export Bitset, decode, encode
 
-using .Iterators: takewhile, filter, map
+using .Iterators: takewhile, filter
 using IterTools: iterated
 
 # Bitset type
@@ -34,4 +34,3 @@ encode(A) = sum(encode, A; init = empty)
 decode(c) = filter(in(c), 1:length(c))
 
 end # module Bit
-
