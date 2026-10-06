@@ -48,11 +48,16 @@ class PerturbImportanceRelation(Dataclass):
                 max_score = importance_relation.max(coalition)
 
             score = importance_relation[coalition]
+            amp = (
+                0.5
+                if (np.sum(np.array(importance_relation.values()) == score) - 1)
+                else 1
+            )
             available_score: list[float] = []
             if score > min_score:
-                available_score.append(score - 1)
+                available_score.append(score - amp)
             if score < max_score:
-                available_score.append(score + 1)
+                available_score.append(score + amp)
 
             score = rng.choice(available_score)
             importance_relation[coalition] = score

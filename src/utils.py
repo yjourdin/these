@@ -179,5 +179,5 @@ def kendalltau_distance(x: Sequence[Any], y: Sequence[Any]):
 
 def rerank(dct: dict[Any, Any]):
     keys, values = zip(*dct.items())
-    ranks = rankdata(values)
+    ranks = rankdata(values, "dense")
     return dict(zip(keys, ranks))
