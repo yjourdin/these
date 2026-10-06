@@ -1266,7 +1266,7 @@ class PreferencePathTask(AbstractCollectiveTask, MiTask):
                 heuristic,
                 max_time or DEFAULT_MAX_TIME,
                 # verbose=True,
-                latest=True,
+                # latest=True,
             )
 
             gbfs.init([model.frozen for model in Mcps])
