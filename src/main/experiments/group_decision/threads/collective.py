@@ -474,12 +474,11 @@ def collective_thread(
                     for row in C_reader:
                         changes.append(int(row[0]))
 
-                new_task_Mc = (
-                    replace(task_Mc, it=it + 1) if not compromise_found else None  # pyright: ignore[reportUnknownArgumentType]
-                )
-
-                if new_task_Mc is not None:
+                if (not compromise_found) and (time_left >= 1):
+                    new_task_Mc = replace(task_Mc, it=it + 1)
                     copy(task_Mc.Cr_file(DIR), new_task_Mc.Cr_file(DIR))  # pyright: ignore[reportUnknownArgumentType]
+                else:
+                    new_task_Mc = None
 
                 for dm_id in DMS:
                     with tasks_accept[dm_id].Di_file(DIR).open("r") as f:
