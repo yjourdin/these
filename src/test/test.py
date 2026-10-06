@@ -119,17 +119,16 @@ def distance_parameter_model(
     Mb_frozen = Mb.frozen
 
     def heuristic_profile(model: FrozenRMPModel | FrozenSRMPModel):
-        # result += sum(abs(model.profiles[prof_ind][crit_ind] - Mb_frozen.profiles[prof_ind][crit_ind]) for crit_ind in range(len(model.profiles[0])) for prof_ind in range(len(model.profiles)))
         result = 0
         for prof_ind, profile in enumerate(model.profiles):
             for crit_ind in range(len(profile)):
-                alt = performance_table.data.to_numpy()[:, crit_ind]
+                alts = performance_table.data.to_numpy()[:, crit_ind]
                 if (prof_a := profile[crit_ind]) < (
                     prof_b := Mb_frozen.profiles[prof_ind][crit_ind]
                 ):
-                    result += np.sum((prof_a < alt) & (alt < prof_b))
+                    result += np.sum((prof_a < alts) & (alts < prof_b))
                 elif prof_b < prof_a:
-                    result += np.sum((prof_b < alt) & (alt < prof_a))
+                    result += np.sum((prof_b < alts) & (alts < prof_a))
         return float(result)
 
     def heuristic_importance_relation(model: FrozenRMPModel | FrozenSRMPModel):
@@ -142,7 +141,7 @@ def distance_parameter_model(
         else:
             Ia = rankdata(model.importance_relation)
             Ib = rankdata(Mb_frozen.importance_relation)
-        return float(np.sum(abs(Ia - Ib)))  # pyright: ignore[reportUnknownArgumentType]
+        return kendalltau_distance(Ia, Ib) * len(keys)  # pyright: ignore[reportUnknownArgumentType]
 
     def heuristic_lexicographic_order(model: FrozenRMPModel | FrozenSRMPModel):
         return (
@@ -157,7 +156,7 @@ def distance_parameter_model(
         NeighborhoodProfile[FrozenRMPModel | FrozenSRMPModel](performance_table),
         heuristic_profile,
         latest=True,
-        max_time=60
+        max_time=60,
     )
 
     if isinstance(Ma, RMPModel) and isinstance(Mb, RMPModel):
@@ -174,7 +173,7 @@ def distance_parameter_model(
         NeighborhoodLexOrder[FrozenRMPModel | FrozenSRMPModel](),
         heuristic_lexicographic_order,
         latest=True,
-        max_time=60
+        max_time=60,
     )
 
     result = 0
@@ -194,7 +193,9 @@ def distance_parameter_model(
         M_importance_relation = M_profile
 
     try:
-        path_lexicographic_order = a_star_lexicographic_order([M_importance_relation])[0]
+        path_lexicographic_order = a_star_lexicographic_order([M_importance_relation])[
+            0
+        ]
         result += len(path_lexicographic_order) - 1
     except KeyError:
         pass
