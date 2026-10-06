@@ -3,7 +3,6 @@ from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import InitVar
 from pathlib import Path
-from time import thread_time
 from typing import ClassVar, NotRequired, TypedDict
 
 from mcda.internal.core.interfaces import Learner
@@ -84,8 +83,7 @@ class Iterative[S](Learner[S], Dataclass):
         self.current_obj = self.objective(self.current_sol)
         self.best_sol = initial_sol
         self.best_obj = self.objective(self.best_sol)
-        self.start_time = thread_time()
-        self.time = thread_time() - self.start_time
+        self.time = 0
         self.it = 0
         self.non_improving_it = 0
 

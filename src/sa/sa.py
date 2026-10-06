@@ -1,11 +1,10 @@
 from dataclasses import field
 from math import exp
-from time import thread_time
 from typing import ClassVar
 
 from src.dataclass import dataclass
 from src.random import RNG
-from src.utils import none_guard
+from src.utils import catchtime, none_guard
 
 from .cooling_schedule import CoolingSchedule
 from .iterative import Iterative
@@ -38,35 +37,39 @@ class SimulatedAnnealing[S](Iterative[S]):
         while not self.stop():
             for _ in range(self.L):
                 # New iteration
-                self.time = thread_time() - self.start_time
                 self.it += 1
                 self.non_improving_it += 1
 
-                # Neighbor model
-                neighbor_sol = self.neighbor(self.current_sol, rng)
-                neighbor_obj = self.objective(neighbor_sol)
+                with catchtime() as time:
+                    # Neighbor model
+                    neighbor_sol = self.neighbor(self.current_sol, rng)
+                    neighbor_obj = self.objective(neighbor_sol)
 
-                prob: float
-                if neighbor_obj <= self.current_obj:
-                    prob = 1
-                else:
-                    try:
-                        prob = exp((self.current_obj - neighbor_obj) / self.temp)
-                    except (OverflowError, ZeroDivisionError):
-                        prob = 0
+                    prob: float
+                    if neighbor_obj <= self.current_obj:
+                        prob = 1
+                    else:
+                        try:
+                            prob = exp((self.current_obj - neighbor_obj) / self.temp)
+                        except (OverflowError, ZeroDivisionError):
+                            prob = 0
 
-                if prob >= 1 or rng.random() < prob:
-                    # Accepted
-                    self.current_sol = neighbor_sol
-                    self.current_obj = neighbor_obj
+                    if prob >= 1 or rng.random() < prob:
+                        # Accepted
+                        self.current_sol = neighbor_sol
+                        self.current_obj = neighbor_obj
 
-                    # New best
-                    if self.current_obj < self.best_obj:
-                        self.non_improving_it = 0
-                        self.best_sol = self.current_sol
-                        self.best_obj = self.current_obj
+                        # New best
+                        if self.current_obj < self.best_obj:
+                            self.non_improving_it = 0
+                            self.best_sol = self.current_sol
+                            self.best_obj = self.current_obj
+
+                # Update time
+                self.time += time()
 
                 if self.verbose:
+                    # print(self.it, self.time, self.best_obj, flush=True)
                     with self.log_writer() as log_writer:
                         log_writer.writerow(
                             self.LogFields(
@@ -86,9 +89,6 @@ class SimulatedAnnealing[S](Iterative[S]):
                 # Stop when optimum reached
                 if self.best_obj <= self.objective.optimum:
                     return self.best_sol
-
-                # Update time
-                self.time = thread_time() - self.start_time
 
             # Update temperature
             self.temp = self.cooling_schedule(self.temp)

@@ -1,8 +1,7 @@
-from time import thread_time
-
 from src.dataclass import dataclass
 from src.random import RNG
 
+from ..utils import catchtime
 from .iterative import Iterative
 
 
@@ -11,13 +10,15 @@ class RandomWalk[S](Iterative[S]):
     def main_loop(self, rng: RNG):
         while not self.stop():
             # New iteration
-            self.time = thread_time() - self.start_time
             self.it += 1
             self.non_improving_it += 1
 
-            # Neighbor model
-            self.current_sol = self.neighbor(self.current_sol, rng)
-            self.current_obj = self.objective(self.current_sol)
+            with catchtime() as time:
+                # Neighbor model
+                self.current_sol = self.neighbor(self.current_sol, rng)
+                self.current_obj = self.objective(self.current_sol)
+
+            self.time += time()
 
             if self.verbose:
                 with self.log_writer() as log_writer:
