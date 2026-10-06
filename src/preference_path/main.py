@@ -12,6 +12,7 @@ from src.random import RNGParam
 from src.rmp.model import FrozenRMPModel, RMPModel
 from src.srmp.model import FrozenSRMPModel, SRMPModel
 
+from .a_star import Astar
 from .gbfs import GBFS
 from .neighborhood import (
     Neighborhood,
@@ -49,9 +50,9 @@ def compute_model_paths(
     neighborhood = NeighborhoodCombined(neighborhoods, rng)
 
     def heuristic(model: FrozenRMPModel | FrozenSRMPModel):
-        return 1 - fitness_comparisons_ranking(
+        return int((1 - fitness_comparisons_ranking(
             target_preferences, model.model.rank_series(alternatives)
-        )
+        )) * len(target_preferences))
 
     gbfs = GBFS(neighborhood, heuristic, max_time)
     path = gbfs([model.frozen for model in start_models])
