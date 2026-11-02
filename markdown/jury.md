@@ -22,9 +22,9 @@
 - Alex
 - Vincent (prof) (rapporteur)
 - Yves De Smet (prof) (rapporteur)
-- Meltem (prof) (examinatrice)
-- Marc ? (examinateur)
-- Nawal ? (examinatrice)
+- Marc (examinateur) (accepté)
+- Meltem (prof) ? (examinatrice) (acceptée)
+- Nawal ? (examinatrice) (pas contactée)
 
 
 

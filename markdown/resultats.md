@@ -1,0 +1,4 @@
+- Modèle collectif trouvé par recuit simulé assez similaire en objectif par rapport à ceux trouvés par MILP
+- Plusieurs modèle collectifs trouvés, assez loin entre eux de plusieurs dizaines voire centaines de pas entre eux
+- Calcul des chemins de préférences marchent bien avec plus de comparaisons par paires
+- Cependant, marche moins bien quand on augmente le nombre de critères (explosion de la taille de voisinage pour le calcul des chemins de préférences)

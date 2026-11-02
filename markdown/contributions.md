@@ -13,17 +13,13 @@
 
 ## Questions
 
-
 - Comment inférer les paramètres modèle RMP les contextes de décision avec beaucoup d'exemple, de critères ?
 <!-- - Comment représenter un groupe de décideur avec le modèle RMP ? -->
 - Comment définir un bon modèle de compromis RMP pour les décideurs ?
 - Comment accompagner les décideurs vers un modèle de préference compromis (RMP et autres) ?
-- Comment limiter la charge cognitive pour les décideurs ?
----
-définir charge cognitive (nombre de retours vers lui) plus tard
+- Comment limiter la charge cognitive pour les décideurs ? (définir charge cognitive (nombre de retours vers lui) plus tard)
 
-
-- Comment accompagner un groupe de décideur dans leur recherche de compromis dans un contexte à *plusieurs critères*? (question hyper générale)
+- Comment accompagner un groupe de décideur dans leur recherche de compromis dans un contexte à *plusieurs critères* ? (question hyper générale)
 
 ## Contributions
 

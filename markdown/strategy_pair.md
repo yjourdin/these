@@ -22,7 +22,7 @@
 >
 > Soit la mesure de similarité entre deux décideurs $h$ et $l$ sur la paire $(i, j)$ : $sm^{h, l}_{i, j} = 1 - \lvert p^h_{i, j} - p^l_{i, j} \rvert \in [0, 1]$
 >
-> Soit le consensus entre les décideurs sur la paire $(i, j)$ : $cop_{i, j} = \frac{2}{n(n-1)}\sum_{h \ne l} sm^{h, l}_{i, j}$
+> Soit le consensus entre les décideurs sur la paire $(i, j)$ : $cop_{i, j} = \frac{2}{n(n-1)}\sum_{h < l} sm^{h, l}_{i, j}$
 >
 > [1] E. Herrera-Viedma, S. Alonso, F. Chiclana, et F. Herrera, « A Consensus Model for Group Decision Making With Incomplete Fuzzy Preference Relations », IEEE Transactions on Fuzzy Systems, vol. 15, nᵒ 5, p. 863‑877, oct. 2007, doi: 10.1109/TFUZZ.2006.889952.
 
