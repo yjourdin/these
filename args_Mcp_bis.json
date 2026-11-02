@@ -2,7 +2,7 @@
     "name": "test_Mcp_bis",
     "jobs": 10,
     "seed": 0,
-    "max_time": 120,
+    "max_time": 360,
     "time_per_it": 120,
     "nb_Atr": 1,
     "group_size": [
