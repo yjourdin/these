@@ -5,6 +5,7 @@ from typing import Any, NamedTuple, cast
 
 import numpy as np
 from mcda.relations import I, P, PreferenceStructure
+from mcda.types import Relation
 from pulp import value
 
 from src.constants import DEFAULT_MAX_TIME
@@ -62,6 +63,7 @@ def create_mip(
     lexicographic_order_distance: int = 0,
     inconsistencies: bool = False,
     nb_cpus: int = 1,
+    exist=False,
     *args: Any,
     **kwargs: Any,
 ):
@@ -162,7 +164,42 @@ def create_mip(
                 )
                 sense = SenseEnum.MAX
         elif collective:
-            comparisons_refused = comparisons_refused or PreferenceStructure()
+            comparisons_accepted_list = (
+                comparisons_accepted.relations if comparisons_accepted else []
+            )
+            comparisons_refused_list = (
+                comparisons_refused.relations if comparisons_refused else []
+            )
+
+            refused_dict: dict[tuple[Any, Any], Relation] = {}
+            for r in comparisons_refused_list:
+                if (pair := r.elements) in refused_dict:
+                    r2 = refused_dict.pop(pair)
+                    match r, r2:
+                        case P(a=a, b=b), P(a=_, b=_):
+                            comparisons_accepted_list.append(I(a, b))
+                        case P(a=a, b=b), I(a=_, b=_):
+                            comparisons_accepted_list.append(P(b, a))
+                        case I(a=_, b=_), P(a=a, b=b):
+                            comparisons_accepted_list.append(P(b, a))
+                        case _:
+                            raise ValueError(
+                                f"Couple de relations inconnu : {r} et {r2}"
+                            )
+                else:
+                    refused_dict[r.elements] = r
+
+            comparisons_accepted = PreferenceStructure(
+                comparisons_accepted_list, validate=False
+            )
+            comparisons_refused = PreferenceStructure(
+                list(refused_dict.values()), validate=False
+            )
+
+            preference_accepted_list, indifference_accepted_list = divide_preferences(
+                comparisons_accepted
+            )
+
             preference_refused_list, indifference_refused_list = divide_preferences(
                 comparisons_refused
             )
@@ -177,11 +214,6 @@ def create_mip(
             #     )
             #     preference_to_accept_list.append(preference_to_accept)
             #     indifference_to_accept_list.append(indifference_to_accept)
-
-            comparisons_accepted = comparisons_accepted or PreferenceStructure()
-            preference_accepted_list, indifference_accepted_list = divide_preferences(
-                comparisons_accepted
-            )
 
             if reference_model:
                 mip = partial(
@@ -232,6 +264,7 @@ def create_mip(
                     time_limit=max_time,
                     seed=seed_mip,
                     nb_cpus=NB_CPUS_MIP,
+                    exist=exist,
                 )
         else:
             if close:

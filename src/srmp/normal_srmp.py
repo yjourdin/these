@@ -49,6 +49,18 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
             conditional_weighted_sum, conditional_weighted_sum
         ).astype(dtype=np.bool)
 
+    def credibility_numpy(self, **kwargs: Any):
+        """Construct an outranking matrix.
+
+        :return:
+        """
+        conditional_weighted_sum: np.ndarray[tuple[int], np.dtype[np.float64]] = np.dot(
+            self.performance_table.data.values >= self.profile.data.values,
+            self.criteria_weights,
+        )
+
+        return np.subtract.outer(conditional_weighted_sum, conditional_weighted_sum)
+
 
 class NormalSRMP(SRMP):
     """This class implements the SRMP algorithm with a NormalPerformanceTable.
@@ -97,3 +109,18 @@ class NormalSRMP(SRMP):
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
         return np.array(rankdata(-scores, method="dense")).astype(np.int_)  # pyright: ignore[reportUnknownArgumentType]
+
+    def credibility_numpy(self):
+        profilewise_outranking_matrices = np.array([
+            sub_srmp.credibility_numpy() for sub_srmp in self.sub_srmp
+        ])
+        relations_ordered = profilewise_outranking_matrices[self.lexicographic_order]
+        n = len(relations_ordered)
+        score = np.zeros_like(relations_ordered[0])
+        mask = score == 0
+        i = 0
+        while (i < n) and mask.any():
+            score[mask] = relations_ordered[i][mask]  # pyright: ignore[reportArgumentType, reportCallIssue]
+            mask = score == 0
+            i += 1
+        return score

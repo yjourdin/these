@@ -32,11 +32,12 @@ class GenField(Field):
 @custom_field("accept")
 @dataclass(frozen=True)
 class AcceptField(Field):
-    accept: ParametersDeviation
+    accept: float
+    # accept: ParametersDeviation
 
-    @staticmethod
-    def field_decode(o: Any):
-        return ParametersDeviation.from_dict(o)
+    # @staticmethod
+    # def field_decode(o: Any):
+    #     return ParametersDeviation.from_dict(o)
 
 
 @dataclass(frozen=True)

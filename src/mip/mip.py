@@ -61,12 +61,15 @@ class MIP[T, Vars: MIPVars, Params: MIPParams](Learner[T | None], Dataclass):
 
     def learn(self):
         self.prob.solve(self.solver)
-        try:
-            self.create_solution()
-        except ValueError:
-            return None
+        if self.prob.sol_status >= 0:
+            try:
+                self.create_solution()
+            except ValueError:
+                return None
+            else:
+                return self.sol
         else:
-            return self.sol
+            return None
 
     def create_solver(
         self, time_limit: float, seed: int, verbose: bool, nb_cpus: int, log_path: Path

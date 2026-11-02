@@ -41,9 +41,9 @@ class ExperimentFields(CSVFields):
     D_id: int
     Method: MethodEnum
     Config: Config
-    Mie: bool
-    Mie_config: MIPConfig | None
-    Mie_id: int
+    # Mie: bool
+    # Mie_config: MIPConfig | None
+    # Mie_id: int
     Mc_id: int
     Nb_Mcp: int
     Path: bool
@@ -67,7 +67,8 @@ class MieFields(CSVFields):
     Config: MIPConfig
     Mie_id: int
     Time: float
-    Fitness: float | None
+    # Fitness: float | None
+    Optimal: bool
 
 
 class MieCSVFile(CSVFile):

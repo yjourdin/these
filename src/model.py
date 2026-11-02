@@ -9,7 +9,7 @@ import numpy as np
 from mcda.internal.core.scales import DiscreteQuantitativeScale, PreferenceDirection
 from mcda.internal.core.values import CommensurableValues, Ranking
 from mcda.relations import PreferenceStructure
-from pandas import Series
+from pandas import DataFrame, Series
 
 from .aggregator import agg_float, agg_rank
 from .dataclass import RandomDataclass, RandomFrozenDataclass
@@ -32,6 +32,11 @@ class Model(RandomDataclass):
     def rank_list(self, performance_table: PerformanceTableType):
         return tolist(self.rank_numpy(performance_table))
 
+    def rank_dict(self, performance_table: PerformanceTableType):
+        return dict(
+            zip(performance_table.alternatives, self.rank_list(performance_table))
+        )
+
     def rank_series(self, performance_table: PerformanceTableType):
         return Series(
             self.rank_list(performance_table),
@@ -53,7 +58,18 @@ class Model(RandomDataclass):
         self, performance_table: PerformanceTableType, comparisons: PreferenceStructure
     ):
         return fitness_comparisons_ranking(
-            comparisons, self.rank_series(performance_table)
+            comparisons, self.rank_dict(performance_table)
+        )
+
+    def credibility_numpy(
+        self, performance_table: PerformanceTableType
+    ) -> np.ndarray[tuple[int, int], np.dtype[np.float64]]: ...
+
+    def credibility(self, performance_table: PerformanceTableType):
+        return DataFrame(
+            self.credibility_numpy(performance_table),
+            index=performance_table.alternatives,
+            columns=performance_table.alternatives,
         )
 
     @classmethod

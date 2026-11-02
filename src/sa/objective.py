@@ -48,7 +48,7 @@ class CollectiveObjective(Objective[Model], Dataclass):
     def __call__(self, sol: Model):
         result = 0
 
-        ranks = sol.rank_series(self.performance_table).to_dict()
+        ranks = sol.rank_dict(self.performance_table)
 
         if not_accepted := comparisons_ranking(self.comparisons_accepted, ranks):
             result += len(not_accepted)

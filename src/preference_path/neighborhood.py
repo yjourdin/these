@@ -56,7 +56,7 @@ class NeighborhoodModel[T: FrozenRMPModel | FrozenSRMPModel](
             PreferenceStructure(
                 comparisons_ranking(
                     self.target_preferences,
-                    sol.model.rank_series(self.alternatives).to_dict(),
+                    sol.model.rank_dict(self.alternatives),
                 )
             )
             if self.alternatives and self.target_preferences
@@ -152,8 +152,10 @@ class NeighborhoodProfile[T: FrozenRMPModel | FrozenSRMPModel](
                 new_values: list[np.floating] = []
                 if np.any(relevant_mask := (crit_numpy < relevant_bounds[0])):
                     new_values.append(np.max(crit_numpy[relevant_mask]))
+                    # new_values.extend(crit_numpy[relevant_mask])
                 if np.any(relevant_mask := (crit_numpy > relevant_bounds[1])):
                     new_values.append(np.min(crit_numpy[relevant_mask]))
+                    # new_values.extend(crit_numpy[relevant_mask])
 
                 profile_bounds = (
                     sol.profiles[profile_ind - 1][crit_ind] if profile_ind > 0 else 0,
@@ -161,6 +163,8 @@ class NeighborhoodProfile[T: FrozenRMPModel | FrozenSRMPModel](
                     if profile_ind < len(sol.profiles) - 1
                     else 1,
                 )
+                # if crit_ind == 2:
+                #     print(new_values)
 
                 for new_value in new_values:
                     if profile_bounds[0] <= new_value <= profile_bounds[1]:
@@ -271,6 +275,7 @@ class NeighborhoodImportanceRelation(NeighborhoodModel[FrozenRMPModel]):
                     coalition_b = frozenset([
                         c for c in crits if b[c].value >= profile[c]
                     ])
+                    coalition_pair = (coalition_a, coalition_b)
 
                 if profile_ind < len(sol.profiles) - 1:
                     a, b = coalition_pair
@@ -400,7 +405,35 @@ class NeighborhoodWeight(NeighborhoodModel[FrozenSRMPModel]):
     def __call__(self, sol: FrozenSRMPModel):
         result: list[FrozenSRMPModel] = []
 
-        for crit, increase in product(range(len(sol.weights)), [False, True]):
+        if differences := self.different_preferences(sol):
+            assert self.alternatives
+            crits = list(range(len(self.alternatives.criteria)))  # pyright: ignore[reportUnknownArgumentType]
+            for rel in differences:
+                a = self.alternatives.alternatives_values[rel.a]
+                b = self.alternatives.alternatives_values[rel.b]
+
+                profile_ind = 0
+                profile = sol.profiles[sol.lexicographic_order[profile_ind]]
+                coalition_a = frozenset([c for c in crits if a[c].value >= profile[c]])
+                coalition_b = frozenset([c for c in crits if b[c].value >= profile[c]])
+                diff = coalition_a ^ coalition_b
+
+                while (not diff) and (
+                    profile_ind < len(sol.profiles) - 1
+                ):
+                    profile_ind += 1
+                    profile = sol.profiles[sol.lexicographic_order[profile_ind]]
+                    coalition_a = frozenset([
+                        c for c in crits if a[c].value >= profile[c]
+                    ])
+                    coalition_b = frozenset([
+                        c for c in crits if b[c].value >= profile[c]
+                    ])
+                    diff = coalition_a ^ coalition_b
+        else:
+            diff = range(len(sol.weights))
+
+        for crit, increase in product(diff, [False, True]):
             result.append(
                 replace(
                     sol,

@@ -2,6 +2,7 @@ import csv
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from itertools import combinations
+from math import inf
 from multiprocessing import Pipe
 from multiprocessing.connection import Connection, wait
 from shutil import copy
@@ -12,7 +13,7 @@ import numpy as np
 from src.constants import SENTINEL
 from src.methods import MethodEnum
 from src.models import ModelEnum
-from src.preference_structure.io import from_csv, to_csv
+from src.preference_structure.io import from_csv
 
 from .....utils import catchtime
 from ....dir import DIR
@@ -47,9 +48,9 @@ def collective_thread(
     n_bc: int,
     same_alt: bool,
     D_id: int,
-    Mie: bool,
-    Mie_config: MIPConfig | None,
-    Mie_id: int,
+    # Mie: bool,
+    # Mie_config: MIPConfig | None,
+    # Mie_id: int,
     method: MethodEnum,
     config: Config,
     nb_Mcp: int,
@@ -89,9 +90,9 @@ def collective_thread(
                 n_bc,
                 same_alt,
                 D_id,
-                Mie,
-                Mie_config,
-                Mie_id,
+                # Mie,
+                # Mie_config,
+                # Mie_id,
                 config,
                 nb_Mcp,
                 Mc_id,
@@ -115,7 +116,7 @@ def collective_thread(
                 n_bc,
                 same_alt,
                 D_id,
-                Mie_id,
+                # Mie_id,
                 config,
                 nb_Mcp,
                 Mc_id,
@@ -135,15 +136,14 @@ def collective_thread(
         time_left_per_it = time_per_it
         compromise_found = False
         while (
-            (not compromise_found)
-            and (time_left >= 1)
-            and (
-                (not Mie)
-                or (
-                    isinstance(task_Mc, CollectiveMIPTask)
-                    and task_Mc.Mie_file(DIR, 0).exists()
-                )
-            )
+            (not compromise_found) and (time_left >= 1)
+            # and (
+            #     (not Mie)
+            #     or (
+            #         isinstance(task_Mc, CollectiveMIPTask)
+            #         and task_Mc.Mie_file(DIR, 0).exists()
+            #     )
+            # )
         ):
             future_Mc = thread_pool.submit(
                 task_thread,
@@ -216,9 +216,9 @@ def collective_thread(
                         n_bc,
                         same_alt,
                         D_id,
-                        Mie,
-                        Mie_config,
-                        Mie_id,
+                        # Mie,
+                        # Mie_config,
+                        # Mie_id,
                         method,
                         config,
                         nb_Mcp,
@@ -339,9 +339,9 @@ def collective_thread(
                         n_bc,
                         same_alt,
                         D_id,
-                        Mie,
-                        Mie_config,
-                        Mie_id,
+                        # Mie,
+                        # Mie_config,
+                        # Mie_id,
                         method,
                         config,
                         nb_Mcp,
@@ -399,8 +399,9 @@ def collective_thread(
                     #     )
                     #     else SENTINEL
                     # )
-                    for connection in sources:
-                        connection.send(source)
+                    if nb_Mcp > 1:
+                        for connection in sources:
+                            connection.send(source)
 
                     results_P = result_list(list(futures_P.values()))
 
@@ -431,9 +432,9 @@ def collective_thread(
                         n_bc,
                         same_alt,
                         D_id,
-                        Mie,
-                        Mie_config,
-                        Mie_id,
+                        # Mie,
+                        # Mie_config,
+                        # Mie_id,
                         method,
                         config,
                         nb_Mcp,
@@ -452,7 +453,7 @@ def collective_thread(
 
                 if all((result.res == -1) for result in results_accept.values()):
                     compromise_found = True
-                    t = None
+                    t = inf
                 else:
                     compromise_found = False
 
@@ -482,14 +483,24 @@ def collective_thread(
 
                 for dm_id in DMS:
                     with tasks_accept[dm_id].Di_file(DIR).open("r") as f:
-                        D = from_csv(f)
+                        original_D = from_csv(f)
 
-                    with tasks_accept[dm_id].P_file(DIR).open("r") as f:
-                        P = from_csv(f)
+                    # with tasks_accept[dm_id].P_file(DIR).open("r") as f:
+                    #     P = from_csv(f)
 
-                    t_dm = min(t, len(P)) if t is not None else len(P)
+                    # t_dm = min(t, len(P)) if t is not None else len(P)
 
-                    changes[dm_id] += t_dm
+                    temp = 0
+                    while (temp < t) and tasks_accept[dm_id].P_file(DIR, temp).exists():
+                        temp += 1
+                    accepted_t = temp - 1
+
+                    with tasks_accept[dm_id].P_file(DIR, accepted_t).open("r") as f:
+                        accepted_D = from_csv(f)
+
+                    changes[dm_id] += len(original_D - accepted_D)
+
+                    # changes[dm_id] += t_dm
 
                     csv_file = DIR.csv_files["changes"]
                     csv_file.writerow(
@@ -506,30 +517,35 @@ def collective_thread(
                         D_id=D_id,
                         Method=method,
                         Config=config,
-                        Mie=Mie,
-                        Mie_config=Mie_config,
-                        Mie_id=Mie_id,
+                        # Mie=Mie,
+                        # Mie_config=Mie_config,
+                        # Mie_id=Mie_id,
                         Path=path,
                         P_id=P_id,
                         Mc_id=Mc_id,
                         Nb_Mcp=nb_Mcp,
                         It=it,
                         Dm_id=dm_id,
-                        T=t_dm,
+                        T=accepted_t,
                         Changes=changes[dm_id],
                     )
 
                     if new_task_Mc is not None:
-                        for i in range(t_dm):
-                            new_relation = P.relations[i]
-                            if old_relation := D.elements_pairs_relations.get(
-                                new_relation.elements
-                            ):
-                                D -= old_relation
-                            D += new_relation
+                        copy(
+                            tasks_accept[dm_id].P_file(DIR, accepted_t),
+                            new_task_Mc.Di_file(DIR, dm_id),
+                        )
 
-                        with new_task_Mc.Di_file(DIR, dm_id=dm_id).open("w") as f:
-                            to_csv(D, f)
+                        # for i in range(t_dm):
+                        #     new_relation = P.relations[i]
+                        #     if old_relation := D.elements_pairs_relations.get(
+                        #         new_relation.elements
+                        #     ):
+                        #         D -= old_relation
+                        #     D += new_relation
+
+                        # with new_task_Mc.Di_file(DIR, dm_id=dm_id).open("w") as f:
+                        #     to_csv(D, f)
 
                         with new_task_Mc.C_file(DIR).open("a", newline="") as f:
                             C_writer = csv.writer(f, "unix")  # pyright: ignore[reportUnknownArgumentType]
@@ -560,9 +576,9 @@ def collective_thread(
         D_id=D_id,
         Method=method,
         Config=config,
-        Mie=Mie,
-        Mie_config=Mie_config,
-        Mie_id=Mie_id,
+        # Mie=Mie,
+        # Mie_config=Mie_config,
+        # Mie_id=Mie_id,
         Path=path,
         P_id=P_id,
         Mc_id=Mc_id,

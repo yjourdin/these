@@ -31,7 +31,7 @@ class ArgumentsGroupDecision(  # pyright: ignore[reportIncompatibleMethodOverrid
     nb_Mo: int | None = None
     nb_Mi: int | None = None
     nb_D: int | None = None
-    nb_Mie: int | None = None
+    # nb_Mie: int | None = None
     nb_Mc: int | None = None
     nb_P: int | None = None
     group_size: list[int] = field(default_factory=list)

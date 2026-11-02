@@ -1,15 +1,12 @@
-from collections.abc import Mapping
-from typing import Any
-
 import numpy as np
 from mcda.internal.core.matrices import OutrankingMatrix
 from mcda.internal.core.relations import Relation
 from mcda.relations import I, P, PreferenceStructure
 
-from .utils import OutrankingMatrixClass, RankingSeries, outranking_numpy
+from .utils import OutrankingMatrixClass, RankingDict, outranking_numpy
 
 
-def comparisons_ranking(C: PreferenceStructure, R: Mapping[Any, int | float]):
+def comparisons_ranking(C: PreferenceStructure, R: RankingDict):
     result: list[Relation] = []
     for r in C:
         match r:
@@ -44,21 +41,19 @@ def fitness_comparisons(Co: PreferenceStructure, Ce: PreferenceStructure):
     return sum(r in Ce for r in Co) / len(Co)
 
 
-def fitness_comparisons_ranking(Co: PreferenceStructure, Re: RankingSeries):
-    Re_dict = Re.to_dict()
-
-    return 1 - (len(comparisons_ranking(Co, Re_dict)) / len(Co))
+def fitness_comparisons_ranking(Co: PreferenceStructure, Re: RankingDict):
+    # print(comparisons_ranking(Co, Re))
+    return 1 - (len(comparisons_ranking(Co, Re)) / len(Co))
 
 
 def fitness_comparisons_outranking(Co: PreferenceStructure, Oe: OutrankingMatrix):
     return 1 - (len(comparisons_outranking(Co, Oe)) / len(Co))
 
 
-def fitness_ranking_comparisons(Ro: RankingSeries, Ce: PreferenceStructure):
+def fitness_ranking_comparisons(Ro: RankingDict, Ce: PreferenceStructure):
     n = len(Ro)
-    Ro_dict = Ro.to_dict()
 
-    return 1 - (len(comparisons_ranking(Ce, Ro_dict)) / (n * (n - 1) / 2))
+    return 1 - (len(comparisons_ranking(Ce, Ro)) / (n * (n - 1) / 2))
 
 
 def fitness_outranking_comparisons(Oo: OutrankingMatrix, Ce: PreferenceStructure):
@@ -82,14 +77,14 @@ def fitness_outranking_numpy(
 
 
 def fitness_outranking(
-    Oo: OutrankingMatrix | RankingSeries, Oe: OutrankingMatrix | RankingSeries
+    Oo: OutrankingMatrix | RankingDict, Oe: OutrankingMatrix | RankingDict
 ):
     return fitness_outranking_numpy(outranking_numpy(Oo), outranking_numpy(Oe))
 
 
 def fitness(
-    o: PreferenceStructure | OutrankingMatrix | RankingSeries,
-    e: PreferenceStructure | OutrankingMatrix | RankingSeries,
+    o: PreferenceStructure | OutrankingMatrix | RankingDict,
+    e: PreferenceStructure | OutrankingMatrix | RankingDict,
 ):
     if isinstance(o, PreferenceStructure):
         if isinstance(e, PreferenceStructure):
@@ -104,7 +99,4 @@ def fitness(
         else:
             return fitness_outranking(o, e)
     else:
-        if isinstance(e, PreferenceStructure):
-            return fitness_ranking_comparisons(o, e)
-        else:
-            return fitness_outranking(o, e)
+        return fitness_ranking_comparisons(o, e)

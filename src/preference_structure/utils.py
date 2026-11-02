@@ -1,5 +1,5 @@
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import Any
 
 import numpy as np
@@ -10,6 +10,7 @@ from pandas import Series
 
 OutrankingMatrixClass = AdjacencyValueMatrix
 type RankingSeries = Series[int]
+type RankingDict = Mapping[Any, int | float]
 
 
 def preference_structure_from_outranking(outranking: OutrankingMatrix):
@@ -30,13 +31,13 @@ def outranking_numpy_from_outranking(outranking: OutrankingMatrix):
     return outranking.data.to_numpy().astype(np.bool, copy=False)
 
 
-def outranking_numpy_from_ranking(ranking: RankingSeries):
-    ranking_numpy = ranking.to_numpy()
+def outranking_numpy_from_ranking(ranking: RankingDict):
+    ranking_numpy = np.array(list(ranking.values()))
 
     return np.less_equal.outer(ranking_numpy, ranking_numpy).astype(np.bool, copy=False)
 
 
-def outranking_numpy(o: OutrankingMatrix | RankingSeries):
+def outranking_numpy(o: OutrankingMatrix | RankingDict):
     if isinstance(o, OutrankingMatrixClass):
         return outranking_numpy_from_outranking(o)
     else:

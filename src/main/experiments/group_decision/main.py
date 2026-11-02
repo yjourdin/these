@@ -35,12 +35,11 @@ def main(args: ArgumentsGroupDecision):
     NB_MO = args.nb_Mo or NB_ATR
     NB_MI = args.nb_Mi or NB_MO
     NB_D = args.nb_D or NB_MI
-    NB_MIE = args.nb_Mie or NB_D
-    NB_MC = args.nb_Mc or NB_MIE
+    NB_MC = args.nb_Mc or NB_D
     NB_P = args.nb_P or NB_MC
 
     # Complete seeds
-    seeds = Seeds.from_seed(NB_ATR, NB_MO, NB_MI, NB_D, NB_MIE, NB_MC, NB_P, args.seed)
+    seeds = Seeds.from_seed(NB_ATR, NB_MO, NB_MI, NB_D, NB_MC, NB_P, args.seed)
     replace(seeds, A_tr=list_replace(seeds.A_tr, args.seeds.A_tr))
     replace(seeds, Mo=list_replace(seeds.Mo, args.seeds.Mo))
     replace(seeds, Mi=list_replace(seeds.Mi, args.seeds.Mi))
@@ -176,76 +175,116 @@ def main(args: ArgumentsGroupDecision):
                                             for config in args.config
                                             if config.method is method
                                         ):
-                                            for Mie_id in (
-                                                range(args.nb_Mie)
-                                                if args.nb_Mie
-                                                else [D_id]
-                                            ):
-                                                for Mie in args.Mie:
-                                                    precede_futures = [
-                                                        futures[
-                                                            DTask(
-                                                                m,
-                                                                n_tr,
-                                                                Atr_id,
-                                                                model,
-                                                                ko,
-                                                                args.fixed_lex_order,
-                                                                Mo_id,
-                                                                group_size,
-                                                                group,
-                                                                Mi_id,
-                                                                dm_id,
-                                                                n_bc,
-                                                                same_alt,
-                                                                D_id,
-                                                            )
-                                                        ]
-                                                        for dm_id in range(group_size)
-                                                    ]
-
-                                                    do_Mie = (
-                                                        method == MethodEnum.MIP and Mie
+                                            # for Mie_id in (
+                                            #     range(args.nb_Mie)
+                                            #     if args.nb_Mie
+                                            #     else [D_id]
+                                            # ):
+                                            #     for Mie in args.Mie:
+                                            precede_futures = [
+                                                futures[
+                                                    DTask(
+                                                        m,
+                                                        n_tr,
+                                                        Atr_id,
+                                                        model,
+                                                        ko,
+                                                        args.fixed_lex_order,
+                                                        Mo_id,
+                                                        group_size,
+                                                        group,
+                                                        Mi_id,
+                                                        dm_id,
+                                                        n_bc,
+                                                        same_alt,
+                                                        D_id,
                                                     )
-                                                    for Mie_config in (
-                                                        args.Mie_config
-                                                        if do_Mie
-                                                        else [None]
-                                                    ):
-                                                        if do_Mie:
-                                                            assert Mie_config
-                                                            task = MieTask(
-                                                                m,
-                                                                n_tr,
-                                                                Atr_id,
-                                                                model,
-                                                                ko,
-                                                                args.fixed_lex_order,
-                                                                Mo_id,
-                                                                group_size,
-                                                                group,
-                                                                Mi_id,
-                                                                n_bc,
-                                                                same_alt,
-                                                                D_id,
-                                                                Mie_config,
-                                                                Mie_id,
-                                                            )
+                                                ]
+                                                for dm_id in range(group_size)
+                                            ]
 
-                                                            futures[task] = (
-                                                                thread_pool.submit(
-                                                                    task_thread,
-                                                                    task,
-                                                                    seed=seeds.Mie[
-                                                                        Mie_id
-                                                                    ],
-                                                                    precede_futures=precede_futures,
-                                                                )
-                                                            )
+                                            # do_Mie = (
+                                            #     method == MethodEnum.MIP and Mie
+                                            # )
+                                            # for Mie_config in (
+                                            #     args.Mie_config
+                                            #     if do_Mie
+                                            #     else [None]
+                                            # ):
+                                            #     if do_Mie:
+                                            #         assert Mie_config
+                                            task = MieTask(
+                                                m,
+                                                n_tr,
+                                                Atr_id,
+                                                model,
+                                                ko,
+                                                args.fixed_lex_order,
+                                                Mo_id,
+                                                group_size,
+                                                group,
+                                                Mi_id,
+                                                n_bc,
+                                                same_alt,
+                                                D_id,
+                                                # Mie_config,
+                                                # Mie_id,
+                                                method,
+                                                config
+                                            )
 
-                                                            precede_futures = [
-                                                                futures[
-                                                                    MieTask(
+                                            futures[task] = (
+                                                thread_pool.submit(
+                                                    task_thread,
+                                                    task,
+                                                    seed=seeds.Mie,
+                                                    precede_futures=precede_futures,
+                                                )
+                                            )
+
+                                            precede_futures = [
+                                                futures[
+                                                    MieTask(
+                                                        m,
+                                                        n_tr,
+                                                        Atr_id,
+                                                        model,
+                                                        ko,
+                                                        args.fixed_lex_order,
+                                                        Mo_id,
+                                                        group_size,
+                                                        group,
+                                                        Mi_id,
+                                                        n_bc,
+                                                        same_alt,
+                                                        D_id,
+                                                        # Mie_config,
+                                                        # Mie_id,
+                                                        method,
+                                                        config,
+                                                    )
+                                                ]
+                                            ]
+
+                                            for path in args.path:
+                                                for Mc_id in (
+                                                    range(args.nb_Mc)
+                                                    if args.nb_Mc
+                                                    # else [Mie_id]
+                                                    else [D_id]
+                                                ):
+                                                    for (
+                                                        nb_Mcp
+                                                    ) in args.nb_Mcp:
+                                                        for P_id in (
+                                                            range(args.nb_P)
+                                                            if args.nb_P
+                                                            else [Mc_id]
+                                                        ):
+                                                            task: Task
+                                                            match method:
+                                                                case MethodEnum.MIP:
+                                                                    task = CollectiveMIPTask(
                                                                         m,
                                                                         n_tr,
                                                                         Atr_id,
@@ -259,113 +298,76 @@ def main(args: ArgumentsGroupDecision):
                                                                         n_bc,
                                                                         same_alt,
                                                                         D_id,
-                                                                        Mie_config,
-                                                                        Mie_id,
+                                                                        # Mie,
+                                                                        # Mie_config,
+                                                                        # Mie_id,
+                                                                        cast(
+                                                                            MIPConfig,
+                                                                            config,
+                                                                        ),
+                                                                        nb_Mcp,
+                                                                        Mc_id,
+                                                                        path,
+                                                                        P_id,
+                                                                        0,
                                                                     )
-                                                                ]
-                                                            ]
-
-                                                        for path in args.path:
-                                                            for Mc_id in (
-                                                                range(args.nb_Mc)
-                                                                if args.nb_Mc
-                                                                else [Mie_id]
-                                                            ):
-                                                                for (
-                                                                    nb_Mcp
-                                                                ) in args.nb_Mcp:
-                                                                    for P_id in (
-                                                                        range(args.nb_P)
-                                                                        if args.nb_P
-                                                                        else [Mc_id]
-                                                                    ):
-                                                                        task: Task
-                                                                        match method:
-                                                                            case MethodEnum.MIP:
-                                                                                task = CollectiveMIPTask(
-                                                                                    m,
-                                                                                    n_tr,
-                                                                                    Atr_id,
-                                                                                    model,
-                                                                                    ko,
-                                                                                    args.fixed_lex_order,
-                                                                                    Mo_id,
-                                                                                    group_size,
-                                                                                    group,
-                                                                                    Mi_id,
-                                                                                    n_bc,
-                                                                                    same_alt,
-                                                                                    D_id,
-                                                                                    Mie,
-                                                                                    Mie_config,
-                                                                                    Mie_id,
-                                                                                    cast(
-                                                                                        MIPConfig,
-                                                                                        config,
-                                                                                    ),
-                                                                                    nb_Mcp,
-                                                                                    Mc_id,
-                                                                                    path,
-                                                                                    P_id,
-                                                                                    0,
-                                                                                )
-                                                                            case MethodEnum.SA:
-                                                                                task = CollectiveSATask(
-                                                                                    m,
-                                                                                    n_tr,
-                                                                                    Atr_id,
-                                                                                    model,
-                                                                                    ko,
-                                                                                    args.fixed_lex_order,
-                                                                                    Mo_id,
-                                                                                    group_size,
-                                                                                    group,
-                                                                                    Mi_id,
-                                                                                    n_bc,
-                                                                                    same_alt,
-                                                                                    D_id,
-                                                                                    Mie_id,
-                                                                                    cast(
-                                                                                        SAConfig,
-                                                                                        config,
-                                                                                    ),
-                                                                                    nb_Mcp,
-                                                                                    Mc_id,
-                                                                                    path,
-                                                                                    P_id,
-                                                                                    0,
-                                                                                )
-                                                                        futures[
-                                                                            task
-                                                                        ] = thread_pool.submit(
-                                                                            collective_thread,
-                                                                            m=m,
-                                                                            n_tr=n_tr,
-                                                                            model=model,
-                                                                            ko=ko,
-                                                                            fixed_lex_order=args.fixed_lex_order,
-                                                                            group_size=group_size,
-                                                                            group=group,
-                                                                            n_bc=n_bc,
-                                                                            same_alt=same_alt,
-                                                                            D_id=D_id,
-                                                                            Mie=Mie,
-                                                                            Mie_config=Mie_config,
-                                                                            method=method,
-                                                                            config=config,
-                                                                            nb_Mcp=nb_Mcp,
-                                                                            path=path,
-                                                                            Atr_id=Atr_id,
-                                                                            Mo_id=Mo_id,
-                                                                            Mi_id=Mi_id,
-                                                                            Mie_id=Mie_id,
-                                                                            Mc_id=Mc_id,
-                                                                            P_id=P_id,
-                                                                            seeds=seeds,
-                                                                            max_time=args.max_time,
-                                                                            time_per_it=args.time_per_it,
-                                                                            precede_futures=precede_futures,
-                                                                        )
+                                                                case MethodEnum.SA:
+                                                                    task = CollectiveSATask(
+                                                                        m,
+                                                                        n_tr,
+                                                                        Atr_id,
+                                                                        model,
+                                                                        ko,
+                                                                        args.fixed_lex_order,
+                                                                        Mo_id,
+                                                                        group_size,
+                                                                        group,
+                                                                        Mi_id,
+                                                                        n_bc,
+                                                                        same_alt,
+                                                                        D_id,
+                                                                        # Mie_id,
+                                                                        cast(
+                                                                            SAConfig,
+                                                                            config,
+                                                                        ),
+                                                                        nb_Mcp,
+                                                                        Mc_id,
+                                                                        path,
+                                                                        P_id,
+                                                                        0,
+                                                                    )
+                                                            futures[
+                                                                task
+                                                            ] = thread_pool.submit(
+                                                                collective_thread,
+                                                                m=m,
+                                                                n_tr=n_tr,
+                                                                model=model,
+                                                                ko=ko,
+                                                                fixed_lex_order=args.fixed_lex_order,
+                                                                group_size=group_size,
+                                                                group=group,
+                                                                n_bc=n_bc,
+                                                                same_alt=same_alt,
+                                                                D_id=D_id,
+                                                                # Mie=Mie,
+                                                                # Mie_config=Mie_config,
+                                                                # Mie_id=Mie_id,
+                                                                method=method,
+                                                                config=config,
+                                                                nb_Mcp=nb_Mcp,
+                                                                path=path,
+                                                                Atr_id=Atr_id,
+                                                                Mo_id=Mo_id,
+                                                                Mi_id=Mi_id,
+                                                                Mc_id=Mc_id,
+                                                                P_id=P_id,
+                                                                seeds=seeds,
+                                                                max_time=args.max_time,
+                                                                time_per_it=args.time_per_it,
+                                                                precede_futures=precede_futures,
+                                                            )
 
     done, _ = wait(
         futures.values(),

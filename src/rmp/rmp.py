@@ -94,6 +94,32 @@ class ProfileWiseOutranking(Ranker):
             )
         )
 
+    def credibility(self, **kwargs: Any):
+        """Construct an outranking matrix.
+
+        :return:
+        """
+        scores = Series({
+            a: self.importance_relation[
+                frozenset([
+                    c
+                    for c, s in av.scales.items()
+                    if s.is_better_or_equal(av[c], self.profile[c])
+                ])
+            ]
+            for a, av in self.performance_table.alternatives_values.items()
+        })
+
+        return DataFrame(
+            [
+                [scores[ai] - scores[aj] for aj in self.performance_table.alternatives]
+                for ai in self.performance_table.alternatives
+            ],
+            index=self.performance_table.alternatives,  # pyright: ignore[reportUnknownArgumentType]
+            columns=self.performance_table.alternatives,  # pyright: ignore[reportUnknownArgumentType]
+            dtype="int64",
+        )
+
 
 class NormalProfileWiseOutranking(ProfileWiseOutranking):
     """This class infers outranking relations related to a single profile.
@@ -131,6 +157,20 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
         ])
 
         return np.greater_equal.outer(scores, scores).astype(dtype=np.bool)
+
+    def credibility_numpy(self, **kwargs: Any):
+        """Construct an outranking matrix.
+
+        :return:
+        """
+        comp_df = self.performance_table.data >= self.profile.data
+
+        scores = np.array([
+            self.importance_relation[frozenset(np.nonzero(a)[0].tolist())]
+            for a in comp_df.values
+        ])
+
+        return np.subtract.outer(scores, scores)
 
 
 class RMP(Ranker):
@@ -217,6 +257,47 @@ class RMP(Ranker):
             ),
         )
 
+    def construct_credibility(self):
+        """Construct one outranking matrix per category profile.
+
+        :return:
+        """
+        return [sub_rmp.credibility() for sub_rmp in self.sub_rmp]
+
+    def exploit_credibility(
+        self,
+        credibility_matrices: list[DataFrame],
+        lexicographic_order: list[int] | None = None,
+    ):
+        """Merge outranking matrices built by profiles in lexicographic
+        order using RMP exploitation method.
+
+        :param outranking_matrices:
+            outranking matrix constructed in :attr:`profiles` order
+        :param lexicographic_order: (if not supplied, use attribute)
+        :return:
+            the outranking total order as a ranking
+        """
+        lexicographic_order = (
+            self.lexicographic_order
+            if lexicographic_order is None
+            else lexicographic_order
+        )
+        relations_ordered = [credibility_matrices[i] for i in lexicographic_order]
+        n = len(relations_ordered)
+        score = DataFrame(
+            0,
+            index=relations_ordered[0].vertices,  # pyright: ignore[reportUnknownArgumentType]
+            columns=relations_ordered[0].vertices,  # pyright: ignore[reportUnknownArgumentType]
+        )
+        mask = score == 0
+        i = 0
+        while (i < n) and mask.any(axis=None):
+            score[mask] = relations_ordered[i][mask]  # pyright: ignore[reportArgumentType, reportCallIssue]
+            mask = score == 0
+            i += 1
+        return score
+
     def rank(self, **kwargs: Any):
         """Compute the RMP algorithm
 
@@ -224,6 +305,14 @@ class RMP(Ranker):
             the outranking total order as a ranking
         """
         return self.exploit(self.construct())
+
+    def credibility(self, **kwargs: Any):
+        """Compute the RMP algorithm
+
+        :return:
+            the outranking total order as a ranking
+        """
+        return self.exploit_credibility(self.construct_credibility())
 
     @classmethod
     def plot_input_data(
@@ -596,3 +685,23 @@ class NormalRMP(RMP):
         outranking_matrix = score - score.transpose() >= 0
         scores = outranking_matrix.sum(1)
         return np.array(rankdata(-scores, method="dense")).astype(np.int_)
+
+    def credibility_numpy(self, **kwargs: Any):
+        """Compute the RMP algorithm
+
+        :return:
+            the outranking total order as a ranking
+        """
+        profilewise_outranking_matrices = np.array([
+            sub_rmp.credibility_numpy() for sub_rmp in self.sub_rmp
+        ])
+        relations_ordered = profilewise_outranking_matrices[self.lexicographic_order]
+        n = len(relations_ordered)
+        score = np.zeros_like(relations_ordered[0])
+        mask = score == 0
+        i = 0
+        while (i < n) and mask.any():
+            score[mask] = relations_ordered[i][mask]  # pyright: ignore[reportArgumentType, reportCallIssue]
+            mask = score == 0
+            i += 1
+        return score

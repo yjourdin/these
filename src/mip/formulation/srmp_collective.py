@@ -30,7 +30,7 @@ class MIPSRMPCollectiveVars(MIPVars):
     s: D[D[LpVariable]]
     s_star: D[LpVariable]
     S: LpVariable
-    R: D[LpVariable]
+    # R: D[LpVariable]
 
 
 @dataclass
@@ -61,6 +61,7 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
     preference_accepted: list[P]
     indifference_accepted: list[I]
     comparisons_past: list[PreferenceStructure]
+    exist: bool
     gamma: float = EPSILON
     best_objective: float | None = None
 
@@ -153,38 +154,39 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                 cat=LpBinary,
             ),  # pyright: ignore[reportUnknownArgumentType]
             S=LpVariable("MinimumPreferencesChanges", cat=LpInteger),
-            R=LpVariable.dicts(
-                "MinimumPreferencesChanges",
-                indices=self.preference_refused + self.indifference_refused,
-                cat=LpBinary,
-            ),  # pyright: ignore[reportUnknownArgumentType]
+            # R=LpVariable.dicts(
+            #     "MinimumPreferencesChanges",
+            #     indices=self.preference_refused + self.indifference_refused,
+            #     cat=LpBinary,
+            # ),  # pyright: ignore[reportUnknownArgumentType]
         )
 
     def create_problem(self):
         self.prob = LpProblem("SRMP_Elicitation", LpMinimize)
 
-        # self.prob += self.vars["S"]
-        self.prob += self.vars["S"] + max(
-            len(self.preference_relations[dm]) for dm in self.params.DM
-        ) * lpSum(self.vars["R"].values())
+        if not self.exist:
+            self.prob += self.vars["S"]
+            # self.prob += self.vars["S"] + max(
+            #     len(self.preference_relations[dm]) for dm in self.params.DM
+            # ) * lpSum(self.vars["R"].values())
 
-        # self.prob += self.vars["S"] * max(len(self.preference_relations[dm]) + len(self.indifference_relations[dm]) for dm in self.params.DM) + (
-        #     lpSum([self.preferences_changed[dm] for dm in self.params.DM])
-        #     + sum(
-        #         lpSum([
-        #             self.vars["s"][preference_relations_union.index(r)][0]
-        #             for r in self.preference_relations[dm]
-        #         ])
-        #         for dm in self.params.DM
-        #     )
-        #     + sum(
-        #         lpSum([
-        #             self.vars["s_star"][indifference_relations_union.index(r)]
-        #             for r in self.indifference_relations[dm]
-        #         ])
-        #         for dm in self.params.DM
-        #     )
-        # ) / len(self.params.DM)
+            # self.prob += self.vars["S"] * max(len(self.preference_relations[dm]) + len(self.indifference_relations[dm]) for dm in self.params.DM) + (
+            #     lpSum([self.preferences_changed[dm] for dm in self.params.DM])
+            #     + sum(
+            #         lpSum([
+            #             self.vars["s"][preference_relations_union.index(r)][0]
+            #             for r in self.preference_relations[dm]
+            #         ])
+            #         for dm in self.params.DM
+            #     )
+            #     + sum(
+            #         lpSum([
+            #             self.vars["s_star"][indifference_relations_union.index(r)]
+            #             for r in self.indifference_relations[dm]
+            #         ])
+            #         for dm in self.params.DM
+            #     )
+            # ) / len(self.params.DM)
 
         # Normalized weights
         self.prob += lpSum([self.vars["w"][j] for j in self.params.M]) == 1
@@ -309,17 +311,17 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                 )
 
         # Constraint on accepted preferences
-        # for r in self.preference_accepted:
-        #     self.vars["s"][self.preference_relations_union.index(r)][0].setInitialValue(
-        #         0
-        #     )
-        #     self.vars["s"][self.preference_relations_union.index(r)][0].fixValue()
+        for r in self.preference_accepted:
+            self.vars["s"][self.preference_relations_union.index(r)][0].setInitialValue(
+                0
+            )
+            self.vars["s"][self.preference_relations_union.index(r)][0].fixValue()
 
-        # for r in self.indifference_accepted:
-        #     self.vars["s_star"][
-        #         self.indifference_relations_union.index(r)
-        #     ].setInitialValue(0)
-        #     self.vars["s_star"][self.indifference_relations_union.index(r)].fixValue()
+        for r in self.indifference_accepted:
+            self.vars["s_star"][
+                self.indifference_relations_union.index(r)
+            ].setInitialValue(0)
+            self.vars["s_star"][self.indifference_relations_union.index(r)].fixValue()
 
         # Constraint on refused preferences
         for r in self.preference_refused:
@@ -328,14 +330,14 @@ class MIPSRMPCollective(MIP[SRMPModel, MIPSRMPCollectiveVars, MIPSRMPCollectiveP
                 + self.vars["s_star"][
                     self.indifference_relations_union.index(I(r.a, r.b))
                 ]
-                <= 1 + self.vars["R"][r]
+                <= 1  # + self.vars["R"][r]
             )
 
         for r in self.indifference_refused:
             self.prob += (
                 self.vars["s"][self.preference_relations_union.index(P(r.a, r.b))][0]
                 + self.vars["s"][self.preference_relations_union.index(P(r.b, r.a))][0]
-                <= 1 + self.vars["R"][r]
+                <= 1  # + self.vars["R"][r]
             )
 
         for comp in self.comparisons_past:

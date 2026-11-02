@@ -57,21 +57,27 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
                         # Best node
                         # current_node = heapq.heappop(self.open_heap)
                         current = current_node.item
+                        # print(current.profiles[0])
 
                         if self.verbose:
-                            # print(
-                            #     set(self.parent[current].keys()),
-                            #     current_node.heuristic,
-                            #     flush=True,
-                            # )
-                            with self.log_writer() as log_writer:
-                                log_writer.writerow(
-                                    self.LogFields(
-                                        Item=current,
-                                        Heuristic=current_node.heuristic,
-                                        Time=self.time,
-                                    )
-                                )
+                            print(
+                                # set(self.parent[current].keys()),
+                                current_node.heuristic,
+                                len(self.parent),
+                                current.profiles[0],
+                                current.weights,
+                                hash(current),
+                                # current.importance_relation,
+                                flush=True,
+                            )
+                            # with self.log_writer() as log_writer:
+                            #     log_writer.writerow(
+                            #         self.LogFields(
+                            #             Item=current,
+                            #             Heuristic=current_node.heuristic,
+                            #             Time=self.time,
+                            #         )
+                            #     )
 
                         # Explore neighborhood
                         for neighbor in self.neighborhood(current_node.item):

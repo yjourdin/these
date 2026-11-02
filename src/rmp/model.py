@@ -60,6 +60,17 @@ class RMPModel(
         else:
             raise TypeError("Performance table not normalized")
 
+    def credibility_numpy(self, performance_table: PerformanceTableType):
+        if isinstance(performance_table, NormalPerformanceTable):
+            return NormalRMP(
+                performance_table,
+                self.importance_relation,
+                self.profiles,
+                self.lexicographic_order,
+            ).credibility_numpy()
+        else:
+            raise TypeError("Performance table not normalized")
+
     @classmethod
     def from_reference(
         cls,

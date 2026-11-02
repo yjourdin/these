@@ -14,7 +14,7 @@ from src.preference_path.neighborhood import (
     NeighborhoodWeight,
 )
 from src.preference_structure.fitness import fitness_outranking
-from src.preference_structure.utils import RankingSeries
+from src.preference_structure.utils import RankingDict
 from src.rmp.model import FrozenRMPModel, RMPModel
 from src.srmp.model import FrozenSRMPModel, SRMPModel
 
@@ -32,18 +32,18 @@ class ConsensusResult(NamedTuple):
 
 class DistanceRankingEnum(Enum):
     @member
-    def FITNESS(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
+    def FITNESS(self, Ra: RankingDict, Rb: RankingDict) -> float:
         return fitness_outranking(Ra, Rb)
 
     @member
-    def KENDALL(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
+    def KENDALL(self, Ra: RankingDict, Rb: RankingDict) -> float:
         return kendalltau(Ra, Rb).statistic  # pyright: ignore[reportAttributeAccessIssue]
 
     @member
-    def SPEARMAN(self, Ra: RankingSeries, Rb: RankingSeries) -> float:
+    def SPEARMAN(self, Ra: RankingDict, Rb: RankingDict) -> float:
         return float(spearmanr(Ra, Rb).statistic)  # pyright: ignore[reportUnknownArgumentType, reportAttributeAccessIssue]
 
-    def __call__(self, Ra: RankingSeries, Rb: RankingSeries):
+    def __call__(self, Ra: RankingDict, Rb: RankingDict):
         return self.value(self, Ra, Rb)
 
     def __str__(self):
@@ -51,7 +51,7 @@ class DistanceRankingEnum(Enum):
 
 
 def rccd(distance: DistanceRankingEnum):
-    def func(ra: RankingSeries, rb: RankingSeries):
+    def func(ra: RankingDict, rb: RankingDict):
         return 0.5 * (1 + distance(ra, rb))
 
     return func if distance is not DistanceRankingEnum.FITNESS else distance
@@ -64,7 +64,7 @@ def distance_ranking_model(
     distance: DistanceRankingEnum,
 ):
     return distance(
-        Ma.rank_series(performance_table), Mb.rank_series(performance_table)
+        Ma.rank_dict(performance_table), Mb.rank_dict(performance_table)
     )
 
 
@@ -87,8 +87,8 @@ def consensus_group_model(
 ):
     DMS = range(len(model))
     NB_DM = len(DMS)
-    dm_rankings = [model[dm].rank_series(performance_table) for dm in DMS]
-    collective_ranking = model.collective_model.rank_series(performance_table)
+    dm_rankings = [model[dm].rank_dict(performance_table) for dm in DMS]
+    collective_ranking = model.collective_model.rank_dict(performance_table)
 
     between_individual = np.array([
         [distance(dm_rankings[dm_a], dm_rankings[dm_b]) for dm_b in DMS if dm_b != dm_a]
