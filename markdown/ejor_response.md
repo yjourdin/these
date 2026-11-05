@@ -30,7 +30,8 @@ extension du MILP pour du groupe (à partir d'un MILP mono-décideur)
 ### Quel est l'intérêt des chemins de préférences au niveau des décideurs ?
 
 Justifier le lien entre model-space et preference-space (et pourquoi on se met dans le model-space)
-Garder une cohérence en termes de modèles que ce soit pour le classement de groupe ainsi que pour celui des décideurs
+
+Garder une cohérence en termes de modèles que ce soit pour le classement de groupe ainsi que pour celui des décideurs (Damart)
 
 ### Le modèle M_i n'est pas le modèle du décideurs
 
@@ -43,13 +44,14 @@ Les affirmations comme quoi les chemins de préférences doivent être courts et
 ### Le cas où un modèle n'est pas trouvé n'est pas décrit
 
 Expliciter plus en profondeur ce cas-là
+
 Alors il y a infaisabilité, et donc il faut en tirer des préférences qui entrent en contradiction à l'aide de méthodes adaptées (Mousseau)
 
 ### L'accumulation de refus peut mener à un problème infaisable, et si une étape de chemin est refusée, toutes les comparaisons ne sont pas forcéments refusées
 
 Être plus clair sur le traitement du cas d'infaisabilité, ainsi que sur la prise en compte des refus par le MILP.
-Si infaisabilité, alors cf au dessus
-Dans le cas où des modifications sont refusées, toutes ne posent pas effectivement problème, mais cela est pris en compte au niveau du MILP (partie qui n'a pas été développée)
+Si infaisabilité, alors cf au dessus.
+Dans le cas où des modifications sont refusées, toutes ne posent pas effectivement problème, mais cela est pris en compte au niveau du MILP (partie qui n'a pas été développée).
 
 ### L'objectif d'équité n'est pas au standard
 
@@ -75,6 +77,7 @@ Dire qu'on cherche à valider le processus, pas le modèle
 ### Les performances du solveur prennent une trop gande place dans l'analyse des résultats du processus (ça ne démontre que le problème de la mise à l'échelle), il faut d'autres métriques pour évaluer le processus itératif
 
 Donner des informations sur la qualité du compromis, telles que :
+
 - Nombre de refus
 - Nombre de changements par itérations
 - Nombre de concessions totales
@@ -87,6 +90,36 @@ Seul avantage des chemins est le nombre réduit d'itérations, pas forcément no
 ### Les expériences conduites ne sont pas très réalistes
 
 Trop d'alternatives (1000) pour trop peu de comparaisons (50 max), il faut réduire le nombre de comparaisons.
+
+## Idée
+
+crédibilité : $r(a \succ b) \in [0, 1] \quad \lvert r(a \succ b) \rvert <= \lambda$
+
+$r(a \succ b) = \max(0, \sum_{a_j>p_j} w_j - \sum_{b_j>p_j} w_j) \in [0, 1]$
+
+$r(a \sim b) = 1 - \lvert \sum_{a_j>p_j} w_j - \sum_{b_j>p_j} w_j \rvert \in [0, 1]$
+
+$r(b \succ a) = \max(0, \sum_{b_j>p_j} w_j - \sum_{a_j>p_j} w_j) \in [0, 1]$
+
+À quel point la décision du décideur est "robuste", et peut accepter un changement
+
+$r(a \succ b) = \frac{1 + \sum_{a_j>p_j} w_j - \sum_{b_j>p_j} w_j}{2} \in [0, 1]$
+1-> $a \succ b$
+0 ->$b \succ a$
+0.5 ->$a \sim b$
+
+$r(a \sim b) = \min(\sum_{(a_j \ge p_j \text{ et } b_j \ge p_j) \text{ ou } (a_j < p_j \text{ et } b_j < p_j)} w_j \quad \forall p \in \mathcal{P}) \in [0, 1]$
+
+$C(a) = \{j : a_j \ge p_j\}$
+$C(a) = C(b) \text{ ou } C(a) \ne C(b)$
+
+$c(a) =  \sum_{a_j>p_j} w_j$
+
+$a \succ b \iff \sum_{a_j>p_j} w_j > \sum_{b_j>p_j} w_j$
+
+$\lvert \sum_{a_j>p_j} w_j - \sum_{b_j>p_j} w_j \rvert < \lambda_1 \implies a \sim b$
+
+$\lvert \sum_{a_j>p_j} w_j - \sum_{b_j>p_j} w_j \rvert < \lambda_2 \implies b \succ a \quad (\lambda_2 < \lambda_1)$
 
 <!---
 > its originality and contribution to the theory and methodology of multicriteria group decision-making are somewhat limited.
