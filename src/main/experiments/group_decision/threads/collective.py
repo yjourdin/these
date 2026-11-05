@@ -361,47 +361,48 @@ def collective_thread(
                 working_connections = list(sources.keys())
 
                 with catchtime() as time:
-                    while working_connections and not set.intersection(
-                        *sources.values()
-                    ):
-                        # while working_connections and not all(*sources.values()):
-                        for connection in cast(
-                            list[Connection], wait(working_connections)
+                    if path:
+                        while working_connections and not set.intersection(
+                            *sources.values()
                         ):
-                            if (source := connection.recv()) != SENTINEL:
-                                sources[connection] = sources[connection] | source
-                            else:
-                                working_connections.remove(connection)
-                                if not set.intersection(*[
-                                    sources[connection]
-                                    for connection in sources
-                                    if connection not in working_connections
-                                ]):
-                                    working_connections = []
+                            # while working_connections and not all(*sources.values()):
+                            for connection in cast(
+                                list[Connection], wait(working_connections)
+                            ):
+                                if (source := connection.recv()) != SENTINEL:
+                                    sources[connection] = sources[connection] | source
+                                else:
+                                    working_connections.remove(connection)
+                                    if not set.intersection(*[
+                                        sources[connection]
+                                        for connection in sources
+                                        if connection not in working_connections
+                                    ]):
+                                        working_connections = []
 
-                    source = (
-                        sources_union[
-                            np.argmax([
-                                sum(s in val for val in sources.values())
-                                for s in sources_union
-                            ])
-                        ]
-                        if (sources_union := list(set.union(*sources.values())))  # pyright: ignore[reportUnknownArgumentType]
-                        else 0
-                    )
+                        source = (
+                            sources_union[
+                                np.argmax([
+                                    sum(s in val for val in sources.values())
+                                    for s in sources_union
+                                ])
+                            ]
+                            if (sources_union := list(set.union(*sources.values())))  # pyright: ignore[reportUnknownArgumentType]
+                            else 0
+                        )
 
-                    # source = (
-                    #     intersect.pop()
-                    #     if (
-                    #         working_connections
-                    #         and (intersect := set.intersection(*sources.values()))
-                    #         # and (intersect := set.union(*sources.values()))
-                    #     )
-                    #     else SENTINEL
-                    # )
-                    if nb_Mcp > 1:
-                        for connection in sources:
-                            connection.send(source)
+                        # source = (
+                        #     intersect.pop()
+                        #     if (
+                        #         working_connections
+                        #         and (intersect := set.intersection(*sources.values()))
+                        #         # and (intersect := set.union(*sources.values()))
+                        #     )
+                        #     else SENTINEL
+                        # )
+                        if nb_Mcp > 1:
+                            for connection in sources:
+                                connection.send(source)
 
                     results_P = result_list(list(futures_P.values()))
 

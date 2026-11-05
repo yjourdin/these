@@ -1435,8 +1435,9 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
             preference_path = [D]
             Dc = random_comparisons(A, Mcps[Mcp_id], pairs=D.elements_pairs_relations)
             new_D = D
-            for i in rng_order.permutation(len([r for r in Dc if r not in D])):
-                new_relation = Dc.relations[i]
+            D_changes = [r for r in Dc if r not in D]
+            for i in rng_order.permutation(len(D_changes)):
+                new_relation = D_changes[i]
                 if old_relation := D.elements_pairs_relations.get(
                     new_relation.elements
                 ):
