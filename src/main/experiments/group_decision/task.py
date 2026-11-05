@@ -6,6 +6,7 @@ from multiprocessing.connection import Connection
 from operator import attrgetter
 from typing import Any, cast
 
+import numpy as np
 from mcda.relations import I, P, PreferenceStructure
 from mcda.types import Relation
 from pandas import read_csv
@@ -227,6 +228,9 @@ class DTask(AbstractDTask, MiTask):
         D = random_comparisons(A, Mi, self.nbc, rng=rng)
 
         cred = Mi.credibility(A)
+        cred_numpy = cred.to_numpy()
+
+        cred_lambda = np.quantile(cred_numpy[cred_numpy >= 0], 1 - self.group.accept)
 
         Df: list[Relation] = []
 
@@ -234,13 +238,13 @@ class DTask(AbstractDTask, MiTask):
             match r:
                 case P(a=a, b=b):
                     # print(a, "P", b, cred.at[a, b])
-                    if (c := float(cred.at[a, b]) - self.group.accept) >= 0:  # pyright: ignore[reportArgumentType]
+                    if (c := float(cred.at[a, b]) - cred_lambda) >= 0:  # pyright: ignore[reportArgumentType]
                         Df.append(P(b, a))
                         if c > 0:
                             Df.append(I(a, b))
                 case I(a=a, b=b):
                     # print(a, "I", b, cred.at[a, b])
-                    if float(cred.at[a, b]) - self.group.accept >= 0:  # pyright: ignore[reportArgumentType]
+                    if float(cred.at[a, b]) - cred_lambda >= 0:  # pyright: ignore[reportArgumentType]
                         Df.extend([P(a, b), P(b, a)])
 
         with self.D_file(dir).open("w") as f:
@@ -900,7 +904,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                     f,
                 )
 
-        time_fixed = time() / factorial(self.ko)
+        # time_fixed = time() / factorial(self.ko)
 
         csv_file = dir.csv_files["collective"]
         csv_file.writerow(
@@ -926,12 +930,12 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             Path=self.path,
             P_id=self.P_id,
             It=self.it,
-            Time=time_fixed,
+            Time=time(),
             Objective=best_objective,
             Optimal=optimal,
         )
 
-        return best_model is not None, time_fixed
+        return best_model is not None, time()
 
     # def Mie_file(self, dir: DirectoryGroupDecision, dm_id: int):
     #     assert self.Mie_config
@@ -1431,7 +1435,7 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
             preference_path = [D]
             Dc = random_comparisons(A, Mcps[Mcp_id], pairs=D.elements_pairs_relations)
             new_D = D
-            for i in rng_order.permutation(len(Dc)):
+            for i in rng_order.permutation(len([r for r in Dc if r not in D])):
                 new_relation = Dc.relations[i]
                 if old_relation := D.elements_pairs_relations.get(
                     new_relation.elements

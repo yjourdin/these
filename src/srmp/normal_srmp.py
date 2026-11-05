@@ -62,9 +62,16 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
 
         result = np.subtract.outer(conditional_weighted_sum, conditional_weighted_sum)
 
-        result[result == 0] = np.dot(np.unpackbits((~ np.bitwise_xor.outer(comp_bit, comp_bit))[:, :, np.newaxis], axis=-1, count=len(self.performance_table.criteria)), self.criteria_weights)[result == 0]
+        result[result == 0] = np.dot(
+            np.unpackbits(
+                (~np.bitwise_xor.outer(comp_bit, comp_bit))[:, :, np.newaxis],
+                axis=-1,
+                count=len(self.performance_table.criteria),
+            ),
+            self.criteria_weights,
+        )[result == 0]
 
-        return result
+        return result, np.equal.outer(conditional_weighted_sum, conditional_weighted_sum)
 
 
 class NormalSRMP(SRMP):
@@ -116,16 +123,24 @@ class NormalSRMP(SRMP):
         return np.array(rankdata(-scores, method="dense")).astype(np.int_)  # pyright: ignore[reportUnknownArgumentType]
 
     def credibility_numpy(self):
-        profilewise_outranking_matrices = np.array([
-            sub_srmp.credibility_numpy() for sub_srmp in self.sub_srmp
-        ])
-        relations_ordered = profilewise_outranking_matrices[self.lexicographic_order]
-        n = len(relations_ordered)
-        score = np.zeros_like(relations_ordered[0])
-        mask = score == 0
+        credibility_matrices, equality_matrices = np.rollaxis(
+            np.array([sub_srmp.credibility_numpy() for sub_srmp in self.sub_srmp]), 1
+        )
+        equality_matrices = equality_matrices.astype(np.bool_, copy=False)
+        credibility_ordered = credibility_matrices[self.lexicographic_order]
+        equality_ordered = equality_matrices[self.lexicographic_order]
+        n = len(self.lexicographic_order)
+        score = np.ones_like(credibility_ordered[0])
         i = 0
-        while (i < n) and mask.any():
-            score[mask] = relations_ordered[i][mask]  # pyright: ignore[reportArgumentType, reportCallIssue]
-            mask = score == 0
+        eq = equality_ordered[i]
+        prev_eq = np.ones_like(eq, np.bool_)
+        while (i < n) and prev_eq.any(axis=None):
+            score[prev_eq & ~eq] = credibility_ordered[i][prev_eq & ~eq]
+            score[prev_eq & eq] = np.minimum(
+                score[prev_eq & eq], credibility_ordered[i][prev_eq & eq]
+            )
             i += 1
+            if i < n:
+                prev_eq = eq
+                eq = equality_ordered[i]
         return score

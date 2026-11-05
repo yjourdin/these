@@ -126,6 +126,17 @@ class ProfileWiseOutranking(Ranker):
             index=self.performance_table.alternatives,  # pyright: ignore[reportUnknownArgumentType]
             columns=self.performance_table.alternatives,  # pyright: ignore[reportUnknownArgumentType]
             dtype="int64",
+        ), DataFrame(
+            [
+                [
+                    (scores[ai] - scores[aj]) == 0
+                    for aj in self.performance_table.alternatives
+                ]
+                for ai in self.performance_table.alternatives
+            ],
+            index=self.performance_table.alternatives,  # pyright: ignore[reportUnknownArgumentType]
+            columns=self.performance_table.alternatives,  # pyright: ignore[reportUnknownArgumentType]
+            dtype="bool",
         )
 
 
@@ -173,21 +184,32 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
         """
         comp_df = self.performance_table.data >= self.profile.data
 
-        coalitions = np.array([
-            np.nonzero(a)[0] for a in comp_df.values
-        ])
+        coalitions = np.array([np.nonzero(a)[0] for a in comp_df.values])
 
         coalitions_bit = np.packbits(coalitions)
 
-        def score_func(x): return self.importance_relation[frozenset(x)]
+        def score_func(x):
+            return self.importance_relation[frozenset(x)]
 
         scores = np.apply_along_axis(score_func, -1, coalitions)
 
         result = np.subtract.outer(scores, scores)
 
-        result[result == 0] = np.apply_along_axis(score_func, -1, (np.unpackbits((~ np.bitwise_xor.outer(coalitions_bit, coalitions_bit))[:, :, np.newaxis], axis=-1, count=len(self.performance_table.criteria))))[result == 0]
+        result[result == 0] = np.apply_along_axis(
+            score_func,
+            -1,
+            (
+                np.unpackbits(
+                    (~np.bitwise_xor.outer(coalitions_bit, coalitions_bit))[
+                        :, :, np.newaxis
+                    ],
+                    axis=-1,
+                    count=len(self.performance_table.criteria),
+                )
+            ),
+        )[result == 0]
 
-        return result
+        return result, np.equal.outer(scores, scores)
 
 
 class RMP(Ranker):
@@ -279,11 +301,18 @@ class RMP(Ranker):
 
         :return:
         """
-        return [sub_rmp.credibility() for sub_rmp in self.sub_rmp]
+        cred = []
+        eq = []
+        for sub_rmp in self.sub_rmp:
+            sub_cred, sub_eq = sub_rmp.credibility()
+            cred.append(sub_cred)
+            eq.append(sub_eq)
+        return cred, eq
 
     def exploit_credibility(
         self,
         credibility_matrices: list[DataFrame],
+        equality_matrices: list[DataFrame],
         lexicographic_order: list[int] | None = None,
     ):
         """Merge outranking matrices built by profiles in lexicographic
@@ -300,20 +329,30 @@ class RMP(Ranker):
             if lexicographic_order is None
             else lexicographic_order
         )
-        relations_ordered = [credibility_matrices[i] for i in lexicographic_order]
-        n = len(relations_ordered)
-        score = DataFrame(
-            0,
-            index=relations_ordered[0].vertices,  # pyright: ignore[reportUnknownArgumentType]
-            columns=relations_ordered[0].vertices,  # pyright: ignore[reportUnknownArgumentType]
-        )
-        mask = score == 0
+        credibility_ordered = [
+            credibility_matrices[i].to_numpy() for i in lexicographic_order
+        ]
+        equality_ordered = [
+            equality_matrices[i].to_numpy() for i in lexicographic_order
+        ]
+        n = len(lexicographic_order)
+        score = np.ones_like(credibility_ordered[0])
         i = 0
-        while (i < n) and mask.any(axis=None):
-            score[mask] = relations_ordered[i][mask]  # pyright: ignore[reportArgumentType, reportCallIssue]
-            mask = score == 0
+        eq = equality_ordered[i]
+        prev_eq = np.full_like(eq, True, np.bool_)
+        while (i < n) and prev_eq.any(axis=None):
+            score[prev_eq & ~eq] = credibility_ordered[i][prev_eq & ~eq]
+            score[prev_eq & eq] = np.minimum(
+                score[prev_eq & eq], credibility_ordered[i][prev_eq & eq]
+            )
             i += 1
-        return score
+            prev_eq = eq
+            eq = equality_ordered[i]
+        return DataFrame(
+            score,
+            index=credibility_matrices[0].vertices,  # pyright: ignore[reportUnknownArgumentType]
+            columns=credibility_matrices[0].vertices,  # pyright: ignore[reportUnknownArgumentType]
+        )
 
     def rank(self, **kwargs: Any):
         """Compute the RMP algorithm
@@ -329,7 +368,7 @@ class RMP(Ranker):
         :return:
             the outranking total order as a ranking
         """
-        return self.exploit_credibility(self.construct_credibility())
+        return self.exploit_credibility(*self.construct_credibility())
 
     @classmethod
     def plot_input_data(
@@ -709,16 +748,24 @@ class NormalRMP(RMP):
         :return:
             the outranking total order as a ranking
         """
-        profilewise_outranking_matrices = np.array([
-            sub_rmp.credibility_numpy() for sub_rmp in self.sub_rmp
-        ])
-        relations_ordered = profilewise_outranking_matrices[self.lexicographic_order]
-        n = len(relations_ordered)
-        score = np.zeros_like(relations_ordered[0])
-        mask = score == 0
+        credibility_matrices, equality_matrices = np.rollaxis(
+            np.array([sub_rmp.credibility_numpy() for sub_rmp in self.sub_rmp]), 1
+        )
+        equality_matrices = equality_matrices.astype(np.bool_, copy=False)
+        credibility_ordered = credibility_matrices[self.lexicographic_order]
+        equality_ordered = equality_matrices[self.lexicographic_order]
+        n = len(self.lexicographic_order)
+        score = np.ones_like(credibility_ordered[0])
         i = 0
-        while (i < n) and mask.any():
-            score[mask] = relations_ordered[i][mask]  # pyright: ignore[reportArgumentType, reportCallIssue]
-            mask = score == 0
+        eq = equality_ordered[i]
+        prev_eq = np.ones_like(eq, np.bool_)
+        while (i < n) and prev_eq.any(axis=None):
+            score[prev_eq & ~eq] = credibility_ordered[i][prev_eq & ~eq]
+            score[prev_eq & eq] = np.minimum(
+                score[prev_eq & eq], credibility_ordered[i][prev_eq & eq]
+            )
             i += 1
+            if i < n:
+                prev_eq = eq
+                eq = equality_ordered[i]
         return score
