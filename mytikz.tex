@@ -12,517 +12,804 @@
 \definecolor{darkgrey176}{RGB}{176,176,176}
 \definecolor{steelblue31119180}{RGB}{31,119,180}
 
-\begin{groupplot}[group style={group size=3 by 1}]
+\begin{groupplot}[group style={group size=3 by 4}]
 \nextgroupplot[
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
 tick align=outside,
 tick pos=left,
-title={M = 3},
+title={Group = 0 | M = 3},
 x grid style={darkgrey176},
-xlabel={N_bc},
-xmin=80, xmax=520,
+xmin=8, xmax=52,
 xtick style={color=black},
+xticklabels={},
 y grid style={darkgrey176},
-ylabel={Time_Per_It},
-ymin=160.122260607753, ymax=306.637806030872,
+ylabel={Compromise},
+ymin=-0.05, ymax=1.05,
 ytick style={color=black}
 ]
 \addplot [semithick, steelblue31119180]
 table {%
-100 211.624485931073
-200 217.298112998434
-300 211.918046568576
-400 191.249235345058
-500 200.524811792303
+10 1
+20 1
+30 1
+40 1
+50 1
 };
 \path [draw=steelblue31119180, semithick]
-(axis cs:100,190.910479167323)
---(axis cs:100,233.862370576865);
+(axis cs:10,1)
+--(axis cs:10,1);
 
 \path [draw=steelblue31119180, semithick]
-(axis cs:200,195.401841551925)
---(axis cs:200,244.862633562257);
+(axis cs:20,1)
+--(axis cs:20,1);
 
 \path [draw=steelblue31119180, semithick]
-(axis cs:300,184.421245359644)
---(axis cs:300,240.142973808207);
+(axis cs:30,1)
+--(axis cs:30,1);
 
 \path [draw=steelblue31119180, semithick]
-(axis cs:400,166.782058126985)
---(axis cs:400,219.593075656131);
+(axis cs:40,1)
+--(axis cs:40,1);
 
 \path [draw=steelblue31119180, semithick]
-(axis cs:500,173.491341647856)
---(axis cs:500,230.256674006739);
+(axis cs:50,1)
+--(axis cs:50,1);
 
 \addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
 table {%
-100 190.910479167323
-200 195.401841551925
-300 184.421245359644
-400 166.782058126985
-500 173.491341647856
+10 1
+20 1
+30 1
+40 1
+50 1
 };
 \addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
 table {%
-100 233.862370576865
-200 244.862633562257
-300 240.142973808207
-400 219.593075656131
-500 230.256674006739
-};
-\addplot [semithick, steelblue31119180, dash pattern=on 4pt off 1.5pt]
-table {%
-100 225.777232546307
-200 226.804271850156
-300 213.528671618389
-400 222.306580099652
-500 234.09650338842
-};
-\path [draw=steelblue31119180, semithick]
-(axis cs:100,206.810995279846)
---(axis cs:100,245.712924920571);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:200,205.712467284227)
---(axis cs:200,246.820299282772);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:300,188.203650741181)
---(axis cs:300,239.137118537835);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:400,201.021465156287)
---(axis cs:400,245.256275494431);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:500,211.342136301617)
---(axis cs:500,257.640694514887);
-
-\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
-table {%
-100 206.810995279846
-200 205.712467284227
-300 188.203650741181
-400 201.021465156287
-500 211.342136301617
-};
-\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
-table {%
-100 245.712924920571
-200 246.820299282772
-300 239.137118537835
-400 245.256275494431
-500 257.640694514887
-};
-\addplot [semithick, steelblue31119180, dash pattern=on 1pt off 1pt]
-table {%
-100 214.895437344146
-200 223.238527429769
-300 223.282344337678
-400 231.479345799608
-500 225.284774978367
-};
-\path [draw=steelblue31119180, semithick]
-(axis cs:100,195.2527355844)
---(axis cs:100,234.032431936897);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:200,202.667035427495)
---(axis cs:200,245.839816735899);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:300,199.096136676285)
---(axis cs:300,246.169670370708);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:400,209.982655261841)
---(axis cs:400,253.98932927745);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:500,202.258842033488)
---(axis cs:500,250.731410668423);
-
-\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
-table {%
-100 195.2527355844
-200 202.667035427495
-300 199.096136676285
-400 209.982655261841
-500 202.258842033488
-};
-\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
-table {%
-100 234.032431936897
-200 245.839816735899
-300 246.169670370708
-400 253.98932927745
-500 250.731410668423
+10 1
+20 1
+30 1
+40 1
+50 1
 };
 \addplot [semithick, steelblue31119180]
 table {%
-100 211.624485931073
-200 217.298112998434
-300 211.918046568576
-400 191.249235345058
-500 200.524811792303
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+
+\nextgroupplot[
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+scaled y ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+title={Group = 0 | M = 5},
+x grid style={darkgrey176},
+xmin=8, xmax=52,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgrey176},
+ymin=-0.05, ymax=1.05,
+ytick style={color=black},
+yticklabels={}
+]
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+\path [draw=steelblue31119180, semithick]
+(axis cs:10,1)
+--(axis cs:10,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:20,1)
+--(axis cs:20,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:30,1)
+--(axis cs:30,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:40,1)
+--(axis cs:40,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:50,1)
+--(axis cs:50,1);
+
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
 };
 \addplot [semithick, steelblue31119180]
 table {%
-100 225.777232546307
-200 226.804271850156
-300 213.528671618389
-400 222.306580099652
-500 234.09650338842
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+
+\nextgroupplot[
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+scaled y ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+title={Group = 0 | M = 7},
+unbounded coords=jump,
+x grid style={darkgrey176},
+xmin=8, xmax=52,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgrey176},
+ymin=-0.05, ymax=1.05,
+ytick style={color=black},
+yticklabels={}
+]
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+\path [draw=steelblue31119180, semithick]
+(axis cs:10,1)
+--(axis cs:10,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:20,1)
+--(axis cs:20,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:30,1)
+--(axis cs:30,1);
+
+\path [draw=steelblue31119180, semithick]
+;
+
+\path [draw=steelblue31119180, semithick]
+;
+
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 nan
+50 nan
+};
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 nan
+50 nan
 };
 \addplot [semithick, steelblue31119180]
 table {%
-100 214.895437344146
-200 223.238527429769
-300 223.282344337678
-400 231.479345799608
-500 225.284774978367
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+
+\nextgroupplot[
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+title={Group = 1 | M = 3},
+x grid style={darkgrey176},
+xmin=8, xmax=52,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgrey176},
+ylabel={Compromise},
+ymin=-0.05, ymax=1.05,
+ytick style={color=black}
+]
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+\path [draw=steelblue31119180, semithick]
+(axis cs:10,1)
+--(axis cs:10,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:20,1)
+--(axis cs:20,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:30,1)
+--(axis cs:30,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:40,1)
+--(axis cs:40,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:50,1)
+--(axis cs:50,1);
+
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+
+\nextgroupplot[
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+scaled y ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+title={Group = 1 | M = 5},
+x grid style={darkgrey176},
+xmin=8, xmax=52,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgrey176},
+ymin=-0.05, ymax=1.05,
+ytick style={color=black},
+yticklabels={}
+]
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 0.925925925925926
+};
+\path [draw=steelblue31119180, semithick]
+(axis cs:10,1)
+--(axis cs:10,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:20,1)
+--(axis cs:20,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:30,1)
+--(axis cs:30,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:40,1)
+--(axis cs:40,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:50,0.814814814814815)
+--(axis cs:50,1);
+
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 0.814814814814815
+};
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 0.925925925925926
+};
+
+\nextgroupplot[
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+scaled y ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+title={Group = 1 | M = 7},
+x grid style={darkgrey176},
+xmin=8, xmax=52,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgrey176},
+ymin=-0.05, ymax=1.05,
+ytick style={color=black},
+yticklabels={}
+]
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 0.916666666666667
+};
+\path [draw=steelblue31119180, semithick]
+(axis cs:10,1)
+--(axis cs:10,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:20,1)
+--(axis cs:20,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:30,1)
+--(axis cs:30,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:40,1)
+--(axis cs:40,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:50,0.75)
+--(axis cs:50,1);
+
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 0.75
+};
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 0.916666666666667
+};
+
+\nextgroupplot[
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+title={Group = 2 | M = 3},
+x grid style={darkgrey176},
+xmin=8, xmax=52,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgrey176},
+ylabel={Compromise},
+ymin=-0.05, ymax=1.05,
+ytick style={color=black}
+]
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 0.5
+};
+\path [draw=steelblue31119180, semithick]
+(axis cs:10,1)
+--(axis cs:10,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:20,1)
+--(axis cs:20,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:30,1)
+--(axis cs:30,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:40,1)
+--(axis cs:40,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:50,0)
+--(axis cs:50,1);
+
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 0
+};
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 0.5
+};
+
+\nextgroupplot[
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+scaled y ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+title={Group = 2 | M = 5},
+unbounded coords=jump,
+x grid style={darkgrey176},
+xmin=8, xmax=52,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgrey176},
+ymin=-0.05, ymax=1.05,
+ytick style={color=black},
+yticklabels={}
+]
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+\path [draw=steelblue31119180, semithick]
+(axis cs:10,1)
+--(axis cs:10,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:20,1)
+--(axis cs:20,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:30,1)
+--(axis cs:30,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:40,1)
+--(axis cs:40,1);
+
+\path [draw=steelblue31119180, semithick]
+;
+
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 nan
+};
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 nan
+};
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+
+\nextgroupplot[
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+scaled y ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+title={Group = 2 | M = 7},
+unbounded coords=jump,
+x grid style={darkgrey176},
+xmin=8, xmax=52,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgrey176},
+ymin=-0.05, ymax=1.05,
+ytick style={color=black},
+yticklabels={}
+]
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+};
+\path [draw=steelblue31119180, semithick]
+(axis cs:10,1)
+--(axis cs:10,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:20,1)
+--(axis cs:20,1);
+
+\path [draw=steelblue31119180, semithick]
+;
+
+\path [draw=steelblue31119180, semithick]
+;
+
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 nan
+40 nan
+};
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 nan
+40 nan
+};
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 1
+};
+
+\nextgroupplot[
+tick align=outside,
+tick pos=left,
+title={Group = 3 | M = 3},
+x grid style={darkgrey176},
+xlabel={N_bc},
+xmin=8, xmax=52,
+xtick style={color=black},
+y grid style={darkgrey176},
+ylabel={Compromise},
+ymin=-0.05, ymax=1.05,
+ytick style={color=black}
+]
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 0.923076923076923
+50 0.857142857142857
+};
+\path [draw=steelblue31119180, semithick]
+(axis cs:10,1)
+--(axis cs:10,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:20,1)
+--(axis cs:20,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:30,1)
+--(axis cs:30,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:40,0.769230769230769)
+--(axis cs:40,1);
+
+\path [draw=steelblue31119180, semithick]
+(axis cs:50,0.571428571428571)
+--(axis cs:50,1);
+
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 0.769230769230769
+50 0.571428571428571
+};
+\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
+table {%
+10 1
+20 1
+30 1
+40 1
+50 1
+};
+\addplot [semithick, steelblue31119180]
+table {%
+10 1
+20 1
+30 1
+40 0.923076923076923
+50 0.857142857142857
 };
 
 \nextgroupplot[
 scaled y ticks=manual:{}{\pgfmathparse{#1}},
 tick align=outside,
 tick pos=left,
-title={M = 4},
+title={Group = 3 | M = 5},
 x grid style={darkgrey176},
 xlabel={N_bc},
-xmin=80, xmax=520,
+xmin=8, xmax=52,
 xtick style={color=black},
 y grid style={darkgrey176},
-ymin=160.122260607753, ymax=306.637806030872,
+ymin=-0.05, ymax=1.05,
 ytick style={color=black},
 yticklabels={}
 ]
 \addplot [semithick, steelblue31119180]
 table {%
-100 266.399563478128
-200 281.19283918871
-300 265.451638659994
-400 279.570101115269
-500 279.286821987602
+10 1
+20 1
+30 1
+40 1
+50 0.916666666666667
 };
 \path [draw=steelblue31119180, semithick]
-(axis cs:100,241.918195479211)
---(axis cs:100,288.082306705288);
+(axis cs:10,1)
+--(axis cs:10,1);
 
 \path [draw=steelblue31119180, semithick]
-(axis cs:200,265.948921874341)
---(axis cs:200,294.40671845971);
+(axis cs:20,1)
+--(axis cs:20,1);
 
 \path [draw=steelblue31119180, semithick]
-(axis cs:300,245.000573346142)
---(axis cs:300,284.432868458427);
+(axis cs:30,1)
+--(axis cs:30,1);
 
 \path [draw=steelblue31119180, semithick]
-(axis cs:400,260.484462934931)
---(axis cs:400,295.962487102572);
+(axis cs:40,1)
+--(axis cs:40,1);
 
 \path [draw=steelblue31119180, semithick]
-(axis cs:500,246.639753897183)
---(axis cs:500,299.947793562216);
+(axis cs:50,0.75)
+--(axis cs:50,1);
 
 \addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
 table {%
-100 241.918195479211
-200 265.948921874341
-300 245.000573346142
-400 260.484462934931
-500 246.639753897183
+10 1
+20 1
+30 1
+40 1
+50 0.75
 };
 \addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
 table {%
-100 288.082306705288
-200 294.40671845971
-300 284.432868458427
-400 295.962487102572
-500 299.947793562216
-};
-\addplot [semithick, steelblue31119180, dash pattern=on 4pt off 1.5pt]
-table {%
-100 260.693709004828
-200 261.351794682663
-300 273.393017141346
-400 295.143210523777
-500 254.808410863339
-};
-\path [draw=steelblue31119180, semithick]
-(axis cs:100,235.362357272932)
---(axis cs:100,282.260947408887);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:200,241.352397901903)
---(axis cs:200,278.970525648188);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:300,256.04190749217)
---(axis cs:300,287.83532081178);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:400,288.851698084724)
---(axis cs:400,299.949861843606);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:500,232.43059189152)
---(axis cs:500,276.130617734272);
-
-\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
-table {%
-100 235.362357272932
-200 241.352397901903
-300 256.04190749217
-400 288.851698084724
-500 232.43059189152
-};
-\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
-table {%
-100 282.260947408887
-200 278.970525648188
-300 287.83532081178
-400 299.949861843606
-500 276.130617734272
-};
-\addplot [semithick, steelblue31119180, dash pattern=on 1pt off 1pt]
-table {%
-100 247.601976821078
-200 255.743474786298
-300 243.40179582196
-400 263.103492860033
-500 273.755561081897
-};
-\path [draw=steelblue31119180, semithick]
-(axis cs:100,232.363346450024)
---(axis cs:100,262.284803395222);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:200,237.106401969205)
---(axis cs:200,272.634776615379);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:300,222.526105362401)
---(axis cs:300,264.379064475118);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:400,228.441560321712)
---(axis cs:400,292.448271988672);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:500,257.001788990582)
---(axis cs:500,288.573576254401);
-
-\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
-table {%
-100 232.363346450024
-200 237.106401969205
-300 222.526105362401
-400 228.441560321712
-500 257.001788990582
-};
-\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
-table {%
-100 262.284803395222
-200 272.634776615379
-300 264.379064475118
-400 292.448271988672
-500 288.573576254401
+10 1
+20 1
+30 1
+40 1
+50 1
 };
 \addplot [semithick, steelblue31119180]
 table {%
-100 266.399563478128
-200 281.19283918871
-300 265.451638659994
-400 279.570101115269
-500 279.286821987602
-};
-\addplot [semithick, steelblue31119180]
-table {%
-100 260.693709004828
-200 261.351794682663
-300 273.393017141346
-400 295.143210523777
-500 254.808410863339
-};
-\addplot [semithick, steelblue31119180]
-table {%
-100 247.601976821078
-200 255.743474786298
-300 243.40179582196
-400 263.103492860033
-500 273.755561081897
+10 1
+20 1
+30 1
+40 1
+50 0.916666666666667
 };
 
 \nextgroupplot[
 scaled y ticks=manual:{}{\pgfmathparse{#1}},
 tick align=outside,
 tick pos=left,
-title={M = 5},
+title={Group = 3 | M = 7},
 x grid style={darkgrey176},
 xlabel={N_bc},
-xmin=80, xmax=520,
+xmin=8, xmax=52,
 xtick style={color=black},
 y grid style={darkgrey176},
-ymin=160.122260607753, ymax=306.637806030872,
+ymin=-0.05, ymax=1.05,
 ytick style={color=black},
 yticklabels={}
 ]
 \addplot [semithick, steelblue31119180]
 table {%
-100 264.533951631266
-200 296.237984540482
-300 299.950581152424
-400 299.956262833697
-500 295.677628334676
+10 1
+20 1
+30 1
+40 1
+50 1
 };
 \path [draw=steelblue31119180, semithick]
-(axis cs:100,243.752801762659)
---(axis cs:100,283.377749766408);
+(axis cs:10,1)
+--(axis cs:10,1);
 
 \path [draw=steelblue31119180, semithick]
-(axis cs:200,289.847644816629)
---(axis cs:200,299.959298064399);
+(axis cs:20,1)
+--(axis cs:20,1);
 
 \path [draw=steelblue31119180, semithick]
-(axis cs:300,299.938245537639)
---(axis cs:300,299.961803538723);
+(axis cs:30,1)
+--(axis cs:30,1);
 
 \path [draw=steelblue31119180, semithick]
-(axis cs:400,299.942938861679)
---(axis cs:400,299.970974454587);
+(axis cs:40,1)
+--(axis cs:40,1);
 
 \path [draw=steelblue31119180, semithick]
-(axis cs:500,287.109886057203)
---(axis cs:500,299.96770780215);
+(axis cs:50,1)
+--(axis cs:50,1);
 
 \addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
 table {%
-100 243.752801762659
-200 289.847644816629
-300 299.938245537639
-400 299.942938861679
-500 287.109886057203
+10 1
+20 1
+30 1
+40 1
+50 1
 };
 \addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
 table {%
-100 283.377749766408
-200 299.959298064399
-300 299.961803538723
-400 299.970974454587
-500 299.96770780215
-};
-\addplot [semithick, steelblue31119180, dash pattern=on 4pt off 1.5pt]
-table {%
-100 260.626478689221
-200 293.685953493022
-300 286.698096004587
-400 286.379585887838
-500 290.43827296882
-};
-\path [draw=steelblue31119180, semithick]
-(axis cs:100,233.055140546163)
---(axis cs:100,284.422824171602);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:200,281.18182401328)
---(axis cs:200,299.971904686146);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:300,278.635437810094)
---(axis cs:300,294.316451899201);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:400,271.511581952139)
---(axis cs:400,299.094989352747);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:500,276.158510241181)
---(axis cs:500,299.961466064984);
-
-\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
-table {%
-100 233.055140546163
-200 281.18182401328
-300 278.635437810094
-400 271.511581952139
-500 276.158510241181
-};
-\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
-table {%
-100 284.422824171602
-200 299.971904686146
-300 294.316451899201
-400 299.094989352747
-500 299.961466064984
-};
-\addplot [semithick, steelblue31119180, dash pattern=on 1pt off 1pt]
-table {%
-100 267.09343278669
-200 269.145465705371
-300 294.607317330293
-400 277.345582983755
-500 281.169122186107
-};
-\path [draw=steelblue31119180, semithick]
-(axis cs:100,243.695020157082)
---(axis cs:100,284.513477021902);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:200,241.997804075961)
---(axis cs:200,294.167425217482);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:300,283.883724685457)
---(axis cs:300,299.97800851164);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:400,259.488479584253)
---(axis cs:400,295.184228171302);
-
-\path [draw=steelblue31119180, semithick]
-(axis cs:500,269.486705180607)
---(axis cs:500,292.841286496535);
-
-\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
-table {%
-100 243.695020157082
-200 241.997804075961
-300 283.883724685457
-400 259.488479584253
-500 269.486705180607
-};
-\addplot [semithick, steelblue31119180, mark=-, mark size=5, mark options={solid}, only marks]
-table {%
-100 284.513477021902
-200 294.167425217482
-300 299.97800851164
-400 295.184228171302
-500 292.841286496535
+10 1
+20 1
+30 1
+40 1
+50 1
 };
 \addplot [semithick, steelblue31119180]
 table {%
-100 264.533951631266
-200 296.237984540482
-300 299.950581152424
-400 299.956262833697
-500 295.677628334676
-};
-\addplot [semithick, steelblue31119180]
-table {%
-100 260.626478689221
-200 293.685953493022
-300 286.698096004587
-400 286.379585887838
-500 290.43827296882
-};
-\addplot [semithick, steelblue31119180]
-table {%
-100 267.09343278669
-200 269.145465705371
-300 294.607317330293
-400 277.345582983755
-500 281.169122186107
+10 1
+20 1
+30 1
+40 1
+50 1
 };
 \end{groupplot}
 
@@ -531,7 +818,7 @@ table {%
   anchor=north,
   text=black,
   rotate=0.0
-]{Computing time per iteration};
+]{Proportion of instances reaching compromise};
 \end{tikzpicture}
 
 \end{document}
