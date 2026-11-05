@@ -99,20 +99,28 @@ class ProfileWiseOutranking(Ranker):
 
         :return:
         """
-        scores = Series({
-            a: self.importance_relation[
-                frozenset([
-                    c
-                    for c, s in av.scales.items()
-                    if s.is_better_or_equal(av[c], self.profile[c])
-                ])
-            ]
+        coalitions = Series({
+            a: frozenset([
+                c
+                for c, s in av.scales.items()
+                if s.is_better_or_equal(av[c], self.profile[c])
+            ])
             for a, av in self.performance_table.alternatives_values.items()
         })
 
+        scores = coalitions.map(self.importance_relation.get)
+
         return DataFrame(
             [
-                [scores[ai] - scores[aj] for aj in self.performance_table.alternatives]
+                [
+                    diff
+                    if (diff := scores[ai] - scores[aj]) != 0
+                    else self.importance_relation[
+                        frozenset(self.performance_table.criteria)
+                        - coalitions[ai].symmetric_difference(coalitions[aj])
+                    ]
+                    for aj in self.performance_table.alternatives
+                ]
                 for ai in self.performance_table.alternatives
             ],
             index=self.performance_table.alternatives,  # pyright: ignore[reportUnknownArgumentType]
@@ -165,12 +173,21 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
         """
         comp_df = self.performance_table.data >= self.profile.data
 
-        scores = np.array([
-            self.importance_relation[frozenset(np.nonzero(a)[0].tolist())]
-            for a in comp_df.values
+        coalitions = np.array([
+            np.nonzero(a)[0] for a in comp_df.values
         ])
 
-        return np.subtract.outer(scores, scores)
+        coalitions_bit = np.packbits(coalitions)
+
+        def score_func(x): return self.importance_relation[frozenset(x)]
+
+        scores = np.apply_along_axis(score_func, -1, coalitions)
+
+        result = np.subtract.outer(scores, scores)
+
+        result[result == 0] = np.apply_along_axis(score_func, -1, (np.unpackbits((~ np.bitwise_xor.outer(coalitions_bit, coalitions_bit))[:, :, np.newaxis], axis=-1, count=len(self.performance_table.criteria))))[result == 0]
+
+        return result
 
 
 class RMP(Ranker):

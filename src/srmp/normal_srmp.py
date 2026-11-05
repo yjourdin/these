@@ -54,12 +54,17 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
 
         :return:
         """
-        conditional_weighted_sum: np.ndarray[tuple[int], np.dtype[np.float64]] = np.dot(
-            self.performance_table.data.values >= self.profile.data.values,
-            self.criteria_weights,
-        )
+        comp_df = self.performance_table.data.values >= self.profile.data.values
 
-        return np.subtract.outer(conditional_weighted_sum, conditional_weighted_sum)
+        comp_bit = np.packbits(comp_df, axis=1, bitorder="little").squeeze()
+
+        conditional_weighted_sum = np.dot(comp_df, self.criteria_weights)
+
+        result = np.subtract.outer(conditional_weighted_sum, conditional_weighted_sum)
+
+        result[result == 0] = np.dot(np.unpackbits((~ np.bitwise_xor.outer(comp_bit, comp_bit))[:, :, np.newaxis], axis=-1, count=len(self.performance_table.criteria)), self.criteria_weights)[result == 0]
+
+        return result
 
 
 class NormalSRMP(SRMP):
