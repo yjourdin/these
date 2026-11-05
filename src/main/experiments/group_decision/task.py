@@ -1,7 +1,7 @@
 import csv
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
-from math import inf
+from math import factorial, inf
 from multiprocessing.connection import Connection
 from operator import attrgetter
 from typing import Any, cast
@@ -13,7 +13,6 @@ from pandas import read_csv
 from src.constants import DEFAULT_MAX_TIME, SENTINEL
 from src.methods import MethodEnum
 from src.mip.main import MIPResult, create_mip, mip_result
-from src.model import is_group_model
 from src.models import GroupModelEnum, ModelEnum
 from src.performance_table.normal_performance_table import NormalPerformanceTable
 from src.preference_path.a_star import Astar
@@ -842,7 +841,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                     # reference_models=Mie,
                     gamma=self.config.gamma,
                     nb_cpus=self.config.nb_cpus // self.nb_Mcp,
-                    log_path=self.log_file(dir, Mcp_id),
+                    # log_path=self.log_file(dir, Mcp_id),
                 )[0]
             )
         with (
@@ -901,6 +900,8 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                     f,
                 )
 
+        time_fixed = time() / factorial(self.ko)
+
         csv_file = dir.csv_files["collective"]
         csv_file.writerow(
             M=self.m,
@@ -925,12 +926,12 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             Path=self.path,
             P_id=self.P_id,
             It=self.it,
-            Time=time(),
+            Time=time_fixed,
             Objective=best_objective,
             Optimal=optimal,
         )
 
-        return best_model is not None, time()
+        return best_model is not None, time_fixed
 
     # def Mie_file(self, dir: DirectoryGroupDecision, dm_id: int):
     #     assert self.Mie_config
@@ -1427,10 +1428,22 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
             preference_path = compute_preference_path(model_path, D, A, R)
         else:
             model_path = [Mcps[Mcp_id]]
-            preference_path = [
-                D,
-                random_comparisons(A, Mcps[Mcp_id], pairs=D.elements_pairs_relations),
-            ]
+            preference_path = [D]
+            Dc = random_comparisons(A, Mcps[Mcp_id], pairs=D.elements_pairs_relations)
+            new_D = D
+            for i in rng_order.permutation(len(Dc)):
+                new_relation = Dc.relations[i]
+                if old_relation := D.elements_pairs_relations.get(
+                    new_relation.elements
+                ):
+                    new_D -= old_relation
+                new_D += new_relation
+                preference_path.append(new_D)
+
+            # preference_path = [
+            #     D,
+            #     random_comparisons(A, Mcps[Mcp_id], pairs=D.elements_pairs_relations),
+            # ]
 
         # comparisons_order: list[Relation] = []
         # D1 = D
@@ -1440,19 +1453,19 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
         #         comparisons_order.append(changes[int(i)])
         #     D1 = D2
 
-        for t in range(len(preference_path)):
-            with self.P_file(dir, t).open("w") as f:
-                to_csv(PreferenceStructure(preference_path[t], False), f)
-
-        t = None
-        for t, model in enumerate(model_path):
-            with self.Mp_file(dir, t).open("w") as f:
-                f.write(model.to_json())
-
-        t = None
         for t, preferences in enumerate(preference_path):
-            with self.Dp_file(dir, t).open("w") as f:
-                to_csv(preferences, f)
+            with self.P_file(dir, t).open("w") as f:
+                to_csv(PreferenceStructure(preferences, False), f)
+
+        # t = None
+        # for t, model in enumerate(model_path):
+        #     with self.Mp_file(dir, t).open("w") as f:
+        #         f.write(model.to_json())
+
+        # t = None
+        # for t, preferences in enumerate(preference_path):
+        #     with self.Dp_file(dir, t).open("w") as f:
+        #         to_csv(preferences, f)
 
         if self.path:
             csv_file = dir.csv_files["path"]
@@ -1587,7 +1600,7 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
     #     return super().Dr_file(dir)
 
     def done(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any):
-        return self.Dp_file(dir, 0).exists()
+        return self.P_file(dir, 0).exists()
 
 
 @dataclass(frozen=True)

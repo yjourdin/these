@@ -156,7 +156,7 @@ def collective_thread(
             (result_Mc, time_Mc), _ = future_Mc.result()
             time_left -= time_Mc
             time_left_per_it -= time_Mc
-            if time_left < 1:  # or (time_left_per_it < 1):
+            if (time_left < 1) or (time_left_per_it < 1):
                 # raise ValueError("Time left")
                 break
             # return TaskResult(result_Mc, max_time - time_left)
