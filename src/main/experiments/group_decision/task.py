@@ -1499,7 +1499,7 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
                 It=self.it,
                 Dm_id=self.dm_id,
                 Time=time,
-                Length=t,
+                Length=len(preference_path),
                 Model_Length=len(model_path) if model_path else None,
                 Found=result,
             )
