@@ -171,9 +171,9 @@ def create_mip(
                 comparisons_refused.relations if comparisons_refused else []
             )
 
-            refused_dict: dict[tuple[Any, Any], Relation] = {}
+            refused_dict: dict[frozenset[Any], Relation] = {}
             for r in comparisons_refused_list:
-                if (pair := r.elements) in refused_dict:
+                if (pair := frozenset(r.elements)) in refused_dict:
                     r2 = refused_dict.pop(pair)
                     match r, r2:
                         case P(a=a, b=b), P(a=_, b=_):
@@ -186,8 +186,10 @@ def create_mip(
                             raise ValueError(
                                 f"Couple de relations inconnu : {r} et {r2}"
                             )
+                    print(r, "A")
                 else:
-                    refused_dict[r.elements] = r
+                    refused_dict[pair] = r
+                    print(r, "R")
 
             comparisons_accepted = PreferenceStructure(
                 comparisons_accepted_list, validate=False

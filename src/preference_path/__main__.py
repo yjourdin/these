@@ -37,7 +37,7 @@ model_paths, time = compute_model_paths(Mc, D, A, ARGS.seed, ARGS.max_time)
 if ARGS.model_output:
     for i, path in model_paths.items():
         for j, model in enumerate(path):
-            filename = add_filename_suffix(ARGS.model_output, f"_{i}_{j}")
+            filename = add_filename_suffix(ARGS.model_output, f"_{i}_{j}.json")
 
             with filename.open("w") as f:
                 f.write(model.to_json())
@@ -54,7 +54,7 @@ paths = {
 if ARGS.output:
     for i, path in paths.items():
         for j, preferences in enumerate(path):
-            filename = add_filename_suffix(ARGS.output, f"_{i}_{j}")
+            filename = add_filename_suffix(ARGS.output, f"_{i}_{j}.csv")
 
             with filename.open("w") as f:
                 to_csv(preferences, f)

@@ -9,11 +9,12 @@ from shutil import copy
 from typing import cast
 
 import numpy as np
+from mcda.relations import PreferenceStructure
 
 from src.constants import SENTINEL
 from src.methods import MethodEnum
 from src.models import ModelEnum
-from src.preference_structure.io import from_csv
+from src.preference_structure.io import from_csv, to_csv
 
 from .....utils import catchtime
 from ....dir import DIR
@@ -478,7 +479,15 @@ def collective_thread(
 
                 if (not compromise_found) and (time_left >= 1):
                     new_task_Mc = replace(task_Mc, it=it + 1)
-                    copy(task_Mc.Cr_file(DIR), new_task_Mc.Cr_file(DIR))  # pyright: ignore[reportUnknownArgumentType]
+                    with (
+                        task_Mc.Cr_file(DIR).open("r") as f,
+                        new_task_Mc.Cr_file(DIR).open("w") as g,
+                    ):
+                        Refused = from_csv(f)
+                        Refused_no_duplicates = PreferenceStructure(
+                            list(set(Refused.relations)), validate=False
+                        )
+                        to_csv(Refused_no_duplicates, g)
                 else:
                     new_task_Mc = None
 
