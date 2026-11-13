@@ -395,6 +395,7 @@ class MieTask(AbstractDTask):
                 )
 
                 with (
+                    catchtime() as time,
                     ProcessPoolExecutor(self.config.nb_cpus) as process_pool,
                 ):
                     results = list(process_pool.map(sa_result, sas))

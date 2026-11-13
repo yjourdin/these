@@ -377,7 +377,7 @@ def main(args: ArgumentsGroupDecision):
         futures.values(),
         return_when=FIRST_EXCEPTION if args.stop_error else ALL_COMPLETED,
     )
-    # thread_pool.shutdown(cancel_futures=args.stop_error)
+    thread_pool.shutdown(cancel_futures=args.stop_error)
     for future in done:
         with suppress(TaskException, ShutDown):
             future.result()
