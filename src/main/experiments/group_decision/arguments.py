@@ -45,3 +45,4 @@ class ArgumentsGroupDecision(  # pyright: ignore[reportIncompatibleMethodOverrid
     path: list[bool] = field(default_factory=lambda: [True])
     Mie: list[bool] = field(default_factory=lambda: [True])
     nb_Mcp: list[int] = field(default_factory=lambda: [1])
+    error: list[float] = field(default_factory=lambda: [0])

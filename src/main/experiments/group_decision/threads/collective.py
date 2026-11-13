@@ -48,6 +48,7 @@ def collective_thread(
     Mi_id: int,
     n_bc: int,
     same_alt: bool,
+    error: float,
     D_id: int,
     # Mie: bool,
     # Mie_config: MIPConfig | None,
@@ -90,6 +91,7 @@ def collective_thread(
                 Mi_id,
                 n_bc,
                 same_alt,
+                error,
                 D_id,
                 # Mie,
                 # Mie_config,
@@ -116,6 +118,7 @@ def collective_thread(
                 Mi_id,
                 n_bc,
                 same_alt,
+                error,
                 D_id,
                 # Mie_id,
                 config,
@@ -216,6 +219,7 @@ def collective_thread(
                         Mi_id,
                         n_bc,
                         same_alt,
+                        error,
                         D_id,
                         # Mie,
                         # Mie_config,
@@ -342,6 +346,7 @@ def collective_thread(
                             dm_id,
                             n_bc,
                             same_alt,
+                            error,
                             D_id,
                             # Mie,
                             # Mie_config,
@@ -365,56 +370,55 @@ def collective_thread(
 
                 working_connections = list(sources.keys())
 
-                with catchtime() as time:
-                    if path:
-                        while working_connections and not set.intersection(
-                            *sources.values()
+                if path:
+                    while working_connections and not set.intersection(
+                        *sources.values()
+                    ):
+                        # while working_connections and not all(*sources.values()):
+                        for connection in cast(
+                            list[Connection], wait(working_connections)
                         ):
-                            # while working_connections and not all(*sources.values()):
-                            for connection in cast(
-                                list[Connection], wait(working_connections)
-                            ):
-                                if (source := connection.recv()) != SENTINEL:
-                                    sources[connection] = sources[connection] | source
-                                else:
-                                    working_connections.remove(connection)
-                                    if not set.intersection(*[
-                                        sources[connection]
-                                        for connection in sources
-                                        if connection not in working_connections
-                                    ]):
-                                        working_connections = []
+                            if (source := connection.recv()) != SENTINEL:
+                                sources[connection] = sources[connection] | source
+                            else:
+                                working_connections.remove(connection)
+                                if not set.intersection(*[
+                                    sources[connection]
+                                    for connection in sources
+                                    if connection not in working_connections
+                                ]):
+                                    working_connections = []
 
-                        source = (
-                            sources_union[
-                                np.argmax([
-                                    sum(s in val for val in sources.values())
-                                    for s in sources_union
-                                ])
-                            ]
-                            if (sources_union := list(set.union(*sources.values())))  # pyright: ignore[reportUnknownArgumentType]
-                            else 0
-                        )
+                    source = (
+                        sources_union[
+                            np.argmax([
+                                sum(s in val for val in sources.values())
+                                for s in sources_union
+                            ])
+                        ]
+                        if (sources_union := list(set.union(*sources.values())))  # pyright: ignore[reportUnknownArgumentType]
+                        else 0
+                    )
 
-                        # source = (
-                        #     intersect.pop()
-                        #     if (
-                        #         working_connections
-                        #         and (intersect := set.intersection(*sources.values()))
-                        #         # and (intersect := set.union(*sources.values()))
-                        #     )
-                        #     else SENTINEL
-                        # )
-                        if nb_Mcp > 1:
-                            for connection in sources:
-                                connection.send(source)
+                    # source = (
+                    #     intersect.pop()
+                    #     if (
+                    #         working_connections
+                    #         and (intersect := set.intersection(*sources.values()))
+                    #         # and (intersect := set.union(*sources.values()))
+                    #     )
+                    #     else SENTINEL
+                    # )
+                    if nb_Mcp > 1:
+                        for connection in sources:
+                            connection.send(source)
 
                     result_P = (
                         future_P.result()
                     )  # result_list(list(futures_P.values()))
 
-                time_left -= time()
-                time_left_per_it -= time()
+                time_left -= result_P.time
+                time_left_per_it -= result_P.time
                 if time_left < 1:  # or (time_left_per_it < 1):
                     # raise ValueError("Time left 2")
                     break
@@ -439,6 +443,7 @@ def collective_thread(
                         dm_id,
                         n_bc,
                         same_alt,
+                        error,
                         D_id,
                         # Mie,
                         # Mie_config,
@@ -530,6 +535,7 @@ def collective_thread(
                         Mi_id=Mi_id,
                         N_bc=n_bc,
                         Same_alt=same_alt,
+                        Error=error,
                         D_id=D_id,
                         Method=method,
                         Config=config,
@@ -589,6 +595,7 @@ def collective_thread(
         Mi_id=Mi_id,
         N_bc=n_bc,
         Same_alt=same_alt,
+        Error=error,
         D_id=D_id,
         Method=method,
         Config=config,

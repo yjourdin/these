@@ -31,7 +31,7 @@ from src.preference_structure.fitness import (
     comparisons_ranking,
     fitness_comparisons_ranking,
 )
-from src.preference_structure.generate import random_comparisons
+from src.preference_structure.generate import noisy_comparisons, random_comparisons
 from src.preference_structure.io import from_csv, to_csv
 from src.random import SeedLike
 from src.rmp.model import FrozenRMPModel, RMPModel
@@ -169,6 +169,7 @@ class MiTask(AbstractMiTask):
 class AbstractDTask(AbstractMiTask, ATask):
     nbc: int
     same_alt: bool
+    error: float
     D_id: int = field(hash=False)
 
     def D_file(self, dir: DirectoryGroupDecision, dm_id: int):
@@ -185,6 +186,7 @@ class AbstractDTask(AbstractMiTask, ATask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
         )
 
@@ -202,6 +204,7 @@ class AbstractDTask(AbstractMiTask, ATask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
         )
 
@@ -225,6 +228,9 @@ class DTask(AbstractDTask, MiTask):
             rng = self.rng(seed)
 
         D = random_comparisons(A, Mi, self.nbc, rng=rng)
+
+        if self.error:
+            D = noisy_comparisons(D, self.error, rng)
 
         cred = Mi.credibility(A)
         cred_numpy = cred.to_numpy()
@@ -429,6 +435,7 @@ class MieTask(AbstractDTask):
             Mi_id=self.Mi_id,
             N_bc=self.nbc,
             Same_alt=self.same_alt,
+            Error=self.error,
             D_id=self.D_id,
             Config=self.config,
             # Mie_id=self.Mie_id,
@@ -457,6 +464,7 @@ class MieTask(AbstractDTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.config,
             # self.Mie_id,
@@ -491,6 +499,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.method,
             self.config,
@@ -517,6 +526,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.method,
             self.config,
@@ -543,6 +553,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.method,
             self.config,
@@ -569,6 +580,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.method,
             self.config,
@@ -595,6 +607,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.method,
             self.config,
@@ -621,6 +634,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.method,
             self.config,
@@ -648,6 +662,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.method,
             self.config,
@@ -675,6 +690,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.method,
             self.config,
@@ -701,6 +717,7 @@ class AbstractCollectiveTask(AbstractDTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.method,
             self.config,
@@ -918,6 +935,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             Mi_id=self.Mi_id,
             N_bc=self.nbc,
             Same_alt=self.same_alt,
+            Error=self.error,
             D_id=self.D_id,
             Method=self.method,
             Config=self.config,
@@ -969,6 +987,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.method,
             self.config,
@@ -1170,6 +1189,7 @@ class CollectiveSATask(AbstractCollectiveTask):
             Mi_id=self.Mi_id,
             N_bc=self.nbc,
             Same_alt=self.same_alt,
+            Error=self.error,
             D_id=self.D_id,
             Method=self.method,
             Config=self.config,
@@ -1226,6 +1246,7 @@ class DistanceTask(AbstractCollectiveTask):
                     Mi_id=self.Mi_id,
                     N_bc=self.nbc,
                     Same_alt=self.same_alt,
+                    Error=self.error,
                     D_id=self.D_id,
                     Method=self.method,
                     Config=self.config,
@@ -1485,6 +1506,7 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
                 Mi_id=self.Mi_id,
                 N_bc=self.nbc,
                 Same_alt=self.same_alt,
+                Error=self.error,
                 D_id=self.D_id,
                 Method=self.method,
                 Config=self.config,
@@ -1525,6 +1547,7 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.method,
             self.config,
@@ -1553,6 +1576,7 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.method,
             self.config,
@@ -1581,6 +1605,7 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
             self.Mi_id,
             self.nbc,
             self.same_alt,
+            self.error,
             self.D_id,
             self.method,
             self.config,
@@ -1739,6 +1764,7 @@ class AcceptPTask(PreferencePathTask):
             Mi_id=self.Mi_id,
             N_bc=self.nbc,
             Same_alt=self.same_alt,
+            Error=self.error,
             D_id=self.D_id,
             Method=self.method,
             Config=self.config,

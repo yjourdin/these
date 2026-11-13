@@ -38,6 +38,7 @@ class ExperimentFields(CSVFields):
     Mi_id: int
     N_bc: int
     Same_alt: bool
+    Error: float
     D_id: int
     Method: MethodEnum
     Config: Config
@@ -63,6 +64,7 @@ class MieFields(CSVFields):
     Mi_id: int
     N_bc: int
     Same_alt: bool
+    Error: float
     D_id: int
     Config: MIPConfig
     Mie_id: int

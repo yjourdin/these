@@ -112,7 +112,7 @@ def main(args: ArgumentsGroupDecision):
                             ],
                         )
 
-        for n_tr, model, ko, group_size, group, n_bc, same_alt in product(
+        for n_tr, model, ko, group_size, group, n_bc, same_alt, error in product(
             args.N_tr,
             args.model,
             args.Ko,
@@ -120,6 +120,7 @@ def main(args: ArgumentsGroupDecision):
             args.group,
             args.N_bc,
             args.same_alt,
+            args.error,
         ):
             for Atr_id in range(args.nb_Atr):
                 for Mo_id in range(args.nb_Mo) if args.nb_Mo else [Atr_id]:
@@ -140,6 +141,7 @@ def main(args: ArgumentsGroupDecision):
                                     dm_id,
                                     n_bc,
                                     same_alt,
+                                    error,
                                     D_id,
                                 )
                                 futures[task] = thread_pool.submit(
@@ -197,6 +199,7 @@ def main(args: ArgumentsGroupDecision):
                                                         dm_id,
                                                         n_bc,
                                                         same_alt,
+                                                        error,
                                                         D_id,
                                                     )
                                                 ]
@@ -226,6 +229,7 @@ def main(args: ArgumentsGroupDecision):
                                                 Mi_id,
                                                 n_bc,
                                                 same_alt,
+                                                error,
                                                 D_id,
                                                 # Mie_config,
                                                 # Mie_id,
@@ -255,6 +259,7 @@ def main(args: ArgumentsGroupDecision):
                                                         Mi_id,
                                                         n_bc,
                                                         same_alt,
+                                                        error,
                                                         D_id,
                                                         # Mie_config,
                                                         # Mie_id,
@@ -293,6 +298,7 @@ def main(args: ArgumentsGroupDecision):
                                                                         Mi_id,
                                                                         n_bc,
                                                                         same_alt,
+                                                                        error,
                                                                         D_id,
                                                                         # Mie,
                                                                         # Mie_config,
@@ -321,6 +327,7 @@ def main(args: ArgumentsGroupDecision):
                                                                         Mi_id,
                                                                         n_bc,
                                                                         same_alt,
+                                                                        error,
                                                                         D_id,
                                                                         # Mie_id,
                                                                         cast(
@@ -345,6 +352,7 @@ def main(args: ArgumentsGroupDecision):
                                                                     group=group,
                                                                     n_bc=n_bc,
                                                                     same_alt=same_alt,
+                                                                    error=error,
                                                                     D_id=D_id,
                                                                     # Mie=Mie,
                                                                     # Mie_config=Mie_config,
