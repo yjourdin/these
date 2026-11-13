@@ -34,10 +34,10 @@ class Astar[T](Paths[T, NodeAstar[T]]):
     def init(self, sources: list[T]):
         super().init(sources)
         for i, source in enumerate(sources):
-            if heuristic_value := self.heuristic(source):
-                self.open_heaps[i].append(
-                    NodeAstar(source, 0, heuristic_value, self.latest)
-                )
+            node = NodeAstar(source, 0, self.heuristic(source), self.latest)
+            self.open_heaps[i].append(node)
+            if node.heuristic:
+                self.best[i] = node
             else:
                 self.paths |= {i: [source]}
             heapq.heapify(self.open_heaps[i])
@@ -85,7 +85,17 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                                 )
 
                                 # Stop when target reached
-                                if (heuristic_value := self.heuristic(neighbor)) == 0:
+                                neighbor_node = NodeAstar(
+                                    neighbor,
+                                    current_node.cost + 1,
+                                    self.heuristic(neighbor),
+                                    self.latest,
+                                )
+                                if (
+                                    heuristic_value := neighbor_node.heuristic
+                                ) < self.best[source_id].heuristic:
+                                    self.best[source_id] = neighbor_node
+                                if heuristic_value == 0:
                                     paths = self.paths_from(neighbor)
                                     self.paths |= paths
                                     # for path in paths.values():
@@ -93,7 +103,7 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                                     for source in self.paths:
                                         self.open_heaps.pop(source, None)
                                     return self.paths
-                                elif heuristic_value < inf:
+                                if heuristic_value < inf:
                                     # Add neighbor to queue
                                     heapq.heappush(
                                         self.open_heaps[source_id],
@@ -106,7 +116,9 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                                     )
                             elif (
                                 neighbor_source_ids := set(self.parent[neighbor].keys())
-                            ) != (current_source_ids := set(self.parent[current].keys())):
+                            ) != (
+                                current_source_ids := set(self.parent[current].keys())
+                            ):
                                 # Remonte le path de current
                                 if new_ids := neighbor_source_ids - current_source_ids:
                                     paths = self.paths_from(current)
@@ -125,7 +137,9 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                                         neighbor_source_ids & self.paths.keys()
                                     ):
                                         paths = self.paths_from(
-                                            self.paths[neighbors_source_found_ids.pop()][0]
+                                            self.paths[
+                                                neighbors_source_found_ids.pop()
+                                            ][0]
                                         )
                                         self.paths |= paths
                                         for source in self.paths:
@@ -135,5 +149,15 @@ class Astar[T](Paths[T, NodeAstar[T]]):
             # Update time
             time_loop += time()
             self.time += time()
+
+        if (
+            (self.time >= self.max_time)
+            or (not self.open_heaps)
+            or (not any(self.open_heaps.values()))
+        ):
+            for source_id in self.open_heaps:
+                if source_id not in self.paths:
+                    paths = self.paths_from(self.best[source_id].item)
+                    self.paths |= paths
 
         return self.paths

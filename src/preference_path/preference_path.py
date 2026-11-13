@@ -14,7 +14,7 @@ def preference_path(
     alternatives: PerformanceTableType,
     start_preferences: PreferenceStructure,
 ):
-    result: list[PreferenceStructure] = []
+    result: list[PreferenceStructure] = [start_preferences]
 
     pairs = start_preferences.elements_pairs_relations.keys()
 

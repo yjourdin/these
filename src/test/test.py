@@ -141,6 +141,7 @@ def distance_parameter_model(
         else:
             Ia = rankdata(model.importance_relation)
             Ib = rankdata(Mb_frozen.importance_relation)
+            keys = range(len(Ia))
         return kendalltau_distance(Ia, Ib) * len(keys)  # pyright: ignore[reportUnknownArgumentType]
 
     def heuristic_lexicographic_order(model: FrozenRMPModel | FrozenSRMPModel):

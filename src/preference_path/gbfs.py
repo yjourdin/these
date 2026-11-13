@@ -30,10 +30,10 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
     def init(self, sources: list[T]):
         super().init(sources)
         for i, source in enumerate(sources):
-            if heuristic_value := self.heuristic(source):
-                self.open_heaps[i].append(
-                    NodeGBFS(source, heuristic_value, self.latest)
-                )
+            node = NodeGBFS(source, self.heuristic(source), self.latest)
+            self.best[i] = node
+            if node.heuristic:
+                self.open_heaps[i].append(node)
             else:
                 self.paths |= {i: [source]}
             heapq.heapify(self.open_heaps[i])
@@ -87,19 +87,24 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
                                 )
 
                                 # Stop when target reached
-                                if (heuristic_value := self.heuristic(neighbor)) == 0:
+                                neighbor_node = NodeGBFS(
+                                    neighbor, self.heuristic(neighbor), self.latest
+                                )
+                                if (
+                                    heuristic_value := neighbor_node.heuristic
+                                ) < self.best[source_id].heuristic:
+                                    self.best[source_id] = neighbor_node
+                                if heuristic_value == 0:
                                     paths = self.paths_from(neighbor)
                                     self.paths |= paths
                                     for source in self.paths:
                                         self.open_heaps.pop(source, None)
                                     return self.paths
-                                elif heuristic_value < inf:
+                                if heuristic_value < inf:
                                     # Add neighbor to queue
                                     heapq.heappush(
                                         self.open_heaps[source_id],
-                                        NodeGBFS(
-                                            neighbor, heuristic_value, self.latest
-                                        ),
+                                        neighbor_node,
                                     )
 
                             elif (
@@ -137,5 +142,15 @@ class GBFS[T](Paths[T, NodeGBFS[T]]):
             # Update time
             time_loop += time()
             self.time += time()
+
+        if (
+            (self.time >= self.max_time)
+            or (not self.open_heaps)
+            or (not any(self.open_heaps.values()))
+        ):
+            for source_id in self.open_heaps:
+                if source_id not in self.paths:
+                    paths = self.paths_from(self.best[source_id].item)
+                    self.paths |= paths
 
         return self.paths

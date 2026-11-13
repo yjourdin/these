@@ -76,6 +76,7 @@ class Paths[T, N: Node[Any]](Dataclass):
             source: {i: None} for i, source in enumerate(sources)
         }
         self.paths: dict[int, list[T]] = {}
+        self.best: dict[int, N] = {}
 
         if self.verbose:
             with self.log_writer() as log_writer:

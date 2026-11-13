@@ -6,7 +6,7 @@ from math import inf
 from multiprocessing import Pipe
 from multiprocessing.connection import Connection, wait
 from shutil import copy
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 from mcda.relations import PreferenceStructure
@@ -19,7 +19,7 @@ from src.preference_structure.io import from_csv, to_csv
 from .....utils import catchtime
 from ....dir import DIR
 from ....task import FutureTask, TaskResult, result_dict, result_list
-from ....threads.task import task_thread
+from ....threads.task import group_task_thread, task_thread
 from ...elicitation.config import Config, MIPConfig, SAConfig
 from ..directory import DirectoryGroupDecision
 from ..fields import GroupParameters
@@ -319,45 +319,49 @@ def collective_thread(
                 # if not all(result.res for result in results_P):
                 #     break
 
-                futures_P: dict[int, FutureTask] = {}
+                # futures_P: dict[int, FutureTask] = {}
                 sources: dict[Connection, set[int]] = {}
+                tasks: list[PreferencePathTask] = []
+                kwargs: list[dict[str, Any]] = []
 
                 for dm_id in DMS:
                     main_connection, worker_connection = Pipe()
                     sources[main_connection] = set()
-                    task = PreferencePathTask(
-                        m,
-                        n_tr,
-                        Atr_id,
-                        model,
-                        ko,
-                        fixed_lex_order,
-                        Mo_id,
-                        group_size,
-                        group,
-                        Mi_id,
-                        dm_id,
-                        n_bc,
-                        same_alt,
-                        D_id,
-                        # Mie,
-                        # Mie_config,
-                        # Mie_id,
-                        method,
-                        config,
-                        nb_Mcp,
-                        Mc_id,
-                        path,
-                        P_id,
-                        it,
+                    tasks.append(
+                        PreferencePathTask(
+                            m,
+                            n_tr,
+                            Atr_id,
+                            model,
+                            ko,
+                            fixed_lex_order,
+                            Mo_id,
+                            group_size,
+                            group,
+                            Mi_id,
+                            dm_id,
+                            n_bc,
+                            same_alt,
+                            D_id,
+                            # Mie,
+                            # Mie_config,
+                            # Mie_id,
+                            method,
+                            config,
+                            nb_Mcp,
+                            Mc_id,
+                            path,
+                            P_id,
+                            it,
+                        )
                     )
-                    futures_P[dm_id] = thread_pool.submit(
-                        task_thread,
-                        task,
-                        seed=seeds.P[P_id],
-                        max_time=min(time_left, time_left_per_it),
-                        connection=worker_connection,
-                    )
+                    kwargs.append({
+                        "seed": seeds.P[P_id],
+                        "max_time": min(time_left, time_left_per_it),
+                        "connection": worker_connection,
+                    })
+
+                future_P = thread_pool.submit(group_task_thread, tasks, kwargs=kwargs)
 
                 working_connections = list(sources.keys())
 
@@ -405,14 +409,16 @@ def collective_thread(
                             for connection in sources:
                                 connection.send(source)
 
-                    results_P = result_list(list(futures_P.values()))
+                    result_P = (
+                        future_P.result()
+                    )  # result_list(list(futures_P.values()))
 
                 time_left -= time()
                 time_left_per_it -= time()
                 if time_left < 1:  # or (time_left_per_it < 1):
                     # raise ValueError("Time left 2")
                     break
-                if not all(result.res for result in results_P):
+                if not result_P.res:
                     # raise ValueError("Preference path")
                     break
 
@@ -448,7 +454,7 @@ def collective_thread(
                     futures_accept[dm_id] = thread_pool.submit(
                         task_thread,
                         tasks_accept[dm_id],
-                        precede_futures=[futures_P[dm_id]],
+                        precede_futures=[future_P],
                     )
 
                 results_accept = result_dict(futures_accept)

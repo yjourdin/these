@@ -65,4 +65,4 @@ class TaskQueueElement(NamedTuple):
     args: Args
 
 
-type TaskQueue = LifoQueue[TaskQueueElement]
+type TaskQueue = LifoQueue[TaskQueueElement | list[TaskQueueElement]]

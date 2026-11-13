@@ -1,3 +1,4 @@
+from collections import deque
 from contextlib import suppress
 from itertools import chain
 from multiprocessing.connection import wait
@@ -75,8 +76,13 @@ class TaskManager(Thread):
         # Get remaining tasks
         with suppress(ShutDown):
             while True:
-                task, _, connection, _ = TASK_QUEUE.get()
-                self.task_connections[task] = connection
+                element = TASK_QUEUE.get()
+                elements = (
+                    (element,) if isinstance(element, TaskQueueElement) else element
+                )
+                for element in elements:
+                    task, _, connection, _ = element
+                    self.task_connections[task] = connection
 
         # Send sentinel signal
         for connection in chain(
@@ -85,19 +91,24 @@ class TaskManager(Thread):
             connection.send(SENTINEL)
 
     def run(self):
-        to_do = None
+        to_do: deque[TaskQueueElement] = deque()
 
         while (self.waiting or self.working) and not STOP.is_set():
             while self.waiting:
                 try:
-                    element = to_do or TASK_QUEUE.get(timeout=1)
+                    element = to_do.pop() if to_do else TASK_QUEUE.get(timeout=1)
                 except Empty:
                     break
                 except ShutDown:
                     STOP.set()
                 else:
-                    # Send task
-                    if to_do := None if self.send_task(element) else element:
+                    # Extract elements
+                    if not isinstance(element, TaskQueueElement):
+                        to_do.extendleft(element)
+                        element = to_do.pop()
+                        # Send task
+                    if not self.send_task(element):
+                        to_do.append(element)
                         break
 
             if self.working:

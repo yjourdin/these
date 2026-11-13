@@ -186,10 +186,10 @@ def create_mip(
                             raise ValueError(
                                 f"Couple de relations inconnu : {r} et {r2}"
                             )
-                    print(r, "A")
+                    # print(r, "A")
                 else:
                     refused_dict[pair] = r
-                    print(r, "R")
+                    # print(r, "R")
 
             comparisons_accepted = PreferenceStructure(
                 comparisons_accepted_list, validate=False

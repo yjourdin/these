@@ -230,16 +230,14 @@ def main(args: ArgumentsGroupDecision):
                                                 # Mie_config,
                                                 # Mie_id,
                                                 method,
-                                                config
+                                                config,
                                             )
 
-                                            futures[task] = (
-                                                thread_pool.submit(
-                                                    task_thread,
-                                                    task,
-                                                    seed=seeds.Mie,
-                                                    precede_futures=precede_futures,
-                                                )
+                                            futures[task] = thread_pool.submit(
+                                                task_thread,
+                                                task,
+                                                seed=seeds.Mie,
+                                                precede_futures=precede_futures,
                                             )
 
                                             precede_futures = [
@@ -273,9 +271,7 @@ def main(args: ArgumentsGroupDecision):
                                                     # else [Mie_id]
                                                     else [D_id]
                                                 ):
-                                                    for (
-                                                        nb_Mcp
-                                                    ) in args.nb_Mcp:
+                                                    for nb_Mcp in args.nb_Mcp:
                                                         for P_id in (
                                                             range(args.nb_P)
                                                             if args.nb_P
@@ -337,43 +333,43 @@ def main(args: ArgumentsGroupDecision):
                                                                         P_id,
                                                                         0,
                                                                     )
-                                                            futures[
-                                                                task
-                                                            ] = thread_pool.submit(
-                                                                collective_thread,
-                                                                m=m,
-                                                                n_tr=n_tr,
-                                                                model=model,
-                                                                ko=ko,
-                                                                fixed_lex_order=args.fixed_lex_order,
-                                                                group_size=group_size,
-                                                                group=group,
-                                                                n_bc=n_bc,
-                                                                same_alt=same_alt,
-                                                                D_id=D_id,
-                                                                # Mie=Mie,
-                                                                # Mie_config=Mie_config,
-                                                                # Mie_id=Mie_id,
-                                                                method=method,
-                                                                config=config,
-                                                                nb_Mcp=nb_Mcp,
-                                                                path=path,
-                                                                Atr_id=Atr_id,
-                                                                Mo_id=Mo_id,
-                                                                Mi_id=Mi_id,
-                                                                Mc_id=Mc_id,
-                                                                P_id=P_id,
-                                                                seeds=seeds,
-                                                                max_time=args.max_time,
-                                                                time_per_it=args.time_per_it,
-                                                                precede_futures=precede_futures,
+                                                            futures[task] = (
+                                                                thread_pool.submit(
+                                                                    collective_thread,
+                                                                    m=m,
+                                                                    n_tr=n_tr,
+                                                                    model=model,
+                                                                    ko=ko,
+                                                                    fixed_lex_order=args.fixed_lex_order,
+                                                                    group_size=group_size,
+                                                                    group=group,
+                                                                    n_bc=n_bc,
+                                                                    same_alt=same_alt,
+                                                                    D_id=D_id,
+                                                                    # Mie=Mie,
+                                                                    # Mie_config=Mie_config,
+                                                                    # Mie_id=Mie_id,
+                                                                    method=method,
+                                                                    config=config,
+                                                                    nb_Mcp=nb_Mcp,
+                                                                    path=path,
+                                                                    Atr_id=Atr_id,
+                                                                    Mo_id=Mo_id,
+                                                                    Mi_id=Mi_id,
+                                                                    Mc_id=Mc_id,
+                                                                    P_id=P_id,
+                                                                    seeds=seeds,
+                                                                    max_time=args.max_time,
+                                                                    time_per_it=args.time_per_it,
+                                                                    precede_futures=precede_futures,
+                                                                )
                                                             )
 
     done, _ = wait(
         futures.values(),
         return_when=FIRST_EXCEPTION if args.stop_error else ALL_COMPLETED,
     )
-    thread_pool.shutdown(cancel_futures=args.stop_error)
+    # thread_pool.shutdown(cancel_futures=args.stop_error)
     for future in done:
         with suppress(TaskException, ShutDown):
             future.result()

@@ -1,10 +1,10 @@
 import csv
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field, replace
-from math import factorial, inf
+from math import inf
 from multiprocessing.connection import Connection
 from operator import attrgetter
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 import numpy as np
 from mcda.relations import I, P, PreferenceStructure
@@ -40,7 +40,6 @@ from src.srmp.model import FrozenSRMPModel, SRMPModel
 from src.test.test import distance_parameter_model
 from src.utils import catchtime, tolist
 
-from ....rmp.field import ProfilesField
 from ...task import SeedTask
 from ..elicitation.config import Config, MIPConfig, SAConfig
 from .directory import DirectoryGroupDecision
@@ -54,7 +53,7 @@ class AbstractMTask(SeedTask):
 
 @dataclass(frozen=True)
 class ATask(AbstractMTask):
-    name = "A"
+    name: ClassVar[str] = "A"
     ntr: int
     Atr_id: int = field(hash=False)
 
@@ -75,7 +74,7 @@ class ATask(AbstractMTask):
 
 @dataclass(frozen=True)
 class MoTask(AbstractMTask):
-    name = "Mo"
+    name: ClassVar[str] = "Mo"
     model: ModelEnum
     ko: int
     fixed_lex_order: bool = field(hash=False)
@@ -130,7 +129,7 @@ class AbstractMiTask(MoTask):
 
 @dataclass(frozen=True)
 class MiTask(AbstractMiTask):
-    name = "Mi"
+    name: ClassVar[str] = "Mi"
     dm_id: int
 
     def task(
@@ -209,7 +208,7 @@ class AbstractDTask(AbstractMiTask, ATask):
 
 @dataclass(frozen=True)
 class DTask(AbstractDTask, MiTask):
-    name = "D"
+    name: ClassVar[str] = "D"
 
     def task(
         self, dir: DirectoryGroupDecision, seed: SeedLike, *args: Any, **kwargs: Any
@@ -267,7 +266,7 @@ class DTask(AbstractDTask, MiTask):
 
 @dataclass(frozen=True)
 class MieTask(AbstractDTask):
-    name = "Mie"
+    name: ClassVar[str] = "Mie"
     # Mie_config: MIPConfig
     # Mie_id: int = field(hash=False)
     method: MethodEnum
@@ -721,7 +720,7 @@ class AbstractCollectiveTask(AbstractDTask):
 
 @dataclass(frozen=True)
 class CollectiveMIPTask(AbstractCollectiveTask):
-    name = "CollectiveMIP"
+    name: ClassVar[str] = "CollectiveMIP"
     method: MethodEnum = field(default=MethodEnum.MIP, init=False)
     config: MIPConfig
 
@@ -987,7 +986,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
 
 @dataclass(frozen=True)
 class CollectiveSATask(AbstractCollectiveTask):
-    name = "CollectiveSA"
+    name: ClassVar[str] = "CollectiveSA"
     method: MethodEnum = field(default=MethodEnum.SA, init=False)
     config: SAConfig
     Mie: bool = field(default=False, init=False, hash=False)
@@ -1195,7 +1194,7 @@ class CollectiveSATask(AbstractCollectiveTask):
 
 @dataclass(frozen=True)
 class DistanceTask(AbstractCollectiveTask):
-    name = "Distance"
+    name: ClassVar[str] = "Distance"
     Mcp_id_a: int
     Mcp_id_b: int
 
@@ -1345,7 +1344,7 @@ class DistanceTask(AbstractCollectiveTask):
 
 @dataclass(frozen=True)
 class PreferencePathTask(AbstractCollectiveTask, DTask):
-    name = "Path"
+    name: ClassVar[str] = "Path"
 
     def task(
         self,
@@ -1428,7 +1427,7 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
             time = time or gbfs.time
             Mcp_id = connection.recv() if self.nb_Mcp > 1 else 0
         if model_path := paths.get(Mcp_id, None):
-            result = True
+            result = gbfs.best[Mcp_id].heuristic == 0
             preference_path = compute_preference_path(model_path, D, A, R)
         else:
             model_path = [Mcps[Mcp_id]]
@@ -1610,7 +1609,7 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
 
 @dataclass(frozen=True)
 class AcceptPTask(PreferencePathTask):
-    name = "AcceptP"
+    name: ClassVar[str] = "AcceptP"
 
     def task(self, dir: DirectoryGroupDecision, *args: Any, **kwargs: Any) -> Any:
         # with self.Mi_file(dir).open("r") as f:
