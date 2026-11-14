@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from concurrent.futures import Future
+from math import inf
 from multiprocessing.connection import wait
 from typing import Any, cast
 
@@ -64,7 +65,7 @@ def group_task_thread(
     TASK_QUEUE.put(elements)
 
     res = True
-    time = 0
+    time = inf
     n = 0
     while n < len(tasks):
         for conn in cast(list[ThreadEndTaskConnection], wait(thread_connections)):
@@ -73,7 +74,7 @@ def group_task_thread(
             if result == SENTINEL:
                 raise TaskException(str(tasks[thread_connections.index(conn)]))
             res &= result.res
-            time = max(time, result.time)
+            time = min(time, result.time)
 
     TASK_QUEUE.task_done()
 
