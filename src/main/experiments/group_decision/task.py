@@ -1132,18 +1132,44 @@ class CollectiveSATask(AbstractCollectiveTask):
         ):
             results = list(process_pool.map(sa_result, sas))
 
-        results = [res for res in results if res.best_objective < 1]
-        results.sort(key=attrgetter("best_objective"))
         # min_obj = min(res.best_objective for res in results)
         time = max(res.time for res in results)
+        results.sort(key=attrgetter("best_objective"))
+        results = [res for res in results if res.best_objective < 1]
 
-        for Mcp_id in range(min(len(results), self.nb_Mcp)):
-            best_model = results[Mcp_id].best_model
+        best_model = None
+        best_objective = None
 
-            with self.Mcp_file(dir, Mcp_id).open("w") as f:
+        if results:
+            for Mcp_id in range(min(len(results), self.nb_Mcp)):
+                best_model = results[Mcp_id].best_model
+
+                with self.Mcp_file(dir, Mcp_id).open("w") as f:
+                    f.write(best_model.to_json())
+
+                with self.Dcp_file(dir, Mcp_id).open("w") as f:
+                    to_csv(
+                        random_comparisons(
+                            A,
+                            best_model,
+                            pairs=set.union(
+                                *(set(d.elements_pairs_relations.keys()) for d in D)
+                            ),  # pyright: ignore[reportUnknownArgumentType]
+                        ),
+                        f,
+                    )
+
+            best_model = results[0].best_model
+
+            best_objective = max(
+                C[dm] + len(comparisons_ranking(D[dm], best_model.rank_dict(A)))
+                for dm in range(self.group_size)
+            )
+
+            with self.Mc_file(dir).open("w") as f:
                 f.write(best_model.to_json())
 
-            with self.Dcp_file(dir, Mcp_id).open("w") as f:
+            with self.Dc_file(dir).open("w") as f:
                 to_csv(
                     random_comparisons(
                         A,
@@ -1154,27 +1180,6 @@ class CollectiveSATask(AbstractCollectiveTask):
                     ),
                     f,
                 )
-
-        best_model = (
-            results[0]
-            if self.nb_Mcp == 1
-            else min(results, key=attrgetter("best_objective"))
-        ).best_model
-
-        with self.Mc_file(dir).open("w") as f:
-            f.write(best_model.to_json())
-
-        with self.Dc_file(dir).open("w") as f:
-            to_csv(
-                random_comparisons(
-                    A,
-                    best_model,
-                    pairs=set.union(
-                        *(set(d.elements_pairs_relations.keys()) for d in D)
-                    ),  # pyright: ignore[reportUnknownArgumentType]
-                ),
-                f,
-            )
 
         csv_file = dir.csv_files["collective"]
         if len(C) != self.group_size:
@@ -1204,14 +1209,11 @@ class CollectiveSATask(AbstractCollectiveTask):
             P_id=self.P_id,
             It=self.it,
             Time=time,
-            Objective=max(
-                C[dm] + len(comparisons_ranking(D[dm], best_model.rank_dict(A)))
-                for dm in range(self.group_size)
-            ),
+            Objective=best_objective,
             Optimal=False,
         )
 
-        return True, time
+        return best_model is not None, time
 
 
 @dataclass(frozen=True)
