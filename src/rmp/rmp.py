@@ -184,14 +184,14 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
         """
         comp_df = self.performance_table.data >= self.profile.data
 
-        coalitions = np.array([np.nonzero(a)[0] for a in comp_df.values])
+        coalitions = [np.nonzero(a)[0] for a in comp_df.values]
 
         coalitions_bit = np.packbits(comp_df.values, axis=-1)
 
         def score_func(x):
             return self.importance_relation[frozenset(x)]
 
-        scores = np.apply_along_axis(score_func, -1, coalitions)
+        scores = np.array(list(map(score_func, coalitions)))
 
         result = np.subtract.outer(scores, scores)
 
