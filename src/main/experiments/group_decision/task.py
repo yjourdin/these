@@ -1136,7 +1136,7 @@ class CollectiveSATask(AbstractCollectiveTask):
         time = max(res.time for res in results)
         results = [res for res in results if res.best_objective == min_obj]
 
-        for Mcp_id in range(len(results)):
+        for Mcp_id in range(max(len(results), self.nb_Mcp)):
             best_model = results[Mcp_id].best_model
 
             with self.Mcp_file(dir, Mcp_id).open("w") as f:
