@@ -241,6 +241,7 @@ def main(args: ArgumentsGroupDecision):
                                                 task_thread,
                                                 task,
                                                 seed=seeds.Mie,
+                                                nb_cpus=config.nb_cpus,
                                                 precede_futures=precede_futures,
                                             )
 
