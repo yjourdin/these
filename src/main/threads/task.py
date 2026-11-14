@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from concurrent.futures import Future
-from math import inf
 from multiprocessing.connection import wait
 from typing import Any, cast
 

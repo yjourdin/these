@@ -186,7 +186,7 @@ class NormalProfileWiseOutranking(ProfileWiseOutranking):
 
         coalitions = np.array([np.nonzero(a)[0] for a in comp_df.values])
 
-        coalitions_bit = np.packbits(coalitions)
+        coalitions_bit = np.packbits(comp_df.values, axis=-1)
 
         def score_func(x):
             return self.importance_relation[frozenset(x)]
