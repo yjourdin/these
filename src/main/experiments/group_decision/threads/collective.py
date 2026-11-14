@@ -413,16 +413,16 @@ def collective_thread(
                         for connection in sources:
                             connection.send(source)
 
-                    result_P = (
+                    (result_P, time_P), _ = (
                         future_P.result()
                     )  # result_list(list(futures_P.values()))
 
-                time_left -= result_P.time
-                time_left_per_it -= result_P.time
+                time_left -= time_P
+                time_left_per_it -= time_P
                 if time_left < 1:  # or (time_left_per_it < 1):
                     # raise ValueError("Time left 2")
                     break
-                if not result_P.res:
+                if not result_P:
                     # raise ValueError("Preference path")
                     break
 

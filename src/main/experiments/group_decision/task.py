@@ -1526,7 +1526,7 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
                 Found=result,
             )
 
-        return len(preference_path) != 0
+        return (len(preference_path) != 0), time
 
     def Mi_file(self, dir: DirectoryGroupDecision, dm_id: int | None = None):
         return super().Mi_file(dir, self.dm_id)

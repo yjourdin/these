@@ -64,8 +64,9 @@ def group_task_thread(
 
     TASK_QUEUE.put(elements)
 
-    res = True
-    time = inf
+    res_a = True
+    res_b = 0
+    time = 0
     n = 0
     while n < len(tasks):
         for conn in cast(list[ThreadEndTaskConnection], wait(thread_connections)):
@@ -73,9 +74,10 @@ def group_task_thread(
             result = conn.recv()
             if result == SENTINEL:
                 raise TaskException(str(tasks[thread_connections.index(conn)]))
-            res &= result.res
-            time = min(time, result.time)
+            res_a &= result.res[0]
+            res_b = max(res_b, result.res[1])
+            time = max(time, result.time)
 
     TASK_QUEUE.task_done()
 
-    return TaskResult(res, time)
+    return TaskResult((res_a, res_b), time)
