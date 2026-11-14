@@ -68,8 +68,8 @@ def collective_thread(
     precede_results = result_list(precede_futures)
 
     time_passed = 0
-    if len(precede_results) == 1:
-        time_passed = precede_results[0].time
+    # if len(precede_results) == 1:
+    #     time_passed = precede_results[0].time
 
     with ThreadPoolExecutor() as thread_pool:
         DMS = range(group_size)
