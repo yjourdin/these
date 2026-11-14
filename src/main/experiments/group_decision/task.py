@@ -400,12 +400,12 @@ class MieTask(AbstractDTask):
                 ):
                     results = list(process_pool.map(sa_result, sas))
 
-                optimal = any(result.best_objective == 0 for result in results)
+                optimal = any(result.best_objective < 1 for result in results)
                 if optimal:
                     best_model = next(
                         result.best_model
                         for result in results
-                        if result.best_objective == 0
+                        if result.best_objective < 1
                     )
 
         # for i, result in enumerate(results):
