@@ -40,6 +40,7 @@ class CollectiveObjective(Objective[Model], Dataclass):
     comparisons_past: list[PreferenceStructure]
     M: int = field(init=False)
     nb_DM: int = field(init=False)
+    exist: bool = False
 
     def __post_init__(self):
         self.M = max(len(comp) for comp in self.comparisons)
@@ -62,6 +63,9 @@ class CollectiveObjective(Objective[Model], Dataclass):
             not comparisons_ranking(refused_set, ranks)
             for refused_set in self.comparisons_past
         )
+
+        if self.exist:
+            return result
 
         tup = sorted(
             (

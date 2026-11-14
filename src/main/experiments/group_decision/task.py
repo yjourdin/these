@@ -392,6 +392,7 @@ class MieTask(AbstractDTask):
                     rng_init=rng_init,
                     rng_sa=rng_sa,
                     nb_cpus=self.config.nb_cpus,
+                    exist=True,
                 )
 
                 with (
@@ -1131,12 +1132,12 @@ class CollectiveSATask(AbstractCollectiveTask):
         ):
             results = list(process_pool.map(sa_result, sas))
 
-        # results.sort(key=attrgetter("best_objective"))
-        min_obj = min(res.best_objective for res in results)
+        results = [res for res in results if res.best_objective < 1]
+        results.sort(key=attrgetter("best_objective"))
+        # min_obj = min(res.best_objective for res in results)
         time = max(res.time for res in results)
-        results = [res for res in results if res.best_objective == min_obj]
 
-        for Mcp_id in range(max(len(results), self.nb_Mcp)):
+        for Mcp_id in range(min(len(results), self.nb_Mcp)):
             best_model = results[Mcp_id].best_model
 
             with self.Mcp_file(dir, Mcp_id).open("w") as f:

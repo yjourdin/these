@@ -69,6 +69,7 @@ def create_sa(
     nb_cpus: int = 1,
     reference: RMPModel | None = None,
     accept_deviation: ParametersDeviation | None = None,
+    exist: bool = False
 ):
     # DMs
     NB_DM = len(comparisons)
@@ -160,6 +161,7 @@ def create_sa(
             comparisons_accepted,
             comparisons_refused,
             comparisons_past,
+            exist
         )
     )
 
