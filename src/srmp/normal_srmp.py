@@ -132,15 +132,16 @@ class NormalSRMP(SRMP):
         n = len(self.lexicographic_order)
         score = np.ones_like(credibility_ordered[0])
         i = 0
-        eq = equality_ordered[i]
-        prev_eq = np.ones_like(eq, np.bool_)
-        while (i < n) and prev_eq.any(axis=None):
+        eq = np.ones_like(score, np.bool_)
+        while (i < n) and eq.any(axis=None):
+            prev_eq = eq
+            eq = equality_ordered[i]
             score[prev_eq & ~eq] = credibility_ordered[i][prev_eq & ~eq]
             score[prev_eq & eq] = np.minimum(
                 score[prev_eq & eq], credibility_ordered[i][prev_eq & eq]
             )
             i += 1
-            if i < n:
-                prev_eq = eq
-                eq = equality_ordered[i]
+
+        score[eq] = 0
+
         return score
