@@ -142,6 +142,6 @@ class NormalSRMP(SRMP):
             )
             i += 1
 
-        score[eq] = 0
+        # score[eq] = 0
 
         return score
