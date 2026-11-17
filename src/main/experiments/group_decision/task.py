@@ -229,10 +229,14 @@ class DTask(AbstractDTask, MiTask):
 
         D = random_comparisons(A, Mi, self.nbc, rng=rng)
 
-        if self.error:
-            D = noisy_comparisons(D, self.error, rng)
-
         cred = Mi.credibility(A)
+
+        if self.error:
+            D_origin = D.copy()
+            D = noisy_comparisons(D, self.error, rng)
+            for r in D - D_origin:
+                cred.at[r.a, r.b] = 0
+
         cred_numpy = cred.to_numpy()
 
         cred_lambda = np.quantile(cred_numpy[cred_numpy >= 0], 1 - self.group.accept)
@@ -327,7 +331,7 @@ class MieTask(AbstractDTask):
                     False,
                     [0] * self.group_size,
                     R,
-                    ACC,
+                    # ACC,
                     gamma=self.config.gamma,
                     nb_cpus=self.config.nb_cpus,
                     exist=True,
@@ -386,7 +390,7 @@ class MieTask(AbstractDTask):
                     max_it=self.config.max_it,
                     max_it_non_improving=self.config.max_it_non_improving,
                     # preferences_changes=C,
-                    comparisons_accepted=ACC,
+                    # comparisons_accepted=ACC,
                     comparisons_refused=R,
                     # comparisons_past=DR,
                     rng_init=rng_init,
@@ -858,7 +862,7 @@ class CollectiveMIPTask(AbstractCollectiveTask):
                     False,
                     C,
                     R,
-                    ACC,
+                    # ACC,
                     # DR,
                     # reference_models=Mie,
                     gamma=self.config.gamma,
@@ -1119,16 +1123,16 @@ class CollectiveSATask(AbstractCollectiveTask):
             max_it=self.config.max_it,
             max_it_non_improving=self.config.max_it_non_improving,
             preferences_changes=C,
-            comparisons_accepted=ACC,
+            # comparisons_accepted=ACC,
             comparisons_refused=R,
             # comparisons_past=DR,
             rng_init=rng_init,
             rng_sa=rng_sa,
-            nb_cpus=max(self.config.nb_cpus, self.nb_Mcp),
+            nb_cpus=self.config.nb_cpus * self.nb_Mcp
         )
 
         with (
-            ProcessPoolExecutor(max(self.config.nb_cpus, self.nb_Mcp)) as process_pool,
+            ProcessPoolExecutor(self.config.nb_cpus * self.nb_Mcp) as process_pool,
         ):
             results = list(process_pool.map(sa_result, sas))
 

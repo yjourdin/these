@@ -7,6 +7,7 @@ from src.constants import SENTINEL
 
 from ..connection import TaskPipe, TaskQueueElement, ThreadEndTaskConnection
 from ..dir import DIR
+from ..experiments.group_decision.task import CollectiveMIPTask, CollectiveSATask
 from ..task import Task, TaskException, TaskResult, result_list
 from .task_manager import TASK_QUEUE
 
@@ -18,7 +19,10 @@ def task_thread(
     **kwargs: Any,
 ):
     if task.done(DIR, **kwargs):
-        return TaskResult(None, 0)
+        if isinstance(task, (CollectiveMIPTask, CollectiveSATask)):
+            return TaskResult((None, 0), 0)
+        else:
+            return TaskResult(None, 0)
 
     if precede_futures:
         try:
