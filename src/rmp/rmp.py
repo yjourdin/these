@@ -348,7 +348,7 @@ class RMP(Ranker):
             )
             i += 1
 
-        # score[eq] = 0
+        score[eq] = 0
 
         return DataFrame(
             score,
