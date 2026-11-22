@@ -11,7 +11,9 @@ class Dataclass(Field):
     @classmethod
     def from_dict(cls, dct: dict[str, Any]):
         return cls(**{
-            k: v for k, v in dct.items() if k in [field.name for field in fields(cls)]
+            k: v
+            for k, v in dct.items()
+            if k in {field.name for field in fields(cls) if field.init}
         })
 
     def to_dict(self):
