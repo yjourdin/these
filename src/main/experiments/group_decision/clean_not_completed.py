@@ -1,0 +1,98 @@
+from dataclasses import replace
+from pathlib import Path
+from typing import NamedTuple
+
+import pandas as pd
+
+from ....methods import MethodEnum
+from ....models import ModelEnum
+from ..elicitation.config import SAConfig
+from .directory import DirectoryGroupDecision
+from .fields import GroupParameters, ParametersDeviation
+from .task import PreferencePathTask
+
+DIR = DirectoryGroupDecision(Path().name, Path().parent)
+
+df = pd.read_csv(Path("compromise_results.csv"))
+
+
+class Exp(NamedTuple):
+    M: int
+    Ko: int
+    Group_size: int
+    N_bc: int
+    Nb_Mcp: int
+
+
+# Exp = namedtuple("Exp", )
+exps: set[Exp] = set()
+
+for m in range(3, 7):
+    for k in range(1, 4):
+        for g in range(2, 8, 2):
+            for n in range(100, 600, 100):
+                for p in range(1, 4):
+                    exps.add(Exp(m, k, g, n, p))
+
+for exp in df.itertuples(False):
+    exps.remove(Exp(exp.M, exp.Ko, exp.Group_size, exp.N_bc, exp.Nb_Mcp))
+
+for exp in exps:
+    print(exp)
+    csvs = [
+        Path("collective_results.csv"),
+        Path("path_results.csv"),
+        Path("distance.csv"),
+        Path("changes_results.csv"),
+    ]
+    for csv in csvs:
+        dff = pd.read_csv(csv)
+        dff = dff.drop(
+            dff[
+                (dff["M"] == exp.M)
+                & (dff["Ko"] == exp.Ko)
+                & (dff["Group_size"] == exp.Group_size)
+                & (dff["N_bc"] == exp.N_bc)
+                & (dff["Nb_Mcp"] == exp.Nb_Mcp)
+            ].index
+        )
+        dff.to_csv(csv)
+
+    for dm in range(exp.Group_size):
+        it = 0
+        task = PreferencePathTask(
+            exp.M,
+            1000,
+            0,
+            ModelEnum.RMP,
+            exp.Ko,
+            False,
+            0,
+            exp.Group_size,
+            GroupParameters(0.1, ParametersDeviation(0.1, 0.1, 0.1, 0)),
+            0,
+            dm,
+            exp.N_bc,
+            True,
+            0,
+            0,
+            MethodEnum.SA,
+            SAConfig(),
+            exp.Nb_Mcp,
+            0,
+            True,
+            0,
+            it,
+        )
+        while task.Di_file(DIR, dm).exists():
+            task.Di_file(DIR, dm).unlink(True)
+            task.C_file(DIR).unlink(True)
+            task.Cr_file(DIR).unlink(True)
+            task.Da_file(DIR).unlink(True)
+            task.Dr_file(DIR, it).unlink(True)
+            for id in range(exp.Nb_Mcp):
+                task.Mcp_file(DIR, id).unlink(True)
+                task.Dcp_file(DIR, id).unlink(True)
+            task.Mc_file(DIR).unlink(True)
+            task.Dc_file(DIR).unlink(True)
+            task = replace(task, it=it + 1)
