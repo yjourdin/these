@@ -88,6 +88,7 @@ for exp in exps:
             0,
             it,
         )
+        print(DIR.dirs)
         while task.Di_file(DIR, dm).exists():
             print(exp, dm, it)
             task.Di_file(DIR, dm).unlink(True)
