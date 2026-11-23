@@ -50,16 +50,17 @@ for exp in exps:
     ]
     for csv in csvs:
         dff = pd.read_csv(csv)
-        dff = dff.drop(
-            dff[
+        if not (
+            d := dff[
                 (dff["M"] == exp.M)
                 & (dff["Ko"] == exp.Ko)
                 & (dff["Group_size"] == exp.Group_size)
                 & (dff["N_bc"] == exp.N_bc)
                 & (dff["Nb_Mcp"] == exp.Nb_Mcp)
-            ].index
-        )
-        dff.to_csv(csv)
+            ]
+        ).empty:
+            dff = dff.drop(d.index)
+            dff.to_csv(csv)
 
     for dm in range(exp.Group_size):
         it = 0
