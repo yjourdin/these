@@ -4,12 +4,15 @@ from typing import NamedTuple
 
 import pandas as pd
 
-from ....methods import MethodEnum
-from ....models import ModelEnum
-from ..elicitation.config import SAConfig
-from .directory import DirectoryGroupDecision
-from .fields import GroupParameters, ParametersDeviation
-from .task import PreferencePathTask
+from src.main.experiments.elicitation.config import SAConfig
+from src.main.experiments.group_decision.directory import DirectoryGroupDecision
+from src.main.experiments.group_decision.fields import (
+    GroupParameters,
+    ParametersDeviation,
+)
+from src.main.experiments.group_decision.task import PreferencePathTask
+from src.methods import MethodEnum
+from src.models import ModelEnum
 
 DIR = DirectoryGroupDecision(Path().name, Path().parent)
 
