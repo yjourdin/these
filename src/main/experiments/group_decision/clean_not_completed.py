@@ -1,6 +1,5 @@
 from dataclasses import replace
 from pathlib import Path
-from tokenize import group
 from typing import NamedTuple
 
 import pandas as pd
@@ -93,7 +92,7 @@ for exp in exps:
             0,
             it,
         )
-        # print(task.Di_file(DIR, dm).resolve())
+        print(task.Di_file(DIR, dm).resolve())
         while task.Di_file(DIR, dm).exists():
             print(exp, dm, it)
             task.Di_file(DIR, dm).unlink(True)
