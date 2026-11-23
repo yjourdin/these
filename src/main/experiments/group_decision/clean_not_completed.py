@@ -93,7 +93,6 @@ for exp in exps:
             0,
             it,
         )
-        print(task.Di_file(DIR, dm).resolve())
         while task.Di_file(DIR, dm).exists():
             print(exp, dm, it)
             task.Di_file(DIR, dm).unlink(True)
