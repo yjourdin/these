@@ -41,6 +41,9 @@ for m in range(3, 7):
 for exp in df.itertuples(False):
     exps.remove(Exp(exp.M, exp.Ko, exp.Group_size, exp.N_bc, exp.Nb_Mcp))
 
+group = GroupParameters(0.1, ParametersDeviation(0.1, 0.1, 0.1, 0))
+config = SAConfig()
+
 for exp in exps:
     csvs = [
         Path("collective_results.csv"),
@@ -65,10 +68,7 @@ for exp in exps:
     for dm in range(exp.Group_size):
         print(exp, dm)
         it = 0
-        group = GroupParameters(0.1, ParametersDeviation(0.1, 0.1, 0.1, 0))
-        group.__setattr__("id", 0)
-        config = SAConfig()
-        config.__setattr__("id", 0)
+
         task = PreferencePathTask(
             exp.M,
             1000,
