@@ -60,7 +60,7 @@ for exp in exps:
             ]
         ).empty:
             dff = dff.drop(d.index)
-            dff.to_csv(csv)
+            dff.to_csv(csv, index=False)
 
     for dm in range(exp.Group_size):
         it = 0
