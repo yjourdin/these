@@ -99,4 +99,10 @@ for exp in exps:
                 task.Dcp_file(DIR, id).unlink(True)
             task.Mc_file(DIR).unlink(True)
             task.Dc_file(DIR).unlink(True)
+            t=0
+            while task.P_file(DIR, t).exists():
+                task.P_file(DIR, t).unlink(True)
+                task.Mp_file(DIR, t).unlink(True)
+                task.Dp_file(DIR, t).unlink(True)
+                t+=1
             task = replace(task, it=it + 1)
