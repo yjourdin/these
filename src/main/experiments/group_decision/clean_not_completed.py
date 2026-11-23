@@ -73,7 +73,7 @@ for exp in exps:
             False,
             0,
             exp.Group_size,
-            GroupParameters(0.1, ParametersDeviation(0.1, 0.1, 0.1, 0)),
+            replace(GroupParameters(0.1, ParametersDeviation(0.1, 0.1, 0.1, 0)), id=0),
             0,
             dm,
             exp.N_bc,
@@ -81,14 +81,14 @@ for exp in exps:
             0,
             0,
             MethodEnum.SA,
-            SAConfig(),
+            replace(SAConfig(), id=0),
             exp.Nb_Mcp,
             0,
             True,
             0,
             it,
         )
-        print(task.Di_file(DIR, dm).resolve())
+        # print(task.Di_file(DIR, dm).resolve())
         while task.Di_file(DIR, dm).exists():
             print(exp, dm, it)
             task.Di_file(DIR, dm).unlink(True)
