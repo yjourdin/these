@@ -41,7 +41,8 @@ for exp in df.itertuples(False):
     exps.remove(Exp(exp.M, exp.Ko, exp.Group_size, exp.N_bc, exp.Nb_Mcp))
 
 group = GroupParameters(0.1, ParametersDeviation(0.1, 0.1, 0.1, 0))
-config = SAConfig()
+config0 = SAConfig()
+config1 = SAConfig()
 
 for exp in exps:
     csvs = [
@@ -85,7 +86,7 @@ for exp in exps:
             0,
             0,
             MethodEnum.SA,
-            config,
+            config1,
             exp.Nb_Mcp,
             0,
             True,
