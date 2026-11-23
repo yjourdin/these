@@ -1,5 +1,6 @@
 from dataclasses import replace
 from pathlib import Path
+from tokenize import group
 from typing import NamedTuple
 
 import pandas as pd
@@ -64,6 +65,10 @@ for exp in exps:
     for dm in range(exp.Group_size):
         print(exp, dm)
         it = 0
+        group = GroupParameters(0.1, ParametersDeviation(0.1, 0.1, 0.1, 0))
+        group.__setattr__("id", 0)
+        config = SAConfig()
+        config.__setattr__("id", 0)
         task = PreferencePathTask(
             exp.M,
             1000,
@@ -73,7 +78,7 @@ for exp in exps:
             False,
             0,
             exp.Group_size,
-            replace(GroupParameters(0.1, ParametersDeviation(0.1, 0.1, 0.1, 0)), id=0),
+            group,
             0,
             dm,
             exp.N_bc,
@@ -81,7 +86,7 @@ for exp in exps:
             0,
             0,
             MethodEnum.SA,
-            replace(SAConfig(), id=0),
+            config,
             exp.Nb_Mcp,
             0,
             True,
