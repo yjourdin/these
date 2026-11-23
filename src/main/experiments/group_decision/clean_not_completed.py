@@ -41,7 +41,6 @@ for exp in df.itertuples(False):
     exps.remove(Exp(exp.M, exp.Ko, exp.Group_size, exp.N_bc, exp.Nb_Mcp))
 
 for exp in exps:
-    print(exp)
     csvs = [
         Path("collective_results.csv"),
         Path("path_results.csv"),
@@ -63,6 +62,7 @@ for exp in exps:
             dff.to_csv(csv, index=False)
 
     for dm in range(exp.Group_size):
+        print(exp, dm)
         it = 0
         task = PreferencePathTask(
             exp.M,
@@ -89,6 +89,7 @@ for exp in exps:
             it,
         )
         while task.Di_file(DIR, dm).exists():
+            print(exp, dm, it)
             task.Di_file(DIR, dm).unlink(True)
             task.C_file(DIR).unlink(True)
             task.Cr_file(DIR).unlink(True)
@@ -99,10 +100,11 @@ for exp in exps:
                 task.Dcp_file(DIR, id).unlink(True)
             task.Mc_file(DIR).unlink(True)
             task.Dc_file(DIR).unlink(True)
-            t=0
+            t = 0
             while task.P_file(DIR, t).exists():
+                print(exp, dm, it, t)
                 task.P_file(DIR, t).unlink(True)
                 task.Mp_file(DIR, t).unlink(True)
                 task.Dp_file(DIR, t).unlink(True)
-                t+=1
+                t += 1
             task = replace(task, it=it + 1)
