@@ -1433,7 +1433,7 @@ class PreferencePathTask(AbstractCollectiveTask, DTask):
             gbfs = GBFS(
                 neighborhood,
                 heuristic,
-                max_time or DEFAULT_MAX_TIME,
+                max_time*self.nb_Mcp if max_time else DEFAULT_MAX_TIME,
                 # verbose=True,
                 # latest=True,
             )
