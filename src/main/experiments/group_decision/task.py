@@ -239,7 +239,7 @@ class DTask(AbstractDTask, MiTask):
 
         cred_numpy = cred.to_numpy()
 
-        cred_lambda = np.quantile(cred_numpy[cred_numpy > 0], 1 - self.group.accept)
+        cred_lambda = np.quantile(cred_numpy[cred_numpy > 0], 1 - self.group.accept) if (cred_numpy > 0).any() else 1
 
         Df: list[Relation] = []
 
