@@ -35,9 +35,9 @@ class Astar[T](Paths[T, NodeAstar[T]]):
         super().init(sources)
         for i, source in enumerate(sources):
             node = NodeAstar(source, 0, self.heuristic(source), self.latest)
-            self.open_heaps[i].append(node)
+            self.best[i] = node
             if node.heuristic:
-                self.best[i] = node
+                self.open_heaps[i].append(node)
             else:
                 self.paths |= {i: [source]}
             heapq.heapify(self.open_heaps[i])
@@ -51,9 +51,9 @@ class Astar[T](Paths[T, NodeAstar[T]]):
             and any(self.open_heaps.values())
         ):
             with catchtime() as time:
-                min_f = min(heap[0].f for heap in self.open_heaps.values() if heap)
+                # min_f = min(heap[0].f for heap in self.open_heaps.values() if heap)
                 for source_id, heap in self.open_heaps.items():
-                    if heap and (heap[0].f == min_f):
+                    if heap:  # and (heap[0].f == min_f):
                         current_node = heapq.heappop(heap)
 
                         # Best node
@@ -107,12 +107,7 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                                     # Add neighbor to queue
                                     heapq.heappush(
                                         self.open_heaps[source_id],
-                                        NodeAstar(
-                                            neighbor,
-                                            current_node.cost + 1,
-                                            heuristic_value,
-                                            self.latest,
-                                        ),
+                                        neighbor_node,
                                     )
                             elif (
                                 neighbor_source_ids := set(self.parent[neighbor].keys())
@@ -122,15 +117,15 @@ class Astar[T](Paths[T, NodeAstar[T]]):
                                 # Remonte le path de current
                                 if new_ids := neighbor_source_ids - current_source_ids:
                                     paths = self.paths_from(current)
-                                    for path in paths.values():
-                                        for u, v in pairwise([neighbor] + path):
-                                            for i in new_ids:
+                                    for i in new_ids:
+                                        for path in paths.values():
+                                            for u, v in pairwise([neighbor] + path):
                                                 self.parent[v] |= {i: u}
                                 # Remonte le path de neighbor
                                 if new_ids := current_source_ids - neighbor_source_ids:
                                     paths = self.paths_from(neighbor)
-                                    for path in paths.values():
-                                        for i in new_ids:
+                                    for i in new_ids:
+                                        for path in paths.values():
                                             for u, v in pairwise([current] + path):
                                                 self.parent[v] |= {i: u}
                                     if neighbors_source_found_ids := (
